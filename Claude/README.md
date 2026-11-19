@@ -8,11 +8,9 @@ The whole game is one file, `index.html`. Every texture, model, sound and piece 
 is generated in the browser when the game starts; there are no image, model or audio
 files.
 
-![Dry Gulch at golden hour: three outlaws stand in the sunlit main street between the telegraph office, the bank and the sheriff's office, with the six-shooter in the foreground](screenshot.jpg)
-
-| Chapter II · Kagemori | Chapter III · Uri |
-| --- | --- |
-| ![The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground](screenshot-japan.jpg) | ![An alpine chalet with flower boxes, a cow, an Austrian soldier, the lake and snow peaks behind, the crossbow in the foreground](screenshot-uri.jpg) |
+| Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
+| --- | --- | --- |
+| ![Dry Gulch at golden hour: three outlaws stand in the sunlit main street between the telegraph office, the bank and the sheriff's office, with the six-shooter in the foreground](screenshot.jpg) | ![The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground](screenshot-japan.jpg) | ![An alpine chalet with flower boxes, a cow, an Austrian soldier, the lake and snow peaks behind, the crossbow in the foreground](screenshot-uri.jpg) |
 
 ## Run it
 
