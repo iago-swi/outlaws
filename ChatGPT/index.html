@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#171613">
+  <title>Outlaws · Three Frontiers</title>
+  <link rel="icon" href="assets/badge.svg">
+  <link rel="preload" href="assets/west.webp" as="image">
+  <link rel="preload" href="assets/rye.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="campaign.css">
+  <link rel="stylesheet" href="game.css">
+  <script defer src="game.js"></script>
+  <script defer src="campaign.js"></script>
+</head>
+<body>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M6 3.5 21 12 6 20.5z"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3zM16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3zM16 9l6 6m0-6-6 6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M3.5 9V3.5H9M15 3.5h5.5V9m0 6v5.5H15m-6 0H3.5V15"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6v14m0-14C9 4 5 4 2.5 5v14c3-1 7-1 9.5 1 2.5-2 6.5-2 9.5-1V5c-2.5-1-6.5-1-9.5 1Z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+    <symbol id="i-cards" viewBox="0 0 24 24"><path d="M3 6.5h5v12H3zM10 4h5v14.5h-5zM17 8h4v10.5h-4z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-cross" viewBox="0 0 24 24"><path d="m5 5 14 14m0-14L5 19"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M12 1v6m0 10v6M1 12h6m10 0h6"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m14.5 5-7 7 7 7"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 5 7 7-7 7"/></symbol>
+  </svg>
+  <div id="campaign">
+    <header>
+      <div class="brand" aria-label="Outlaws, Three Frontiers"><img src="assets/badge.svg" alt=""><div><strong>OUTLAWS</strong><small><i></i>THREE FRONTIERS<i></i></small></div></div>
+      <div class="header-actions">
+        <button id="guide-btn" class="guide-btn"><svg><use href="#i-book"/></svg><span>Field guide</span></button>
+        <span class="header-rule"></span>
+        <button class="icon-btn" id="audio-btn" aria-label="Mute sound" title="Mute sound"><svg><use href="#i-sound"/></svg></button>
+        <button class="icon-btn" id="full-btn" aria-label="Enter fullscreen" title="Enter fullscreen"><svg><use href="#i-expand"/></svg></button>
+      </div>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="chapter-title">
+        <img id="hero-img" class="hero-art" src="assets/west.webp" alt="">
+        <div class="hero-shade"></div><div class="motes" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="chapter-tab" id="chapter-tab">Chapter I</span><span class="ornament"><i></i>✦</span></div>
+          <h1 id="chapter-title">Dust &amp; Iron</h1>
+          <div class="place"><svg><use href="#i-pin"/></svg><span id="place">Blackridge, New Mexico</span><b></b><span id="year">1886</span></div>
+          <p id="story">A gang has taken Blackridge. Strap on your six-shooter and take back the town, one dusty street at a time.</p>
+          <button id="play" class="play"><svg><use href="#i-play"/></svg>Play chapter</button>
+        </div>
+        <div class="pager"><button id="prev" aria-label="Previous chapter"><svg><use href="#i-left"/></svg></button><span id="page-num">01</span><i>/</i><span>03</span><button id="next" aria-label="Next chapter"><svg><use href="#i-right"/></svg></button></div>
+      </section>
+      <section class="chapters" aria-labelledby="chapters-title">
+        <div class="section-cap"><svg><use href="#i-cards"/></svg><h2 id="chapters-title">The Campaign</h2><i></i><div id="progress" aria-live="polite">0 / 3 chapters cleared</div></div>
+        <div id="deck" class="deck"></div>
+      </section>
+    </main>
+    <footer><div><svg><use href="#i-target"/></svg>Single player</div><span><kbd>←</kbd><kbd>→</kbd> Select chapter <i></i> <kbd>Enter</kbd> Play</span></footer>
+  </div>
+  <dialog id="guide"><div class="guide-head"><div class="chapter-tab">Field guide</div><button class="icon-btn" id="close-guide" aria-label="Close field guide"><svg><use href="#i-cross"/></svg></button></div>
+    <h2>How to play</h2><p>Clear each encounter and push on to the next. Every frontier puts a different weapon in your hands.</p>
+    <dl id="control-list"></dl><div class="guide-touch">On a touchscreen, tap an enemy to attack and use the on-screen controls to move and take cover.</div>
+    <button class="play" id="guide-done">Back to campaign</button>
+  </dialog>
+  <section id="game" aria-label="Game"></section>
+</body>
+</html>
