@@ -1,5 +1,9 @@
 # Outlaws
 
+Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to compare what different AI assistants produce from the same brief. Each takes you through three frontiers: the American West, Japan and central Switzerland.
+
+**Play it in your browser: <https://iago-swi.github.io/outlaws/>**
+
 ## Claude version
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
