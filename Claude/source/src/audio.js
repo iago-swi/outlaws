@@ -1,0 +1,244 @@
+// All sound is synthesised live with the Web Audio API - no audio files.
+// Effects are shaped noise/tones; music is a small generative band per level
+// (plucked strings via the Karplus-Strong algorithm + a lead voice).
+
+const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+
+export class Sound {
+  constructor() { this.ctx = null; this.mus = null; this.amb = []; this.vol = 0.8; this.pluckCache = new Map(); }
+
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const c = (this.ctx = new AC());
+    this.master = c.createGain(); this.master.gain.value = this.vol;
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.ratio.value = 5;
+    this.master.connect(comp); comp.connect(c.destination);
+    this.sfx = c.createGain(); this.sfx.gain.value = 0.9; this.sfx.connect(this.master);
+    this.music = c.createGain(); this.music.gain.value = 0.5; this.music.connect(this.master);
+    this.ambient = c.createGain(); this.ambient.gain.value = 0.6; this.ambient.connect(this.master);
+    // reverb: convolution with a burst of decaying noise
+    const len = c.sampleRate * 2.4, ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+    this.rev = c.createConvolver(); this.rev.buffer = ir;
+    const rg = c.createGain(); rg.gain.value = 0.5; this.rev.connect(rg); rg.connect(this.master);
+    const nb = (this.noiseBuf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate));
+    const nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  }
+  get t() { return this.ctx.currentTime; }
+  setMuted(m) { if (this.master) this.master.gain.value = m ? 0 : this.vol; }
+
+  // --- building blocks -----------------------------------------------------
+  /** Filtered noise burst. */
+  noise(o) {
+    const c = this.ctx; if (!c) return;
+    const t = o.t ?? c.currentTime, s = c.createBufferSource(); s.buffer = this.noiseBuf; s.loop = true;
+    const f = c.createBiquadFilter(); f.type = o.type || 'lowpass'; f.Q.value = o.q ?? 0.8;
+    f.frequency.setValueAtTime(o.f0, t); if (o.f1) f.frequency.exponentialRampToValueAtTime(o.f1, t + o.dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(o.vol, t + (o.att ?? 0.004)); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur);
+    s.connect(f); f.connect(g); g.connect(o.dest || this.sfx);
+    if (o.rev) { const r = c.createGain(); r.gain.value = o.rev; g.connect(r); r.connect(this.rev); }
+    s.start(t, Math.random()); s.stop(t + o.dur + 0.05);
+  }
+  /** Pitched tone with a decay envelope. */
+  tone(o) {
+    const c = this.ctx; if (!c) return;
+    const t = o.t ?? c.currentTime, os = c.createOscillator(); os.type = o.type || 'sine';
+    os.frequency.setValueAtTime(o.f0, t); if (o.f1) os.frequency.exponentialRampToValueAtTime(o.f1, t + o.dur);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(o.vol, t + (o.att ?? 0.005)); g.gain.exponentialRampToValueAtTime(0.0001, t + o.dur);
+    let out = os;
+    if (o.lp) { const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; os.connect(f); out = f; }
+    out.connect(g); g.connect(o.dest || this.sfx);
+    if (o.rev) { const r = c.createGain(); r.gain.value = o.rev; g.connect(r); r.connect(this.rev); }
+    os.start(t); os.stop(t + o.dur + 0.05);
+  }
+
+  // --- effects ---------------------------------------------------------------
+  gun(vol = 1, far = 0) {
+    if (!this.ctx) return;
+    this.noise({ type: 'lowpass', f0: 9000 - far * 7000, f1: 500, dur: 0.32, vol: 0.9 * vol, rev: 0.6 });
+    this.noise({ type: 'bandpass', f0: 1800, f1: 600, dur: 0.12, vol: 0.5 * vol, q: 0.6 });
+    this.tone({ f0: 170, f1: 42, dur: 0.2, vol: 0.9 * vol });
+  }
+  bow() {
+    this.tone({ type: 'sawtooth', f0: 210, f1: 80, dur: 0.16, vol: 0.35, lp: 1800 });
+    this.noise({ type: 'bandpass', f0: 900, f1: 2600, dur: 0.22, vol: 0.28, q: 1.4 });
+  }
+  crossbow() {
+    this.tone({ type: 'square', f0: 130, f1: 55, dur: 0.1, vol: 0.4, lp: 1200 });
+    this.noise({ type: 'highpass', f0: 2500, dur: 0.05, vol: 0.4 });
+    this.noise({ type: 'bandpass', f0: 800, f1: 2400, dur: 0.2, vol: 0.25, q: 1.2 });
+  }
+  slash() {
+    this.noise({ type: 'bandpass', f0: 700, f1: 4200, dur: 0.2, vol: 0.5, q: 1.8, att: 0.03 });
+    this.tone({ type: 'triangle', f0: 3200, f1: 5200, dur: 0.25, vol: 0.05, rev: 0.5 });
+  }
+  clank() {
+    for (const f of [1900, 2850, 4300]) this.tone({ type: 'triangle', f0: f, dur: 0.35, vol: 0.12, rev: 0.4 });
+    this.noise({ type: 'highpass', f0: 3000, dur: 0.05, vol: 0.4 });
+  }
+  thud() { this.noise({ type: 'lowpass', f0: 600, f1: 150, dur: 0.12, vol: 0.7 }); this.tone({ f0: 110, f1: 60, dur: 0.1, vol: 0.5 }); }
+  tick() { this.noise({ type: 'highpass', f0: 1800, dur: 0.05, vol: 0.3 }); }
+  hitmark() { this.tone({ type: 'triangle', f0: 1250, dur: 0.07, vol: 0.2 }); }
+  killmark() { this.tone({ type: 'triangle', f0: 880, dur: 0.12, vol: 0.22 }); this.tone({ type: 'triangle', f0: 1320, dur: 0.2, vol: 0.2, t: this.ctx ? this.t + 0.08 : 0 }); }
+  hurt() { this.tone({ type: 'sawtooth', f0: 150, f1: 70, dur: 0.28, vol: 0.45, lp: 900 }); this.noise({ type: 'lowpass', f0: 800, dur: 0.15, vol: 0.5 }); }
+  step(wood) {
+    this.noise({ type: 'lowpass', f0: wood ? 1100 : 650, f1: 200, dur: 0.08, vol: wood ? 0.16 : 0.11 });
+    if (wood) this.tone({ f0: 150 + Math.random() * 40, f1: 90, dur: 0.07, vol: 0.12 });
+  }
+  click(f = 2600) { this.noise({ type: 'bandpass', f0: f, dur: 0.035, vol: 0.4, q: 3 }); }
+  whiz() { this.noise({ type: 'bandpass', f0: 3200, f1: 900, dur: 0.16, vol: 0.3, q: 4, att: 0.02 }); }
+  pickup() { if (!this.ctx) return; this.tone({ f0: 660, dur: 0.25, vol: 0.2, rev: 0.4 }); this.tone({ f0: 990, dur: 0.4, vol: 0.2, t: this.t + 0.1, rev: 0.4 }); }
+  shout() {
+    if (!this.ctx) return;
+    const f = 160 + Math.random() * 90;
+    this.tone({ type: 'sawtooth', f0: f * 1.2, f1: f * 0.8, dur: 0.22, vol: 0.16, lp: 1100, rev: 0.3 });
+  }
+  poof() { this.noise({ type: 'lowpass', f0: 2400, f1: 300, dur: 0.4, vol: 0.4, att: 0.02 }); }
+  fanfare(kind) {
+    if (!this.ctx) return;
+    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : [57, 60, 64, 69];
+    base.forEach((n, i) => this.pluck(n, this.t + i * 0.16, 0.5, 0.7));
+    this.pluck(base[0] - 12, this.t, 0.5, 0.5);
+  }
+  sting() { if (!this.ctx) return; [45, 44, 40].forEach((n, i) => this.pluck(n, this.t + i * 0.35, 0.6, 0.3)); }
+
+  // --- music -----------------------------------------------------------------
+  /** Karplus-Strong plucked string: a noise burst circulating in a short, slowly damped loop. */
+  pluckBuffer(freq, bright) {
+    const key = Math.round(freq * 10) + ':' + bright;
+    let b = this.pluckCache.get(key);
+    if (b) return b;
+    const sr = this.ctx.sampleRate, N = Math.max(2, Math.round(sr / freq)), len = Math.floor(sr * 2.2);
+    b = this.ctx.createBuffer(1, len, sr);
+    const out = b.getChannelData(0), ring = new Float32Array(N);
+    let prev = 0;
+    for (let i = 0; i < N; i++) { const w = Math.random() * 2 - 1; prev = prev + (w - prev) * bright; ring[i] = prev; }
+    const decay = 0.9955 - Math.min(0.004, freq / 400000);
+    for (let i = 0, k = 0; i < len; i++) {
+      out[i] = ring[k];
+      const nx = (k + 1) % N;
+      ring[k] = (ring[k] + ring[nx]) * 0.5 * decay;
+      k = nx;
+    }
+    this.pluckCache.set(key, b);
+    return b;
+  }
+  pluck(note, t, vol = 0.4, bright = 0.5, dest) {
+    if (!this.ctx) return;
+    const s = this.ctx.createBufferSource(); s.buffer = this.pluckBuffer(midi(note), bright);
+    const g = this.ctx.createGain(); g.gain.value = vol;
+    s.connect(g); g.connect(dest || this.music);
+    const r = this.ctx.createGain(); r.gain.value = 0.35; g.connect(r); r.connect(this.rev);
+    s.start(t);
+  }
+  /** Sustained lead voice. kind: whistle | flute | horn */
+  lead(kind, note, t, dur, vol = 0.12) {
+    const c = this.ctx; if (!c) return;
+    const f = midi(note), os = c.createOscillator(), g = c.createGain();
+    os.type = kind === 'horn' ? 'sawtooth' : kind === 'flute' ? 'triangle' : 'sine';
+    const scoop = kind === 'flute' ? 0.955 : kind === 'horn' ? 0.985 : 0.97;
+    os.frequency.setValueAtTime(f * scoop, t); os.frequency.exponentialRampToValueAtTime(f, t + (kind === 'flute' ? 0.22 : 0.08));
+    const lfo = c.createOscillator(), lg = c.createGain();
+    lfo.frequency.value = kind === 'horn' ? 4.2 : 5.6; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.012, t + Math.min(dur * 0.7, 0.6));
+    lfo.connect(lg); lg.connect(os.frequency);
+    const att = kind === 'horn' ? 0.14 : kind === 'flute' ? 0.12 : 0.05;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + att);
+    g.gain.setValueAtTime(vol, t + Math.max(att, dur - 0.12)); g.gain.linearRampToValueAtTime(0.0001, t + dur + 0.1);
+    let out = os;
+    if (kind === 'horn') { const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 650; lp.Q.value = 1.2; os.connect(lp); out = lp; }
+    out.connect(g); g.connect(this.music);
+    const r = c.createGain(); r.gain.value = 0.7; g.connect(r); r.connect(this.rev);
+    os.start(t); lfo.start(t); os.stop(t + dur + 0.2); lfo.stop(t + dur + 0.2);
+    if (kind !== 'horn') this.noise({ t, type: 'bandpass', f0: f * 2, q: 6, dur: dur + 0.1, vol: vol * (kind === 'flute' ? 0.5 : 0.18), att, dest: this.music, rev: 0.5 });
+  }
+
+  startMusic(kind) {
+    this.stopMusic();
+    if (!this.ctx) return;
+    const dt = kind === 'west' ? 0.29 : kind === 'japan' ? 0.4 : 0.46;
+    this.mus = { kind, k: 0, next: this.t + 0.4, dt, walk: 2 };
+    this.mus.timer = setInterval(() => {
+      const m = this.mus; if (!m || !this.ctx) return;
+      while (m.next < this.t + 0.5) { this['music_' + m.kind](m.k, m.next, m); m.next += m.dt; m.k++; }
+    }, 110);
+  }
+  stopMusic() { if (this.mus) { clearInterval(this.mus.timer); this.mus = null; } }
+
+  music_west(k, t, m) {
+    const chords = [[45, 57, 60, 64], [48, 60, 64, 67], [43, 59, 62, 67], [45, 57, 60, 64], [50, 57, 62, 65], [45, 57, 60, 64], [40, 59, 64, 68], [45, 57, 60, 64]];
+    const bar = Math.floor(k / 8) % 8, s = k % 8, ch = chords[bar];
+    if (s === 0) this.pluck(ch[0], t, 0.5, 0.35);
+    if (s === 4) this.pluck(ch[0] + 7, t, 0.38, 0.35);
+    if (s === 2 || s === 3 || s === 6 || s === 7) this.pluck(ch[1 + ((s + bar) % 3)], t, 0.22, 0.6);
+    if (s === 0 && bar % 2 === 0) this.tone({ t, f0: 90, f1: 50, dur: 0.3, vol: 0.25, dest: this.music });
+    const mel = [[[0, 3, 76], [3, 5, 81]], [[0, 3, 79], [3, 5, 76]], [[0, 3, 74], [3, 1, 76], [4, 4, 74]], [[0, 2, 72], [2, 6, 69]],
+      [[0, 3, 74], [3, 5, 77]], [[0, 3, 76], [3, 5, 72]], [[0, 3, 71], [3, 2, 74], [5, 3, 76]], [[0, 7, 69]]];
+    if (Math.floor(k / 64) % 2 === 1) for (const n of mel[bar]) if (n[0] === s) this.lead('whistle', n[2], t, n[1] * m.dt * 0.95, 0.1);
+  }
+  music_japan(k, t, m) {
+    const sc = [62, 63, 67, 69, 70, 74, 75, 79];
+    const s = k % 16;
+    if (s === 0) this.pluck(38, t, 0.5, 0.3);
+    if (s === 8 && Math.random() < 0.6) this.pluck(50, t, 0.35, 0.4);
+    if (Math.random() < (s % 2 === 0 ? 0.55 : 0.2)) {
+      m.walk = Math.max(0, Math.min(sc.length - 1, m.walk + Math.floor(Math.random() * 5) - 2));
+      this.pluck(sc[m.walk], t, 0.36, 0.85);
+      if (Math.random() < 0.18) this.pluck(sc[Math.max(0, m.walk - 1)], t + m.dt * 0.5, 0.25, 0.85);
+    }
+    if (k % 32 === 4) { const n = [69, 74, 70, 67][Math.floor(k / 32) % 4]; this.lead('flute', n, t, m.dt * 9, 0.11); this.lead('flute', n - 2, t + m.dt * 10, m.dt * 4, 0.08); }
+    if (k % 64 === 0) { this.tone({ t, f0: 85, f1: 48, dur: 0.6, vol: 0.5, dest: this.music, rev: 0.5 }); }
+  }
+  music_swiss(k, t, m) {
+    const chords = [[41, 57, 60], [41, 57, 60], [36, 55, 60], [36, 58, 64], [41, 57, 60], [46, 58, 62], [36, 55, 64], [41, 57, 60]];
+    const bar = Math.floor(k / 3) % 8, s = k % 3, ch = chords[bar];
+    if (s === 0) this.pluck(ch[0], t, 0.5, 0.35);
+    else { this.pluck(ch[1], t, 0.2, 0.6); this.pluck(ch[2], t + 0.02, 0.2, 0.6); }
+    const mel = [[[0, 3, 72]], [[0, 1, 69], [1, 2, 72]], [[0, 3, 67]], [[0, 1, 67], [1, 1, 70], [2, 1, 72]], [[0, 1, 69], [1, 2, 72]], [[0, 3, 74]], [[0, 2, 72], [2, 1, 67]], [[0, 3, 65]]];
+    if (Math.floor(k / 24) % 2 === 1) for (const n of mel[bar]) if (n[0] === s) this.lead('horn', n[2] - 12, t, n[1] * m.dt * 0.95, 0.2);
+  }
+
+  // --- ambience ----------------------------------------------------------------
+  startAmbient(kind) {
+    this.stopAmbient();
+    const c = this.ctx; if (!c) return;
+    const loop = (type, freq, q, vol) => {
+      const s = c.createBufferSource(); s.buffer = this.noiseBuf; s.loop = true;
+      const f = c.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+      const g = c.createGain(); g.gain.value = vol;
+      s.connect(f); f.connect(g); g.connect(this.ambient); s.start();
+      this.amb.push(s);
+      return { g, f };
+    };
+    const wind = loop('bandpass', 420, 0.5, kind === 'west' ? 0.3 : 0.16);
+    const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.13; lg.gain.value = 180;
+    lfo.connect(lg); lg.connect(wind.f.frequency); lfo.start(); this.amb.push(lfo);
+    this.fall = null;
+    if (kind === 'swiss') this.fall = loop('lowpass', 1500, 0.4, 0);
+    if (kind === 'japan') this.fall = loop('lowpass', 2600, 0.3, 0);
+    this.ambKind = kind;
+    this.ambTimer = setInterval(() => {
+      if (!this.ctx || this.ctx.state !== 'running') return;
+      const r = Math.random(), t = this.t;
+      if (kind === 'swiss') {
+        if (r < 0.5) { const f = 2600 + Math.random() * 1800; for (let i = 0; i < 2 + Math.floor(Math.random() * 4); i++) this.tone({ t: t + i * 0.11, f0: f, f1: f * (1.1 + Math.random() * 0.3), dur: 0.08, vol: 0.05, dest: this.ambient, rev: 0.4 }); }
+        else if (r < 0.75) for (const f of [520, 1310, 1740]) this.tone({ t, type: 'triangle', f0: f * (0.9 + Math.random() * 0.2), dur: 0.5, vol: 0.035, dest: this.ambient, rev: 0.6 });
+      } else if (kind === 'japan') {
+        if (r < 0.6) { const f = 3900 + Math.random() * 600; for (let i = 0; i < 9; i++) this.tone({ t: t + i * 0.055, f0: f, dur: 0.04, vol: 0.022, dest: this.ambient }); }
+        else if (r < 0.7) { this.tone({ t, type: 'triangle', f0: 760, f1: 620, dur: 0.14, vol: 0.12, dest: this.ambient, rev: 0.9 }); }
+      } else if (r < 0.12) {
+        this.tone({ t, type: 'sawtooth', f0: 1900, f1: 1300, dur: 0.7, vol: 0.02, lp: 2600, dest: this.ambient, rev: 0.8 });   // distant hawk
+      }
+    }, 1300);
+  }
+  /** Loudness of running water, 0..1 (driven by distance to it). */
+  setWater(v) { if (this.fall && this.ctx) this.fall.g.gain.setTargetAtTime(v * 0.5, this.t, 0.2); }
+  stopAmbient() {
+    for (const s of this.amb) { try { s.stop(); } catch (e) { /* already stopped */ } }
+    this.amb = []; clearInterval(this.ambTimer); this.fall = null;
+  }
+}
