@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OUTLAWS: Three Horizons</title>
+  <script type="module" crossorigin src="./assets/index-BXzBtQCE.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B3NEpCnZ.css">
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <!-- Vintage Scope / Focus Overlay -->
+  <div id="scope-overlay" class="hidden">
+    <div class="scope-vignette"></div>
+    <div class="scope-ring">
+      <div class="scope-crosshair-h"></div>
+      <div class="scope-crosshair-v"></div>
+      <div class="scope-ticks"></div>
+      <div class="scope-label" id="scope-label">HENRY .44 OPTIC</div>
+    </div>
+  </div>
+
+  <!-- Damage & Low-Health Vignette -->
+  <div id="damage-overlay"></div>
+  <div id="hit-flash"></div>
+
+  <!-- Crosshair & Hitmarker -->
+  <div id="hud-crosshair" class="hidden">
+    <div class="ch-line ch-top"></div>
+    <div class="ch-line ch-bottom"></div>
+    <div class="ch-line ch-left"></div>
+    <div class="ch-line ch-right"></div>
+    <div class="ch-dot"></div>
+    <div id="hitmarker" class="hidden">
+      <span class="hm-a"></span>
+      <span class="hm-b"></span>
+    </div>
+  </div>
+
+  <!-- Floating Callout (Headshot, Boss Incoming, Reload, Pickup) -->
+  <div id="callout-banner" class="hidden"></div>
+  <div id="pickup-toast"></div>
+
+  <!-- Main Gameplay HUD -->
+  <div id="hud" class="hidden">
+    <!-- Top Left: Mission & Level Title -->
+    <div class="hud-top-left">
+      <div class="hud-era-badge" id="hud-era-badge">ACT I • RED GULCH</div>
+      <div class="hud-objective" id="hud-objective">Eliminate the Outlaws</div>
+      <div class="hud-counter">
+        <span class="hud-counter-icon" id="hud-enemy-icon">★</span>
+        <span id="hud-enemies-left">12</span>
+        <span class="hud-counter-label">REMAINING</span>
+      </div>
+    </div>
+
+    <!-- Top Center: Boss Health Bar (Hidden until Boss activates) -->
+    <div id="boss-bar-wrap" class="hidden">
+      <div class="boss-name" id="boss-name">EL DIABLO</div>
+      <div class="boss-bar-bg">
+        <div class="boss-bar-fill" id="boss-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Top Right: Score & Quick Controls -->
+    <div class="hud-top-right">
+      <div class="hud-score-box">
+        <div class="hud-score-label">BOUNTY</div>
+        <div class="hud-score-val" id="hud-score">$0</div>
+      </div>
+      <div class="hud-controls-hint">
+        <span>[ESC] Menu</span>
+        <span>[M] Mute</span>
+        <span>[R] Reload</span>
+        <span>[RMB] Zoom / Alt</span>
+      </div>
+    </div>
+
+    <!-- Bottom Left: Health & Stamina -->
+    <div class="hud-bottom-left">
+      <div class="hud-panel health-panel">
+        <div class="hud-panel-label">
+          <span id="hud-hero-name">MARSHAL</span>
+          <span id="hud-hp-text">100 / 100</span>
+        </div>
+        <div class="bar-track health-track">
+          <div class="bar-fill health-fill" id="hud-hp-bar"></div>
+        </div>
+        <div class="hud-sub-row">
+          <span class="hud-mini-label">STAMINA</span>
+          <div class="bar-track stamina-track">
+            <div class="bar-fill stamina-fill" id="hud-stamina-bar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Center: Weapon Bar -->
+    <div class="hud-weapon-strip" id="hud-weapon-strip"></div>
+
+    <!-- Bottom Right: Ammo Cylinder / Quiver Display -->
+    <div class="hud-bottom-right">
+      <div class="hud-panel ammo-panel">
+        <div class="hud-weapon-name" id="hud-weapon-name">.45 PEACEMAKER</div>
+        <div class="hud-ammo-row">
+          <div id="hud-ammo-pips" class="ammo-pips"></div>
+          <div class="hud-ammo-numbers">
+            <span id="hud-ammo-mag">6</span>
+            <span class="ammo-sep">/</span>
+            <span id="hud-ammo-reserve">48</span>
+          </div>
+        </div>
+        <div class="hud-alt-hint" id="hud-alt-hint">RMB: Fan Hammer</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title / Level Select Screen (Over live 3D rotating camera preview!) -->
+  <div id="title-screen" class="overlay-screen">
+    <div class="title-vignette"></div>
+    <div class="title-content">
+      <div class="title-eyebrow">A MODERN TRIBUTE TO LUCASARTS' 1997 CLASSIC</div>
+      <h1 class="title-logo">OUTLAWS</h1>
+      <div class="title-subtitle">THREE HORIZONS</div>
+
+      <div class="level-cards">
+        <button class="level-card active" data-level="0">
+          <div class="card-badge">ACT I • 1884</div>
+          <div class="card-title">RED GULCH</div>
+          <div class="card-region">Wild West Frontier</div>
+          <div class="card-desc">Dusty saloon streets, wooden corrals, desert mesas. Duel outlaw cowboys &amp; Mexican banditos with revolver, shotgun, scoped rifle &amp; dynamite.</div>
+        </button>
+        <button class="level-card" data-level="1">
+          <div class="card-badge">ACT II • 1603</div>
+          <div class="card-title">KYOTO MIST</div>
+          <div class="card-region">Feudal Japan</div>
+          <div class="card-desc">Towering bamboo groves, vermilion Shinto shrines, zen gardens &amp; sakura blossoms. Battle shadow ninjas &amp; rōnin with katana, yumi bow, shuriken &amp; matchlock.</div>
+        </button>
+        <button class="level-card" data-level="2">
+          <div class="card-badge">ACT III • 1307</div>
+          <div class="card-title">RÜTLI VALLEY</div>
+          <div class="card-region">Medieval Switzerland</div>
+          <div class="card-desc">Snow-capped Alps, glacial lakes, roaring waterfalls &amp; timber barns. Fight Austrian Habsburg troops as Wilhelm Tell with heavy crossbow, halberd &amp; fire-pots.</div>
+        </button>
+      </div>
+
+      <div class="title-controls-row">
+        <div class="difficulty-group">
+          <span class="diff-label">DIFFICULTY</span>
+          <button class="diff-btn" data-diff="good">THE GOOD <em>(Easy)</em></button>
+          <button class="diff-btn active" data-diff="bad">THE BAD <em>(Normal)</em></button>
+          <button class="diff-btn" data-diff="ugly">THE UGLY <em>(Deadly)</em></button>
+        </div>
+        <button id="btn-play" class="btn-primary-western">
+          <span>RIDE OUT</span>
+          <span class="btn-arrow">▶</span>
+        </button>
+      </div>
+
+      <div class="controls-legend">
+        <span><b>WASD</b> Move</span>
+        <span><b>SHIFT</b> Sprint</span>
+        <span><b>SPACE</b> Jump</span>
+        <span><b>MOUSE</b> Aim</span>
+        <span><b>LMB</b> Shoot / Strike</span>
+        <span><b>RMB</b> Scope / Alt-Fire</span>
+        <span><b>R</b> Reload</span>
+        <span><b>1-4 / SCROLL</b> Weapons</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comic-Book Illustrated Intro Intermission Card -->
+  <div id="intro-card" class="overlay-screen hidden">
+    <div class="comic-frame">
+      <div class="comic-act" id="comic-act">ACT I</div>
+      <h2 class="comic-title" id="comic-title">DUST &amp; RECKONING</h2>
+      <div class="comic-divider"></div>
+      <p class="comic-quote" id="comic-quote"></p>
+      <div class="comic-arsenal" id="comic-arsenal"></div>
+      <button id="btn-start-mission" class="btn-primary-western">DRAW WEAPON &amp; BEGIN ▶</button>
+    </div>
+  </div>
+
+  <!-- Pause Menu -->
+  <div id="pause-screen" class="overlay-screen hidden">
+    <div class="modal-panel">
+      <h2 class="modal-title">PAUSED</h2>
+      <div class="modal-subtitle" id="pause-level-name">ACT I — RED GULCH</div>
+      <div class="modal-buttons">
+        <button id="btn-resume" class="btn-primary-western">RESUME</button>
+        <button id="btn-restart" class="btn-secondary-western">RESTART LEVEL</button>
+        <button id="btn-toggle-audio" class="btn-secondary-western">SOUND: ON</button>
+        <button id="btn-main-menu" class="btn-secondary-western">CHANGE LEVEL / MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory / Defeat Screen -->
+  <div id="end-screen" class="overlay-screen hidden">
+    <div class="modal-panel end-panel">
+      <div class="comic-act" id="end-eyebrow">STAGE CLEARED</div>
+      <h2 class="modal-title" id="end-title">JUSTICE SERVED</h2>
+      <p class="end-summary" id="end-summary"></p>
+      <div class="end-stats" id="end-stats"></div>
+      <div class="modal-buttons">
+        <button id="btn-next-level" class="btn-primary-western">NEXT HORIZON ▶</button>
+        <button id="btn-end-restart" class="btn-secondary-western">PLAY AGAIN</button>
+        <button id="btn-end-menu" class="btn-secondary-western">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
