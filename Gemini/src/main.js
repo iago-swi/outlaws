@@ -15,13 +15,15 @@ import { LEVEL2_META, buildLevel2 } from './levels/level2_japan.js';
 import { LEVEL3_META, buildLevel3 } from './levels/level3_swiss.js';
 import { LEVEL4_META, buildLevel4 } from './levels/level4_greece.js';
 import { LEVEL5_META, buildLevel5 } from './levels/level5_scandinavia.js';
+import { LEVEL6_META, buildLevel6 } from './levels/level6_normandy.js';
 
 const LEVELS = [
   { meta: LEVEL1_META, builder: buildLevel1 },
   { meta: LEVEL2_META, builder: buildLevel2 },
   { meta: LEVEL3_META, builder: buildLevel3 },
   { meta: LEVEL4_META, builder: buildLevel4 },
-  { meta: LEVEL5_META, builder: buildLevel5 }
+  { meta: LEVEL5_META, builder: buildLevel5 },
+  { meta: LEVEL6_META, builder: buildLevel6 }
 ];
 
 const DIFFICULTY = {
@@ -95,7 +97,8 @@ class OutlawsGame {
       japan: ERA_HEROES.japan[0].id,
       swiss: ERA_HEROES.swiss[0].id,
       greece: ERA_HEROES.greece[0].id,
-      scandinavia: ERA_HEROES.scandinavia[0].id
+      scandinavia: ERA_HEROES.scandinavia[0].id,
+      normandy: ERA_HEROES.normandy[0].id
     };
     this.activeHero = ERA_HEROES.west[0];
     this.timeSinceLastDamage = 999;
@@ -160,10 +163,10 @@ class OutlawsGame {
     this._cacheDom();
     this._bindEvents();
 
-    // Support URL params / hash for direct level selection (#west, #japan, #swiss, #greece, #scandinavia)
+    // Support URL params / hash for direct level selection (#west, #japan, #swiss, #greece, #scandinavia, #normandy)
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4 };
+    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4, normandy: 5 };
     let initialLevel = 0;
     if (hash in mapIdx) initialLevel = mapIdx[hash];
     else if (params.has('level')) {
@@ -230,6 +233,7 @@ class OutlawsGame {
       comicAct: document.getElementById('comic-act'),
       comicTitle: document.getElementById('comic-title'),
       comicQuote: document.getElementById('comic-quote'),
+      heroHistoricalNote: document.getElementById('hero-historical-note'),
       heroCardsList: document.getElementById('hero-cards-list'),
       heroPreviewName: document.getElementById('hero-preview-name'),
       heroPreviewBio: document.getElementById('hero-preview-bio'),
@@ -480,8 +484,11 @@ class OutlawsGame {
       }
     }
 
-    // Build Era Weapons & Apply Active Hero Modifiers (fire rate, reload speed, damage, melee reach)
-    const templates = ERA_WEAPONS[meta.id];
+    // Build Era Weapons (or Hero-specific loadout when hero.weaponIds is defined, e.g. Normandy!)
+    const allEraWeapons = ERA_WEAPONS[meta.id];
+    const templates = hero.weaponIds
+      ? hero.weaponIds.map((id) => allEraWeapons.find((w) => w.id === id)).filter(Boolean)
+      : allEraWeapons;
     this.weapons = templates.map((w) => {
       const ov = (mods.weaponOverrides && mods.weaponOverrides[w.id]) || {};
       const fireRateMult = (w.kind === 'melee' && mods.meleeFireRateMult ? mods.meleeFireRateMult : 1)
@@ -573,6 +580,14 @@ class OutlawsGame {
     this.dom.comicAct.textContent = `${meta.act} — ${meta.subtitle}`;
     this.dom.comicTitle.textContent = meta.title;
     this.dom.comicQuote.textContent = meta.quote;
+    if (this.dom.heroHistoricalNote) {
+      if (meta.historicalNote) {
+        this.dom.heroHistoricalNote.textContent = meta.historicalNote;
+        this.dom.heroHistoricalNote.classList.remove('hidden');
+      } else {
+        this.dom.heroHistoricalNote.classList.add('hidden');
+      }
+    }
 
     // Populate the 3 Hero Selection Cards (Mouse hover + click + keyboard 1/2/3!)
     this.dom.heroCardsList.innerHTML = heroes.map((h, i) => `
@@ -840,10 +855,21 @@ class OutlawsGame {
     this.recoilOffset = w.recoil * (shotsToConsume > 1 ? 1.5 : 1.0);
     this.stats.shots++;
 
-    // Muzzle flash & audio
+    // Muzzle flash & audio + gunfire sound alert radius (Virginia Hall alerts enemies much closer!)
     this.sound.playShot(w.sound);
-    if (w.sound === 'revolver' || w.sound === 'shotgun' || w.sound === 'rifle' || w.sound === 'musket') {
-      this.muzzleLight.intensity = 10;
+    const loudGuns = ['revolver', 'shotgun', 'rifle', 'musket', 'smg', 'sniper'];
+    if (loudGuns.includes(w.sound)) {
+      this.muzzleLight.intensity = w.sound === 'smg' ? 7 : 10;
+      const mods = (this.activeHero && this.activeHero.mods) || {};
+      const soundRadius = mods.soundAlertRadius || 34;
+      for (const e of this.enemies) {
+        if (!e.alive || e.alert) continue;
+        const d = Math.hypot(e.mesh.position.x - this.player.pos.x, e.mesh.position.z - this.player.pos.z);
+        if (d <= soundRadius) {
+          e.alert = true;
+          if (e.style === 'dog') this.sound.playDogBark();
+        }
+      }
     }
 
     // Crosshair bloom pulse
@@ -1063,11 +1089,11 @@ class OutlawsGame {
 
     if (victory) {
       const isFinal = this.levelIndex === LEVELS.length - 1;
-      const baseEyebrow = isFinal ? 'ALL FIVE HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
+      const baseEyebrow = isFinal ? 'ALL SIX HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
       this.dom.endEyebrow.textContent = wasPractice ? `${baseEyebrow} • PRACTICE MODE` : baseEyebrow;
-      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF FIVE ERAS' : 'HORIZON CLEARED';
+      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF SIX ERAS' : 'HORIZON CLEARED';
       this.dom.endSummary.textContent = isFinal
-        ? 'From Red Gulch and Kyoto Mist to Rütli Valley, the Aegean Isle, and the Fjord of the North — your legend echoes across five ages!'
+        ? 'From Red Gulch and Kyoto Mist to Rütli Valley, the Aegean Isle, the Fjord of the North, and the beaches of Normandy — your legend endures across six eras!'
         : `${meta.title} is free. Ready your gear for the next horizon!`;
       this.dom.btnNextLevel.classList.remove('hidden');
       this.dom.btnNextLevel.textContent = isFinal ? 'REPLAY FROM ACT I ▶' : `PROCEED TO ACT ${this.levelIndex + 2} ▶`;
@@ -1260,8 +1286,8 @@ class OutlawsGame {
       }
     }
 
-    // Continuous fire while holding LMB on rapid weapons
-    if (this.mouseDownL && this.fireTimer <= 0 && !this.reloading && w && w.fireRate <= 0.4) {
+    // Continuous fire while holding LMB on rapid or full-auto weapons (e.g. Sten Mk II SMG)
+    if (this.mouseDownL && this.fireTimer <= 0 && !this.reloading && w && (w.autoFire || w.fireRate <= 0.4)) {
       this.tryFire(false);
     }
 
@@ -1387,7 +1413,13 @@ class OutlawsGame {
   }
 
   _updateEnemies(dt) {
+    const mods = (this.activeHero && this.activeHero.mods) || {};
+    const detectMult = mods.stealthMult || 1.0;
+
     const callbacks = {
+      onDogBark: () => {
+        this.sound.playDogBark();
+      },
       onMeleeHitPlayer: (dmg) => {
         this._damagePlayer(dmg);
       },
@@ -1418,7 +1450,7 @@ class OutlawsGame {
     };
 
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.player.pos, this.collision, callbacks);
+      enemy.update(dt, this.player.pos, this.collision, callbacks, detectMult);
     }
 
     // Also wake boss if player charges deep into the northern stronghold!

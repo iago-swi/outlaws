@@ -195,6 +195,34 @@ export class SoundEngine {
           this._alphorn(146.83, 1.5, 0.16, now);
         }
       }, 400);
+    } else if (theme === 'normandy') {
+      // Solemn, tense pre-dawn Normandy string pulse + distant artillery/flak rumble
+      const cello = [110.0, 110.0, 103.83, 98.0, 110.0, 110.0, 130.81, 123.47];
+      const brass = [220.0, 0, 261.63, 246.94, 220.0, 0, 196.0, 207.65];
+
+      this.musicTimer = setInterval(() => {
+        if (!this.ctx || this.muted) return;
+        const s = this.step++;
+        const now = this.ctx.currentTime;
+
+        // Soft tense military pulse
+        if (s % 2 === 0) {
+          this._noiseBurst(0.05, 0.09, 1800, 'bandpass', 2.2);
+        }
+        // Brooding low cello drone
+        if (s % 2 === 0) {
+          this._tone(cello[(s >> 1) % cello.length], 'sawtooth', 0.62, 0.13, now, this.musicGain, 520);
+        }
+        // Somber brass/horn figure
+        if (s % 4 === 0) {
+          const b = brass[(s >> 2) % brass.length];
+          if (b > 0) this._alphorn(b, 1.15, 0.12, now);
+        }
+        // Occasional distant pre-dawn anti-aircraft flak thump
+        if (s % 16 === 7) {
+          this._taiko(now, 0.18);
+        }
+      }, 370);
     }
   }
 
@@ -389,6 +417,22 @@ export class SoundEngine {
       g.connect(this.sfxGain);
       osc.start(now);
       osc.stop(now + 0.17);
+    } else if (kind === 'smg') {
+      this._noiseBurst(0.09, 0.52, 1950, 'bandpass', 1.1);
+      this._tone(210, 'sawtooth', 0.075, 0.34, now, this.sfxGain, 950);
+    } else if (kind === 'sniper') {
+      this._noiseBurst(0.42, 0.96, 1250, 'lowpass');
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(34, now + 0.28);
+      g.gain.setValueAtTime(0.75, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(g);
+      g.connect(this.sfxGain);
+      osc.start(now);
+      osc.stop(now + 0.32);
     } else if (kind === 'throw') {
       this._noiseBurst(0.14, 0.35, 1600, 'bandpass');
     }
@@ -453,5 +497,27 @@ export class SoundEngine {
     const now = this.ctx.currentTime;
     this._alphorn(146.83, 1.4, 0.45, now);
     this._alphorn(220.0, 1.4, 0.35, now + 0.15);
+  }
+
+  playDogBark() {
+    this.ensureInit();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    // Crisp synthesized double canine bark
+    for (const off of [0, 0.17]) {
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(360, now + off);
+      osc.frequency.exponentialRampToValueAtTime(145, now + off + 0.11);
+      g.gain.setValueAtTime(0.001, now + off);
+      g.gain.linearRampToValueAtTime(0.36, now + off + 0.018);
+      g.gain.exponentialRampToValueAtTime(0.001, now + off + 0.12);
+      osc.connect(g);
+      g.connect(this.sfxGain);
+      osc.start(now + off);
+      osc.stop(now + off + 0.13);
+      this._noiseBurst(0.09, 0.28, 950, 'bandpass', 1.6);
+    }
   }
 }
