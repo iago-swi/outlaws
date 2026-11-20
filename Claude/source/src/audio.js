@@ -98,10 +98,14 @@ export class Sound {
     const f = 160 + Math.random() * 90;
     this.tone({ type: 'sawtooth', f0: f * 1.2, f1: f * 0.8, dur: 0.22, vol: 0.16, lp: 1100, rev: 0.3 });
   }
+  bark() {
+    if (!this.ctx) return;
+    for (const d of [0, 0.16]) { this.tone({ t: this.t + d, type: 'sawtooth', f0: 420, f1: 190, dur: 0.11, vol: 0.3, lp: 1500, rev: 0.25 }); this.noise({ t: this.t + d, type: 'bandpass', f0: 900, dur: 0.09, vol: 0.2, q: 1.5 }); }
+  }
   poof() { this.noise({ type: 'lowpass', f0: 2400, f1: 300, dur: 0.4, vol: 0.4, att: 0.02 }); }
   fanfare(kind) {
     if (!this.ctx) return;
-    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : kind === 'greece' ? [62, 65, 69, 74] : kind === 'north' ? [50, 57, 62, 65] : [57, 60, 64, 69];
+    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : kind === 'greece' ? [62, 65, 69, 74] : kind === 'north' ? [50, 57, 62, 65] : kind === 'war' ? [57, 60, 64, 72] : [57, 60, 64, 69];
     base.forEach((n, i) => this.pluck(n, this.t + i * 0.16, 0.5, 0.7));
     this.pluck(base[0] - 12, this.t, 0.5, 0.5);
   }
@@ -160,7 +164,7 @@ export class Sound {
   startMusic(kind) {
     this.stopMusic();
     if (!this.ctx) return;
-    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34 }[kind] || 0.3;
+    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34, war: 0.27 }[kind] || 0.3;
     this.mus = { kind, k: 0, next: this.t + 0.4, dt, walk: 2 };
     this.mus.timer = setInterval(() => {
       const m = this.mus; if (!m || !this.ctx) return;
@@ -223,6 +227,17 @@ export class Sound {
     if (Math.floor(bar / 4) % 2 === 1) for (const n of mel[bar % 4]) if (n[0] === s) this.lead('horn', n[2], t, n[1] * m.dt * 0.95, 0.2);
   }
 
+  music_war(k, t, m) {
+    // muffled snare march, low strings and a lone bugle in A minor
+    const s = k % 8, bar = Math.floor(k / 8), chords = [[45, 57, 60], [45, 57, 60], [41, 57, 60], [43, 55, 59], [45, 57, 60], [38, 57, 62], [40, 56, 59], [45, 57, 60]], ch = chords[bar % 8];
+    if (s === 0 || s === 4) this.tone({ t, f0: 70, f1: 46, dur: 0.3, vol: 0.3, dest: this.music });
+    if ([2, 3, 6].includes(s) || (s === 7 && bar % 2)) this.noise({ t, type: 'bandpass', f0: 1700, dur: 0.07, vol: s === 3 ? 0.1 : 0.16, q: 1.2, dest: this.music });
+    if (s === 0) { this.pluck(ch[0], t, 0.45, 0.25); this.pluck(ch[1], t + 0.02, 0.2, 0.3); }
+    if (s === 4) this.pluck(ch[2], t, 0.2, 0.3);
+    const mel = [[[0, 6, 57]], [[0, 2, 60], [2, 6, 64]], [[0, 6, 65]], [[0, 3, 62], [4, 4, 59]], [[0, 6, 60]], [[0, 2, 62], [2, 6, 65]], [[0, 6, 64]], [[0, 8, 57]]];
+    if (Math.floor(bar / 8) % 2 === 1) for (const n of mel[bar % 8]) if (n[0] === s) this.lead('horn', n[2], t, n[1] * m.dt * 0.95, 0.16);
+  }
+
   // --- ambience ----------------------------------------------------------------
   startAmbient(kind) {
     this.stopAmbient();
@@ -241,7 +256,7 @@ export class Sound {
     this.fall = null;
     if (kind === 'swiss') this.fall = loop('lowpass', 1500, 0.4, 0);
     if (kind === 'japan') this.fall = loop('lowpass', 2600, 0.3, 0);
-    if (kind === 'greece' || kind === 'north') this.fall = loop('lowpass', 700, 0.3, 0);          // surf on the shore
+    if (kind === 'greece' || kind === 'north' || kind === 'war') this.fall = loop('lowpass', 700, 0.3, 0);          // surf on the shore
     this.ambKind = kind;
     this.ambTimer = setInterval(() => {
       if (!this.ctx || this.ctx.state !== 'running') return;
@@ -255,6 +270,9 @@ export class Sound {
       } else if (kind === 'greece') {
         if (r < 0.7) { const f = 4400 + Math.random() * 500; for (let i = 0; i < 16; i++) this.tone({ t: t + i * 0.035, type: 'square', f0: f, dur: 0.02, vol: 0.008, dest: this.ambient }); }   // cicadas
         else if (r < 0.82) this.tone({ t, type: 'sawtooth', f0: 1500, f1: 1100, dur: 0.35, vol: 0.02, lp: 2600, dest: this.ambient, rev: 0.6 });                                              // gull
+      } else if (kind === 'war') {
+        if (r < 0.5) this.tone({ t, f0: 60 + Math.random() * 30, f1: 30, dur: 1.2, vol: 0.07 + Math.random() * 0.08, dest: this.ambient, rev: 0.9 });                 // guns far out at sea
+        else if (r < 0.62) for (let i = 0; i < 7; i++) this.noise({ t: t + i * 0.085, type: 'bandpass', f0: 900, dur: 0.05, vol: 0.02, q: 1, dest: this.ambient, rev: 0.6 });     // distant machine gun
       } else if (kind === 'north') {
         if (r < 0.1) this.tone({ t, type: 'sawtooth', f0: 520, f1: 380, dur: 1.4, vol: 0.016, lp: 900, dest: this.ambient, rev: 0.9 });                                                         // far wolf
       } else if (r < 0.12) {

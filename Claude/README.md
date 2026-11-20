@@ -1,10 +1,10 @@
 # Lone Hand — Claude version
 
-A first-person shooter in five chapters, built with Claude (Anthropic) in the spirit of
+A first-person shooter in six chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
-a Greek island and a Norwegian fjord, one hero faces many enemies alone, in a real-time
-3D world you can walk through freely. Fifteen heroes from history and legend are
-playable, three per chapter.
+a Greek island, a Norwegian fjord and a village in Normandy in 1944, one hero faces many
+enemies alone, in a real-time 3D world you can walk through freely. Eighteen heroes from
+history and legend are playable, three per chapter.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -20,6 +20,10 @@ files.
 | --- | --- |
 | ![A Greek island in bright sun: Spartans with red cloaks and lambda shields among olive trees and white houses, a temple with columns on the hill behind, a javelin in the foreground](screenshot-greece.jpg) | ![A snowy Viking village at night under green northern lights: a bonfire, longhouses, a palisade gate and two Vikings, a throwing axe in the foreground](screenshot-north.jpg) |
 
+| Chapter VI · Sainte-Aubine |
+| --- |
+| ![A Norman village square before dawn: German soldiers, an officer and two guard dogs on the cobbles between stone houses, a tank and a truck behind, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground](screenshot-normandy.jpg) |
+
 ## Run it
 
 Play online with the link above. To play offline, download the folder and open `index.html` in a current version of Chrome or Edge, or
@@ -30,7 +34,7 @@ connection is needed. A mouse and keyboard are required; there are no touch cont
 
 Clear every enemy to finish a chapter. The dots on the compass at the top of the screen
 show where the remaining enemies are; the last three come looking for you. Health items
-(tonic, rice cake, alp cheese, ambrosia, mead) restore 35 points.
+(tonic, rice cake, alp cheese, ambrosia, mead, calvados) restore 35 points.
 
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
@@ -39,6 +43,7 @@ show where the remaining enemies are; the last three come looking for you. Healt
 | III · Uri, the Waldstätten, 1307 | crossbow and halberd | Habsburg halberdiers, crossbowmen, knights, the bailiff |
 | IV · Ithaca, Greece, the age of heroes | javelins and short sword | Spartan hoplites, javelin throwers, their captain |
 | V · Jarnvik, Norway, winter of 985 | throwing axes and sword | rival Vikings, berserkers, bowmen, the grey jarl |
+| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | German riflemen, officers, machine-gunners, guard dogs, the battery commander |
 
 ### Choose your hero
 
@@ -65,10 +70,19 @@ card to see the figure in the opening shot, then click it, or press `1` to `3` a
 | V | Erik the Red | Outlaw and founder of Greenland | Hot temper: throws axes much faster |
 | V | Leif Erikson | Leif the Lucky, who sailed to Vinland | The Lucky: takes 30% less damage |
 | V | Ragnar Lothbrok | Legendary sea-king and raider | Raider: faster, harder sword blows |
+| VI | Lyudmila Pavlichenko | Soviet sniper, 309 confirmed kills | Sniper: scoped rifle, one shot fells a soldier |
+| VI | Virginia Hall | American spy, “the limping lady” | Spy: Sten gun; sentries notice her much later |
+| VI | Maurice Bavaud | Of Neuchâtel, who set out to shoot Hitler in 1938 | Sure hand: pistol whose shots hit 60% harder |
 
 The heroes are drawn from history, myth and saga, not from any film, series or comic.
-Several do not belong to their chapter's year (Winkelried is of 1386, Tomoe Gozen of the
-twelfth century, Ragnar of the ninth); they appear as legends beside the others.
+Several do not belong to their chapter's year or place (Winkelried is of 1386, Tomoe
+Gozen of the twelfth century, Ragnar of the ninth; in 1944 Pavlichenko was on the
+Eastern Front and Bavaud had been executed three years earlier); they appear as legends
+beside the others.
+
+Chapter VI is set in occupied France. Its three heroes are real people who resisted the
+Nazi regime, and they are shown with respect. The chapter shows no Nazi symbols: vehicles
+and the flag carry a plain bar cross.
 
 ### Controls
 
@@ -78,9 +92,9 @@ twelfth century, Ragnar of the ninth); they appear as legends beside the others.
 | `Shift` | Run |
 | `Space` | Jump |
 | Left mouse button | Fire, loose an arrow, shoot a bolt, throw a javelin or an axe |
-| Right mouse button | Aim (six-shooter, crossbow); katana or sword cut in chapters II, IV and V |
-| `F` | Halberd thrust in chapter III (also the katana and the swords) |
-| `R` | Reload the six-shooter |
+| Right mouse button | Aim (six-shooter, crossbow, the guns of chapter VI; through the scope with the rifle); katana or sword cut in chapters II, IV and V |
+| `F` | Halberd thrust in chapter III, knife in chapter VI (also the katana and the swords) |
+| `R` | Reload the six-shooter and the guns of chapter VI |
 | `Esc` or `P` | Pause; then `Q` returns to the chapter list |
 | `M` | Sound on/off |
 
@@ -104,8 +118,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.36 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 4,750 lines of plain JavaScript (ES modules) in 14 files under [source/src/](source/src/), plus 160 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.39 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 5,150 lines of plain JavaScript (ES modules) in 15 files under [source/src/](source/src/), plus 160 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
@@ -158,6 +172,13 @@ lights of chapter V are a further layer: a band of fractal noise stretched acros
 northern sky, folded by a sine wave into curtains, green below and violet above. They
 are brighter than white, so the bloom pass makes them glow. In that chapter the single
 directional light is the moon.
+
+In chapter VI the lamp that lights the scene is decoupled from the sun drawn in the sky.
+The sun sits on the horizon and gives the dawn glow and the light shafts, while a cool
+moonlight from behind the player casts the shadows; lit by the low sun alone the ground
+was nearly black. The searchlight beams are long additive cones that rotate slowly, the
+anti-aircraft fire is bursts of glowing particles far over the sea, and the fleet is a
+row of dark boxes on the horizon.
 
 Water is a second shader. Three scrolling noise layers give a surface normal; the
 reflection is the sky gradient evaluated in the reflected direction plus a sharp sun
@@ -224,15 +245,19 @@ barrels. A description object selects skin, clothes, hat, beard, extras such as 
 poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-The same builder makes the fifteen playable heroes, the eighteen enemy types, the
-bystanders and the marble statues of chapter IV. Each enemy has five hit spheres; a head hit does 2.5 times the
+The same builder makes the eighteen playable heroes, the human enemy types, the
+bystanders and the marble statues of chapter IV. There are twenty-three enemy types in
+all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
+same parts to the enemy code (a body, and the front and back pairs of legs in place of
+the two legs), with two low hit spheres, a bark instead of a shout, and a roll onto the
+side when it falls. They run at 7.6 m/s, faster than any human enemy, and bite at 1.7 m. Each enemy has five hit spheres; a head hit does 2.5 times the
 damage.
 
 | State | What the enemy does |
 | --- | --- |
 | Hidden | Ninja only. Invisible until the player comes within 12 to 15 m, then appears in a puff of smoke. |
 | Idle | Stands or patrols near its post. A line-of-sight ray is cast every 0.18 to 0.3 s. Gunshots are heard at a distance; the bow and crossbow are silent. |
-| Combat, ranged | Keeps within a distance band, strafes, and raises the weapon for 0.45 to 0.9 s before firing. |
+| Combat, ranged | Keeps within a distance band, strafes, and raises the weapon for 0.4 to 0.9 s before firing. Machine-gunners stay behind their sandbags and fire bursts of five. |
 | Combat, melee | Runs in, winds up for 0.3 to 0.5 s, then strikes if still in reach. Ninja zigzag and throw shuriken; berserkers zigzag; hoplites and halberdiers thrust. |
 
 Enemy shots are real projectiles, not instant hits. They are aimed with only 45% of the
@@ -254,6 +279,12 @@ builder, sleeve colours for the first-person hands, and a small object of multip
 | `power` | Scales the speed and damage of thrown weapons | Ulysses (1.3) |
 | `hp` | Starting and maximum health | Arnold von Winkelried (150), Heracles (170) |
 | `regen` | Health per second after 4 s without being hit | Werner Stauffacher (3) |
+| `gun` | Scales the damage of firearms | Maurice Bavaud (1.6) |
+| `stealth` | Scales how far enemies see and hear the player | Virginia Hall (0.55) |
+
+A hero entry may also name its own weapon. Chapter VI uses this: the three heroes carry
+a scoped rifle, a Sten gun and a pistol, where every other chapter gives all three
+heroes the same weapons.
 
 Weapon timers advance by `dt / multiplier`, so a strength changes the pace of an action
 without a second set of animations. Choosing a hero rebuilds the figure in the scene and
@@ -278,6 +309,14 @@ is detected by keeping the last few typed characters and testing whether they en
 | Javelin | Thrown at 50 m/s with gravity | 85 | 0.16 s wind-up, 0.55 s to ready the next |
 | Throwing axe | Thrown at 36 m/s with gravity, spinning | 80 | 0.16 s wind-up, 0.55 s to ready the next |
 | Sword (chapters IV and V) | Arc, 3.0 to 3.2 m reach | 100 | 0.4 s |
+| Sten gun | Instant ray, automatic | 16 | 32 rounds, 0.085 s between shots, 1.7 s reload |
+| Scoped rifle | Instant ray | 120 | 5 rounds, 1.15 s to work the bolt, 2.3 s reload |
+| Pistol (chapter VI) | Instant ray | 35, or 56 with Bavaud | as the six-shooter |
+| Knife | Thrust, 2.5 m reach | 90 | 0.36 s |
+
+The rifle's scope narrows the field of view to 15 degrees. A full-screen HTML layer
+draws the black surround and the cross-hairs, the weapon model is hidden, and mouse
+sensitivity is scaled with the field of view so that aiming stays steady.
 
 Arrows, bolts, javelins and axes stay lodged in walls, trees and enemies. The weapon and hands at the
 bottom of the screen are drawn at 30% scale close to the camera, which looks the same
@@ -299,10 +338,11 @@ tap shorter than one frame still fires.
   Karplus-Strong algorithm (a burst of noise circulating in a short, damped delay
   line); a lead voice plays a whistle, a bamboo flute, an alphorn, a reed pipe or a
   war horn. The Greek chapter is in a limping seven-beat measure (3+2+2); the Norse one
-  is a slow war drum over a drone.
-- **Ambience** is filtered wind plus bird calls, crickets, cicadas, cowbells or a far
-  wolf, and water whose volume follows the distance to the pond, stream, waterfall or
-  shore.
+  is a slow war drum over a drone; chapter VI has a muffled snare march and a lone
+  bugle.
+- **Ambience** is filtered wind plus bird calls, crickets, cicadas, cowbells, a far
+  wolf, or guns rumbling far out at sea, and water whose volume follows the distance to
+  the pond, stream, waterfall or shore.
 
 ### Performance
 
@@ -330,7 +370,7 @@ npm run build
 `npm run build` writes the self-contained file to `source/dist/index.html`; copy it
 over `index.html` in this folder to publish it.
 
-Four address flags help while editing: `?level=2` jumps into a chapter (1 to 5), `&hero=3` picks
+Four address flags help while editing: `?level=2` jumps into a chapter (1 to 6), `&hero=3` picks
 its third hero, `&free` starts play at once without mouse capture (arrow keys turn), and
 `&peace` makes enemies passive. In the
 browser console, `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the
@@ -341,13 +381,14 @@ camera.
 The game was checked with scripted runs in an automated browser: loading each chapter,
 firing each weapon with simulated clicks, selecting heroes and measuring their
 strengths, enemy attacks, practice mode, death and retry, and finishing a chapter.
-Chapters IV and V were checked for loading, weapons, enemy damage and practice mode,
-but not played through to the end. It was not tuned by long sessions of hand play, so the difficulty is a first
+Chapters IV, V and VI were checked for loading, weapons, enemy damage and practice
+mode (chapter VI also for the scope and for a dog reaching and biting the player), but
+not played through to the end. It was not tuned by long sessions of hand play, so the difficulty is a first
 estimate, and frame rate on slower graphics hardware has not been measured.
 
 - No touch controls and no gamepad support.
 - Progress is not saved between sessions.
-- The fifteen heroes' strengths are not balanced against each other.
+- The eighteen heroes' strengths are not balanced against each other.
 - Enemies have no path finding and can be held up by buildings.
 - Wind moves plants but not their shadows.
 

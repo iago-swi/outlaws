@@ -68,7 +68,7 @@ export class Player {
     this.camY = 1.65; this.bob = 0; this.bobAmt = 0; this.kick = 0; this.kickV = 0; this.land = 0; this.roll = 0;
     this.fov = 72; this.aim = 0; this.swayX = 0; this.swayY = 0; this.deadT = 0; this.stepPhase = 0;
     // hero traits: multipliers set by the chosen character (1 = no change)
-    this.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1 };
+    this.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1, gun: 1, stealth: 1 };
     this.maxHp = 100; this.hurtT = 99;
     this.vm = new THREE.Group();               // viewmodel root, scaled down so it never pokes through walls
     this.vm.scale.setScalar(0.3);
@@ -121,7 +121,7 @@ export class Player {
     if (this.mods.regen && this.hurtT > 4 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.mods.regen * dt);
     const K = input.keys;
     if (active) {
-      const sens = 0.0022 * (1 - this.aim * 0.45);
+      const sens = 0.0022 * Math.min(1, cam.fov / 72 + 0.06);        // slower when zoomed in
       this.yaw -= input.mx * sens; this.pitch -= input.my * sens;
       if (K.has('ArrowLeft')) this.yaw += dt * 1.8; if (K.has('ArrowRight')) this.yaw -= dt * 1.8;
       if (!input.locked && !input.free) { if (input.cx < 0.04) this.yaw += dt * 1.7; else if (input.cx > 0.96) this.yaw -= dt * 1.7; }
@@ -175,6 +175,7 @@ export class Player {
     this.swayX = damp(this.swayX, clamp(-input.mx * 0.0006, -0.05, 0.05), 10, dt);
     this.swayY = damp(this.swayY, clamp(input.my * 0.0006, -0.05, 0.05), 10, dt);
     w.update(dt, input, active);
+    if (w.scope && this.aim > 0.8) this.vm.visible = false;          // looking through the scope
   }
 
   recoil(v) { this.kickV += v; }
@@ -192,6 +193,7 @@ class Weapon {
     this.flash = new THREE.Mesh(new THREE.PlaneGeometry(0.34, 0.34), new THREE.MeshBasicMaterial({ map: player.flashTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
     this.flash.material.color.setScalar(5); this.flash.visible = false; this.flashT = 0;
     this['build_' + kind](M);
+    if (!this.melee && this.game.def && this.game.def.knife) this.addKnife(M);
     if (this.melee) this.root.add(this.melee);
   }
   get busy() { return this.state === 'reload' || this.meleeT > 0; }
@@ -239,7 +241,7 @@ class Weapon {
       else if (input.shoot && this.cd <= 0 && this.ammo > 0) {
         this.ammo--; this.cd = 0.33 * this.m.fire; this.kickV += 9; P.recoil(0.55); this.drumRot += Math.PI / 3;
         this.flashT = 0.05; this.flash.rotation.z = Math.random() * 6.28; this.flash.scale.setScalar(0.8 + Math.random() * 0.5);
-        G.playerHitscan(this.muzzle, P.aim > 0.5 ? 0.002 : 0.012, 35);
+        G.playerHitscan(this.muzzle, P.aim > 0.5 ? 0.002 : 0.012, 35 * this.m.gun);
         G.sound.gun(1, 0);
       }
     }
@@ -369,6 +371,70 @@ class Weapon {
     g.rotation.set(this.kick * 0.25 - rl * 0.55 + P.swayY - m * 0.5, 0.04 * (1 - P.aim) + P.swayX + rl * 0.12, rl * 0.25 + P.swayX * 0.8 + m * 0.5);
   }
 
+  // ---- firearms of 1944: Sten submachine gun and scoped rifle, plus a knife ----
+  build_sten(M) {
+    this.gunCfg = { interval: 0.085, dmg: 16, hip: 0.03, ads: 0.011, reload: 1.7, kick: 3.2, recoil: 0.13, vol: 0.55 };
+    this.ammo = this.mag = 32; this.canAim = true; this.aimFov = 56; this.cuff = this.cuffIn ?? 0x8a7a52;
+    this.hip = new THREE.Vector3(0.17, -0.17, -0.42); this.ads = new THREE.Vector3(0, -0.088, -0.34);
+    const g = (this.gun = new THREE.Group()), D = 0x2e3136, L = 0x5a5f68, X = Math.PI / 2;
+    g.add(mesh([fist([0.002, -0.075, 0.06], [-0.25, 0, 0], 1.02), ...this.arm(this.sleeve, [0.02, -0.16, 0.25], [1.15, 0, 0.1], 0.3),
+      fist([-0.12, -0.004, -0.16], [0, 0, X], 1.0, -1), ...this.arm(this.sleeve, [-0.2, -0.1, 0.02], [1.0, 0, -0.7], 0.36)], M.flat));
+    g.add(mesh([gCyl(0.02, 0.02, 0.42, D, [0, 0, -0.12], [X, 0, 0], 1, 8), gCyl(0.012, 0.012, 0.2, D, [0, 0, -0.42], [X, 0, 0], 1, 8), gCyl(0.026, 0.026, 0.16, L, [0, 0, -0.27], [X, 0, 0], 1, 8),
+      gBox(0.19, 0.03, 0.04, D, [-0.115, 0, -0.16]), gBox(0.02, 0.085, 0.03, D, [0, -0.05, 0.05], [-0.25, 0, 0]), gCyl(0.006, 0.006, 0.3, L, [0, -0.008, 0.24], [X, 0, 0], 1, 5),
+      gBox(0.02, 0.09, 0.012, L, [0, -0.03, 0.39]), gBox(0.004, 0.02, 0.01, L, [0, 0.032, -0.5]), gBox(0.02, 0.016, 0.01, L, [0, 0.03, 0.06])], M.metal));
+    this.muzzle.position.set(0, 0, -0.53); this.flash.position.set(0, 0, -0.58); g.add(this.muzzle, this.flash);
+    this.root.add(g);
+  }
+  build_rifle(M) {
+    this.gunCfg = { interval: 1.15, dmg: 120, hip: 0.02, ads: 0.0006, reload: 2.3, kick: 8, recoil: 0.5, vol: 1, bolt: true };
+    this.ammo = this.mag = 5; this.canAim = true; this.aimFov = 15; this.scope = true; this.cuff = this.cuffIn ?? 0x5a5a34;
+    this.hip = new THREE.Vector3(0.16, -0.18, -0.4); this.ads = new THREE.Vector3(0, -0.11, -0.3);
+    const g = (this.gun = new THREE.Group()), D = 0x2e3136, L = 0x5a5f68, W = 0x6a4426, X = Math.PI / 2;
+    g.add(mesh([gBox(0.045, 0.06, 0.62, W, [0, -0.02, -0.2]), gBox(0.045, 0.1, 0.3, W, [0, -0.045, 0.22], [0.12, 0, 0]), gBox(0.04, 0.03, 0.3, W, [0, 0.0, -0.6]),
+      fist([0.004, -0.07, 0.1], [-0.3, 0, 0], 1.05), ...this.arm(this.sleeve, [0.04, -0.17, 0.29], [1.2, 0, 0.14], 0.32),
+      fist([0, -0.055, -0.32], [X, 0, Math.PI], 1.05, -1), ...this.arm(this.sleeve, [-0.1, -0.17, -0.12], [1.05, 0, -0.5], 0.38)], M.flat));
+    g.add(mesh([gCyl(0.011, 0.012, 0.86, D, [0, 0.022, -0.5], [X, 0, 0], 1, 8), gBox(0.03, 0.035, 0.2, D, [0, 0.022, 0.0]), gCyl(0.007, 0.007, 0.07, L, [0.04, 0.02, 0.04], [0, 0, X], 1, 5), gSph(0.014, L, [0.078, 0.018, 0.04]),
+      gCyl(0.018, 0.018, 0.26, D, [0, 0.075, -0.05], [X, 0, 0], 1, 10), gCyl(0.024, 0.024, 0.05, D, [0, 0.075, -0.2], [X, 0, 0], 1, 10), gBox(0.012, 0.03, 0.02, L, [0, 0.05, -0.1]), gBox(0.012, 0.03, 0.02, L, [0, 0.05, 0.02]),
+      gBox(0.004, 0.016, 0.01, L, [0, 0.042, -0.92])], M.metal));
+    this.muzzle.position.set(0, 0.022, -0.94); this.flash.position.set(0, 0.022, -1.0); g.add(this.muzzle, this.flash);
+    this.root.add(g);
+  }
+  update_sten(dt, input, active) { this.updateGun(dt, input, active); }
+  update_rifle(dt, input, active) { this.updateGun(dt, input, active); }
+  updateGun(dt, input, active) {
+    const P = this.p, G = this.game, c = this.gunCfg;
+    if (this.state === 'reload') {
+      this.t += dt / this.m.reload;
+      if (!this.clicked && this.t > c.reload * 0.45) { this.clicked = 1; G.sound.click(1800); }
+      if (this.t >= c.reload) { this.state = 'ready'; this.ammo = this.mag; G.sound.click(2800); }
+    } else if (active) {
+      if ((input.pressed.has('KeyR') && this.ammo < this.mag) || (input.shoot && this.ammo === 0 && this.cd <= 0)) { this.state = 'reload'; this.t = 0; this.clicked = 0; }
+      else if (input.shoot && this.cd <= 0 && this.ammo > 0 && this.meleeT <= 0) {
+        this.ammo--; this.cd = c.interval * this.m.fire; this.kickV += c.kick; P.recoil(c.recoil);
+        this.flashT = 0.045; this.flash.rotation.z = Math.random() * 6.28; this.flash.scale.setScalar(0.7 + Math.random() * 0.5);
+        G.playerHitscan(this.muzzle, P.aim > 0.5 ? c.ads : c.hip, c.dmg * this.m.gun);
+        G.sound.gun(c.vol, 0);
+        if (c.bolt) setTimeout(() => G.sound.click(1500), 380);
+      }
+    }
+    const rl = this.state === 'reload' ? Math.sin(Math.min(1, this.t / c.reload) * Math.PI) : 0;
+    const bolt = c.bolt && this.cd > 0 ? Math.sin(Math.min(1, (c.interval - this.cd) / 0.8) * Math.PI) * (1 - P.aim) : 0;
+    const m = this.meleeT > 0 ? Math.sin(Math.min(1, this.meleeT / this.meleeDur) * Math.PI) : 0;
+    const g = this.gun;
+    g.position.lerpVectors(this.hip, this.ads, P.aim);
+    g.position.y -= rl * 0.16 + m * 0.4 + bolt * 0.03; g.position.x -= m * 0.2; g.position.z += this.kick * 0.035;
+    g.rotation.set(this.kick * 0.22 + rl * 0.7 + P.swayY - m * 0.5, 0.04 * (1 - P.aim) + P.swayX + rl * 0.25, rl * -0.5 + P.swayX * 0.8 + m * 0.5 + bolt * 0.25);
+  }
+  /** Fighting knife on F, for the weapons that use the right button to aim. */
+  addKnife(M) {
+    const k = (this.melee = new THREE.Group()), X = Math.PI / 2;
+    k.add(mesh([gBox(0.03, 0.035, 0.12, 0x2a1c12, [0, 0, 0]), gBox(0.07, 0.02, 0.02, 0x4a4a4e, [0, 0, -0.065]), fist([0, 0, 0.0], [X, 0, Math.PI], 1.05),
+      ...this.arm(this.sleeve, [0.07, -0.13, 0.2], [1.1, 0, 0.3], 0.36)], M.flat));
+    k.add(mesh([gBox(0.006, 0.034, 0.2, 0xd4d9df, [0, 0, -0.175])], M.metal));
+    k.visible = false;
+    this.meleeDur = 0.36; this.meleeAt = 0.38; this.meleeRange = 2.5; this.meleeCone = 0.6; this.meleeDmg = 90; this.meleeStyle = 'thrust';
+  }
+
   // ---- thrown weapons: javelins (Greece) and axes (the North), each with a sword ----
   build_javelin(M) { this.buildThrown(M, true); }
   build_axe(M) { this.buildThrown(M, false); }
@@ -461,6 +527,7 @@ class Weapon {
     if (this.kind === 'revolver') return { ammo: this.ammo, mag: this.mag, reloading: this.state === 'reload' };
     if (this.kind === 'bow') return { ammo: this.state === 'nock' ? 0 : 1, mag: 1, reloading: false };
     if (this.thrown) return { ammo: this.state === 'ready' ? 1 : 0, mag: 1, reloading: false };
+    if (this.gunCfg) return { ammo: this.ammo, mag: this.mag, reloading: this.state === 'reload' };
     return { ammo: this.state === 'ready' ? 1 : 0, mag: 1, reloading: this.state === 'reload' };
   }
 }
