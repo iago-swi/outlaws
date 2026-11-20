@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import { Gfx } from './gfx.js';
 import { Sound } from './audio.js';
 import { makeMaterials } from './tex.js';
-import { World, Builder } from './build.js';
+import { World, Builder, Nav } from './build.js';
 import { Player, Input } from './player.js';
 import { Enemy, Shots, makeHumanoid, lookFor } from './actors.js';
 import { rng, clamp, damp } from './util.js';
@@ -19,8 +19,10 @@ import { swiss } from './levels/swiss.js';
 import { greece } from './levels/greece.js';
 import { north } from './levels/north.js';
 import { war } from './levels/war.js';
+import { russia } from './levels/russia.js';
+import { tibet } from './levels/tibet.js';
 
-const LEVELS = [west, japan, swiss, greece, north, war];
+const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet];
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 
@@ -114,14 +116,16 @@ class Game {
     const B = new Builder(this.world);
     const L = (this.level = def.build({ game: this, gfx: this.gfx, world: this.world, B, M: this.M, root: this.gfx.root, rand: this.rand, shared: this.gfx.shared }));
     B.build(this.gfx.root);
+    { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
     this.gfx.setEnvironment(L.env);
     for (const [type, x, z, o] of L.enemies) this.enemies.push(new Enemy(this, type, x, z, o));
-    for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[2]);
+    for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[3] !== undefined ? this.world.height(p[0], p[1]) + p[3] : p[2]);
     this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon);
     this.hero = null;
     const want = params.has('hero') ? +params.get('hero') - 1 : 0;
     this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, def.heroes.length - 1));
-    document.body.classList.remove('theme-west', 'theme-japan', 'theme-swiss', 'theme-greece', 'theme-north', 'theme-war'); document.body.classList.add(def.theme);
+    for (const c of [...document.body.classList]) if (c.startsWith('theme-')) document.body.classList.remove(c);
+    document.body.classList.add(def.theme);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.timeScale = 1; this.slow = 0; this.noise = 0; this.cache = {};
     this.ui.boss.classList.remove('on');
@@ -222,6 +226,7 @@ class Game {
       if (!e.alive || e.state === 'hidden') continue;
       const dx = e.pos.x - P.pos.x, dy = e.pos.y + 1.1 - (P.pos.y + 1.5), dz = e.pos.z - P.pos.z, dist = Math.hypot(dx, dy, dz);
       if (dist > range || (dx * f.x + dy * f.y + dz * f.z) / dist < cone) continue;
+      if (!this.world.clear(P.pos.x, P.pos.y + 1.5, P.pos.z, e.pos.x, e.pos.y + (e.cfg.dog ? 0.5 : 1.1), e.pos.z)) continue;   // not through walls
       this.hitEnemy(e, dmg, false, e.pos.x - dx / dist * 0.3, e.pos.y + 1.2, e.pos.z - dz / dist * 0.3, P.pos.x, P.pos.z);
       any = true;
     }

@@ -105,7 +105,7 @@ export class Sound {
   poof() { this.noise({ type: 'lowpass', f0: 2400, f1: 300, dur: 0.4, vol: 0.4, att: 0.02 }); }
   fanfare(kind) {
     if (!this.ctx) return;
-    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : kind === 'greece' ? [62, 65, 69, 74] : kind === 'north' ? [50, 57, 62, 65] : kind === 'war' ? [57, 60, 64, 72] : [57, 60, 64, 69];
+    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : kind === 'greece' ? [62, 65, 69, 74] : kind === 'north' ? [50, 57, 62, 65] : kind === 'war' ? [57, 60, 64, 72] : kind === 'russia' ? [52, 57, 60, 64] : kind === 'tibet' ? [62, 64, 69, 74] : [57, 60, 64, 69];
     base.forEach((n, i) => this.pluck(n, this.t + i * 0.16, 0.5, 0.7));
     this.pluck(base[0] - 12, this.t, 0.5, 0.5);
   }
@@ -164,7 +164,7 @@ export class Sound {
   startMusic(kind) {
     this.stopMusic();
     if (!this.ctx) return;
-    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34, war: 0.27 }[kind] || 0.3;
+    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34, war: 0.27, russia: 0.3, tibet: 0.44 }[kind] || 0.3;
     this.mus = { kind, k: 0, next: this.t + 0.4, dt, walk: 2 };
     this.mus.timer = setInterval(() => {
       const m = this.mus; if (!m || !this.ctx) return;
@@ -238,6 +238,26 @@ export class Sound {
     if (Math.floor(bar / 8) % 2 === 1) for (const n of mel[bar % 8]) if (n[0] === s) this.lead('horn', n[2], t, n[1] * m.dt * 0.95, 0.16);
   }
 
+  music_russia(k, t, m) {
+    // a slow minor waltz: bass, two soft chords, and a balalaika trembling above
+    const chords = [[45, 57, 60], [45, 57, 60], [50, 57, 62], [45, 57, 60], [52, 56, 59], [45, 57, 60], [50, 53, 57], [52, 56, 59]];
+    const bar = Math.floor(k / 6) % 8, s = k % 6, ch = chords[bar];
+    if (s === 0) { this.pluck(ch[0] - 12, t, 0.5, 0.25); this.tone({ t, f0: 80, f1: 52, dur: 0.3, vol: 0.2, dest: this.music }); }
+    if (s === 2 || s === 4) { this.pluck(ch[1], t, 0.18, 0.5); this.pluck(ch[2], t + 0.02, 0.18, 0.5); }
+    const mel = [76, 72, 74, 69, 71, 72, 77, 76][bar], mel2 = [72, 69, 77, 72, 68, 69, 74, 71][bar];
+    if (Math.floor(k / 48) % 2 === 1) for (let i = 0; i < 2; i++) this.pluck(s < 3 ? mel : mel2, t + i * m.dt * 0.5, 0.2, 0.9);
+    if (k % 96 === 48) this.lead('horn', 45, t, m.dt * 10, 0.12);
+  }
+  music_tibet(k, t, m) {
+    // long horns, a singing bowl, a few bells and a flute in the five notes of the plateau
+    const s = k % 16, bar = Math.floor(k / 16), sc = [62, 64, 67, 69, 71, 74, 76, 79];
+    if (s === 0) { this.lead('horn', 38, t, m.dt * 13, 0.2); if (bar % 2 === 0) this.lead('horn', 45, t + m.dt * 2, m.dt * 10, 0.1); }
+    if (s === 8) { this.tone({ t, type: 'sine', f0: 587, dur: 2.6, vol: 0.06, dest: this.music, rev: 0.8 }); this.tone({ t, type: 'sine', f0: 880.5, dur: 2.0, vol: 0.03, dest: this.music, rev: 0.8 }); }
+    if (s % 4 === 2 && Math.random() < 0.5) this.tone({ t, type: 'triangle', f0: 1760 + Math.random() * 400, dur: 0.5, vol: 0.035, dest: this.music, rev: 0.9 });
+    if (s === 0 && bar % 4 === 3) this.tone({ t, f0: 70, f1: 44, dur: 0.8, vol: 0.4, dest: this.music, rev: 0.6 });
+    if (bar % 4 >= 2 && (s === 4 || s === 9 || s === 12)) { m.walk = Math.max(0, Math.min(sc.length - 1, m.walk + Math.floor(Math.random() * 5) - 2)); this.lead('flute', sc[m.walk], t, m.dt * (s === 12 ? 3.5 : 3), 0.09); }
+  }
+
   // --- ambience ----------------------------------------------------------------
   startAmbient(kind) {
     this.stopAmbient();
@@ -250,7 +270,7 @@ export class Sound {
       this.amb.push(s);
       return { g, f };
     };
-    const wind = loop('bandpass', 420, 0.5, kind === 'west' ? 0.3 : kind === 'north' ? 0.42 : 0.16);
+    const wind = loop('bandpass', 420, 0.5, kind === 'west' || kind === 'russia' ? 0.3 : kind === 'north' || kind === 'tibet' ? 0.42 : 0.16);
     const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.13; lg.gain.value = 180;
     lfo.connect(lg); lg.connect(wind.f.frequency); lfo.start(); this.amb.push(lfo);
     this.fall = null;
@@ -273,6 +293,12 @@ export class Sound {
       } else if (kind === 'war') {
         if (r < 0.5) this.tone({ t, f0: 60 + Math.random() * 30, f1: 30, dur: 1.2, vol: 0.07 + Math.random() * 0.08, dest: this.ambient, rev: 0.9 });                 // guns far out at sea
         else if (r < 0.62) for (let i = 0; i < 7; i++) this.noise({ t: t + i * 0.085, type: 'bandpass', f0: 900, dur: 0.05, vol: 0.02, q: 1, dest: this.ambient, rev: 0.6 });     // distant machine gun
+      } else if (kind === 'russia') {
+        if (r < 0.14) this.tone({ t, type: 'sawtooth', f0: 760, f1: 620, dur: 0.22, vol: 0.02, lp: 1800, dest: this.ambient, rev: 0.7 });                                // a crow
+        else if (r < 0.2) for (const f of [1180, 1570]) this.tone({ t, type: 'triangle', f0: f, dur: 0.7, vol: 0.02, dest: this.ambient, rev: 0.8 });                   // a tram bell, far off
+      } else if (kind === 'tibet') {
+        if (r < 0.3) for (let i = 0; i < 5; i++) this.noise({ t: t + i * 0.09, type: 'bandpass', f0: 1400 + Math.random() * 600, dur: 0.07, vol: 0.02, q: 0.8, dest: this.ambient });   // prayer flags snapping
+        else if (r < 0.36) this.tone({ t, type: 'sawtooth', f0: 92, f1: 88, dur: 2.2, vol: 0.03, lp: 500, dest: this.ambient, rev: 0.9 });                                // a long horn from the monastery
       } else if (kind === 'north') {
         if (r < 0.1) this.tone({ t, type: 'sawtooth', f0: 520, f1: 380, dur: 1.4, vol: 0.016, lp: 900, dest: this.ambient, rev: 0.9 });                                                         // far wolf
       } else if (r < 0.12) {

@@ -165,4 +165,53 @@ export function brazier(B, M, x, y, z, s = 1) {
   return [x, y + 1.45 * s, z];
 }
 
+/**
+ * Hollow building shell that can be walked into. (x, z) = centre, y = floor level, o.ry = rotation.
+ * Local frame: 's' = +z, 'n' = -z, 'e' = +x, 'w' = -x.
+ * o: { w, d, h, t (wall thickness), mat, c, mats: {n,s,e,w}, cs: {n,s,e,w}, base (depth below y),
+ *      doors: [{ side, at, w, h }], wins: [{ side, at, w, y, h }], floor: {mat, c} | false, ceil: {mat, c} | false }
+ * Returns P(lx, lz) -> [worldX, worldZ].
+ */
+export function room(B, M, x, y, z, o) {
+  const { w, d, h = 3.2, t = 0.3, ry = 0, mat = M.plaster, c = 0xffffff, base = 0.5 } = o;
+  const cs = Math.cos(ry), sn = Math.sin(ry), P = (lx, lz) => [x + lx * cs + lz * sn, z - lx * sn + lz * cs];
+  const piece = (side, a0, a1, y0, y1) => {
+    if (a1 - a0 < 0.02 || y1 - y0 < 0.02) return;
+    const m = (a0 + a1) / 2, L = a1 - a0, ns = side === 'n' || side === 's';
+    const off = (side === 's' || side === 'e' ? 1 : -1) * ((ns ? d : w) / 2 - t / 2);
+    const [px, pz] = ns ? P(m, off) : P(off, m);
+    B.box((o.mats && o.mats[side]) || mat, ns ? L : t, y1 - y0, ns ? t : L, px, y + y0, pz, { ry, c: (o.cs && o.cs[side]) ?? c, solid: true });
+  };
+  for (const side of ['n', 's', 'e', 'w']) {
+    const ns = side === 'n' || side === 's', half = ns ? w / 2 : d / 2 - t;
+    const ops = [...(o.doors || []).filter((q) => q.side === side).map((q) => ({ a: q.at - (q.w ?? 1.5) / 2, b: q.at + (q.w ?? 1.5) / 2, y0: 0, y1: q.h ?? 2.4 })),
+      ...(o.wins || []).filter((q) => q.side === side).map((q) => ({ a: q.at - (q.w ?? 1.2) / 2, b: q.at + (q.w ?? 1.2) / 2, y0: q.y ?? 1.1, y1: (q.y ?? 1.1) + (q.h ?? 1.1) }))].sort((p, q) => p.a - q.a);
+    let cur = -half;
+    for (const op of ops) {
+      piece(side, cur, op.a, -base, h);
+      piece(side, op.a, op.b, -base, op.y0);        // threshold or window sill
+      piece(side, op.a, op.b, op.y1, h);            // lintel
+      cur = op.b;
+    }
+    piece(side, cur, half, -base, h);
+  }
+  if (o.floor !== false) B.box((o.floor && o.floor.mat) || M.woodH, w - t, base + 0.06, d - t, x, y - base, z, { ry, c: (o.floor && o.floor.c) ?? 0x7a5a3e, solid: true });
+  if (o.ceil !== false) B.box((o.ceil && o.ceil.mat) || M.woodH, w, 0.2, d, x, y + h, z, { ry, c: (o.ceil && o.ceil.c) ?? 0x5a4030, solid: true });
+  return P;
+}
+
+/** Flight of steps going down from yTop, starting at (x, z) and running along local +Z. */
+export function steps(B, M, x, z, ry, yTop, n = 4, o = {}) {
+  const { w = 2, rise = 0.36, run = 0.5, mat = M.stone, c = 0xb0a898 } = o, cs = Math.cos(ry), sn = Math.sin(ry);
+  for (let k = 0; k < n; k++) { const lz = (k + 0.5) * run; B.box(mat, w, 3, run + 0.02, x + lz * sn, yTop - (k + 1) * rise - 3, z + lz * cs, { ry, c, solid: true }); }
+}
+
+/** Row of iron bars from (x0,z0) to (x1,z1), between heights y0 and y1. */
+export function bars(B, M, x0, z0, x1, z1, y0, y1, o = {}) {
+  const L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / (o.gap ?? 0.17))), ry = Math.atan2(-(z1 - z0), x1 - x0), c = o.c ?? 0x2a2a2e;
+  for (let i = 0; i <= n; i++) B.cyl(M.metal, 0.022, 0.022, y1 - y0, x0 + (x1 - x0) * i / n, y0, z0 + (z1 - z0) * i / n, { c, seg: 5 });
+  for (const yy of [y0, (y0 + y1) / 2 - 0.03, y1 - 0.06]) B.box(M.metal, L + 0.04, 0.06, 0.07, (x0 + x1) / 2, yy, (z0 + z1) / 2, { ry, c });
+  if (o.solid !== false) B.world.addBox((x0 + x1) / 2, (z0 + z1) / 2, L, 0.1, ry, y0, y1);
+}
+
 export { gBox, gCyl, gSph, gCone, gCap, xf, merge, paint };

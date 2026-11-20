@@ -143,9 +143,18 @@ export class Player {
     if (active && this.onGround && input.pressed.has('Space')) { this.vel.y = 5.8; this.onGround = false; }
     this.vel.y -= 17 * dt;
 
-    const nx = this.pos.x + this.vel.x * dt, nz = this.pos.z + this.vel.z * dt;
-    if (W.walkable(this.pos.x, this.pos.z, nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
-    else { this.vel.x *= 0.5; this.vel.z *= 0.5; }
+    const steps = Math.max(1, Math.ceil(Math.hypot(this.vel.x, this.vel.z) * dt / 0.2));   // small steps: thin walls cannot be skipped
+    for (let q = 0; q < steps; q++) {
+      const nx = this.pos.x + this.vel.x * dt / steps, nz = this.pos.z + this.vel.z * dt / steps;
+      if (W.walkable(this.pos.x, this.pos.z, nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
+      else { this.vel.x *= 0.5; this.vel.z *= 0.5; }
+      W.collide(this.pos, 0.4, 1.75);
+    }
+    for (const e of G.enemies) {               // living bodies are solid
+      if (!e.alive || e.state === 'hidden') continue;
+      const ex = this.pos.x - e.pos.x, ez = this.pos.z - e.pos.z, d2 = ex * ex + ez * ez, rr = e.cfg.dog ? 0.7 : 0.8;
+      if (d2 < rr * rr && d2 > 1e-6 && Math.abs(this.pos.y - e.pos.y) < 1.6) { const d = Math.sqrt(d2); this.pos.x = e.pos.x + ex / d * rr; this.pos.z = e.pos.z + ez / d * rr; }
+    }
     W.collide(this.pos, 0.4, 1.75);
     const ground = W.groundAt(this.pos.x, this.pos.z, this.pos.y);
     this.pos.y += this.vel.y * dt;
@@ -394,11 +403,18 @@ class Weapon {
       fist([0.004, -0.07, 0.1], [-0.3, 0, 0], 1.05), ...this.arm(this.sleeve, [0.04, -0.17, 0.29], [1.2, 0, 0.14], 0.32),
       fist([0, -0.055, -0.32], [X, 0, Math.PI], 1.05, -1), ...this.arm(this.sleeve, [-0.1, -0.17, -0.12], [1.05, 0, -0.5], 0.38)], M.flat));
     g.add(mesh([gCyl(0.011, 0.012, 0.86, D, [0, 0.022, -0.5], [X, 0, 0], 1, 8), gBox(0.03, 0.035, 0.2, D, [0, 0.022, 0.0]), gCyl(0.007, 0.007, 0.07, L, [0.04, 0.02, 0.04], [0, 0, X], 1, 5), gSph(0.014, L, [0.078, 0.018, 0.04]),
-      gCyl(0.018, 0.018, 0.26, D, [0, 0.075, -0.05], [X, 0, 0], 1, 10), gCyl(0.024, 0.024, 0.05, D, [0, 0.075, -0.2], [X, 0, 0], 1, 10), gBox(0.012, 0.03, 0.02, L, [0, 0.05, -0.1]), gBox(0.012, 0.03, 0.02, L, [0, 0.05, 0.02]),
+      ...(this.noScope ? [gBox(0.02, 0.022, 0.02, L, [0, 0.046, -0.02])] : [gCyl(0.018, 0.018, 0.26, D, [0, 0.075, -0.05], [X, 0, 0], 1, 10), gCyl(0.024, 0.024, 0.05, D, [0, 0.075, -0.2], [X, 0, 0], 1, 10), gBox(0.012, 0.03, 0.02, L, [0, 0.05, -0.1]), gBox(0.012, 0.03, 0.02, L, [0, 0.05, 0.02])]),
       gBox(0.004, 0.016, 0.01, L, [0, 0.042, -0.92])], M.metal));
     this.muzzle.position.set(0, 0.022, -0.94); this.flash.position.set(0, 0.022, -1.0); g.add(this.muzzle, this.flash);
     this.root.add(g);
   }
+  /** Plain bolt-action rifle with iron sights. */
+  build_carbine(M) {
+    this.noScope = true; this.build_rifle(M);
+    this.gunCfg = { interval: 0.85, dmg: 82, hip: 0.02, ads: 0.003, reload: 2.1, kick: 7, recoil: 0.42, vol: 0.95, bolt: true };
+    this.ammo = this.mag = 8; this.aimFov = 34; this.scope = false; this.ads = new THREE.Vector3(0, -0.062, -0.3);
+  }
+  update_carbine(dt, input, active) { this.updateGun(dt, input, active); }
   update_sten(dt, input, active) { this.updateGun(dt, input, active); }
   update_rifle(dt, input, active) { this.updateGun(dt, input, active); }
   updateGun(dt, input, active) {

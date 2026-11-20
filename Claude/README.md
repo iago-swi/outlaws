@@ -1,10 +1,11 @@
 # Lone Hand — Claude version
 
-A first-person shooter in six chapters, built with Claude (Anthropic) in the spirit of
+A first-person shooter in eight chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
-a Greek island, a Norwegian fjord and a village in Normandy in 1944, one hero faces many
-enemies alone, in a real-time 3D world you can walk through freely. Eighteen heroes from
-history and legend are playable, three per chapter.
+a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
+and the Tibetan plateau in 1959, one hero faces many enemies alone, in a real-time 3D
+world you can walk through freely. Many buildings can be entered. Twenty-four heroes
+from history and legend are playable, three per chapter.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -12,11 +13,11 @@ files.
 
 **[Play it in your browser](https://iago-swi.github.io/outlaws/Claude/)**
 
-| Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
-| :---: | :---: | :---: |
-| <img src="screenshot.jpg" width="270" alt="Dry Gulch at golden hour: three outlaws stand in the sunlit main street between the telegraph office, the bank and the sheriff's office, with the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="270" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground"> | <img src="screenshot-uri.jpg" width="270" alt="An alpine chalet with flower boxes, a cow, an Austrian soldier, the lake and snow peaks behind, the crossbow in the foreground"> |
-| **Chapter IV · Ithaca** | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
-| <img src="screenshot-greece.jpg" width="270" alt="A Greek island in bright sun: Spartans with red cloaks and lambda shields among olive trees and white houses, a temple with columns on the hill behind, a javelin in the foreground"> | <img src="screenshot-north.jpg" width="270" alt="A snowy Viking village at night under green northern lights: a bonfire, longhouses, a palisade gate and two Vikings, a throwing axe in the foreground"> | <img src="screenshot-normandy.jpg" width="270" alt="A Norman village square before dawn: German soldiers, an officer and two guard dogs on the cobbles between stone houses, a tank and a truck behind, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
+| Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri | Chapter IV · Ithaca |
+| :---: | :---: | :---: | :---: |
+| <img src="screenshot.jpg" width="200" alt="The main street of Dry Gulch at golden hour, looking west: the sheriff's office and the jail on the right, the telegraph office and the barber on the left, an outlaw in a sombrero on the boardwalk, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="200" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground"> | <img src="screenshot-uri.jpg" width="200" alt="An alpine chalet with flower boxes, a cow, an Austrian soldier, the lake and snow peaks behind, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="200" alt="A Greek island in bright sun: Spartans with red cloaks and lambda shields among olive trees and white houses, a temple with columns on the hill behind, a javelin in the foreground"> |
+| **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** |
+| <img src="screenshot-north.jpg" width="200" alt="A snowy Viking village at night under green northern lights: a bonfire, longhouses, a palisade gate and two Vikings, a throwing axe in the foreground"> | <img src="screenshot-normandy.jpg" width="200" alt="A Norman village square before dawn: German soldiers, an officer and two guard dogs on the cobbles between stone houses, a tank and a truck behind, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> | <img src="screenshot-russia.jpg" width="200" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth, panel blocks with lit windows and a tower behind, a militiaman, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="200" alt="A Tibetan village under snow peaks and a deep blue sky: whitewashed flat-roofed houses with dark red parapets, a white chorten, strings of prayer flags, the monastery on the ridge behind, Chinese soldiers, a rifle in the foreground"> |
 
 ## Run it
 
@@ -29,23 +30,42 @@ connection is needed. A mouse and keyboard are required; there are no touch cont
 
 Clear every enemy to finish a chapter. The dots on the compass at the top of the screen
 show where the remaining enemies are; the last three come looking for you. Health items
-(tonic, rice cake, alp cheese, ambrosia, mead, calvados) restore 35 points.
+(tonic, rice cake, alp cheese, ambrosia, mead, calvados, hot tea, butter tea) restore
+35 points.
 
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 15: cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | bow (yumi) and katana | 17: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 16: Habsburg halberdiers, crossbowmen, knights, the bailiff |
-| IV · Ithaca, Greece, the age of heroes | javelins and short sword | 20: Spartan hoplites, javelin throwers, their captain |
-| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 19: rival Vikings, berserkers, bowmen, the grey jarl |
-| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 23: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 23: cowboys, sombrero bandits, the gang boss Silas Crowe |
+| II · Kagemori, Japan, 1600 | bow (yumi) and katana | 25: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 22: Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| IV · Ithaca, Greece, the age of heroes | javelins and short sword | 25: Spartan hoplites, javelin throwers, their captain |
+| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 27: rival Vikings, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
+| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 31: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
+| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | 32: KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
+| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | 32: Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
+
+### Buildings you can enter
+
+Walls, furniture, iron bars and living bodies are solid for the player and for enemies,
+and some enemies wait indoors.
+
+| Chapter | Open buildings |
+| --- | --- |
+| I | saloon, jail with two barred cells, bank with its safe, barn, a homestead, the crypt on Boot Hill (the cemetery outside town) |
+| II | every house (walk-through, with open screens), the shrine hall, the dojo in its walled compound, a hermitage |
+| III | the chalets, the chapel, a Habsburg watchtower |
+| IV | every house, the temple's inner room, the beacon tower on the fishermen's cape |
+| V | every longhouse, the jarl's great hall, a small temple of the old gods |
+| VI | the ground floor of every house, the church, the command bunker, the manor, the windmill |
+| VII | the food shop, two garages, the Palace of Culture with its stage, the works, and the Committee building: lobby, cells and archive |
+| VIII | the village houses, the old fort, the monks' houses and the monastery's assembly hall |
 
 ### Choose your hero
 
 Each chapter starts with a choice of three heroes from history and legend. Point at a
 card to see the figure in the opening shot, then click it, or press `1` to `3` and
-`Enter`. Every hero has their own look and one strength; in chapter VI the strength is
-the hero's own gun.
+`Enter`. Every hero has their own look and one strength; in chapters VI to VIII the heroes
+also carry different weapons.
 
 ![The hero selection for Dry Gulch: cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
 
@@ -69,6 +89,12 @@ the hero's own gun.
 | VI | Lyudmila Pavlichenko | Soviet sniper, 309 confirmed kills | Sniper: scoped rifle, one shot fells a soldier |
 | VI | Virginia Hall | American spy, “the limping lady” | Spy: Sten gun; sentries notice her much later |
 | VI | Maurice Bavaud | Of Neuchâtel, who set out to shoot Hitler in 1938 | Sure hand: pistol whose shots hit 60% harder |
+| VII | Aleksandr Solzhenitsyn | Artillery captain, prisoner, writer | Frontline officer: submachine gun; takes 15% less damage |
+| VII | Andrei Sakharov | Physicist, and the conscience of a country | Precision: pistol whose shots hit 60% harder |
+| VII | Rudolf Nureyev | The dancer who leapt to freedom in 1961 | The leap: moves 25% faster; agents notice him later |
+| VIII | Gompo Tashi Andrugtsang | Khampa leader of the Chushi Gangdruk | Marksman: rifle, one shot fells a soldier |
+| VIII | Ani Pachen | The warrior nun who led her clan on horseback | Rider: pistol; moves 20% faster |
+| VIII | Songtsen Gampo | The king who founded the Tibetan empire | King of old: bow and sword; takes 20% less damage |
 
 The heroes are drawn from history, myth and saga, not from any film, series or comic.
 Several do not belong to their chapter's year or place (Winkelried is of 1386, Tomoe
@@ -80,6 +106,18 @@ Chapter VI is set in occupied France. Its three heroes are real people who resis
 Nazi regime, and they are shown with respect. The chapter shows no Nazi symbols: vehicles
 and the flag carry a plain bar cross.
 
+Chapter VII is set in Stalnogorsk, an invented Soviet city. Its three heroes are real
+people who stood against the Soviet state, and none of them ever fought it with a gun:
+Solzhenitsyn was expelled from the country in 1974, Sakharov was banished to Gorky in
+1980, and Nureyev had left in 1961. The mission, to bring a seized manuscript out of the
+Committee's tower, is fiction.
+
+Chapter VIII follows a real event: the Dalai Lama's escape from Lhasa in March 1959. He
+stands with his caravan where the chapter starts, unarmed, and is never part of the
+fighting; the player clears the road ahead of him. Gompo Tashi Andrugtsang and Ani Pachen
+did fight in those years; Songtsen Gampo is a king of the seventh century. The Red Guards
+belong to the years after 1966 and are in the chapter by request, not by the calendar.
+
 ### Controls
 
 | Key | Action |
@@ -88,9 +126,9 @@ and the flag carry a plain bar cross.
 | `Shift` | Run |
 | `Space` | Jump |
 | Left mouse button | Fire, loose an arrow, shoot a bolt, throw a javelin or an axe |
-| Right mouse button | Aim (six-shooter, crossbow, the guns of chapter VI; through the scope with the rifle); katana or sword cut in chapters II, IV and V |
-| `F` | Halberd thrust in chapter III, knife in chapter VI (also the katana and the swords) |
-| `R` | Reload the six-shooter and the guns of chapter VI |
+| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II, IV and V and with the bow of chapter VIII |
+| `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana and the swords) |
+| `R` | Reload the six-shooter and the guns of chapters VI to VIII |
 | `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
 | `M` | Sound on/off |
 
@@ -114,13 +152,13 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.39 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 5,150 lines of plain JavaScript (ES modules) in 15 files under [source/src/](source/src/), plus 190 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.47 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 6,350 lines of plain JavaScript (ES modules) in 17 files under [source/src/](source/src/), plus 200 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
 | Type | Rye, Pirata One, IM Fell English and Cinzel (SIL Open Font License), bundled through Fontsource. |
-| Storage | None. Progress is not saved; all six chapters are open from the start. |
+| Storage | None. Progress is not saved; all eight chapters are open from the start. |
 | Requirements | A browser with WebGL 2 and half-float render targets. A dedicated graphics card is recommended. |
 
 ### Source layout
@@ -130,11 +168,11 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [main.js](source/src/main.js) | Game loop, level loading, hero selection, combat rules, win and death, practice mode, HUD, menu screens, opening camera. |
 | [gfx.js](source/src/gfx.js) | Renderer, sky dome (clouds, stars, northern lights), sun and shadows, bloom, final screen pass, particles, water and wind shaders. |
 | [tex.js](source/src/tex.js) | Procedural textures and the shared material library. |
-| [build.js](source/src/build.js) | Geometry helpers, the mesh-merging `Builder`, terrain height field, collision and ray casting. |
+| [build.js](source/src/build.js) | Geometry helpers, the mesh-merging `Builder`, terrain height field, collision, ray casting, and the navigation grid with its route search. |
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
 | [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps and iron bars. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
@@ -148,7 +186,7 @@ Each frame is drawn in this order:
 2. **Scene.** The world is rendered into a half-float (HDR) target with 4× multisampling.
    Lighting is the sun, a sky/ground hemisphere light, and a blurred environment map
    baked from the sky shader when a level loads, so metal has something to reflect.
-   Lanterns, fires and lamps are point lights without shadows: nine in chapter II, six
+   Lanterns, fires and lamps are point lights without shadows: nine in chapter II, seven
    or fewer in the others.
 3. **Bloom.** three.js `UnrealBloomPass` with a threshold between 1.0 and 1.5, set per
    chapter, so only
@@ -192,7 +230,13 @@ at the same time and converted to a normal map by finite differences, so planks 
 stones catch the light. Noise used in textures wraps at the tile border.
 
 Shop signs and the flags (the bull of Uri, the Austrian colours) are drawn with the
-Canvas 2D API as well.
+Canvas 2D API as well, as are the Cyrillic slogans of chapter VII and the Chinese board
+in the army camp of chapter VIII, which use the system's own fonts.
+
+The apartment blocks of chapter VII are plain boxes. One 256-pixel texture of eight by
+eight windows, a random quarter of them lit, is tiled over them in world units (one
+repeat per 24 m), and a second copy that holds only the lit windows is used as the
+emissive map, so the lit windows glow through the snow and fog.
 
 Every material multiplies its texture by a per-vertex colour. One "wood" material can
 therefore be a red barn, a grey boardwalk and a brown fence.
@@ -211,7 +255,8 @@ Levels are assembled from simple shapes by code. Two techniques keep the frame c
 
 Terrain is a height field: 700 m with 230 segments for the desert, 360 m with 180 for
 the shrine forest, 1,200 m with 400 (161,000 vertices) for the Alps, 1,000 m with 320
-for the Greek island, 1,200 m with 380 for the fjord and 1,000 m with 300 for Normandy. The mountains use ridged
+for the Greek island, 1,200 m with 380 for the fjord, 1,000 m with 300 for Normandy, 760 m
+with 150 for the flat Soviet city and 1,300 m with 400 for Tibet. The mountains use ridged
 noise; grass, rock, sand and snow are chosen per vertex from altitude and slope. Around
 the Greek island the sea bed is coloured from pale sand to deep blue and the water is
 half transparent, which gives turquoise shallows without a depth pass.
@@ -219,6 +264,15 @@ half transparent, which gives turquoise shallows without a depth pass.
 Ships (Greek galleys with a bronze ram, Viking longships with a dragon prow and striped
 sail) come from one parameterised builder. Each chapter has its own small builders for
 houses, temples, longhouses, hedgerows, bunkers and vehicles.
+
+Enterable buildings come from one `room` builder. It takes a footprint, a height and a
+list of door and window openings, and cuts each wall into solid pieces around them: full
+height between openings, a sill below a window, a lintel above. The same pieces are the
+collision boxes, so a bullet passes through a window and a body through a door, and
+nowhere else. On sloping ground the floor is set at the highest corner of the footprint
+and a flight of steps runs down from the door. Statues reuse the character builder: the
+twelve-metre monument of chapter VII is the ordinary figure in one colour, scaled seven
+times.
 
 Layouts are deterministic. Each chapter uses a seeded random generator, so the world is
 the same on every run.
@@ -231,10 +285,32 @@ rotated about the vertical axis, vertical cylinders, and the terrain height func
 - **Walking.** The player and enemies are vertical capsules. Each step pushes the
   capsule out of any box or cylinder it overlaps. A ledge up to 0.5 m high is climbed
   automatically, which makes boardwalks, stairs and the arched bridge walkable. Slopes
-  steeper than a per-level limit, and deep water, block movement.
+  steeper than a per-level limit, and deep water, block movement. A move is cut into
+  strides of at most 0.2 to 0.25 m, so a fast runner cannot skip over a thin wall.
+- **Bodies.** Living enemies and the player push each other apart, so nobody walks
+  through anybody. A blade only lands if a ray between the two fighters is clear, so
+  nothing reaches through a wall. A falling enemy checks the space behind and in front
+  and falls the free way, or slumps down the wall if there is none.
 - **Rays.** One function casts a ray against the boxes (slab test), the cylinders
   (quadratic) and the terrain (0.7 m marching steps refined by six bisections). Bullets,
   arrows, enemy line of sight and the opening camera all use it.
+
+### Route finding
+
+When a chapter loads, a grid of 0.7 m cells is laid over the playable area: between
+40,000 and 154,000 cells. For each cell the game looks for the lowest surface on which a
+body fits (the ground, or a floor, step or plinth above it) by testing the same capsule
+the walkers use against the same colliders. Two neighbouring cells are linked if the
+height between them is a step of at most half a metre, or an open slope; a larger
+difference is walked in three short strides to tell a staircase from a wall. Building
+the grid takes about 0.3 to 1.5 s per chapter.
+
+An enemy that can see the player and has a clear straight line simply walks it.
+Otherwise it asks for a route (A* over the grid, with a binary heap; 0.05 to 0.4 ms per
+route) and follows it cell by cell, asking again about once a second. Because the grid
+is built from the collision shapes, every door and stair works for enemies without any
+hand-placed waypoints. The start and the goal are matched to the walker's own storey, so
+an enemy standing beside a crate does not plan from the top of it.
 
 ### Characters and behaviour
 
@@ -244,9 +320,9 @@ barrels. A description object selects skin, clothes, hat, beard, extras such as 
 poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-The same builder makes the eighteen playable heroes, the human enemy types, the
-bystanders and the marble statues of chapter IV. There are twenty-three enemy types in
-all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
+The same builder makes the twenty-four playable heroes, the human enemy types, the
+bystanders (among them the Dalai Lama, his monks and riders in chapter VIII) and the
+statues of chapters IV and VII. There are thirty-one enemy types in all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
 same parts to the enemy code (a body, and the front and back pairs of legs in place of
 the two legs), with two low hit spheres, a bark instead of a shout, and a roll onto the
 side when it falls. They run at 7.6 m/s, faster than any human enemy, and bite at 1.7 m.
@@ -263,7 +339,8 @@ the damage.
 
 Enemy shots are real projectiles, not instant hits. They are aimed with only 45% of the
 lead a moving target needs, so standing still gets you hit and strafing avoids most
-fire. There is no path finding: an enemy that makes no progress sidesteps for a moment.
+fire. Enemies that cannot walk straight at the player follow a route (see Route finding
+above); one that still makes no progress sidesteps for a moment.
 
 ### Playable heroes
 
@@ -272,20 +349,21 @@ builder, sleeve colours for the first-person hands, and a small object of multip
 
 | Multiplier | Effect | Used by |
 | --- | --- | --- |
-| `armor` | Scales every hit the player takes | Wyatt Earp (0.75), Date Masamune (0.7), Achilles (0.65), Leif Erikson (0.7) |
-| `speed` | Scales walking and running speed | Calamity Jane (1.18) |
+| `armor` | Scales every hit the player takes | Wyatt Earp (0.75), Date Masamune (0.7), Achilles (0.65), Leif Erikson (0.7), Aleksandr Solzhenitsyn (0.85), Songtsen Gampo (0.8) |
+| `speed` | Scales walking and running speed | Calamity Jane (1.18), Rudolf Nureyev (1.25), Ani Pachen (1.2) |
 | `fire`, `reload` | Scale the time between shots or throws and the reload | Billy the Kid (0.68, 0.6), Wilhelm Tell (reload 0.6), Erik the Red (fire 0.6) |
 | `draw` | Scales the bow's draw and nock time | Tomoe Gozen (0.55) |
 | `melee`, `reach`, `meleeDmg` | Scale the blade's swing time, add reach in metres, scale its damage | Miyamoto Musashi (0.62, +0.6), Ragnar Lothbrok (0.75, +0.4, damage 1.7) |
 | `power` | Scales the speed and damage of thrown weapons | Ulysses (1.3) |
 | `hp` | Starting and maximum health | Arnold von Winkelried (150), Heracles (170) |
 | `regen` | Health per second after 4 s without being hit | Werner Stauffacher (3) |
-| `gun` | Scales the damage of firearms | Maurice Bavaud (1.6) |
-| `stealth` | Scales how far enemies see and hear the player | Virginia Hall (0.55) |
+| `gun` | Scales the damage of firearms | Maurice Bavaud (1.6), Andrei Sakharov (1.6) |
+| `stealth` | Scales how far enemies see and hear the player | Virginia Hall (0.55), Rudolf Nureyev (0.75) |
 
-A hero entry may also name its own weapon. Chapter VI uses this: the three heroes carry
-a scoped rifle, a Sten gun and a pistol, where every other chapter gives all three
-heroes the same weapons.
+A hero entry may also name its own weapon. Chapters VI, VII and VIII use this: in
+chapter VI the three heroes carry a scoped rifle, a Sten gun and a pistol, in chapter
+VII a submachine gun or a pistol, in chapter VIII a rifle, a pistol or a bow with a
+sword. Chapters I to V give all three heroes the same weapons.
 
 Weapon timers advance by `dt / multiplier`, so a strength changes the pace of an action
 without a second set of animations. Choosing a hero rebuilds the figure in the scene and
@@ -310,9 +388,10 @@ is detected by keeping the last few typed characters and testing whether they en
 | Javelin | Thrown at 50 m/s with gravity | 85 | 0.16 s wind-up, 0.55 s to ready the next |
 | Throwing axe | Thrown at 36 m/s with gravity, spinning | 80 | 0.16 s wind-up, 0.55 s to ready the next |
 | Sword (chapters IV and V) | Arc, 3.0 to 3.2 m reach | 100 | 0.4 s |
-| Sten gun | Instant ray, automatic | 16 | 32 rounds, 0.085 s between shots, 1.7 s reload |
+| Sten gun (also the submachine gun of chapter VII) | Instant ray, automatic | 16 | 32 rounds, 0.085 s between shots, 1.7 s reload |
 | Scoped rifle | Instant ray | 120 | 5 rounds, 1.15 s to work the bolt, 2.3 s reload |
-| Pistol (chapter VI) | Instant ray | 35, or 56 with Bavaud | as the six-shooter |
+| Rifle (chapter VIII) | Instant ray, iron sights | 82 | 8 rounds, 0.85 s to work the bolt, 2.1 s reload |
+| Pistol (chapters VI to VIII) | Instant ray | 35, or 56 with Bavaud or Sakharov | as the six-shooter |
 | Knife | Thrust, 2.5 m reach | 90 | 0.36 s |
 
 The rifle's scope narrows the field of view to 15 degrees. A full-screen HTML layer
@@ -340,10 +419,12 @@ tap shorter than one frame still fires.
   line); a lead voice plays a whistle, a bamboo flute, an alphorn, a reed pipe or a
   war horn. The Greek chapter is in a limping seven-beat measure (3+2+2); the Norse one
   is a slow war drum over a drone; chapter VI has a muffled snare march and a lone
-  bugle.
+  bugle; chapter VII is a slow minor waltz with a trembling balalaika; chapter VIII has
+  long horns, a singing bowl, small bells and a flute on five notes.
 - **Ambience** is filtered wind plus bird calls, crickets, cicadas, cowbells, a far
-  wolf, or guns rumbling far out at sea, and water whose volume follows the distance to
-  the pond, stream, waterfall or shore.
+  wolf, guns rumbling far out at sea, a crow and a distant tram bell, or prayer flags
+  snapping in the wind, and water whose volume follows the distance to the pond, stream,
+  waterfall or shore.
 
 ### Performance
 
@@ -351,20 +432,25 @@ The render resolution follows the device pixel ratio up to 1.5. The game average
 frame time over 80 frames; if the average is above 34 ms it lowers the pixel ratio by
 0.25, down to 0.75.
 
-Measured in the published build at 1280 × 720, standing at the start of each chapter.
-A frame includes the shadow pass and the post-processing passes.
+Measured at 1280 × 720, standing at the start of each chapter with every enemy alive.
+A frame includes the shadow pass and the post-processing passes. Enemies count for much
+of the draw calls: each figure is five or six meshes, drawn once for the picture and
+once for the shadow map.
 
-| Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders |
-| --- | --- | --- | --- | --- |
-| I · Dry Gulch | 265 | 0.73 million | 8,400 | 168 |
-| II · Kagemori | 202 | 0.42 million | 11,400 | 1,199 |
-| III · Uri | 316 | 1.81 million | 52,800 | 201 |
-| IV · Ithaca | 157 | 0.71 million | 18,200 | 262 |
-| V · Jarnvik | 62 | 0.78 million | 2,100 | 168 |
-| VI · Sainte-Aubine | 257 | 0.69 million | 18,600 | 173 |
+| Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
+| --- | --- | --- | --- | --- | --- |
+| I · Dry Gulch | 352 | 0.78 million | 8,400 | 347 | 53,500 |
+| II · Kagemori | 247 | 0.46 million | 11,900 | 1,648 | 40,000 |
+| III · Uri | 397 | 1.83 million | 52,700 | 425 | 153,700 |
+| IV · Ithaca | 397 | 0.78 million | 18,100 | 500 | 98,900 |
+| V · Jarnvik | 347 | 0.87 million | 2,100 | 361 | 77,600 |
+| VI · Sainte-Aubine | 340 | 0.82 million | 22,700 | 522 | 98,000 |
+| VII · Stalnogorsk | 373 | 0.18 million | 23 | 308 | 81,100 |
+| VIII · Che La | 387 | 0.83 million | 20,400 | 362 | 97,900 |
 
 Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has the most
-colliders because every bamboo stalk near the path is solid.
+colliders because every bamboo stalk near the path is solid. Chapter VII is the lightest
+in triangles: a city of boxes with painted windows.
 
 ### Build from source
 
@@ -386,7 +472,7 @@ npm run build
 `npm run build` writes the self-contained file to `source/dist/index.html`; copy it
 over `index.html` in this folder to publish it.
 
-Four address flags help while editing: `?level=2` jumps into a chapter (1 to 6),
+Four address flags help while editing: `?level=2` jumps into a chapter (1 to 8),
 `&hero=3` picks its third hero, `&free` starts play at once without mouse capture (arrow
 keys turn), and `&peace` makes enemies passive. In the browser console,
 `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
@@ -397,18 +483,32 @@ The game was checked with scripted runs in an automated browser: loading each ch
 firing each weapon with simulated clicks, selecting heroes and measuring their
 strengths, enemy attacks, practice mode, death and retry, and the end-of-chapter screen
 (reached by removing the enemies in a script, not by playing through).
-Chapters IV, V and VI were checked for loading, weapons, enemy damage and practice
-mode (chapter VI also for the scope and for a dog reaching and biting the player), but
-not played through to the end. All six chapters were loaded once more in the published
-build on GitHub Pages, without errors.
+
+Collisions and route finding were checked the same way in all eight chapters. A script
+asks for a route from every enemy to the player and reports any that has none; this
+found a shrine door blocked by its offering box, a stair too steep to climb and a hall
+door with a bench across it, all now fixed. In a second run every enemy is alerted and
+the script counts, frame by frame, how often one overlaps a wall: at most a few frames
+in ten thousand (a body being pushed back out), except in the bamboo forest of chapter
+II, where enemies squeeze between the stalks.
+In chapter I the script also walked the player into a closed building (stopped by a
+porch post) and through the jail door (stopped by the cell bars).
+
+Chapters VII and VIII were checked for loading, routes, a short alerted fight and one
+rifle shot. No chapter was played through to the end by hand, and not every new interior
+was looked at. All eight chapters were loaded once more in the published build on GitHub
+Pages, without errors.
 
 The game was not tuned by long sessions of hand play, so the difficulty is a first
 estimate, and frame rate on slower graphics hardware has not been measured.
 
 - No touch controls and no gamepad support.
 - Progress is not saved between sessions.
-- The eighteen heroes' strengths are not balanced against each other.
-- Enemies have no path finding and can be held up by buildings.
+- The twenty-four heroes' strengths are not balanced against each other.
+- Enemies cannot climb onto roofs or balconies, and the route grid does not know about
+  other enemies, so several can crowd one doorway.
+- A chapter takes up to about a second and a half longer to load than before, for the
+  route grid.
 - Wind moves plants but not their shadows.
 
 ### Licences of bundled components

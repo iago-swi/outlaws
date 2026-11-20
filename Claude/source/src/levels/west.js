@@ -3,12 +3,12 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
   id: 'west', theme: 'theme-west', chapter: 'Chapter I', title: 'Dry Gulch', place: 'Dry Gulch · Arizona Territory · 1881',
-  story: 'The Crowe gang rode in at noon and took the town. The sheriff is dead, the telegraph is cut, and you are the last man with a badge and a loaded gun. Clear the street before sundown.',
+  story: 'The Crowe gang rode in at noon and took the town. The sheriff is dead, the telegraph is cut, and you are the last one with a badge and a loaded gun. Clear the street, the jail, the bank and Boot Hill before sundown.',
   weapon: 'revolver',
   heroes: [
     { look: 'earp', name: 'Wyatt Earp', who: 'Lawman of Tombstone, 1881', trait: 'Iron nerve', effect: 'takes 25% less damage', mods: { armor: 0.75 }, sleeve: 0x18181c, cuff: 0xe8e4d8 },
@@ -25,11 +25,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const R = rand;
   // ---- terrain: flat town, dunes beyond ---------------------------------------
   const hf = new Heightfield(700, 230, (x, z) => {
-    const out = Math.max(smooth(84, 170, Math.abs(x)), smooth(46, 120, Math.abs(z)));
+    const out = Math.max(smooth(96, 180, Math.abs(x)), smooth(62, 134, Math.abs(z)));
     return out * (fbm(x * 0.011 + 3, z * 0.011, 4, 5) * 20 - 5) + out * out * 3;
   });
   world.height = (x, z) => hf.h(x, z);
-  world.bounds = { x0: -90, x1: 84, z0: -50, z1: 50 };
+  world.bounds = { x0: -102, x1: 96, z0: -66, z1: 66 };
   const cA = new THREE.Color(0xc99866), cB = new THREE.Color(0xa87048), cS = new THREE.Color(0x9c7a58), cR = new THREE.Color(0xb5613c), tmp = new THREE.Color();
   root.add(hf.mesh(M.ground, (x, z, h) => {
     const n = fbm(x * 0.03, z * 0.03, 4, 9);
@@ -52,7 +52,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     return m;
   };
   function bld(o) {
-    const { x, w, d, h, dir, wall, trim = 0x4a3526, roofC = 0x8a6a52, balcony = false, interior = false, text, signO, door = true } = o;
+    const { x, w, d, h, dir, wall, trim = 0x4a3526, roofC = 0x8a6a52, balcony = false, interior = false, text, signO, door = true, panel = 0x5a2c22 } = o;
     const zf = -8 * dir, zc = zf - dir * d / 2, zp = zf + dir * 1.3, zo = zf + dir * 0.27;
     B.box(M.woodH, w + 1, 0.3, 2.7, x, 0, zp, { c: 0x9a8468, solid: true });
     const H2 = h + 1.5;
@@ -71,9 +71,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
       B.box(M.woodH, w - 0.6, 0.3, d - 0.6, x, 0, zc, { c: 0x7a5a3e, solid: true });
       B.box(M.woodH, w - 0.6, 0.2, d - 0.6, x, 3.8, zc, { c: 0x5a4030, solid: true });
       // dark panelling inside
-      B.box(M.wood, w - 0.72, 3.5, 0.06, x, 0.3, zf - dir * (d - T - 0.04), { c: 0x5a2c22 });
-      B.box(M.wood, 0.06, 3.5, d - 0.72, x - w / 2 + T + 0.04, 0.3, zc, { c: 0x5a2c22 });
-      B.box(M.wood, 0.06, 3.5, d - 0.72, x + w / 2 - T - 0.04, 0.3, zc, { c: 0x5a2c22 });
+      B.box(M.wood, w - 0.72, 3.5, 0.06, x, 0.3, zf - dir * (d - T - 0.04), { c: panel });
+      B.box(M.wood, 0.06, 3.5, d - 0.72, x - w / 2 + T + 0.04, 0.3, zc, { c: panel });
+      B.box(M.wood, 0.06, 3.5, d - 0.72, x + w / 2 - T - 0.04, 0.3, zc, { c: panel });
     }
     // cornice + corner boards
     B.box(M.woodH, w + 1, 0.24, 0.6, x, H2, zf + dir * 0.15, { c: trim });
@@ -106,9 +106,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   bld({ x: -40, w: 12, d: 12, h: 5.4, dir: 1, wall: 0x8a4a34, text: 'LIVERY & FEED', signO: { bg: '#e8d8b0', fg: '#4a1c10' }, roofC: 0x7a5a44 });
   bld({ x: -24, w: 11, d: 10, h: 4.7, dir: 1, wall: 0xc9b68a, text: 'GENERAL STORE', signO: { bg: '#2a4a3a', fg: '#f0e2b0' } });
   const sal = bld({ x: -4, w: 16, d: 13, h: 7.4, dir: 1, wall: 0x9a3a2a, trim: 0xe8d8b0, balcony: true, interior: true, text: 'SALOON', signO: { bg: '#f0e0b0', fg: '#7a1810', size: 100 } });
-  bld({ x: 13, w: 9, d: 9, h: 5.0, dir: 1, wall: 0xb8a48a, trim: 0x3a3a3a, text: 'BANK', signO: { bg: '#1c1c1c', fg: '#d9b23a' } });
+  bld({ x: 12.5, w: 10, d: 11, h: 4.9, dir: 1, wall: 0x9a9080, trim: 0x2a2a2a, interior: true, panel: 0x8a8274, text: 'JAIL', signO: { bg: '#1c1c1c', fg: '#e8e0d0', size: 100 } });
   bld({ x: 26, w: 8, d: 8, h: 4.3, dir: 1, wall: 0x8a7a64, text: 'SHERIFF', signO: { bg: '#e8d8b0', fg: '#1c1c1c' } });
-  bld({ x: 38, w: 8, d: 8, h: 4.5, dir: 1, wall: 0x6a7a80, text: 'ASSAY OFFICE', signO: { bg: '#e8d8b0', fg: '#2a3a4a' } });
+  bld({ x: 38, w: 9, d: 9, h: 5.0, dir: 1, wall: 0xb8a48a, trim: 0x3a3a3a, interior: true, panel: 0x3e5244, text: 'BANK', signO: { bg: '#1c1c1c', fg: '#d9b23a' } });
   bld({ x: -38, w: 10, d: 9, h: 4.5, dir: -1, wall: 0x5a4a3e, text: 'BLACKSMITH', signO: { bg: '#1c1410', fg: '#e0a040' } });
   bld({ x: -21, w: 14, d: 11, h: 7.6, dir: -1, wall: 0xd8ceb0, trim: 0x5a6a5a, balcony: true, text: 'GRAND HOTEL', signO: { bg: '#3a5a4a', fg: '#f0e2b0' } });
   bld({ x: -4, w: 8, d: 8, h: 4.5, dir: -1, wall: 0x3a3a40, trim: 0x1c1c1c, text: 'UNDERTAKER', signO: { bg: '#1c1c1c', fg: '#c9c9c9' } });
@@ -146,6 +146,44 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
       const pl = new THREE.PointLight(0xffa650, 46, 15, 1.8); pl.position.set(x, 2.9, cz); root.add(pl);
     }
   }
+  // ---- jail: the marshal's office in front, two cells behind -------------------------
+  {
+    const X0 = 7.85, X1 = 17.15, ZB = -18.65, ZC = -13.4, F = 0.3, TOP = 3.8;
+    bars(B, M, X0, ZC, 9.2, ZC, F, TOP); bars(B, M, 10.8, ZC, 14.2, ZC, F, TOP); bars(B, M, 15.8, ZC, X1, ZC, F, TOP);
+    bars(B, M, 9.2, ZC, 10.8, ZC, 2.45, TOP); bars(B, M, 14.2, ZC, 15.8, ZC, 2.45, TOP);
+    bars(B, M, 12.5, ZC, 12.5, ZB, F, TOP);                                       // between the cells
+    bars(B, M, 9.2, ZC, 8.5, ZC + 1.4, F, 2.45); bars(B, M, 15.8, ZC, 16.5, ZC + 1.4, F, 2.45);   // cell doors, swung open
+    for (const bx of [8.35, 16.65]) {
+      B.box(M.woodH, 0.8, 0.42, 1.9, bx, F, -17.5, { c: 0x5a4030, solid: true }); B.box(M.cloth, 0.76, 0.08, 1.5, bx, F + 0.42, -17.3, { c: 0x6a6a72 }); B.box(M.cloth, 0.5, 0.1, 0.3, bx, F + 0.44, -18.25, { c: 0xc8c0a8 });
+      B.cyl(M.metal, 0.15, 0.12, 0.26, bx + (bx < 12 ? 2.6 : -2.6), F, -18.2, { c: 0x4a4a4e, seg: 8 });
+    }
+    for (const wx of [10, 15]) { B.box(M.flat, 0.9, 0.6, 0.05, wx, 2.5, ZB + 0.03, { c: 0xf0c890 }); bars(B, M, wx - 0.45, ZB + 0.08, wx + 0.45, ZB + 0.08, 2.5, 3.1, { solid: false, gap: 0.15 }); }
+    // office
+    B.box(M.woodH, 1.8, 0.78, 0.85, 9.7, F, -10.6, { c: 0x5a3a22, solid: true }); B.box(M.woodH, 1.9, 0.05, 0.95, 9.7, F + 0.78, -10.6, { c: 0x7a5232 });
+    B.box(M.flat, 0.3, 0.02, 0.4, 9.4, F + 0.84, -10.6, { ry: 0.3, c: 0xe8dcc0 }); B.box(M.glow, 0.1, 0.22, 0.1, 10.3, F + 0.84, -10.8, { c: 0xffb050 });
+    B.box(M.wood, 0.45, 0.45, 0.45, 9.7, F, -11.6, { c: 0x6a4428 }); B.box(M.wood, 0.45, 0.6, 0.06, 9.7, F + 0.45, -11.85, { c: 0x6a4428 });
+    B.box(M.woodH, 0.12, 1.3, 1.9, X0 + 0.1, F + 0.9, -10.4, { c: 0x4a2c1c });                 // rifle rack
+    for (let i = 0; i < 4; i++) { B.cyl(M.metal, 0.018, 0.018, 1.05, X0 + 0.22, F + 1.0, -11.1 + i * 0.46, { c: 0x2a2a2e, seg: 5 }); B.box(M.wood, 0.05, 0.4, 0.08, X0 + 0.22, F + 0.95, -11.1 + i * 0.46, { c: 0x5a3420 }); }
+    for (let i = 0; i < 3; i++) { B.box(M.flat, 0.04, 0.62, 0.46, X1 - 0.05, F + 1.5 + (i % 2) * 0.1, -9.6 - i * 0.75, { c: 0xe8d8b0 }); B.box(M.flat, 0.05, 0.26, 0.26, X1 - 0.06, F + 1.72 + (i % 2) * 0.1, -9.6 - i * 0.75, { c: 0x4a3a2a }); }
+    B.cyl(M.metal, 0.3, 0.34, 0.9, 16.2, F, -12.3, { c: 0x1c1c1e, solid: true, seg: 10 }); B.cyl(M.metal, 0.09, 0.09, 2.6, 16.2, F + 0.9, -12.3, { c: 0x1c1c1e, seg: 8 });
+    B.cyl(M.metal, 0.12, 0.12, 0.03, 12.5, 2.6, ZC + 0.12, { rx: Math.PI / 2, c: 0xb8923a, seg: 10, open: true });   // key ring on the bars
+    const pl = new THREE.PointLight(0xffb060, 30, 13, 1.8); pl.position.set(12.5, 3.2, -11); root.add(pl);
+  }
+  // ---- bank: counter, teller's cage, the safe ---------------------------------------
+  {
+    const X0 = 33.85, X1 = 42.15, F = 0.3;
+    B.box(M.woodH, 6.4, 1.1, 0.7, X0 + 3.2, F, -11.6, { c: 0x4a3020, solid: true }); B.box(M.woodH, 6.5, 0.06, 0.86, X0 + 3.2, F + 1.1, -11.6, { c: 0x7a5232 });
+    bars(B, M, X0, -11.6, X0 + 2.4, -11.6, F + 1.16, 2.9, { c: 0xb8923a }); bars(B, M, X0 + 3.6, -11.6, X0 + 6.4, -11.6, F + 1.16, 2.9, { c: 0xb8923a });
+    B.box(M.metal, 2.3, 2.5, 1.5, X0 + 1.3, F, -15.75, { c: 0x34383e, solid: true });                                 // the safe
+    B.cyl(M.metal, 0.85, 0.85, 0.16, X0 + 1.3, F + 0.45, -14.95, { rx: Math.PI / 2, c: 0x4a4e56, seg: 18 });
+    B.geo(M.metal, new THREE.TorusGeometry(0.3, 0.035, 6, 14), [X0 + 1.3, F + 1.3, -14.83], [0, 0, 0], 1, 0xc9a23a);
+    for (let k = 0; k < 4; k++) B.box(M.metal, 0.04, 0.62, 0.04, X0 + 1.3, F + 1.0, -14.83, { rz: k * Math.PI / 4, c: 0xc9a23a });
+    B.box(M.woodH, 1.5, 0.76, 0.8, 38.6, F, -15.6, { c: 0x5a3a22, solid: true });
+    for (let k = 0; k < 6; k++) B.box(M.metal, 0.3, 0.1, 0.14, 38.3 + (k % 3) * 0.33, F + 0.78 + Math.floor(k / 3) * 0.1, -15.6, { c: 0xe0b020 });
+    for (const [sx, sz] of [[37.2, -13.2], [37.7, -13.5], [36.9, -13.8]]) B.geo(M.cloth, new THREE.SphereGeometry(0.26, 8, 6), [sx, F + 0.2, sz], [0, 0, 0], [1, 0.8, 1], 0xb8a070);
+    B.box(M.flat, 2.2, 0.9, 0.05, 38, 2.2, -16.62, { c: 0x2a3a30 }); B.box(M.flat, 1.9, 0.66, 0.06, 38, 2.32, -16.6, { c: 0xd8c890 });
+    const pl = new THREE.PointLight(0xffc070, 30, 12, 1.8); pl.position.set(38, 3.2, -12.6); root.add(pl);
+  }
   // batwing doors
   const doors = [];
   for (const s of [-1, 1]) {
@@ -155,7 +193,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
 
   // ---- street dressing ----------------------------------------------------------
   const hitch = (x, z) => { for (const s of [-1.3, 1.3]) B.box(M.wood, 0.14, 1.1, 0.14, x + s, 0, z, { c: 0x6a4a30 }); B.box(M.woodH, 3.0, 0.1, 0.1, x, 1.0, z, { c: 0x6a4a30 }); world.addBox(x, z, 3, 0.2, 0, 0, 1.05); };
-  hitch(-24, -4.8); hitch(13, -4.8); hitch(-21, 4.8); hitch(21, 4.8); hitch(35, 4.8);
+  hitch(-24, -4.8); hitch(20, -4.8); hitch(-21, 4.8); hitch(21, 4.8); hitch(35, 4.8);
   const trough = (x, z) => { B.box(M.woodH, 2.2, 0.55, 0.8, x, 0, z, { c: 0x6a5038, solid: true }); B.box(M.glow, 1.9, 0.02, 0.5, x, 0.54, z, { c: 0x1a3a44 }); };
   trough(-9, 4.6); trough(30, -4.6);
   for (const [x, z, y] of [[-17.2, -6.9, 0.3], [-16.6, -6.2, 0.3], [9.2, -6.6, 0.3], [-30.2, 6.7, 0.3], [0.9, 6.6, 0.3], [16, 6.7, 0.3], [30.8, -6.8, 0.3], [-46.5, -7, 0.3], [43, -6.5, 0.3], [42.4, -7.1, 0.3]]) barrel(B, M, x, y, z);
@@ -240,14 +278,85 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.woodH, 2.6, 0.55, 0.8, -56, 0, 19, { c: 0x6a5038, solid: true }); B.box(M.glow, 2.3, 0.02, 0.5, -56, 0.54, 19, { c: 0x1a3a44 });
     // barn
     const x = -70, z = -20;
-    B.box(M.wood, 13, 6.2, 17, x, 0, z, { c: 0x8a2c22, solid: true });
+    room(B, M, x, 0, z, { w: 13, d: 17, h: 6.2, t: 0.35, mat: M.wood, c: 0x8a2c22, doors: [{ side: 's', at: 0, w: 4.4, h: 4.6 }, { side: 'n', at: 3.6, w: 1.7, h: 2.4 }],
+      wins: [{ side: 'e', at: -3, w: 1.3, y: 1.4, h: 1.0 }, { side: 'w', at: 2, w: 1.3, y: 1.4, h: 1.0 }], floor: { mat: M.ground, c: 0xb89a62 }, ceil: { mat: M.woodH, c: 0x4a2c20 } });
     B.geo(M.shingle, prismGeo(14, 4.2, 17.8, 3), [x, 6.2, z], [0, 0, 0], 1, 0x4a3c38);
-    B.box(M.wood, 4.4, 4.6, 0.12, x, 0, z + 8.56, { c: 0x6a2018 });
-    for (const s of [-1, 1]) { B.box(M.woodH, 0.22, 4.7, 0.16, x + s * 2.2, 0, z + 8.6, { c: 0xe8e0d0 }); B.box(M.woodH, 4.9, 0.2, 0.14, x, 2.2, z + 8.62, { rz: s * 0.76, c: 0xe8e0d0 }); }
+    for (const s of [-1, 1]) {
+      B.box(M.woodH, 0.22, 4.7, 0.16, x + s * 2.2, 0, z + 8.6, { c: 0xe8e0d0 });
+      B.box(M.wood, 2.2, 4.5, 0.1, x + s * 3.45, 0, z + 8.62, { c: 0x6a2018 });                       // door leaves, slid open
+      B.box(M.woodH, 2.4, 0.16, 0.12, x + s * 3.45, 2.2, z + 8.68, { rz: s * 1.1, c: 0xe8e0d0 });
+    }
+    // inside: stalls, hay, posts
+    for (const sz of [-25, -21.5, -18]) { B.box(M.wood, 3.4, 1.35, 0.14, x - 4.4, 0.06, sz, { c: 0x6a4a30, solid: true }); B.box(M.woodH, 0.16, 1.7, 0.16, x - 2.7, 0.06, sz, { c: 0x5a3a24 }); }
+    for (const [hx, hz, hy, ry] of [[-65.2, -27.3, 0, 0], [-65.2, -26.3, 0, 0], [-65.2, -26.8, 0.8, 0.1], [-66.8, -27.4, 0, 1.57], [-65, -14.5, 0, 0.2], [-66.3, -13.4, 0, 1.4], [-73.2, -13.2, 0, 0.1], [-68.5, -22, 0, 0.5]])
+      B.box(M.thatch, 1.5, 0.8, 0.9, hx, hy + 0.06, hz, { ry, c: 0xd8b860, solid: true });
+    for (const pz of [-24.5, -15.5]) for (const s of [-1, 1]) { B.box(M.wood, 0.26, 6.1, 0.26, x + s * 2.3, 0.06, pz, { c: 0x5a3a24 }); world.addCyl(x + s * 2.3, pz, 0.2, 0, 6.2); }
+    B.box(M.woodH, 0.1, 0.3, 0.1, x, 4.3, z, { c: 0x2a2018 }); B.box(M.glow, 0.2, 0.28, 0.2, x, 4.0, z, { c: 0xffa040 });
+    const pl = new THREE.PointLight(0xffa650, 40, 18, 1.8); pl.position.set(x, 3.8, z); root.add(pl);
     B.box(M.woodH, 4.8, 0.22, 0.16, x, 4.6, z + 8.6, { c: 0xe8e0d0 });
     B.box(M.flat, 1.5, 1.5, 0.1, x, 7, z + 8.9, { c: 0x1a1210 });
     for (const [bx, bz] of [[-63, -10.8], [-62.2, -10.2], [-76.5, -10.6]]) barrel(B, M, bx, 0, bz);
     B.box(M.thatch, 1.5, 0.8, 0.9, -65.5, 0, -10.6, { c: 0xd8b860, solid: true }); B.box(M.thatch, 1.5, 0.8, 0.9, -74, 0, -10.4, { ry: 0.3, c: 0xd8b860, solid: true });
+  }
+
+  // ---- homestead south of the corral ---------------------------------------------------
+  {
+    const x = -38, z = 38;
+    room(B, M, x, 0, z, { w: 7.4, d: 6, h: 2.9, t: 0.3, mat: M.wood, c: 0x7a5a3e, doors: [{ side: 'n', at: -1.4, w: 1.6, h: 2.2 }],
+      wins: [{ side: 'n', at: 1.7, w: 1.1, y: 1.1, h: 0.9 }, { side: 'e', at: 0, w: 1.1, y: 1.1, h: 0.9 }, { side: 'w', at: 0.6, w: 1.1, y: 1.1, h: 0.9 }, { side: 's', at: 1.2, w: 1.1, y: 1.1, h: 0.9 }], ceil: { mat: M.woodH, c: 0x5a4030 } });
+    B.geo(M.shingle, prismGeo(6.6, 1.7, 8.2, 3), [x, 2.9, z], [0, Math.PI / 2, 0], 1, 0x6a5444);
+    B.box(M.woodH, 7.6, 0.14, 2.2, x, 0, z - 4.0, { c: 0x8a6a4e, solid: true }); B.box(M.shingle, 7.8, 0.1, 2.5, x, 2.55, z - 4.05, { rx: -0.14, c: 0x6a5444 });
+    for (const s of [-1, 0, 1]) { B.box(M.wood, 0.15, 2.5, 0.15, x + s * 3.6, 0.14, z - 5.0, { c: 0x5a3a24 }); world.addCyl(x + s * 3.6, z - 5.0, 0.12, 0, 2.6); }
+    B.box(M.stone, 1.1, 4.4, 1.1, x + 3.1, 0, z + 3.4, { c: 0xa89880, solid: true });
+    B.box(M.woodH, 1.5, 0.74, 0.9, x + 1.6, 0.06, z + 0.6, { c: 0x6a4428, solid: true }); B.box(M.glow, 0.09, 0.2, 0.09, x + 1.6, 0.8, z + 0.6, { c: 0xffb050 });
+    B.box(M.woodH, 0.9, 0.45, 1.9, x - 2.9, 0.06, z + 1.7, { c: 0x5a4030, solid: true }); B.box(M.cloth, 0.86, 0.1, 1.6, x - 2.9, 0.51, z + 1.8, { c: 0x8a3a2a });
+    B.cyl(M.metal, 0.28, 0.32, 0.8, x + 2.9, 0.06, z + 2.2, { c: 0x1c1c1e, solid: true, seg: 10 });
+    fence(B, M, x - 9, z - 9, x + 9, z - 9); fence(B, M, x - 9, z - 9, x - 9, z + 7); fence(B, M, x + 9, z - 3, x + 9, z + 7); fence(B, M, x - 9, z + 7, x + 9, z + 7);
+    for (let i = 0; i < 9; i++) B.cyl(M.wood, 0.13, 0.13, 1.3, x - 6.5, 0.13 + Math.floor(i / 3) * 0.26, z + 3 + (i % 3) * 0.28 + Math.floor(i / 3) * 0.14, { rz: Math.PI / 2, c: 0x8a623a, seg: 7 });
+    world.addBox(x - 6.5, z + 3.3, 1.4, 1.0, 0, 0, 0.9);
+    B.box(M.wood, 1.2, 2.2, 1.2, x + 6.5, 0, z + 5, { c: 0x6a4a30, solid: true }); B.geo(M.shingle, prismGeo(1.5, 0.5, 1.5, 2), [x + 6.5, 2.2, z + 5], [0, 0, 0], 1, 0x5a4434);
+    barrel(B, M, x - 3.4, 0.14, z - 3.6); crate(B, M, x + 3, 0.14, z - 3.7, 0.7, 0.3);
+  }
+  // ---- Boot Hill: the cemetery beyond the last houses -------------------------------------
+  {
+    const X0 = 44, X1 = 72, Z0 = 30, Z1 = 52, IRON = 0x24242a, gx = 58;
+    const iron = (ax, az, bx, bz) => fence(B, M, ax, az, bx, bz, { h: 1.25, rails: 2, c: IRON, gap: 1.2 });
+    iron(X0, Z0, gx - 1.7, Z0); iron(gx + 1.7, Z0, X1, Z0); iron(X0, Z1, X1, Z1); iron(X0, Z0, X0, Z1); iron(X1, Z0, X1, Z1);
+    for (const s of [-1, 1]) { B.box(M.stone, 0.7, 3.0, 0.7, gx + s * 1.9, 0, Z0, { c: 0xa89c88, solid: true }); B.box(M.stone, 0.9, 0.2, 0.9, gx + s * 1.9, 3.0, Z0, { c: 0x8a8070 }); }
+    sign('BOOT HILL', gx, 3.55, Z0, 4.6, 0.8, { bg: '#1c1c1c', fg: '#d8d0c0', ry: Math.PI });
+    B.box(M.metal, 4.4, 0.08, 0.08, gx, 3.1, Z0, { c: IRON });
+    for (const s of [-1, 1]) bars(B, M, gx + s * 1.55, Z0, gx + s * 1.9, Z0 + 1.4, 0, 1.9, { c: IRON, gap: 0.2 });     // gate leaves, open
+    const stone = [0xb0a898, 0x9a9488, 0xc0b8a8, 0x8a8478];
+    let n = 0;
+    for (let zz = Z0 + 3.5; zz < Z1 - 2; zz += 3.6) for (let xx = X0 + 2.4; xx < X1 - 1.5; xx += 2.7) {
+      n++;
+      if (Math.abs(xx - gx) < 3.2 || (xx > 62 && xx < 66 && zz > 35 && zz < 39)) continue;       // the path, the open grave
+      const px = xx + (R() - 0.5) * 0.5, pz = zz + (R() - 0.5) * 0.5, k = n % 4, lean = (R() - 0.5) * 0.22;
+      B.box(M.ground, 0.95, 0.2, 2.0, px, -0.03, pz - 1.25, { c: 0x9a7048 });
+      if (k === 0) { B.box(M.wood, 0.11, 1.35, 0.11, px, 0, pz, { c: 0xd8d0c0, rz: lean }); B.box(M.wood, 0.75, 0.11, 0.11, px, 0.9, pz, { c: 0xd8d0c0, rz: lean }); world.addCyl(px, pz, 0.14, 0, 1.3); }
+      else if (k === 1) { B.box(M.stone, 0.7, 0.75, 0.18, px, 0, pz, { c: R.pick(stone), rx: lean }); B.cyl(M.stone, 0.35, 0.35, 0.18, px, 0.4, pz, { rx: Math.PI / 2, c: R.pick(stone), seg: 12 }); world.addBox(px, pz, 0.8, 0.3, 0, 0, 1.1); }
+      else if (k === 2) { B.box(M.stone, 0.62, 1.0, 0.2, px, 0, pz, { c: R.pick(stone), rx: lean }); world.addBox(px, pz, 0.7, 0.3, 0, 0, 1.0); }
+      else { B.box(M.stone, 0.5, 0.3, 0.5, px, 0, pz, { c: 0x8a8478 }); B.box(M.stone, 0.12, 1.2, 0.12, px, 0.3, pz, { c: 0xb0a898 }); B.box(M.stone, 0.6, 0.12, 0.12, px, 1.05, pz, { c: 0xb0a898 }); world.addCyl(px, pz, 0.3, 0, 1.5); }
+    }
+    // an open grave, waiting
+    B.box(M.flat, 1.0, 0.03, 2.1, 64, 0.0, 37, { c: 0x120c08 }); B.geo(M.ground, new THREE.SphereGeometry(1, 8, 6), [65.6, 0, 37.2], [0, 0, 0], [0.9, 0.55, 1.3], 0x8a6040); world.addCyl(65.6, 37.2, 0.8, 0, 0.5);
+    B.box(M.wood, 0.62, 0.42, 1.95, 62.5, 0, 37, { ry: 0.08, c: 0x6a4a2e, solid: true }); B.box(M.wood, 0.06, 1.3, 0.06, 65.4, 0.3, 36.6, { rz: 0.5, c: 0x7a5a3a }); B.box(M.metal, 0.22, 0.3, 0.03, 65.75, 1.42, 36.6, { rz: 0.5, c: 0x4a4a4e });
+    // crypt of the town's founder
+    const cx = gx, cz = Z1 - 5;
+    room(B, M, cx, 0, cz, { w: 4.8, d: 5.4, h: 3.0, t: 0.4, mat: M.stone, c: 0xa8a090, doors: [{ side: 'n', at: 0, w: 1.7, h: 2.3 }], floor: { mat: M.stone, c: 0x7a7468 }, ceil: { mat: M.stone, c: 0x8a8478 } });
+    B.geo(M.stone, prismGeo(5.3, 1.3, 5.9, 2), [cx, 3.2, cz], [0, 0, 0], 1, 0x8a8478);
+    for (const s of [-1, 1]) B.cyl(M.stone, 0.2, 0.24, 2.5, cx + s * 1.25, 0, cz - 2.95, { c: 0xc0b8a8, seg: 10, solid: true });
+    B.box(M.stone, 3.4, 0.3, 0.6, cx, 2.5, cz - 2.95, { c: 0x9a9488 }); B.box(M.stone, 0.14, 1.1, 0.14, cx, 4.5, cz - 2.6, { c: 0xc0b8a8 }); B.box(M.stone, 0.6, 0.14, 0.14, cx, 5.15, cz - 2.6, { c: 0xc0b8a8 });
+    B.box(M.stone, 0.95, 0.75, 2.2, cx - 1.1, 0.06, cz + 0.4, { c: 0x9a9488, solid: true }); B.box(M.stone, 1.05, 0.1, 2.3, cx - 1.1, 0.81, cz + 0.4, { c: 0xb8b0a0 });
+    for (const [lx, lz] of [[1.6, 1.9], [1.75, 1.6]]) { B.cyl(M.flat, 0.03, 0.03, 0.22, cx + lx, 0.06, cz + lz, { c: 0xe8e0c8, seg: 5 }); B.geo(M.glow, new THREE.SphereGeometry(0.04, 5, 4), [cx + lx, 0.33, cz + lz], [0, 0, 0], [1, 1.6, 1], 0xffb040); }
+    // the hanging tree
+    const tx = 49.5, tz = 47.5;
+    B.cyl(M.wood, 0.22, 0.42, 4.6, tx, 0, tz, { c: 0x4a3a2e, seg: 8 }); world.addCyl(tx, tz, 0.4, 0, 5);
+    for (const [a, len, up, y0] of [[0.4, 3.2, 0.7, 3.6], [2.3, 2.6, 0.9, 4.1], [4.2, 2.9, 0.6, 3.3], [5.4, 2.0, 1.0, 4.4], [3.2, 1.6, 1.2, 4.5]])
+      B.cyl(M.wood, 0.05, 0.14, len, tx + Math.cos(a) * len * 0.42 * Math.sin(up + 0.5), y0 - 0.2 + len * 0.18, tz - Math.sin(a) * len * 0.42 * Math.sin(up + 0.5), { ry: a, rz: -(Math.PI / 2 - up * 0.6), c: 0x4a3a2e, seg: 6 });
+    B.box(M.flat, 0.03, 1.2, 0.03, tx + 1.2, 2.5, tz - 0.5, { c: 0xb8a070 });
+    wagon(52, 26.2, 1.4, false);                                                                  // the undertaker's cart
+    B.box(M.wood, 0.62, 0.42, 1.95, 52, 1.38, 26.2, { ry: 1.4, c: 0x2a2018 });
   }
 
   // ---- far mesas ----------------------------------------------------------------------
@@ -266,10 +375,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   mesa(-170, -60, 22, 18, 38, 0.6); mesa(190, 30, 20, 26, 34, 1.4); mesa(-140, 120, 18, 22, 30, 0.2);
 
   // ---- vegetation and rocks ----------------------------------------------------------
-  const openLand = (x, z) => (Math.abs(z) > 27 || Math.abs(x) > 92) && !(x > 54 && x < 86 && z < -14 && z > -40) && !(x < -60 && x > -80 && z < -8 && z > -32);
+  const openLand = (x, z) => (Math.abs(z) > 27 || Math.abs(x) > 92) && !(x > 54 && x < 86 && z < -14 && z > -40) && !(x < -60 && x > -80 && z < -8 && z > -32)
+    && !(x > 42 && x < 74 && z > 23 && z < 54) && !(x > -49 && x < -27 && z > 27 && z < 47);
   const cacti = [], rocks = [], sage = [], tufts = [];
-  for (let i = 0; i < 2600 && cacti.length < 90; i++) { const x = (R() - 0.5) * 420, z = (R() - 0.5) * 300; if (openLand(x, z)) { cacti.push({ x, y: world.height(x, z) - 0.1, z, ry: R() * 6.28, s: 0.7 + R() * 0.7 }); if (Math.abs(x) < 95 && Math.abs(z) < 55) world.addCyl(x, z, 0.4, -5, 20); } }
-  for (let i = 0; i < 400; i++) { const x = (R() - 0.5) * 460, z = (R() - 0.5) * 340; if (openLand(x, z)) { const s = 0.5 + R() * R() * 3.2; rocks.push({ x, y: world.height(x, z) + s * 0.15, z, ry: R() * 6.28, s: [s, s * (0.6 + R() * 0.5), s], c: R.pick([0xb07a52, 0x9a6442, 0xc08a60]) }); if (s > 1.1 && Math.abs(x) < 95 && Math.abs(z) < 55) world.addCyl(x, z, s * 0.85, -5, world.height(x, z) + s * 0.6); } }
+  for (let i = 0; i < 2600 && cacti.length < 90; i++) { const x = (R() - 0.5) * 420, z = (R() - 0.5) * 300; if (openLand(x, z)) { cacti.push({ x, y: world.height(x, z) - 0.1, z, ry: R() * 6.28, s: 0.7 + R() * 0.7 }); if (Math.abs(x) < 106 && Math.abs(z) < 70) world.addCyl(x, z, 0.4, -5, 20); } }
+  for (let i = 0; i < 400; i++) { const x = (R() - 0.5) * 460, z = (R() - 0.5) * 340; if (openLand(x, z)) { const s = 0.5 + R() * R() * 3.2; rocks.push({ x, y: world.height(x, z) + s * 0.15, z, ry: R() * 6.28, s: [s, s * (0.6 + R() * 0.5), s], c: R.pick([0xb07a52, 0x9a6442, 0xc08a60]) }); if (s > 1.1 && Math.abs(x) < 106 && Math.abs(z) < 70) world.addCyl(x, z, s * 0.85, -5, world.height(x, z) + s * 0.6); } }
   for (let i = 0; i < 1500; i++) { const x = (R() - 0.5) * 380, z = (R() - 0.5) * 280; if (openLand(x, z)) sage.push({ x, y: world.height(x, z) + 0.15, z, ry: R() * 6.28, s: [0.5 + R() * 0.7, 0.35 + R() * 0.35, 0.5 + R() * 0.7], c: R.pick([0x8a9a6a, 0x9aa878, 0x7a8a5a, 0xa89a6a]) }); }
   for (let i = 0; i < 7000; i++) {
     const x = (R() - 0.5) * 300, z = (R() - 0.5) * 200;
@@ -296,11 +406,14 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   root.add(makeAmbient(shared, { count: 1100, box: 34, boxY: 14, size: 0.05, colorA: 0xffd9a0, colorB: 0xffb870, additive: true, alpha: 0.55, bright: 1.5, fall: -0.04, wind: [0.9, 0, 0.25], flutter: 0.5 }));
 
   const enemies = [
-    ['cowboy', 44, 3, { yaw: 1.4 }], ['cowboy', 33, -3.5, {}], ['bandit', 22, 4.8, {}], ['cowboy', 9, -4, { patrol: true }],
-    ['bandit', -21, 9.3, { y: 4, static: true, yaw: 3.1 }], ['cowboy', -6.5, -9.4, { y: 4, static: true, yaw: 0 }],
+    ['cowboy', 44, 3, { yaw: 1.4 }], ['cowboy', 33, -3.5, {}], ['bandit', 24.5, 4.4, {}], ['cowboy', 9, -4, { patrol: true }],
+    ['bandit', -21, 6.7, { y: 4, static: true, yaw: 3.1 }], ['cowboy', -6.5, -6.7, { y: 4, static: true, yaw: 0 }],
     ['cowboy', -8, -15, { y: 1, patrol: false, yaw: 0.6 }], ['bandit', -0.5, -17.5, { y: 1, patrol: false, yaw: -0.4 }],
     ['cowboy', -14.5, -1.5, {}], ['bandit', -27, -4.5, {}], ['cowboy', -34, 3.5, { patrol: true }], ['bandit', -46, -2, {}],
     ['cowboy', -57, 11.5, {}], ['bandit', -62, -6, { patrol: true }], ['westBoss', -68, -9, { yaw: 1.2, patrol: false }],
+    ['bandit', 15, -10.5, { y: 1, patrol: false, yaw: 0.3 }], ['cowboy', 36.4, -14, { y: 1, patrol: false, yaw: 0.2 }], ['bandit', -72.5, -23, { y: 0.5, patrol: false, yaw: 0.4 }],
+    ['bandit', 50, 40, {}], ['cowboy', 67, 43, { patrol: true }], ['cowboy', 59.2, 47.8, { y: 0.5, ambush: 9, yaw: Math.PI }],
+    ['bandit', -36.5, 39.4, { y: 0.5, patrol: false, yaw: Math.PI }], ['cowboy', -44, 31, {}],
   ];
   const tonicGeo = merge([gCyl(0.075, 0.085, 0.24, 0x8a4a14, [0, 0, 0], [0, 0, 0], 1, 8), gCyl(0.03, 0.06, 0.1, 0x8a4a14, [0, 0.17, 0], [0, 0, 0], 1, 8), gCyl(0.034, 0.034, 0.04, 0xc8a878, [0, 0.24, 0], [0, 0, 0], 1, 6), gCyl(0.088, 0.088, 0.1, 0xf0e8d0, [0, -0.01, 0], [0, 0, 0], 1, 8)]);
 
@@ -316,7 +429,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 72, z: 0.5, yaw: Math.PI / 2 },
     vista: { c: [0, 4, 0], r: 60, h: 4.5, a: 0.0, swing: 0.11, speed: 0.08, up: 1.5 },
-    enemies, pickups: [[27.5, -6.6, 1], [-9.5, -18.5, 1], [-31, 6.6, 1], [-50, 1, 1], [-58, -12, 1]],
+    enemies, pickups: [[27.5, -6.6, 1], [-9.5, -18.5, 1], [-31, 6.6, 1], [-50, 1, 1], [-58, -12, 1], [16.4, -17.2, 1], [41.3, -15.6, 1], [59.6, 48.6, 0.5], [-40.4, 39.6, 0.5], [-74.8, -26.6, 0.5]],
     dust: [0.72, 0.52, 0.34],
     makePickup: () => new THREE.Mesh(tonicGeo, M.flat),
     update(dt, t, g) {
