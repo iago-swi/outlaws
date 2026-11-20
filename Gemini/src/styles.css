@@ -29,6 +29,20 @@ body.theme-swiss {
   --border-glow: rgba(141, 228, 255, 0.45);
 }
 
+body.theme-greece {
+  --accent: #2cb8c9;
+  --accent-bright: #ffe184;
+  --accent-deep: #155c82;
+  --border-glow: rgba(44, 184, 201, 0.5);
+}
+
+body.theme-scandinavia {
+  --accent: #36d99a;
+  --accent-bright: #9fffe0;
+  --accent-deep: #124a4a;
+  --border-glow: rgba(54, 217, 154, 0.5);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -81,6 +95,58 @@ html, body {
   background: radial-gradient(circle, rgba(255, 224, 140, 0.18), transparent 65%);
   opacity: 0;
   transition: opacity 0.08s ease-out;
+}
+
+/* ---------------- Hidden Practice Mode (PAX) Visual Cues ---------------- */
+#pax-badge {
+  position: fixed;
+  top: 12px;
+  right: 24px;
+  z-index: 65;
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px 5px 9px;
+  border-radius: 999px;
+  background: rgba(14, 11, 8, 0.72);
+  border: 1.5px solid var(--accent);
+  color: var(--accent-bright);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 10px var(--border-glow);
+}
+
+.pax-olive {
+  width: 24px;
+  height: 13px;
+  color: var(--accent-bright);
+  flex-shrink: 0;
+}
+
+body.pax-active .hud-top-right {
+  top: 52px;
+}
+
+body.pax-active .health-fill {
+  background: linear-gradient(90deg, #6db87c, #9ee0a8, #c8f5cf);
+}
+
+.end-practice-note {
+  display: inline-block;
+  margin: 4px 0 8px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  background: rgba(158, 224, 168, 0.14);
+  border: 1px solid #9ee0a8;
+  color: #c8f5cf;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
 }
 
 /* ---------------- Vintage Brass Sniper Scope ---------------- */
@@ -459,11 +525,27 @@ html, body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 8px;
   font-size: 12px;
-  letter-spacing: 2px;
+  letter-spacing: 1.4px;
   font-weight: 800;
   color: var(--accent-bright);
+  margin-bottom: 3px;
+}
+
+.hud-hero-perk {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: rgba(244, 230, 204, 0.78);
+  text-transform: uppercase;
   margin-bottom: 6px;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+
+.hud-hero-perk.regen-active {
+  color: #7bffb1;
+  text-shadow: 0 0 10px rgba(84, 255, 152, 0.75);
 }
 
 .bar-track {
@@ -644,25 +726,25 @@ html, body {
 .title-content {
   position: relative;
   z-index: 2;
-  width: min(1080px, 94vw);
+  width: min(1200px, 95vw);
   text-align: center;
-  padding: 20px;
+  padding: 14px 18px;
 }
 
 .title-eyebrow {
-  font-size: 12px;
-  letter-spacing: 4.5px;
+  font-size: 11px;
+  letter-spacing: 4px;
   color: var(--accent-bright);
   font-weight: 800;
   text-shadow: 0 2px 8px rgba(0,0,0,0.9);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .title-logo {
   font-family: var(--font-display);
-  font-size: clamp(54px, 8vw, 96px);
+  font-size: clamp(46px, 6.8vw, 82px);
   font-weight: 900;
-  letter-spacing: 14px;
+  letter-spacing: 12px;
   line-height: 0.96;
   background: linear-gradient(180deg, #fff5dc 0%, #f2b755 52%, #b54e1d 100%);
   -webkit-background-clip: text;
@@ -673,19 +755,19 @@ html, body {
 
 .title-subtitle {
   font-family: var(--font-display);
-  font-size: 18px;
-  letter-spacing: 9px;
+  font-size: 16px;
+  letter-spacing: 8px;
   color: #f4e6cc;
-  margin-top: 6px;
-  margin-bottom: 28px;
+  margin-top: 4px;
+  margin-bottom: 18px;
   text-shadow: 0 2px 10px #000;
 }
 
 .level-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .level-card {
@@ -694,7 +776,7 @@ html, body {
   background: rgba(18, 12, 9, 0.74);
   border: 1.5px solid rgba(255, 232, 194, 0.22);
   border-radius: 6px;
-  padding: 18px 20px;
+  padding: 14px 14px;
   color: var(--paper);
   cursor: pointer;
   backdrop-filter: blur(8px);
@@ -715,33 +797,33 @@ html, body {
 }
 
 .card-badge {
-  font-size: 11px;
-  letter-spacing: 2.5px;
+  font-size: 10px;
+  letter-spacing: 2px;
   font-weight: 800;
   color: var(--accent-bright);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .card-title {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
   color: #fff;
 }
 
 .card-region {
-  font-size: 12px;
-  letter-spacing: 1.5px;
+  font-size: 11px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--accent);
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-weight: 700;
 }
 
 .card-desc {
-  font-size: 13px;
-  line-height: 1.48;
+  font-size: 12px;
+  line-height: 1.42;
   color: rgba(244, 230, 204, 0.84);
 }
 
@@ -862,77 +944,279 @@ html, body {
   margin-right: 4px;
 }
 
-/* ---------------- Comic Intro Card ---------------- */
+/* ---------------- Hero Selection Screen (Live 3D Stage + Cards) ---------------- */
 #intro-card {
-  background: rgba(10, 7, 5, 0.74);
-  backdrop-filter: blur(6px);
+  background: radial-gradient(ellipse at 28% 50%, rgba(12, 8, 6, 0.08) 0%, rgba(10, 7, 5, 0.62) 56%, rgba(10, 7, 5, 0.84) 100%);
+  padding: 20px 28px;
 }
 
-.comic-frame {
-  width: min(680px, 90vw);
-  background: linear-gradient(155deg, rgba(28, 19, 13, 0.96), rgba(14, 10, 7, 0.97));
-  border: 3px solid var(--accent);
-  box-shadow: 0 0 0 6px #120c08, 0 0 0 8px rgba(255, 232, 194, 0.25), 0 24px 64px rgba(0, 0, 0, 0.9);
-  padding: 36px 40px;
-  text-align: center;
-  border-radius: 4px;
+.hero-select-shell {
+  width: min(1140px, 95vw);
+  min-height: min(600px, 84vh);
+  display: grid;
+  grid-template-columns: minmax(300px, 0.92fr) minmax(380px, 1.08fr);
+  gap: 24px;
+  align-items: stretch;
 }
 
-.comic-act {
-  font-size: 12px;
-  letter-spacing: 4px;
+.hero-stage-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 22px 24px;
+  border: 2px solid var(--border-glow);
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(16, 11, 8, 0.72) 0%, rgba(16, 11, 8, 0.06) 28%, rgba(16, 11, 8, 0.06) 72%, rgba(14, 10, 7, 0.88) 100%);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.45), 0 18px 46px rgba(0, 0, 0, 0.65);
+  pointer-events: none;
+}
+
+.hero-stage-eyebrow {
+  font-size: 11px;
+  letter-spacing: 3.5px;
   color: var(--accent-bright);
   font-weight: 800;
   text-transform: uppercase;
+  text-shadow: 0 2px 6px #000;
 }
 
-.comic-title {
+.hero-stage-title {
   font-family: var(--font-display);
-  font-size: 40px;
+  font-size: clamp(26px, 3vw, 38px);
   font-weight: 900;
-  letter-spacing: 5px;
+  letter-spacing: 4px;
   color: #fff;
-  margin-top: 8px;
-  text-shadow: 0 4px 0 #1b0e08;
+  margin-top: 4px;
+  text-shadow: 0 3px 0 #1b0e08, 0 6px 18px rgba(0, 0, 0, 0.85);
 }
 
-.comic-divider {
-  width: 120px;
-  height: 3px;
-  margin: 18px auto;
-  background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+.hero-stage-viewport-label {
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(244, 230, 204, 0.7);
+  background: rgba(14, 10, 7, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.hero-stage-caption {
+  margin-top: auto;
+  text-align: left;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 232, 194, 0.2);
+}
+
+.hero-caption-name {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  color: #fff;
+  text-shadow: 0 2px 8px #000;
+}
+
+.hero-caption-bio {
+  font-size: 13px;
+  color: rgba(244, 230, 204, 0.88);
+  margin-top: 2px;
+}
+
+.hero-caption-strength {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 5px 11px;
+  border-radius: 4px;
+  background: rgba(22, 14, 9, 0.85);
+  border: 1px solid var(--accent);
+  color: var(--accent-bright);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.hero-picker-pane {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(155deg, rgba(24, 16, 11, 0.94), rgba(14, 10, 7, 0.96));
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 5px #120c08, 0 24px 64px rgba(0, 0, 0, 0.88);
+  padding: 24px 28px;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+}
+
+.hero-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.picker-eyebrow {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 3px;
+  color: var(--accent-bright);
+  font-weight: 900;
+}
+
+.picker-keys {
+  font-size: 11px;
+  color: rgba(244, 230, 204, 0.78);
+}
+
+.picker-keys span {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--accent-bright);
+  font-weight: 800;
 }
 
 .comic-quote {
   font-family: var(--font-display);
   font-style: italic;
-  font-size: 18px;
-  line-height: 1.6;
-  color: #f4e6cc;
-  margin-bottom: 22px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(244, 230, 204, 0.82);
+  margin: 10px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 232, 194, 0.14);
 }
 
-.comic-arsenal {
+.hero-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  margin-bottom: 18px;
+  flex: 1;
+}
+
+.hero-card {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-bottom: 28px;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  align-items: start;
   text-align: left;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 232, 194, 0.2);
+  border-radius: 5px;
+  padding: 13px 15px;
+  color: var(--paper);
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
 }
 
-.arsenal-pill {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  padding: 9px 13px;
+.hero-card:hover {
+  border-color: rgba(255, 215, 130, 0.65);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(3px);
+}
+
+.hero-card.active {
+  border-color: var(--accent-bright);
+  background: rgba(64, 32, 16, 0.72);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 16px var(--border-glow);
+  transform: translateX(5px);
+}
+
+body.theme-japan .hero-card.active {
+  background: rgba(66, 20, 24, 0.78);
+}
+
+body.theme-swiss .hero-card.active {
+  background: rgba(20, 44, 68, 0.82);
+}
+
+body.theme-greece .hero-card.active {
+  background: rgba(16, 56, 78, 0.82);
+}
+
+body.theme-scandinavia .hero-card.active {
+  background: rgba(14, 52, 54, 0.84);
+}
+
+.hero-card-key {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 4px;
-  font-size: 12px;
-  color: rgba(244, 230, 204, 0.9);
+  background: rgba(14, 10, 7, 0.78);
+  border: 1.5px solid rgba(255, 232, 194, 0.3);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--accent-bright);
 }
 
-.arsenal-pill b {
+.hero-card.active .hero-card-key {
+  background: var(--accent);
+  color: #160c06;
+  border-color: #fff2cf;
+}
+
+.hero-card-name {
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  color: #fff;
+}
+
+.hero-card-bio {
+  font-size: 13px;
+  color: rgba(244, 230, 204, 0.84);
+  margin-top: 2px;
+}
+
+.hero-card-strength {
+  margin-top: 7px;
+  font-size: 12px;
+  font-weight: 700;
   color: var(--accent-bright);
-  display: block;
-  margin-bottom: 2px;
+}
+
+.hero-card-strength span {
+  display: inline-block;
+  padding: 2px 7px;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-glow);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.hero-picker-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hero-picker-actions .btn-primary-western {
+  flex: 1;
+}
+
+@media (max-width: 860px) {
+  .hero-select-shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .hero-stage-pane {
+    min-height: 260px;
+  }
 }
 
 /* ---------------- Modals (Pause / End) ---------------- */

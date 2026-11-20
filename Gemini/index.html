@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OUTLAWS: Three Horizons</title>
-  <script type="module" crossorigin src="./assets/index-BXzBtQCE.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-B3NEpCnZ.css">
+  <title>OUTLAWS: Five Horizons</title>
+  <script type="module" crossorigin src="./assets/index-8dSc5hJ3.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B6I36oae.css">
 </head>
 <body>
   <div id="game-container"></div>
@@ -24,6 +24,21 @@
   <!-- Damage & Low-Health Vignette -->
   <div id="damage-overlay"></div>
   <div id="hit-flash"></div>
+
+  <!-- Hidden Practice Mode Indicator (Visible on every screen ONLY while PAX is active) -->
+  <div id="pax-badge" class="hidden" aria-live="polite">
+    <svg class="pax-olive" viewBox="0 0 42 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M3 16 C12 14, 24 10, 38 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      <ellipse cx="12" cy="10" rx="4.2" ry="1.9" transform="rotate(-38 12 10)" fill="currentColor"/>
+      <ellipse cx="16" cy="15.5" rx="4.2" ry="1.9" transform="rotate(24 16 15.5)" fill="currentColor"/>
+      <ellipse cx="22" cy="7.2" rx="4.4" ry="1.9" transform="rotate(-34 22 7.2)" fill="currentColor"/>
+      <ellipse cx="26" cy="12.5" rx="4.2" ry="1.9" transform="rotate(24 26 12.5)" fill="currentColor"/>
+      <ellipse cx="32.5" cy="4.8" rx="4.2" ry="1.8" transform="rotate(-28 32.5 4.8)" fill="currentColor"/>
+      <circle cx="19" cy="11.2" r="1.6" fill="currentColor" opacity="0.85"/>
+      <circle cx="29" cy="8.2" r="1.5" fill="currentColor" opacity="0.85"/>
+    </svg>
+    <span>PAX</span>
+  </div>
 
   <!-- Crosshair & Hitmarker -->
   <div id="hud-crosshair" class="hidden">
@@ -81,9 +96,10 @@
     <div class="hud-bottom-left">
       <div class="hud-panel health-panel">
         <div class="hud-panel-label">
-          <span id="hud-hero-name">MARSHAL</span>
+          <span id="hud-hero-name">WYATT EARP</span>
           <span id="hud-hp-text">100 / 100</span>
         </div>
+        <div class="hud-hero-perk" id="hud-hero-perk">-25% DMG</div>
         <div class="bar-track health-track">
           <div class="bar-fill health-fill" id="hud-hp-bar"></div>
         </div>
@@ -122,26 +138,38 @@
     <div class="title-content">
       <div class="title-eyebrow">A MODERN TRIBUTE TO LUCASARTS' 1997 CLASSIC</div>
       <h1 class="title-logo">OUTLAWS</h1>
-      <div class="title-subtitle">THREE HORIZONS</div>
+      <div class="title-subtitle">FIVE HORIZONS</div>
 
       <div class="level-cards">
         <button class="level-card active" data-level="0">
           <div class="card-badge">ACT I • 1884</div>
           <div class="card-title">RED GULCH</div>
           <div class="card-region">Wild West Frontier</div>
-          <div class="card-desc">Dusty saloon streets, wooden corrals, desert mesas. Duel outlaw cowboys &amp; Mexican banditos with revolver, shotgun, scoped rifle &amp; dynamite.</div>
+          <div class="card-desc">Dusty saloon streets, wooden corrals &amp; desert mesas. Duel cowboys &amp; banditos as Wyatt Earp, Calamity Jane, or Billy the Kid.</div>
         </button>
         <button class="level-card" data-level="1">
           <div class="card-badge">ACT II • 1603</div>
           <div class="card-title">KYOTO MIST</div>
           <div class="card-region">Feudal Japan</div>
-          <div class="card-desc">Towering bamboo groves, vermilion Shinto shrines, zen gardens &amp; sakura blossoms. Battle shadow ninjas &amp; rōnin with katana, yumi bow, shuriken &amp; matchlock.</div>
+          <div class="card-desc">Bamboo groves, Torii gates, zen gardens &amp; sakura blossoms. Fight ninjas &amp; rōnin as Musashi, Tomoe Gozen, or Date Masamune.</div>
         </button>
         <button class="level-card" data-level="2">
           <div class="card-badge">ACT III • 1307</div>
           <div class="card-title">RÜTLI VALLEY</div>
           <div class="card-region">Medieval Switzerland</div>
-          <div class="card-desc">Snow-capped Alps, glacial lakes, roaring waterfalls &amp; timber barns. Fight Austrian Habsburg troops as Wilhelm Tell with heavy crossbow, halberd &amp; fire-pots.</div>
+          <div class="card-desc">Snow-capped Alps, glacial lake, waterfall &amp; timber barns. Battle Austrian troops as Wilhelm Tell, Winkelried, or Stauffacher.</div>
+        </button>
+        <button class="level-card" data-level="3">
+          <div class="card-badge">ACT IV • 480 BC</div>
+          <div class="card-title">AEGEAN ISLE</div>
+          <div class="card-region">Ancient Greece</div>
+          <div class="card-desc">White marble temples, turquoise sea, olive groves &amp; coastal triremes. Face Spartan warriors as Ulysses, Achilles, or Heracles.</div>
+        </button>
+        <button class="level-card" data-level="4">
+          <div class="card-badge">ACT V • 985 AD</div>
+          <div class="card-title">FJORD OF THE NORTH</div>
+          <div class="card-region">Scandinavia</div>
+          <div class="card-desc">Snowy cliffs, northern lights, palisades, longships &amp; Great Hall. Clash with rival Vikings as Erik the Red, Leif Erikson, or Ragnar Lothbrok.</div>
         </button>
       </div>
 
@@ -171,15 +199,33 @@
     </div>
   </div>
 
-  <!-- Comic-Book Illustrated Intro Intermission Card -->
+  <!-- Hero Selection Screen (Before Every Level, with Live 3D Hero Turntable!) -->
   <div id="intro-card" class="overlay-screen hidden">
-    <div class="comic-frame">
-      <div class="comic-act" id="comic-act">ACT I</div>
-      <h2 class="comic-title" id="comic-title">DUST &amp; RECKONING</h2>
-      <div class="comic-divider"></div>
-      <p class="comic-quote" id="comic-quote"></p>
-      <div class="comic-arsenal" id="comic-arsenal"></div>
-      <button id="btn-start-mission" class="btn-primary-western">DRAW WEAPON &amp; BEGIN ▶</button>
+    <div class="hero-select-shell">
+      <div class="hero-stage-pane">
+        <div class="hero-stage-eyebrow" id="comic-act">ACT I • 1884</div>
+        <h2 class="hero-stage-title" id="comic-title">RED GULCH</h2>
+        <div class="hero-stage-caption">
+          <div class="hero-caption-name" id="hero-preview-name">Wyatt Earp</div>
+          <div class="hero-caption-bio" id="hero-preview-bio">Lawman of Tombstone, 1881.</div>
+          <div class="hero-caption-strength" id="hero-preview-strength">Takes 25% less damage from enemy fire.</div>
+        </div>
+      </div>
+
+      <div class="hero-picker-pane">
+        <div class="hero-picker-header">
+          <div class="picker-eyebrow">CHOOSE YOUR HERO</div>
+          <div class="picker-keys"><span>[1]</span> <span>[2]</span> <span>[3]</span> Select &nbsp;•&nbsp; <span>[ENTER]</span> Begin</div>
+        </div>
+        <p class="comic-quote" id="comic-quote"></p>
+
+        <div class="hero-cards-list" id="hero-cards-list" role="radiogroup" aria-label="Select Hero"></div>
+
+        <div class="hero-picker-actions">
+          <button id="btn-start-mission" class="btn-primary-western">DRAW WEAPON &amp; BEGIN ▶</button>
+          <button id="btn-hero-back" class="btn-secondary-western">← LEVELS</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -191,6 +237,7 @@
       <div class="modal-buttons">
         <button id="btn-resume" class="btn-primary-western">RESUME</button>
         <button id="btn-restart" class="btn-secondary-western">RESTART LEVEL</button>
+        <button id="btn-pause-change-hero" class="btn-secondary-western">CHANGE HERO</button>
         <button id="btn-toggle-audio" class="btn-secondary-western">SOUND: ON</button>
         <button id="btn-main-menu" class="btn-secondary-western">CHANGE LEVEL / MAIN MENU</button>
       </div>
@@ -202,11 +249,13 @@
     <div class="modal-panel end-panel">
       <div class="comic-act" id="end-eyebrow">STAGE CLEARED</div>
       <h2 class="modal-title" id="end-title">JUSTICE SERVED</h2>
+      <div id="end-practice-note" class="end-practice-note hidden">Achieved in Practice Mode (PAX)</div>
       <p class="end-summary" id="end-summary"></p>
       <div class="end-stats" id="end-stats"></div>
       <div class="modal-buttons">
         <button id="btn-next-level" class="btn-primary-western">NEXT HORIZON ▶</button>
         <button id="btn-end-restart" class="btn-secondary-western">PLAY AGAIN</button>
+        <button id="btn-end-change-hero" class="btn-secondary-western">CHANGE HERO</button>
         <button id="btn-end-menu" class="btn-secondary-western">MAIN MENU</button>
       </div>
     </div>

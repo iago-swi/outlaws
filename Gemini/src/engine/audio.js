@@ -144,6 +144,57 @@ export class SoundEngine {
           this._alphorn(hNote, 1.25, 0.2, now);
         }
       }, 360);
+    } else if (theme === 'greece') {
+      // Ancient Greek Dorian / Phrygian lyre arpeggios + warm aulos flute
+      const lyre = [293.66, 329.63, 349.23, 440.0, 493.88, 440.0, 349.23, 329.63];
+      const bass = [146.83, 146.83, 164.81, 146.83, 130.81, 146.83, 164.81, 146.83];
+      const aulos = [587.33, 659.25, 587.33, 523.25, 440.0, 0, 523.25, 587.33];
+
+      this.musicTimer = setInterval(() => {
+        if (!this.ctx || this.muted) return;
+        const s = this.step++;
+        const now = this.ctx.currentTime;
+
+        // Kithara bass drone pulse
+        if (s % 2 === 0) {
+          this._tone(bass[(s >> 1) % bass.length], 'triangle', 0.42, 0.2, now, this.musicGain, 900);
+        }
+        // Bright plucked lyre string
+        this._tone(lyre[s % lyre.length], 'triangle', 0.34, 0.16, now, this.musicGain, 2600);
+
+        // Aulos reed melody
+        if (s % 4 === 2) {
+          const f = aulos[(s >> 2) % aulos.length];
+          if (f > 0) this._whistle(f, 0.9, 0.1, now);
+        }
+      }, 310);
+    } else if (theme === 'scandinavia') {
+      // Haunting Nordic D-minor tagelharpa bowed drone + low fjord horn + frame drum
+      const drone = [73.42, 73.42, 110.0, 73.42, 65.41, 73.42, 87.31, 73.42];
+      const fiddle = [293.66, 349.23, 329.63, 293.66, 261.63, 293.66, 440.0, 392.0];
+
+      this.musicTimer = setInterval(() => {
+        if (!this.ctx || this.muted) return;
+        const s = this.step++;
+        const now = this.ctx.currentTime;
+
+        // Deep Nordic frame drum beat
+        if (s % 4 === 0 || s % 8 === 6) {
+          this._taiko(now, s % 8 === 0 ? 0.3 : 0.18);
+        }
+        // Bowed tagelharpa low drone
+        if (s % 2 === 0) {
+          this._tone(drone[(s >> 1) % drone.length], 'sawtooth', 0.65, 0.15, now, this.musicGain, 480);
+        }
+        // Sparse Nordic winter melody
+        if (s % 2 === 1) {
+          this._tone(fiddle[(s >> 1) % fiddle.length], 'triangle', 0.48, 0.14, now, this.musicGain, 1500);
+        }
+        // Distant Viking warhorn every 8 beats
+        if (s % 8 === 0) {
+          this._alphorn(146.83, 1.5, 0.16, now);
+        }
+      }, 400);
     }
   }
 
@@ -324,6 +375,20 @@ export class SoundEngine {
       g.connect(this.sfxGain);
       osc.start(now);
       osc.stop(now + 0.19);
+    } else if (kind === 'javelin' || kind === 'axe_throw') {
+      const heavy = kind === 'axe_throw';
+      this._noiseBurst(heavy ? 0.17 : 0.13, heavy ? 0.52 : 0.45, heavy ? 1500 : 2500, 'bandpass', 1.5);
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(heavy ? 240 : 480, now);
+      osc.frequency.exponentialRampToValueAtTime(heavy ? 95 : 170, now + 0.14);
+      g.gain.setValueAtTime(0.38, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      osc.connect(g);
+      g.connect(this.sfxGain);
+      osc.start(now);
+      osc.stop(now + 0.17);
     } else if (kind === 'throw') {
       this._noiseBurst(0.14, 0.35, 1600, 'bandpass');
     }

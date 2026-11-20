@@ -272,3 +272,58 @@ export function createWaterfallMesh(width, height) {
   const mesh = new THREE.Mesh(geo, mat);
   return { mesh, uniforms };
 }
+
+/**
+ * Animated Northern Lights (Aurora Borealis) GLSL Curtain for Scandinavia
+ */
+export function createAuroraMesh(width = 240, height = 65) {
+  const geo = new THREE.PlaneGeometry(width, height, 64, 12);
+  const uniforms = {
+    uTime: { value: 0 }
+  };
+
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms,
+    vertexShader: /* glsl */ `
+      uniform float uTime;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        float wave = sin(uv.x * 9.0 + uTime * 0.55) * 9.0 + cos(uv.x * 16.0 - uTime * 0.35) * 4.5;
+        pos.z += wave;
+        pos.y += sin(uv.x * 6.0 + uTime * 0.4) * 3.0;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */ `
+      uniform float uTime;
+      varying vec2 vUv;
+
+      void main() {
+        float bands = sin(vUv.x * 28.0 + uTime * 0.9) * 0.5 + 0.5;
+        float rays = pow(sin(vUv.x * 54.0 - uTime * 1.3) * 0.5 + 0.5, 2.0);
+        float vertical = smoothstep(0.0, 0.25, vUv.y) * smoothstep(1.0, 0.22, vUv.y);
+        float horizFade = smoothstep(0.0, 0.14, vUv.x) * smoothstep(1.0, 0.86, vUv.x);
+
+        vec3 greenCol = vec3(0.16, 0.96, 0.58);
+        vec3 tealCol  = vec3(0.12, 0.78, 0.92);
+        vec3 violetCol = vec3(0.55, 0.24, 0.88);
+
+        vec3 col = mix(greenCol, tealCol, smoothstep(0.2, 0.65, vUv.y));
+        col = mix(col, violetCol, smoothstep(0.6, 0.98, vUv.y));
+
+        float intensity = (0.35 + 0.45 * bands + 0.45 * rays) * vertical * horizFade;
+        gl_FragColor = vec4(col * intensity * 1.25, intensity * 0.85);
+      }
+    `
+  });
+
+  const mesh = new THREE.Mesh(geo, mat);
+  return { mesh, uniforms };
+}
+

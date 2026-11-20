@@ -21,17 +21,21 @@ export class ParticleSystem {
    */
   initAmbient(mode, bounds) {
     this.ambientBounds = bounds;
-    const count = mode === 'sakura' ? 520 : mode === 'alpine' ? 420 : 340;
+    const count = mode === 'sakura' ? 520 : mode === 'snow' ? 620 : mode === 'alpine' ? 420 : 340;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     this.ambientVel = [];
 
     const c1 = new THREE.Color(
       mode === 'sakura' ? 0xffb7cf :
+      mode === 'snow'   ? 0xffffff :
+      mode === 'aegean' ? 0xfff4c2 :
       mode === 'alpine' ? 0xe8f9ff : 0xffd28a
     );
     const c2 = new THREE.Color(
       mode === 'sakura' ? 0xffe4ec :
+      mode === 'snow'   ? 0xcbe8ff :
+      mode === 'aegean' ? 0x99f0ff :
       mode === 'alpine' ? 0xfff5cc : 0xe39e54
     );
 
@@ -56,7 +60,14 @@ export class ParticleSystem {
           vz: 0.35 + Math.random() * 0.6,
           phase: Math.random() * Math.PI * 2
         });
-      } else if (mode === 'alpine') {
+      } else if (mode === 'snow') {
+        this.ambientVel.push({
+          vx: 0.5 + Math.random() * 0.9,
+          vy: -(1.1 + Math.random() * 1.2),
+          vz: -0.4 + Math.random() * 0.8,
+          phase: Math.random() * Math.PI * 2
+        });
+      } else if (mode === 'alpine' || mode === 'aegean') {
         this.ambientVel.push({
           vx: 0.4 + Math.random() * 0.7,
           vy: -0.15 + Math.random() * 0.35,
@@ -79,10 +90,10 @@ export class ParticleSystem {
     geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
     const mat = new THREE.PointsMaterial({
-      size: mode === 'sakura' ? 0.26 : mode === 'alpine' ? 0.19 : 0.16,
+      size: mode === 'sakura' ? 0.26 : mode === 'snow' ? 0.22 : mode === 'alpine' ? 0.19 : 0.16,
       vertexColors: true,
       transparent: true,
-      opacity: mode === 'sakura' ? 0.9 : 0.68,
+      opacity: mode === 'sakura' || mode === 'snow' ? 0.9 : 0.68,
       depthWrite: false
     });
 

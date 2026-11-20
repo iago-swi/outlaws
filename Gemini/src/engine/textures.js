@@ -290,6 +290,49 @@ export function getGroundTexture(theme = 'desert', repeatX = 24, repeatY = 24) {
         bctx.fillRect(x + 3, y + 3, cw - 6, ch - 6);
       }
     }
+  } else if (theme === 'greek_sand') {
+    ctx.fillStyle = '#e5cf9c';
+    ctx.fillRect(0, 0, size, size);
+    bctx.fillStyle = '#808080';
+    bctx.fillRect(0, 0, size, size);
+
+    for (let i = 0; i < 420; i++) {
+      const x = Math.random() * size;
+      const y = Math.random() * size;
+      const r = 8 + Math.random() * 28;
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(248, 234, 198, 0.24)' : 'rgba(196, 162, 104, 0.16)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 1.5, r * 0.65, 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      bctx.fillStyle = Math.random() > 0.5 ? 'rgba(190,190,190,0.16)' : 'rgba(70,70,70,0.16)';
+      bctx.beginPath();
+      bctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
+      bctx.fill();
+    }
+  } else if (theme === 'arctic_snow') {
+    ctx.fillStyle = '#e6eff8';
+    ctx.fillRect(0, 0, size, size);
+    bctx.fillStyle = '#828282';
+    bctx.fillRect(0, 0, size, size);
+
+    for (let i = 0; i < 380; i++) {
+      const x = Math.random() * size;
+      const y = Math.random() * size;
+      const r = 10 + Math.random() * 34;
+      ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255, 255, 255, 0.35)' : 'rgba(176, 202, 230, 0.22)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 1.4, r * 0.7, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      bctx.fillStyle = Math.random() > 0.5 ? 'rgba(210,210,210,0.18)' : 'rgba(65,65,65,0.18)';
+      bctx.beginPath();
+      bctx.arc(x, y, r * 0.45, 0, Math.PI * 2);
+      bctx.fill();
+    }
+    // Crisp frost glints
+    for (let i = 0; i < 120; i++) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2);
+    }
   }
 
   const res = {
@@ -451,6 +494,32 @@ export function getRoofTileTexture(variant = 'japan', repeatX = 4, repeatY = 2) 
         bctx.beginPath();
         bctx.arc(x + cw / 2, y + ch / 2, cw * 0.42, 0, Math.PI * 2);
         bctx.fill();
+      }
+    }
+  } else if (variant === 'terracotta') {
+    ctx.fillStyle = '#a8472a';
+    ctx.fillRect(0, 0, size, size);
+    bctx.fillStyle = '#404040';
+    bctx.fillRect(0, 0, size, size);
+
+    const cols = 10;
+    const rows = 9;
+    const cw = size / cols;
+    const ch = size / rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = c * cw;
+        const y = r * ch;
+        const grad = ctx.createLinearGradient(x, y, x + cw, y);
+        grad.addColorStop(0, '#8c351e');
+        grad.addColorStop(0.5, '#d46b44');
+        grad.addColorStop(1, '#7a2b17');
+        ctx.fillStyle = grad;
+        ctx.fillRect(x + 2, y + 2, cw - 4, ch - 3);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fillRect(x, y + ch - 4, cw, 4);
+        bctx.fillStyle = '#d0d0d0';
+        bctx.fillRect(x + 2, y + 2, cw - 4, ch - 4);
       }
     }
   } else {
@@ -754,3 +823,170 @@ export function createWantedPosterTexture() {
   cache.set(key, tex);
   return tex;
 }
+
+export function getMarbleTexture(repeatX = 2, repeatY = 2) {
+  const key = `marble_${repeatX}_${repeatY}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 512;
+  const col = makeCanvas(size, size);
+  const ctx = col.getContext('2d');
+  const bump = makeCanvas(size, size);
+  const bctx = bump.getContext('2d');
+
+  ctx.fillStyle = '#f5f1e8';
+  ctx.fillRect(0, 0, size, size);
+  bctx.fillStyle = '#909090';
+  bctx.fillRect(0, 0, size, size);
+
+  // Delicate Pentelic marble veins
+  for (let v = 0; v < 26; v++) {
+    ctx.strokeStyle = v % 3 === 0 ? 'rgba(186, 174, 152, 0.26)' : 'rgba(155, 162, 172, 0.2)';
+    ctx.lineWidth = 1.5 + Math.random() * 3.5;
+    ctx.beginPath();
+    let y = Math.random() * size;
+    ctx.moveTo(0, y);
+    for (let x = 0; x <= size; x += 32) {
+      y += Math.sin(x * 0.02 + v) * 8 + (Math.random() - 0.5) * 6;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+
+  // Subtle ashlar block joints
+  ctx.strokeStyle = 'rgba(140, 128, 108, 0.35)';
+  ctx.lineWidth = 2;
+  bctx.strokeStyle = '#383838';
+  bctx.lineWidth = 3;
+  for (let r = 0; r < 4; r++) {
+    const y = (r / 4) * size;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+    bctx.beginPath(); bctx.moveTo(0, y); bctx.lineTo(size, y); bctx.stroke();
+  }
+
+  const res = {
+    map: finalizeTexture(col, repeatX, repeatY, true),
+    bumpMap: finalizeTexture(bump, repeatX, repeatY, false)
+  };
+  cache.set(key, res);
+  return res;
+}
+
+export function createSpartanShieldTexture() {
+  const key = 'spartan_shield_lambda';
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 256;
+  const c = makeCanvas(size, size);
+  const ctx = c.getContext('2d');
+
+  // Gleaming brushed bronze disc
+  const grad = ctx.createRadialGradient(128, 128, 12, 128, 128, 126);
+  grad.addColorStop(0, '#f3ca6b');
+  grad.addColorStop(0.7, '#c78f34');
+  grad.addColorStop(0.92, '#8c5d19');
+  grad.addColorStop(1, '#5e3c0e');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(128, 128, 126, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Outer hammered rim
+  ctx.strokeStyle = '#ffe394';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.arc(128, 128, 114, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Bold Crimson Spartan Lambda (Λ)
+  ctx.strokeStyle = '#9e1919';
+  ctx.lineWidth = 24;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'miter';
+  ctx.beginPath();
+  ctx.moveTo(64, 198);
+  ctx.lineTo(128, 54);
+  ctx.lineTo(192, 198);
+  ctx.stroke();
+
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}
+
+export function createVikingShieldTexture(variant = 0) {
+  const key = `viking_shield_${variant}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 256;
+  const c = makeCanvas(size, size);
+  const ctx = c.getContext('2d');
+
+  const pairs = [
+    ['#a82424', '#e8dec8'],
+    ['#204b7a', '#e8dec8'],
+    ['#1e523a', '#d9a438'],
+    ['#8c2420', '#d9a438']
+  ];
+  const [c1, c2] = pairs[variant % pairs.length];
+
+  // Quartered / spoked historical Nordic round shield
+  for (let i = 0; i < 8; i++) {
+    ctx.fillStyle = i % 2 === 0 ? c1 : c2;
+    ctx.beginPath();
+    ctx.moveTo(128, 128);
+    ctx.arc(128, 128, 122, (i * Math.PI) / 4, ((i + 1) * Math.PI) / 4);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // Rawhide/iron rim
+  ctx.strokeStyle = '#4a3a2a';
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.arc(128, 128, 118, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Center iron shield boss (umbo)
+  const boss = ctx.createRadialGradient(122, 122, 4, 128, 128, 30);
+  boss.addColorStop(0, '#eef3f7');
+  boss.addColorStop(0.6, '#7a8490');
+  boss.addColorStop(1, '#2b3036');
+  ctx.fillStyle = boss;
+  ctx.beginPath();
+  ctx.arc(128, 128, 28, 0, Math.PI * 2);
+  ctx.fill();
+
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}
+
+export function createSailTexture(variant = 'greece') {
+  const key = `sail_${variant}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const c = makeCanvas(256, 256);
+  const ctx = c.getContext('2d');
+  const stripes = 6;
+  const sw = 256 / stripes;
+  const colA = variant === 'greece' ? '#f5efe2' : '#f2e8d5';
+  const colB = variant === 'greece' ? '#2366a8' : '#a82222';
+  for (let i = 0; i < stripes; i++) {
+    ctx.fillStyle = i % 2 === 0 ? colA : colB;
+    ctx.fillRect(i * sw, 0, sw + 1, 256);
+  }
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 252, 252);
+
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}
+

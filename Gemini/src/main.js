@@ -8,15 +8,20 @@ import { CollisionWorld } from './engine/collision.js';
 import { ParticleSystem } from './engine/particles.js';
 import { SoundEngine } from './engine/audio.js';
 import { ERA_WEAPONS, buildWeaponViewmodel } from './entities/weapons.js';
+import { ERA_HEROES, getHeroById, buildHeroFigure } from './entities/heroes.js';
 import { Enemy } from './entities/enemies.js';
 import { LEVEL1_META, buildLevel1 } from './levels/level1_west.js';
 import { LEVEL2_META, buildLevel2 } from './levels/level2_japan.js';
 import { LEVEL3_META, buildLevel3 } from './levels/level3_swiss.js';
+import { LEVEL4_META, buildLevel4 } from './levels/level4_greece.js';
+import { LEVEL5_META, buildLevel5 } from './levels/level5_scandinavia.js';
 
 const LEVELS = [
   { meta: LEVEL1_META, builder: buildLevel1 },
   { meta: LEVEL2_META, builder: buildLevel2 },
-  { meta: LEVEL3_META, builder: buildLevel3 }
+  { meta: LEVEL3_META, builder: buildLevel3 },
+  { meta: LEVEL4_META, builder: buildLevel4 },
+  { meta: LEVEL5_META, builder: buildLevel5 }
 ];
 
 const DIFFICULTY = {
@@ -53,6 +58,19 @@ class OutlawsGame {
     this.muzzleLight.position.set(0.25, -0.1, -0.9);
     this.camera.add(this.muzzleLight);
 
+    // Live 3D Hero Turntable Stage attached to camera for the Hero Selection Screen
+    this.heroStage = new THREE.Group();
+    this.heroStage.visible = false;
+    this.heroFigureHolder = new THREE.Group();
+    this.heroStage.add(this.heroFigureHolder);
+    const stageKey = new THREE.PointLight(0xfff1d6, 9, 10, 1.4);
+    stageKey.position.set(1.4, 2.2, 2.2);
+    const stageRim = new THREE.PointLight(0x9ecaff, 4.5, 10, 1.5);
+    stageRim.position.set(-1.8, 1.9, -1.6);
+    this.heroStage.add(stageKey, stageRim);
+    this.camera.add(this.heroStage);
+    this.heroStagePop = 1;
+
     // Post-Processing: Subtle Selective Bloom for glowing sunsets, lanterns, fire & snow
     this.composer = new EffectComposer(this.renderer);
     this.renderPass = new RenderPass(this.scene, this.camera);
@@ -71,6 +89,21 @@ class OutlawsGame {
     this.state = 'title'; // 'title' | 'intro' | 'playing' | 'paused' | 'ended'
     this.levelIndex = 0;
     this.difficultyKey = 'bad';
+    // Remember chosen hero per level (preserved on retry after death!)
+    this.selectedHeroIds = {
+      west: ERA_HEROES.west[0].id,
+      japan: ERA_HEROES.japan[0].id,
+      swiss: ERA_HEROES.swiss[0].id,
+      greece: ERA_HEROES.greece[0].id,
+      scandinavia: ERA_HEROES.scandinavia[0].id
+    };
+    this.activeHero = ERA_HEROES.west[0];
+    this.timeSinceLastDamage = 999;
+
+    // Hidden Practice Mode ("PAX") — session-only in memory, never saved
+    this.practiceMode = false;
+    this.usedPracticeThisRun = false;
+    this.paxBuffer = '';
     this.clock = new THREE.Clock();
     this.elapsed = 0;
 
@@ -127,24 +160,33 @@ class OutlawsGame {
     this._cacheDom();
     this._bindEvents();
 
-    // Support URL params / hash for direct level selection (#west, #japan, #swiss or ?level=0..2&autostart=1)
+    // Support URL params / hash for direct level selection (#west, #japan, #swiss, #greece, #scandinavia)
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    const mapIdx = { west: 0, japan: 1, swiss: 2 };
+    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4 };
     let initialLevel = 0;
     if (hash in mapIdx) initialLevel = mapIdx[hash];
     else if (params.has('level')) {
       const lv = params.get('level').toLowerCase();
-      initialLevel = lv in mapIdx ? mapIdx[lv] : Math.max(0, Math.min(2, parseInt(lv, 10) || 0));
+      initialLevel = lv in mapIdx ? mapIdx[lv] : Math.max(0, Math.min(LEVELS.length - 1, parseInt(lv, 10) || 0));
     }
 
     this.loadLevel(initialLevel, true);
     document.querySelectorAll('.level-card').forEach((c, i) => c.classList.toggle('active', i === initialLevel));
-    if (params.get('autostart') === '1') {
+    if (params.has('hero')) {
+      const eraId = LEVELS[initialLevel].meta.id;
+      const h = getHeroById(eraId, params.get('hero').toLowerCase());
+      this.selectedHeroIds[eraId] = h.id;
+      this.activeHero = h;
+    }
+    if (params.get('select') === '1') {
+      this.showIntroCard();
+    } else if (params.get('autostart') === '1') {
       this.startMission();
       // Hide transient callout banner cleanly when autostarting for clean framing
       this.dom.callout.classList.add('hidden');
     }
+    window.__outlawsGame = this;
     this._loop();
   }
 
@@ -161,6 +203,7 @@ class OutlawsGame {
       scopeLabel: document.getElementById('scope-label'),
       damageOverlay: document.getElementById('damage-overlay'),
       hitFlash: document.getElementById('hit-flash'),
+      paxBadge: document.getElementById('pax-badge'),
       callout: document.getElementById('callout-banner'),
       pickupToast: document.getElementById('pickup-toast'),
 
@@ -173,6 +216,7 @@ class OutlawsGame {
       bossBarFill: document.getElementById('boss-bar-fill'),
       scoreVal: document.getElementById('hud-score'),
       heroName: document.getElementById('hud-hero-name'),
+      heroPerk: document.getElementById('hud-hero-perk'),
       hpText: document.getElementById('hud-hp-text'),
       hpBar: document.getElementById('hud-hp-bar'),
       staminaBar: document.getElementById('hud-stamina-bar'),
@@ -186,12 +230,16 @@ class OutlawsGame {
       comicAct: document.getElementById('comic-act'),
       comicTitle: document.getElementById('comic-title'),
       comicQuote: document.getElementById('comic-quote'),
-      comicArsenal: document.getElementById('comic-arsenal'),
+      heroCardsList: document.getElementById('hero-cards-list'),
+      heroPreviewName: document.getElementById('hero-preview-name'),
+      heroPreviewBio: document.getElementById('hero-preview-bio'),
+      heroPreviewStrength: document.getElementById('hero-preview-strength'),
 
       pauseLevelName: document.getElementById('pause-level-name'),
       btnToggleAudio: document.getElementById('btn-toggle-audio'),
       endEyebrow: document.getElementById('end-eyebrow'),
       endTitle: document.getElementById('end-title'),
+      endPracticeNote: document.getElementById('end-practice-note'),
       endSummary: document.getElementById('end-summary'),
       endStats: document.getElementById('end-stats'),
       btnNextLevel: document.getElementById('btn-next-level')
@@ -231,16 +279,22 @@ class OutlawsGame {
       this.showIntroCard();
     });
 
-    // Start Mission from Intro Card -> Pointer Lock & Play!
+    // Start Mission from Hero Selection -> Pointer Lock & Play!
     document.getElementById('btn-start-mission').addEventListener('click', () => {
       this.startMission();
+    });
+
+    document.getElementById('btn-hero-back').addEventListener('click', () => {
+      this.returnToTitle();
     });
 
     // Pause / End screen controls
     document.getElementById('btn-resume').addEventListener('click', () => this.resumeGame());
     document.getElementById('btn-restart').addEventListener('click', () => this.restartLevel());
+    document.getElementById('btn-pause-change-hero').addEventListener('click', () => this.showIntroCard());
     document.getElementById('btn-main-menu').addEventListener('click', () => this.returnToTitle());
     document.getElementById('btn-end-restart').addEventListener('click', () => this.restartLevel());
+    document.getElementById('btn-end-change-hero').addEventListener('click', () => this.showIntroCard());
     document.getElementById('btn-end-menu').addEventListener('click', () => this.returnToTitle());
     document.getElementById('btn-next-level').addEventListener('click', () => {
       const next = (this.levelIndex + 1) % LEVELS.length;
@@ -256,11 +310,46 @@ class OutlawsGame {
     // Keyboard Controls
     window.addEventListener('keydown', (e) => {
       this.keys[e.code] = true;
+
+      // Hidden Practice Mode sequence listener ("PAX", case-insensitive, works on every screen without disturbing play)
+      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key && e.key.length === 1) {
+        const ch = e.key.toLowerCase();
+        if (ch >= 'a' && ch <= 'z') {
+          this.paxBuffer = (this.paxBuffer + ch).slice(-3);
+          if (this.paxBuffer === 'pax') {
+            this.paxBuffer = '';
+            this.togglePracticeMode();
+          }
+        }
+      }
+
       if (e.code === 'KeyM') {
         const m = this.sound.toggleMute();
         this.dom.btnToggleAudio.textContent = m ? 'SOUND: OFF' : 'SOUND: ON';
         this.toast(m ? 'AUDIO MUTED' : 'AUDIO ENABLED');
       }
+
+      // Hero Selection keyboard navigation: 1, 2, 3 and Enter
+      if (this.state === 'intro') {
+        if (e.code === 'Digit1' || e.code === 'Numpad1') {
+          e.preventDefault();
+          this.selectHeroByIndex(0);
+        } else if (e.code === 'Digit2' || e.code === 'Numpad2') {
+          e.preventDefault();
+          this.selectHeroByIndex(1);
+        } else if (e.code === 'Digit3' || e.code === 'Numpad3') {
+          e.preventDefault();
+          this.selectHeroByIndex(2);
+        } else if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+          e.preventDefault();
+          this.startMission();
+        } else if (e.code === 'Escape') {
+          e.preventDefault();
+          this.returnToTitle();
+        }
+        return;
+      }
+
       if (this.state !== 'playing') return;
 
       if (e.code === 'Digit1') this.switchWeapon(0);
@@ -268,7 +357,7 @@ class OutlawsGame {
       if (e.code === 'Digit3') this.switchWeapon(2);
       if (e.code === 'Digit4') this.switchWeapon(3);
       if (e.code === 'KeyR') this.startReload();
-      if (e.code === 'KeyP') this.pauseGame();
+      if (e.code === 'Escape') this.pauseGame();
     });
 
     window.addEventListener('keyup', (e) => {
@@ -348,8 +437,9 @@ class OutlawsGame {
     this.levelIndex = index;
     const { meta, builder } = LEVELS[index];
 
-    // Apply era UI theme
+    // Apply era UI theme while preserving Practice Mode class if active
     document.body.className = meta.themeClass;
+    if (this.practiceMode) document.body.classList.add('pax-active');
 
     // Fresh collision & particle systems inside worldGroup
     this.collision = new CollisionWorld();
@@ -360,16 +450,22 @@ class OutlawsGame {
     this.pickups = built.pickups || [];
     this.tellApple = built.tellApple || null;
 
-    // Setup Player & Difficulty
+    // Setup Player, Difficulty & Chosen Hero Modifiers
     const diff = DIFFICULTY[this.difficultyKey];
+    const hero = getHeroById(meta.id, this.selectedHeroIds[meta.id]);
+    this.activeHero = hero;
+    const mods = hero.mods || {};
+    const effectiveMaxHp = Math.round(diff.playerHp * (mods.maxHpMult || 1));
+
     this.player.pos.copy(meta.spawnPos);
     this.player.vel.set(0, 0, 0);
     this.player.yaw = meta.spawnYaw;
     this.player.pitch = 0;
-    this.player.maxHp = diff.playerHp;
-    this.player.hp = diff.playerHp;
+    this.player.maxHp = effectiveMaxHp;
+    this.player.hp = effectiveMaxHp;
     this.player.stamina = 100;
     this.player.grounded = true;
+    this.timeSinceLastDamage = 999;
 
     this.stats = { score: 0, shots: 0, hits: 0, headshots: 0, kills: 0 };
 
@@ -384,25 +480,42 @@ class OutlawsGame {
       }
     }
 
-    // Build Era Weapons
+    // Build Era Weapons & Apply Active Hero Modifiers (fire rate, reload speed, damage, melee reach)
     const templates = ERA_WEAPONS[meta.id];
-    this.weapons = templates.map((w) => ({
-      ...w,
-      mag: w.magSize,
-      curReserve: w.reserve
-    }));
+    this.weapons = templates.map((w) => {
+      const ov = (mods.weaponOverrides && mods.weaponOverrides[w.id]) || {};
+      const fireRateMult = (w.kind === 'melee' && mods.meleeFireRateMult ? mods.meleeFireRateMult : 1)
+        * (mods.fireRateMult || 1)
+        * (ov.fireRateMult || 1);
+      const reloadTimeMult = (mods.reloadTimeMult || 1) * (ov.reloadTimeMult || 1);
+      const damageMult = (w.kind === 'melee' && mods.meleeDamageMult ? mods.meleeDamageMult : 1)
+        * (mods.damageMult || 1)
+        * (ov.damageMult || 1);
+      const rangeBonus = w.kind === 'melee' && mods.meleeRangeBonus ? mods.meleeRangeBonus : 0;
+
+      return {
+        ...w,
+        damage: Math.round(w.damage * damageMult),
+        fireRate: +(w.fireRate * fireRateMult).toFixed(3),
+        reloadTime: +(w.reloadTime * reloadTimeMult).toFixed(3),
+        range: w.range ? +(w.range + rangeBonus).toFixed(2) : w.range,
+        mag: w.magSize,
+        curReserve: w.reserve
+      };
+    });
     this.weaponMeshes = this.weapons.map((w) => {
       const m = buildWeaponViewmodel(w.id);
       m.visible = false;
       this.weaponHolder.add(m);
       return m;
     });
-    this.currentWeaponIdx = 0;
+    const startWepIdx = Math.min(this.weapons.length - 1, Math.max(0, hero.defaultWeaponIdx || 0));
+    this.currentWeaponIdx = startWepIdx;
     this.reloading = false;
     this.fireTimer = 0;
 
     if (!isPreviewOnly) {
-      this.weaponMeshes[0].visible = true;
+      this.weaponMeshes[startWepIdx].visible = true;
     }
 
     this._buildWeaponStripUI();
@@ -410,21 +523,82 @@ class OutlawsGame {
     this.dom.bossBarWrap.classList.add('hidden');
   }
 
+  selectHeroByIndex(idx) {
+    const eraId = LEVELS[this.levelIndex].meta.id;
+    const heroes = ERA_HEROES[eraId];
+    if (!heroes || idx < 0 || idx >= heroes.length) return;
+    const hero = heroes[idx];
+    this.selectedHeroIds[eraId] = hero.id;
+    this.activeHero = hero;
+
+    // Update Hero Card visual highlight
+    this.dom.heroCardsList.querySelectorAll('.hero-card').forEach((card, i) => {
+      const active = i === idx;
+      card.classList.toggle('active', active);
+      card.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
+
+    // Update Stage Caption
+    this.dom.heroPreviewName.textContent = hero.name;
+    this.dom.heroPreviewBio.textContent = hero.bio;
+    this.dom.heroPreviewStrength.textContent = hero.strengthDesc;
+
+    // Swap live 3D Hero Figure on the Turntable Stage!
+    while (this.heroFigureHolder.children.length > 0) {
+      this.heroFigureHolder.remove(this.heroFigureHolder.children[0]);
+    }
+    const fig = buildHeroFigure(hero.id);
+    this.heroFigureHolder.add(fig);
+    this.heroFigureHolder.rotation.y = 0.25;
+    this.heroStagePop = 0.82;
+  }
+
   showIntroCard() {
     this.state = 'intro';
+    this.setScope(false);
+    if (document.pointerLockElement) document.exitPointerLock();
+
     const meta = LEVELS[this.levelIndex].meta;
+    const heroes = ERA_HEROES[meta.id];
+    const currentId = this.selectedHeroIds[meta.id] || heroes[0].id;
+    const currentIdx = Math.max(0, heroes.findIndex((h) => h.id === currentId));
+
     this.dom.titleScreen.classList.add('hidden');
     this.dom.endScreen.classList.add('hidden');
     this.dom.pauseScreen.classList.add('hidden');
+    this.dom.hud.classList.add('hidden');
+    this.dom.crosshair.classList.add('hidden');
     this.dom.introCard.classList.remove('hidden');
 
     this.dom.comicAct.textContent = `${meta.act} — ${meta.subtitle}`;
     this.dom.comicTitle.textContent = meta.title;
     this.dom.comicQuote.textContent = meta.quote;
-    this.dom.comicArsenal.innerHTML = meta.arsenalSummary
-      .map(([name, desc]) => `<div class="arsenal-pill"><b>${name}</b>${desc}</div>`)
-      .join('');
 
+    // Populate the 3 Hero Selection Cards (Mouse hover + click + keyboard 1/2/3!)
+    this.dom.heroCardsList.innerHTML = heroes.map((h, i) => `
+      <button type="button" class="hero-card" data-hero-idx="${i}" role="radio" aria-checked="false">
+        <div class="hero-card-key">${i + 1}</div>
+        <div class="hero-card-body">
+          <div class="hero-card-name">${h.name}</div>
+          <div class="hero-card-bio">${h.bio}</div>
+          <div class="hero-card-strength"><span>${h.strengthLabel}</span>${h.strengthDesc}</div>
+        </div>
+      </button>
+    `).join('');
+
+    this.dom.heroCardsList.querySelectorAll('.hero-card').forEach((btn, i) => {
+      btn.addEventListener('mouseenter', () => this.selectHeroByIndex(i));
+      btn.addEventListener('focus', () => this.selectHeroByIndex(i));
+      btn.addEventListener('click', () => this.selectHeroByIndex(i));
+      btn.addEventListener('dblclick', () => {
+        this.selectHeroByIndex(i);
+        this.startMission();
+      });
+    });
+
+    this.weaponHolder.visible = false;
+    this.heroStage.visible = true;
+    this.selectHeroByIndex(currentIdx);
     this.sound.startMusic(meta.musicTheme);
   }
 
@@ -437,7 +611,23 @@ class OutlawsGame {
     }
   }
 
+  togglePracticeMode() {
+    this.practiceMode = !this.practiceMode;
+    if (this.practiceMode && this.state === 'playing') {
+      this.usedPracticeThisRun = true;
+    }
+    document.body.classList.toggle('pax-active', this.practiceMode);
+    if (this.dom.paxBadge) {
+      this.dom.paxBadge.classList.toggle('hidden', !this.practiceMode);
+    }
+    if (this.state === 'playing') {
+      this.toast(this.practiceMode ? 'Practice mode: they cannot hurt you' : 'Practice mode off');
+    }
+  }
+
   startMission() {
+    this.heroStage.visible = false;
+    this.usedPracticeThisRun = this.practiceMode;
     this.loadLevel(this.levelIndex, false);
     this.state = 'playing';
     this.dom.introCard.classList.add('hidden');
@@ -452,7 +642,7 @@ class OutlawsGame {
     this.camera.rotation.set(0, meta.spawnYaw, 0, 'YXZ');
     this.sound.startMusic(meta.musicTheme);
     this._requestLock();
-    this.showCallout(`${meta.title} — DRAW!`);
+    this.showCallout(`${this.activeHero.name.toUpperCase()} — DRAW!`);
   }
 
   pauseGame() {
@@ -483,6 +673,7 @@ class OutlawsGame {
     this.state = 'title';
     this.setScope(false);
     this.weaponHolder.visible = false;
+    this.heroStage.visible = false;
     this.dom.hud.classList.add('hidden');
     this.dom.crosshair.classList.add('hidden');
     this.dom.pauseScreen.classList.add('hidden');
@@ -831,7 +1022,14 @@ class OutlawsGame {
 
   _damagePlayer(amount) {
     if (this.state !== 'playing') return;
-    this.player.hp = Math.max(0, this.player.hp - amount);
+    if (this.practiceMode) {
+      this.usedPracticeThisRun = true;
+      return;
+    }
+    const mods = (this.activeHero && this.activeHero.mods) || {};
+    const scaledDamage = amount * (mods.damageTakenMult || 1);
+    this.timeSinceLastDamage = 0;
+    this.player.hp = Math.max(0, this.player.hp - scaledDamage);
     this.sound.playHurt();
 
     this.dom.damageOverlay.style.opacity = '0.9';
@@ -857,13 +1055,19 @@ class OutlawsGame {
 
     const meta = LEVELS[this.levelIndex].meta;
     const acc = this.stats.shots > 0 ? Math.round((this.stats.hits / this.stats.shots) * 100) : 100;
+    const wasPractice = this.practiceMode || this.usedPracticeThisRun;
+
+    if (this.dom.endPracticeNote) {
+      this.dom.endPracticeNote.classList.toggle('hidden', !wasPractice);
+    }
 
     if (victory) {
       const isFinal = this.levelIndex === LEVELS.length - 1;
-      this.dom.endEyebrow.textContent = isFinal ? 'ALL THREE HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
-      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF THREE ERAS' : 'HORIZON CLEARED';
+      const baseEyebrow = isFinal ? 'ALL FIVE HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
+      this.dom.endEyebrow.textContent = wasPractice ? `${baseEyebrow} • PRACTICE MODE` : baseEyebrow;
+      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF FIVE ERAS' : 'HORIZON CLEARED';
       this.dom.endSummary.textContent = isFinal
-        ? 'From the dusty streets of Red Gulch to the cherry blossoms of Kyoto and the snow-capped peaks of Rütli Valley — your legend echoes across history!'
+        ? 'From Red Gulch and Kyoto Mist to Rütli Valley, the Aegean Isle, and the Fjord of the North — your legend echoes across five ages!'
         : `${meta.title} is free. Ready your gear for the next horizon!`;
       this.dom.btnNextLevel.classList.remove('hidden');
       this.dom.btnNextLevel.textContent = isFinal ? 'REPLAY FROM ACT I ▶' : `PROCEED TO ACT ${this.levelIndex + 2} ▶`;
@@ -900,7 +1104,10 @@ class OutlawsGame {
     this.dom.enemyIcon.textContent = meta.enemyIcon;
     this.dom.enemiesLeft.textContent = String(alive);
     this.dom.scoreVal.textContent = `${meta.currency}${this.stats.score}`;
-    this.dom.heroName.textContent = meta.heroName;
+    this.dom.heroName.textContent = (this.activeHero ? this.activeHero.name : meta.heroName).toUpperCase();
+    if (this.dom.heroPerk && this.activeHero) {
+      this.dom.heroPerk.textContent = `${this.activeHero.strengthLabel} • ${this.activeHero.hudTag}`;
+    }
     this.dom.hpText.textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
     this.dom.hpBar.style.width = `${(this.player.hp / this.player.maxHp) * 100}%`;
     this.dom.staminaBar.style.width = `${this.player.stamina}%`;
@@ -968,12 +1175,30 @@ class OutlawsGame {
       this.camera.updateProjectionMatrix();
     }
 
-    // Horizontal Movement
+    // Horizontal Movement (with Hero movement speed modifier e.g. Calamity Jane +18%)
+    const mods = (this.activeHero && this.activeHero.mods) || {};
+    const speedMult = mods.moveSpeedMult || 1;
     const moveFwd = (this.keys['KeyW'] || this.keys['ArrowUp'] ? 1 : 0) - (this.keys['KeyS'] || this.keys['ArrowDown'] ? 1 : 0);
     const moveSide = (this.keys['KeyD'] || this.keys['ArrowRight'] ? 1 : 0) - (this.keys['KeyA'] || this.keys['ArrowLeft'] ? 1 : 0);
 
     const wantsSprint = (this.keys['ShiftLeft'] || this.keys['ShiftRight']) && moveFwd > 0 && !this.scoped && this.player.stamina > 6;
-    const speed = this.scoped ? 4.2 : wantsSprint ? 11.4 : 7.6;
+    const speed = (this.scoped ? 4.2 : wantsSprint ? 11.4 : 7.6) * speedMult;
+
+    // Out-of-danger health regeneration (Werner Stauffacher)
+    this.timeSinceLastDamage += dt;
+    let isRegenerating = false;
+    if (mods.regenRate && this.player.hp > 0 && this.player.hp < this.player.maxHp) {
+      if (this.timeSinceLastDamage >= (mods.regenDelay || 4.0)) {
+        isRegenerating = true;
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + mods.regenRate * dt);
+        this.dom.hpText.textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+        this.dom.hpBar.style.width = `${(this.player.hp / this.player.maxHp) * 100}%`;
+        if (this.player.hp >= 30) this.dom.damageOverlay.style.opacity = '0';
+      }
+    }
+    if (this.dom.heroPerk) {
+      this.dom.heroPerk.classList.toggle('regen-active', isRegenerating);
+    }
 
     if (wantsSprint) {
       this.player.stamina = Math.max(0, this.player.stamina - dt * 26);
@@ -1226,6 +1451,23 @@ class OutlawsGame {
       );
       this.camera.lookAt(preview.center);
       this.weaponHolder.visible = false;
+
+      if (this.state === 'intro' && this.heroStage.visible) {
+        // Position the live 3D Hero Turntable cleanly inside the left showcase pane across aspect ratios
+        const dist = 3.25;
+        const halfH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov * 0.5)) * dist;
+        const halfW = halfH * this.camera.aspect;
+        const isStacked = window.innerWidth <= 860;
+        const posX = isStacked ? 0 : -halfW * 0.45;
+        const posY = isStacked ? 0.15 : -0.96;
+        this.heroStage.position.set(posX, posY, -dist);
+
+        // Smooth pop-in scale & gentle turntable rotation
+        this.heroStagePop += (1 - this.heroStagePop) * Math.min(1, dt * 10);
+        const s = (isStacked ? 0.72 : 0.96) * this.heroStagePop;
+        this.heroFigureHolder.scale.setScalar(s);
+        this.heroFigureHolder.rotation.y += dt * 0.55;
+      }
     }
 
     this.composer.render();
