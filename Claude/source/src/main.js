@@ -20,6 +20,8 @@ import { greece } from './levels/greece.js';
 import { north } from './levels/north.js';
 import { war } from './levels/war.js';
 import { russia } from './levels/russia.js';
+import { Duel, bindDuelUI, RULES } from './duel.js';
+import { VILLAINS } from './villains.js';
 import { tibet } from './levels/tibet.js';
 
 const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet];
@@ -52,23 +54,30 @@ class Game {
     };
     this.cache = {}; this.msgT = 0; this.hitT = 0; this.dmgT = 0; this.crossGap = 6;
     this._v = new THREE.Vector3(); this._v2 = new THREE.Vector3(); this._o = { x: 0, y: 0, z: 0 }; this._d = { x: 0, y: 0, z: 0 };
+    this.duel = null;
     this.bindUI();
   }
+
+  /** The characters on offer: three heroes, and in a duel the chapter's villains as well. */
+  roster() { const d = this.def; return this.duel && this.duel.active ? d.heroes.concat(VILLAINS[d.id] || []) : d.heroes; }
 
   bindUI() {
     document.querySelectorAll('.card').forEach((c) => c.addEventListener('click', () => { this.sound.init(); this.openLevel(+c.dataset.level); }));
     // hero cards: pointing at one previews that hero in the opening shot, clicking starts the chapter
     const cardOf = (e) => { const c = e.target.closest('.hero'); return c ? +c.dataset.hero : -1; };
-    $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex) this.applyHero(k); });
-    $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro') { this.applyHero(k); this.begin(); } });
+    $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k); });
+    $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && !(this.duel && this.duel.myPick >= 0)) { this.applyHero(k); this.begin(); } });
+    bindDuelUI(this);
+    this.canvas.addEventListener('mousedown', () => { if (this.state === 'play' && !this.input.locked && !this.input.free) this.input.lock(); });   // a click captures the mouse again
     $('#pause').addEventListener('click', () => { if (this.state === 'pause') { this.setState('play'); this.input.lock(); } });
     $('#dead').addEventListener('click', () => { if (this.state === 'dead' && this.player.deadT > 1) this.openLevel(this.index, true); });
-    $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
+    $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.duel) { this.toTitle(); return; } if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
     this.input.onLock = (locked) => {
       if (locked) { if (this.state === 'pause') this.setState('play'); }
       else if (this.state === 'play' && !this.input.free) this.setState('pause');
     };
     addEventListener('keydown', (e) => {
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;             // typing a duel code is not playing
       if (e.code === 'KeyM') { this.muted = !this.muted; this.sound.setMuted(this.muted); }
       // easter egg: typing PAX ("peace") switches practice mode on and off
       if (e.key && e.key.length === 1) {
@@ -80,8 +89,8 @@ class Game {
       }
       if (e.code === 'KeyQ' && this.state === 'pause') this.toTitle();
       if (this.state === 'intro') {
-        const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);  // hero keys
-        if (k >= 0 && k < this.def.heroes.length) this.applyHero(k);
+        const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].indexOf(e.code);  // hero keys
+        if (k >= 0 && k < this.roster().length && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k);
         if (e.code === 'Enter') this.begin();
       }
       if ((e.code === 'Escape' || e.code === 'KeyP') && this.state === 'play' && !this.input.locked) { this.pausedByP = e.code === 'KeyP'; this.setState('pause'); }
@@ -90,6 +99,7 @@ class Game {
 
   /** Practice mode: enemies still fight, but nothing they do can hurt you. */
   togglePractice() {
+    if (this.duel && this.duel.active) return;                     // a duel is fought for real
     this.practice = !this.practice;
     document.body.classList.toggle('practice', this.practice);
     this.sound.init(); this.sound.pickup();
@@ -97,18 +107,18 @@ class Game {
     if (this.state === 'play') this.say(this.practice ? 'Practice mode — they cannot hurt you' : 'Practice mode off');
   }
 
-  show(id) { for (const s of ['title', 'intro', 'pause', 'dead', 'clear']) $('#' + s).classList.toggle('on', s === id); }
+  show(id) { for (const s of ['title', 'intro', 'pause', 'dead', 'clear', 'duel']) $('#' + s).classList.toggle('on', s === id); }
 
   setState(s) {
     this.state = s; this.input.active = s === 'play'; if (s === 'play') this.pausedByP = false;
     document.body.classList.toggle('playing', s === 'play'); if (s !== 'play') document.body.classList.remove('scoped');
-    document.body.classList.toggle('cine', s === 'title' || s === 'intro');
+    document.body.classList.toggle('cine', s === 'title' || s === 'intro' || s === 'duel');
     this.show(s === 'play' ? null : s);
     if (this.hero) this.hero.visible = s === 'intro';
   }
 
   // ---- level lifecycle ------------------------------------------------------
-  loadLevel(i) {
+  loadLevel(i, backdrop = false) {
     const def = LEVELS[i];
     this.index = i; this.def = def;
     this.gfx.clearLevel(); this.shots.reset(); this.enemies = []; this.pickups = [];
@@ -116,14 +126,15 @@ class Game {
     const B = new Builder(this.world);
     const L = (this.level = def.build({ game: this, gfx: this.gfx, world: this.world, B, M: this.M, root: this.gfx.root, rand: this.rand, shared: this.gfx.shared }));
     B.build(this.gfx.root);
-    { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
+    if (backdrop) this.nav = null;                         // the title screen only shows the world; nobody has to find a way
+    else { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
     this.gfx.setEnvironment(L.env);
-    for (const [type, x, z, o] of L.enemies) this.enemies.push(new Enemy(this, type, x, z, o));
+    for (const [type, x, z, o] of (this.duel && this.duel.active ? this.duel.enemyList(L.enemies) : L.enemies)) this.enemies.push(new Enemy(this, type, x, z, o));
     for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[3] !== undefined ? this.world.height(p[0], p[1]) + p[3] : p[2]);
     this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon);
     this.hero = null;
     const want = params.has('hero') ? +params.get('hero') - 1 : 0;
-    this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, def.heroes.length - 1));
+    this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, this.roster().length - 1));
     for (const c of [...document.body.classList]) if (c.startsWith('theme-')) document.body.classList.remove(c);
     document.body.classList.add(def.theme);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
@@ -136,7 +147,7 @@ class Game {
 
   /** Switch the playable character: figure in the opening shot, hands, and the hero's trait. */
   applyHero(k) {
-    const d = this.def, h = d.heroes[k], P = this.player;
+    const d = this.def, h = this.roster()[k], P = this.player;
     this.heroIndex = k; this.heroPick[d.id] = k;
     if (this.hero) { this.hero.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); this.hero.removeFromParent(); }
     const rig = makeHumanoid(this.M, lookFor(h.look, this.rand)), look = lookFor(h.look, this.rand);
@@ -171,21 +182,69 @@ class Game {
     $('#intro h2').innerHTML = (d.kanji ? `<span class="kanji">${d.kanji}</span>` : '') + d.title;
     $('#intro .story').textContent = d.story;
     $('#intro .keys').innerHTML = d.keys;
-    $('#heroes').innerHTML = d.heroes.map((h, i) => `<div class="hero${i === this.heroIndex ? ' sel' : ''}" data-hero="${i}"><span class="hk">${i + 1}</span>`
+    const duel = this.duel && this.duel.active, n = d.heroes.length;
+    if (duel) {
+      const c = this.duel.cfg;
+      $('#intro .chap').textContent = 'Duel · ' + RULES[c.rules];
+      $('#intro .story').textContent = 'Two players, one world. ' + (c.rules === 'rounds' ? 'Each kill ends a round; the first to win three rounds wins.' : c.rules === 'one' ? 'One life each: the first kill decides.' : 'Five minutes: whoever has more kills at the end wins.')
+        + (c.foes ? ' A few of the chapter’s enemies are still about, and they attack you both.' : '') + ' The larger dot on the compass is your opponent.';
+    }
+    $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
+    $('#heroes').classList.toggle('many', !!duel);
+    $('#intro').classList.toggle('duelpick', !!duel);
+    const STAR = '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/>';
+    const SKULL = '<path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.9 3.2 6.2V19c0 .8.7 1.5 1.5 1.5h.8v-2h1.5v2h3v-2H15v2h.8c.8 0 1.5-.7 1.5-1.5v-2.6c1.9-1.3 3.2-3.5 3.2-6.2C20.5 5.6 17 2 12 2zM8.5 13a2 2 0 110-4 2 2 0 010 4zm7 0a2 2 0 110-4 2 2 0 010 4zm-3.5 3.2l-1.2-2h2.4z"/>';
+    const icon = (bad, cls) => `<svg class="${cls} ${bad ? 'bad' : 'good'}" viewBox="0 0 24 24" aria-hidden="true">${bad ? SKULL : STAR}</svg>`;
+    const label = (bad) => duel ? `<div class="hlabel ${bad ? 'bad' : 'good'}">${icon(bad, '')}${bad ? 'Villains' : 'Heroes'}</div>` : '';
+    $('#heroes').innerHTML = this.roster().map((h, i) => (i === 0 ? label(false) : i === n ? label(true) : '')
+      + `<div class="hero${duel ? (i >= n ? ' bad' : ' good') : ''}${i === this.heroIndex ? ' sel' : ''}" data-hero="${i}" title="${duel ? (i >= n ? 'Villain' : 'Hero') : ''}"><span class="hk">${i + 1}</span>${duel ? icon(i >= n, 'hi') : ''}`
       + `<div class="hn">${h.name}</div><div class="hw">${h.who}</div><div class="ht"><b>${h.trait}</b> — ${h.effect}</div></div>`).join('');
+  }
+
+  // ---- duel: lobby, choice of fighter, end ---------------------------------------
+  openDuel() { this.setState('duel'); this.duelStatus(''); }
+  closeDuel() { if (this.duel) { this.duel.leave(); this.duel = null; } document.querySelector('#dlinkbox').classList.add('hidden'); this.setState('title'); }
+  /** The line under the cards while the two players choose. */
+  duelPickInfo() {
+    const D = this.duel, r = this.roster(), mine = D.myPick >= 0, theirs = D.theirPick >= 0;
+    const n = this.def.heroes.length, as = (k) => r[k].name + (k >= n ? ', a villain' : ', a hero');
+    $('#intro .pick').textContent = (mine ? 'You are ' + as(D.myPick) + '. ' : 'Choose your fighter. ') + (theirs ? 'Your opponent is ' + as(D.theirPick) + '.' : mine ? 'Waiting for your opponent…' : 'Your opponent is still choosing.');
+  }
+  duelAborted() { this.duel = null; if (this.state === 'intro') this.toTitle(); else this.duelStatus('The connection was lost.'); }
+  duelOver(title, a, b) {
+    this.setState('clear');
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.sound.stopMusic(); this.sound.fanfare(this.def.id);
+    $('#clear .kicker').textContent = 'Duel · ' + RULES[this.duel.cfg.rules];
+    $('#clear .big').textContent = title;
+    $('#clear .stats').innerHTML = `<div><b>${a}</b>You</div><div><b>${b}</b>${this.duel.remote ? this.duel.remote.name : 'Opponent'}</div>`;
+    $('#clear .go').textContent = 'Click to return to the chapters';
+  }
+  /** Damage dealt by a computer enemy: to this player, or in a duel to the other one. */
+  hurtTarget(P, dmg, from, melee) {
+    if (P === this.player) this.hurtPlayer(dmg, from, melee);
+    else if (this.duel) this.duel.send({ t: 'hit', d: dmg, x: from.x, z: from.z, m: melee ? 1 : 0 });
   }
 
   begin() {
     if (this.state !== 'intro' && this.state !== 'dead') return;
+    if (this.duel && this.duel.active) { this.sound.init(); this.duel.pick(this.heroIndex); return; }   // the duel starts when both have chosen
     this.sound.init();
     this.setState('play');
     if (!this.input.free) this.input.lock();
   }
 
   toTitle() {
+    if (this.duel) { this.duel.leave(); this.duel = null; }
     if (document.pointerLockElement) document.exitPointerLock();
     this.gfx.fadeTarget = 0; this.show(null);
-    setTimeout(() => { this.loadLevel(0); this.cineT = 0; this.sound.stopMusic(); this.sound.startAmbient('west'); this.setState('title'); }, 380);
+    setTimeout(() => { this.loadLevel(this.randomChapter(), true); this.cineT = 0; this.sound.stopMusic(); this.sound.startAmbient(this.def.id); this.setState('title'); }, 380);
+  }
+  /** The title screen shows a different chapter on every visit. */
+  randomChapter() {
+    let i = Math.floor(Math.random() * LEVELS.length);
+    if (i === this.index && this.def) i = (i + 1 + Math.floor(Math.random() * (LEVELS.length - 1))) % LEVELS.length;
+    return i;
   }
 
   addPickup(x, z, L, hint = 2) {
@@ -207,6 +266,7 @@ class Game {
     const hx = o.x + d.x * t, hy = o.y + d.y * t, hz = o.z + d.z * t;
     const m = muzzleObj.getWorldPosition(new THREE.Vector3());
     this.shots.tracer(m.x, m.y, m.z, hx, hy, hz);
+    if (this.duel) this.duel.tracer(m.x, m.y, m.z, hx, hy, hz);
     this.muzzle(m.x + d.x * 0.25, m.y + d.y * 0.25, m.z + d.z * 0.25, d.x, d.y, d.z, 1);
     if (target) this.hitEnemy(target, dmg, head, hx, hy, hz, o.x, o.z);
     else if (wh) this.impact(hx, hy, hz, wh.nx, wh.ny, wh.nz, 'bullet');
@@ -216,7 +276,9 @@ class Game {
     const P = this.player, o = this.gfx.camera.getWorldPosition(this._v), d = P.forward(this._v2);
     const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
     this.stats.shots++; this.crossGap = 14;
-    this.shots.spawn(kind, o.x + d.x * 0.5 + rx * 0.04, o.y + d.y * 0.5 - 0.07, o.z + d.z * 0.5 + rz * 0.04, d.x, d.y + 0.012, d.z, speed, true, dmg, grav);
+    const sx = o.x + d.x * 0.5 + rx * 0.04, sy = o.y + d.y * 0.5 - 0.07, sz = o.z + d.z * 0.5 + rz * 0.04;
+    this.shots.spawn(kind, sx, sy, sz, d.x, d.y + 0.012, d.z, speed, true, dmg, grav);
+    if (this.duel) this.duel.shot(kind, sx, sy, sz, d.x, d.y + 0.012, d.z, speed, grav);
   }
 
   playerMelee(range, cone, dmg) {
@@ -249,7 +311,7 @@ class Game {
       if (head) this.say('Headshot');
       if (wasBoss) this.say(this.def.bossDown);
       const left = this.enemies.filter((q) => q.alive).length;
-      if (left === 0) { this.slow = 1.6; this.timeScale = 0.25; }
+      if (this.duel) { /* a duel ends by its own rules */ } else if (left === 0) { this.slow = 1.6; this.timeScale = 0.25; }
       else if (left <= 3) for (const q of this.enemies) if (q.state === 'idle' && !q.static) q.alert(0.5);
     } else this.sound.hitmark();
   }
@@ -281,13 +343,14 @@ class Game {
 
   hurtPlayer(dmg, from, melee) {
     const P = this.player;
-    if (P.dead || this.state !== 'play' || this.practice) return;
+    if (P.dead || this.practice || (this.state !== 'play' && !(this.duel && this.state === 'pause'))) return;
     dmg *= P.mods.armor; P.hp -= dmg; P.hurtT = 0; this.gfx.damage = Math.min(1.1, this.gfx.damage + 0.45 + dmg / 45);
     P.recoil((Math.random() - 0.3) * (melee ? 1.6 : 0.8));
     const dx = from.x - P.pos.x, dz = from.z - P.pos.z;
     const rel = Math.atan2(Math.cos(P.yaw) * dx - Math.sin(P.yaw) * dz, -Math.sin(P.yaw) * dx - Math.cos(P.yaw) * dz);
     this.ui.dmg.style.transform = `rotate(${rel}rad)`; this.ui.dmg.style.transformOrigin = '70px 190px'; this.dmgT = 0.9;
     this.sound.hurt();
+    if (P.hp <= 0 && this.duel) { P.hp = 0; P.dead = true; P.deadT = 0; this.sound.sting(); this.duel.localDied(); return; }
     if (P.hp <= 0) {
       P.hp = 0; P.dead = true; P.deadT = 0; this.state = 'dead'; this.input.active = false;
       document.body.classList.remove('playing');
@@ -339,6 +402,7 @@ class Game {
       if (Math.random() < dt * 5) this.gfx.glow.spawn(p.x + (Math.random() - 0.5) * 0.5, p.y + 0.3, p.z + (Math.random() - 0.5) * 0.5, 0, 0.6 + Math.random() * 0.5, 0, { life: 1.2, s0: 0.05, s1: 0.0, r: 1.2, g: 2.2, b: 0.9, a: 0.9 });
       if (!P.dead && P.hp < P.maxHp && (p.x - P.pos.x) ** 2 + (p.z - P.pos.z) ** 2 < 1.7 && Math.abs(p.y - P.pos.y) < 2) {
         P.hp = Math.min(P.maxHp, P.hp + 35); this.gfx.heal = 1; this.sound.pickup(); this.say(this.def.pickupText);
+        if (this.duel) this.duel.send({ t: 'pk', x: p.x, z: p.z });
         p.mesh.removeFromParent(); this.pickups.splice(i, 1);
       }
     }
@@ -358,7 +422,8 @@ class Game {
       u.pips.innerHTML = Array.from({ length: h.mag }, (_, i) => `<i class="${i < h.ammo ? '' : 'off'}"></i>`).join('');
     }
     const alive = this.enemies.filter((e) => e.alive);
-    if (c.foes !== alive.length) { c.foes = alive.length; u.foes.innerHTML = alive.length ? `<b>${alive.length}</b>${this.def.foes}` : this.def.foesNone; }
+    if (this.duel) { const t = this.duel.hud(); if (c.foes !== t) { c.foes = t; u.foes.innerHTML = t; } }
+    else if (c.foes !== alive.length) { c.foes = alive.length; u.foes.innerHTML = alive.length ? `<b>${alive.length}</b>${this.def.foes}` : this.def.foesNone; }
     // compass
     const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
     while (u.dots.length < alive.length) { const d = document.createElement('i'); u.compass.appendChild(d); u.dots.push(d); }
@@ -370,7 +435,7 @@ class Game {
       const rel = Math.atan2(rx * dx + rz * dz, fx * dx + fz * dz);
       d.style.display = 'block'; d.style.left = 50 + clamp(rel / 1.9, -1, 1) * 50 + '%';
       d.style.opacity = Math.abs(rel) > 1.9 ? 0.35 : clamp(1.15 - Math.hypot(dx, dz) / 140, 0.45, 1);
-      d.className = e.cfg.boss ? 'boss' : '';
+      d.className = e.cfg.boss || e.remote ? 'boss' : '';
       if (e.cfg.boss && e.state === 'combat') boss = e;
     });
     u.boss.classList.toggle('on', !!boss);
@@ -402,10 +467,11 @@ class Game {
     const dt = real * this.timeScale, L = this.level, P = this.player;
     this.time += dt;
     this.flashLight.intensity = Math.max(0, this.flashLight.intensity - real * 700);
-    if (this.state === 'title' || this.state === 'intro') {
+    if (this.duel) this.duel.tick(real);
+    if (this.state === 'title' || this.state === 'intro' || this.state === 'duel') {
       this.cineT += real;
       P.vm.visible = false;
-      if (this.state === 'title') {
+      if (this.state !== 'intro') {
         const v = L.vista, a = v.swing ? v.a + Math.sin(this.cineT * (v.speed ?? 0.05)) * v.swing : v.a + this.cineT * (v.speed ?? 0.03);
         this.orbit(v.c[0], v.c[1], v.c[2], v.r, v.h, a, v.up ?? 0);
       }
@@ -415,7 +481,7 @@ class Game {
         this.gfx.camera.rotateY(0.52);                                 // keep the hero right of the text
         this.heroLight.position.copy(this.gfx.camera.position).y += 0.6;
       }
-    } else if (this.state === 'play' || this.state === 'dead' || this.state === 'clear') this.updatePlay(dt);
+    } else if (this.state === 'play' || this.state === 'dead' || this.state === 'clear' || (this.duel && this.state === 'pause')) this.updatePlay(dt);   // a duel does not stop for a pause
     this.heroLight.intensity = this.state === 'intro' ? (L.heroLight || 0) : 0;
     if (L.update) L.update(dt, this.time, this);
     if (L.water && this.sound.ctx) {
@@ -438,10 +504,11 @@ class Game {
 
   async start() {
     await Promise.all(['48px Rye', '48px "Pirata One"', '48px "IM Fell English"', '48px Cinzel'].map((f) => document.fonts.load(f).catch(() => {})));
-    const lv = params.has('level') ? clamp(+params.get('level') - 1, 0, LEVELS.length - 1) : 0;
-    this.loadLevel(lv); this.cineT = 0;
+    const lv = params.has('level') ? clamp(+params.get('level') - 1, 0, LEVELS.length - 1) : params.has('title') ? clamp(+params.get('title') - 1, 0, LEVELS.length - 1) : this.randomChapter();
+    this.loadLevel(lv, !params.has('level')); this.cineT = 0;
     if (params.has('level')) { this.fillIntro(); this.setState('intro'); if (params.has('free')) this.begin(); }
     else this.setState('title');
+    if (params.has('duel')) { this.openDuel(); $('#dcodein').value = params.get('duel').toUpperCase(); this.duelJoin(params.get('duel')); }   // opened from an invite link
     $('#load').classList.add('off'); $('#load').classList.remove('on');
     this.frame(performance.now());
   }

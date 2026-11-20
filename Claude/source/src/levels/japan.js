@@ -321,7 +321,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
       saturation: 1.12, contrast: 1.06, vignette: 0.42, tintHi: 0xffeedd, tintLo: 0xdce4ff, shadowRange: 70,
     },
     spawn: { x: 0.3, z: 76.5, yaw: 0 },
-    vista: { c: [0, 3, 30], r: 30, h: 8, a: 1.2, speed: 0.03 },
+    vista: { c: [-1, 3, 22], r: 15, h: 9.5, a: 1.2, speed: 0.03 },   // circles above the pond, clear of the bamboo
     enemies, pickups: [[-2.5, 41], [18, 24, 2], [-23, -1.5, 2], [0, -30.5, 4], [14, -52, 4], [3.8, -58.6, 4.3], [50, -11, 1.5], [-51, 25, 1.5]],
     dust: [0.42, 0.4, 0.34], water: [[POND.x, POND.z, 26]], heroLight: 70,
     makePickup: () => new THREE.Mesh(cake, M.flat),

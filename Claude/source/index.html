@@ -93,7 +93,7 @@
   .screen .veil { position:absolute; inset:0; background:radial-gradient(ellipse at center, rgba(0,0,0,.05) 0%, rgba(0,0,0,.55) 100%); }
   .screen > * { position:relative; }
   .kicker { font-size:15px; letter-spacing:.5em; text-transform:uppercase; color:var(--dim); margin-bottom:1.2vh; }
-  h1 { font-family:var(--font); font-weight:normal; font-size:clamp(56px,min(9.4vw,17vh),150px); letter-spacing:.14em; margin:0 0 0 .14em; line-height:.95; text-shadow:0 4px 40px rgba(0,0,0,.6); }
+  h1 { font-family:var(--display); font-weight:normal; font-size:clamp(56px,min(9.4vw,17vh),150px); letter-spacing:.14em; margin:0 0 0 .14em; line-height:.95; text-shadow:0 4px 40px rgba(0,0,0,.6); }
   .sub { font-style:italic; font-size:clamp(18px,1.7vw,26px); color:var(--ink); opacity:.9; margin-top:1.4vh; text-shadow:0 2px 12px rgba(0,0,0,.8); }
   #cards { display:grid; grid-template-columns:repeat(4, auto); gap:1.1vh .9vw; margin-top:3.2vh; }
   .card { cursor:pointer; width:min(17vw,250px); padding:11px 14px 10px; text-align:left; background:rgba(14,10,8,.5); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); transition:transform .25s, border-color .25s, background .25s; }
@@ -102,14 +102,10 @@
   .card .t { font-size:clamp(20px,2.1vw,28px); line-height:1.05; margin:8px 0 6px; }
   .card .p { font-size:clamp(12px,1.05vw,14.5px); color:var(--dim); font-style:italic; line-height:1.3; }
   .card .k { float:right; font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; font-size:40px; line-height:1; color:var(--c); opacity:.9; }
-  .card.w { --c:#e8a84a; } .card.w .t { font-family:'Rye', serif; font-size:clamp(17px,1.75vw,23px); }
-  .card.j { --c:#e0523c; }
-  .card.s { --c:#e8e2d2; } .card.s .t { font-family:'Pirata One', serif; font-size:clamp(23px,2.4vw,32px); }
-  .card.g { --c:#e6c05a; } .card.g .t { font-family:'Cinzel', serif; font-size:clamp(18px,1.9vw,25px); letter-spacing:.06em; }
-  .card.n { --c:#8fd0f0; } .card.n .t { font-family:'Cinzel', serif; font-size:clamp(18px,1.9vw,25px); letter-spacing:.06em; }
-  .card.ru { --c:#d8463a; } .card.ru .t { text-transform:uppercase; letter-spacing:.07em; font-size:clamp(15px,1.5vw,20px); }
-  .card.ti { --c:#e8a030; } .card.ti .t { font-family:'Cinzel', serif; font-size:clamp(18px,1.9vw,25px); letter-spacing:.06em; }
-  .card.x { --c:#d6b25a; } .card.x .t { text-transform:uppercase; letter-spacing:.06em; font-size:clamp(15px,1.5vw,20px); }
+  .card { border-top:3px solid var(--c); }
+  .card .t { font-family:var(--font); font-size:clamp(19px,1.95vw,27px); letter-spacing:.02em; }
+  .card.w { --c:#e8a84a; } .card.j { --c:#e0523c; } .card.s { --c:#e8e2d2; } .card.g { --c:#e6c05a; }
+  .card.n { --c:#8fd0f0; } .card.x { --c:#d6b25a; } .card.ru { --c:#d8463a; } .card.ti { --c:#e8a030; }
   .foot { margin-top:2.2vh; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
 
   #intro { justify-content:flex-end; align-items:flex-start; text-align:left; padding:0 6vw 14.5vh; }
@@ -122,6 +118,35 @@
   kbd { font-family:var(--font); font-size:13px; letter-spacing:.08em; border:1px solid rgba(244,234,212,.45); border-radius:3px; padding:1px 7px 2px; margin-right:4px; color:var(--ink); background:rgba(0,0,0,.3); }
   #intro .pick { margin-top:2.6vh; font-size:14px; letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }
   #heroes { display:flex; gap:14px; margin-top:1.3vh; }
+  #heroes.many { flex-wrap:wrap; gap:8px 10px; max-width:92vw; }
+  #heroes.many .hero { width:min(19vw,215px); padding:8px 12px 9px; }
+  #heroes.many .hn { font-size:19px; } #heroes.many .hw { font-size:13px; margin:2px 0 4px; } #heroes.many .ht { font-size:13px; }
+  .hlabel { flex-basis:100%; display:flex; align-items:center; gap:8px; margin-top:4px; font-size:13px; letter-spacing:.32em; text-transform:uppercase; }
+  .hlabel svg, .hero .hi { width:17px; height:17px; fill:currentColor; flex:none; }
+  .hlabel.good, .hero .hi.good { color:#e6c05a; } .hlabel.bad, .hero .hi.bad { color:#e8705a; }
+  .hero .hi { float:right; margin-left:7px; }
+  .hero.good { border-color:rgba(230,192,90,.45); } .hero.good.sel { border-color:#e6c05a; }
+  .hero.bad { border-color:rgba(232,112,90,.5); background:rgba(40,10,8,.6); } .hero.bad .hn { color:#f4c0b0; } .hero.bad.sel { border-color:#e8705a; background:rgba(60,12,8,.82); }
+  #intro.duelpick { padding-bottom:5vh; } #intro.duelpick .keys { display:none; }
+  #intro.duelpick h2 { font-size:clamp(34px,min(5vw,7.5vh),76px); } #intro.duelpick .story { max-width:760px; font-size:clamp(14px,2.2vh,17px); margin-top:.8vh; } #intro.duelpick .pick { margin-top:1.4vh; }
+  #duelbtn { margin-top:2.4vh; cursor:pointer; padding:9px 26px; font-size:15px; letter-spacing:.3em; text-transform:uppercase; color:var(--ink); border:1px solid rgba(244,234,212,.4); background:rgba(14,10,8,.5); backdrop-filter:blur(7px); transition:border-color .25s, background .25s; }
+  #duelbtn:hover { border-color:var(--danger); background:rgba(60,14,8,.7); }
+  #duel .big { font-size:clamp(40px,min(6vw,9vh),90px); }
+  #duel .dpanel { display:flex; gap:18px; margin-top:2.2vh; text-align:left; }
+  #duel .dcol { width:min(40vw,400px); padding:14px 18px 16px; background:rgba(14,10,8,.72); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); }
+  #duel h3 { font-family:var(--display); font-weight:normal; font-size:24px; margin:0 0 10px; color:var(--accent); }
+  #duel label { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:7px 0; font-size:16px; color:var(--dim); }
+  #duel select, #duel input, #duel textarea, #duel button { font:inherit; font-size:15px; color:var(--ink); background:rgba(0,0,0,.45); border:1px solid rgba(244,234,212,.35); padding:5px 8px; }
+  #duel select { min-width:210px; } #duel select option { background:#1a1410; }
+  #duel button { cursor:pointer; margin-top:8px; padding:7px 14px; } #duel button:hover { border-color:var(--accent); }
+  #duel textarea { width:100%; height:44px; margin-top:6px; font-family:Consolas, monospace; font-size:11px; resize:none; }
+  #dlinkbox { margin-top:10px; font-size:14px; color:var(--dim); } #dlink { width:100%; margin-top:4px; }
+  #dcodeout { font-family:var(--display); font-size:30px; letter-spacing:.2em; color:var(--ink); }
+  #dcodein { width:130px; text-transform:uppercase; letter-spacing:.2em; text-align:center; }
+  #dmanual { margin-top:1.6vh; width:min(84vw,836px); text-align:left; font-size:14px; color:var(--dim); background:rgba(14,10,8,.72); border:1px solid rgba(244,234,212,.2); padding:8px 16px; }
+  #dmanual summary { cursor:pointer; color:var(--ink); } #dmanual .dpanel { margin-top:8px; } #dmanual .dcol { width:50%; background:none; border:0; padding:0; backdrop-filter:none; }
+  #dstatus { min-height:22px; margin-top:1.4vh; font-style:italic; font-size:17px; color:var(--accent); }
+  #dback { margin-top:1.2vh; cursor:pointer; }
   .hero { cursor:pointer; width:min(21vw,250px); padding:14px 16px 14px; background:rgba(14,10,8,.55); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(6px); transition:transform .2s, border-color .2s, background .2s; }
   .hero.sel { border-color:var(--accent); background:rgba(14,10,8,.8); transform:translateY(-5px); }
   .hero .hk { float:right; font-size:12px; color:var(--dim); border:1px solid rgba(244,234,212,.35); border-radius:3px; padding:0 6px; }
@@ -166,7 +191,7 @@
   <div class="sub">From Dry Gulch to the passes of Tibet — one hero, alone against many.</div>
   <div id="cards">
     <div class="card w" data-level="0"><div class="n">I</div><div class="t">Dry Gulch</div><div class="p">Arizona Territory, 1881.<br>A revolver, a dusty street, a gang that owns the town.</div></div>
-    <div class="card j" data-level="1"><span class="k">侍</span><div class="n">II</div><div class="t">Kagemori</div><div class="p">Japan, 1600.<br>Bow and katana on the shrine path at dusk.</div></div>
+    <div class="card j" data-level="1"><div class="n">II</div><div class="t">Kagemori</div><div class="p">Japan, 1600.<br>Bow and katana on the shrine path at dusk.</div></div>
     <div class="card s" data-level="2"><div class="n">III</div><div class="t">Uri</div><div class="p">The Waldstätten, 1307.<br>A crossbow against the Habsburg bailiff's men.</div></div>
     <div class="card g" data-level="3"><div class="n">IV</div><div class="t">Ithaca</div><div class="p">Greece, the age of heroes.<br>Javelins and sword against the Spartans.</div></div>
     <div class="card n" data-level="4"><div class="n">V</div><div class="t">Jarnvik</div><div class="p">Norway, winter of 985.<br>Throwing axes under the northern lights.</div></div>
@@ -175,6 +200,38 @@
     <div class="card ti" data-level="7"><div class="n">VIII</div><div class="t">Che La</div><div class="p">Tibet, March 1959.<br>Open the road for the Dalai Lama's escape.</div></div>
   </div>
   <div class="foot">Choose a chapter</div>
+  <div id="duelbtn">Duel &nbsp;·&nbsp; two players online</div>
+</div>
+
+<div id="duel" class="layer screen">
+  <div class="veil"></div>
+  <div class="kicker">Two players &nbsp;·&nbsp; online</div>
+  <div class="big">Duel</div>
+  <div class="dpanel">
+    <div class="dcol">
+      <h3>Create a duel</h3>
+      <label>Chapter <select id="dlevel"><option value="0">I · Dry Gulch</option><option value="1">II · Kagemori</option><option value="2">III · Uri</option><option value="3">IV · Ithaca</option><option value="4">V · Jarnvik</option><option value="5">VI · Sainte-Aubine</option><option value="6">VII · Stalnogorsk</option><option value="7">VIII · Che La</option></select></label>
+      <label>Rules <select id="drules"><option value="rounds">First to 3 rounds</option><option value="one">One life</option><option value="timed">5 minutes, most kills</option></select></label>
+      <label>Enemies <select id="dfoes"><option value="0">None</option><option value="1">A few, hostile to both</option></select></label>
+      <button id="dcreate">Create and get the invite link</button>
+      <div id="dlinkbox" class="hidden">Code <span id="dcodeout"></span><br>Invite link<input id="dlink" readonly><button id="dcopy">Copy the link</button></div>
+    </div>
+    <div class="dcol">
+      <h3>Join a duel</h3>
+      <label>Code from your opponent <input id="dcodein" maxlength="5" autocomplete="off"></label>
+      <button id="djoinbtn">Join</button>
+      <p style="margin:14px 0 0;font-size:14px;color:var(--dim);line-height:1.4">Or simply open the invite link your opponent sent you.<br>The two computers talk to each other directly; each player can see the other's network address.</p>
+    </div>
+  </div>
+  <details id="dmanual">
+    <summary>Invite link not working? Connect with copy-paste codes instead</summary>
+    <div class="dpanel">
+      <div class="dcol"><b>If you create the duel</b> (settings as chosen above)<br><button id="mhost">1. Make my code</button><textarea id="moffer" readonly placeholder="Your code appears here. Click it to copy, and send it to your opponent."></textarea><textarea id="manswerin" placeholder="2. Paste your opponent's reply here"></textarea><button id="mconnect">3. Connect</button></div>
+      <div class="dcol"><b>If you join</b><br><textarea id="mofferin" placeholder="1. Paste the code you received here"></textarea><button id="mreply">2. Make my reply</button><textarea id="manswer" readonly placeholder="Your reply appears here. Click it to copy, and send it back."></textarea></div>
+    </div>
+  </details>
+  <div id="dstatus"></div>
+  <div class="foot" id="dback">Back to the chapters</div>
 </div>
 
 <div id="intro" class="layer screen">
