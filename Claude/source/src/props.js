@@ -124,4 +124,45 @@ export function horseGeo(coat = 0x6a4428, mane = 0x1c120c) {
   return merge(p);
 }
 
+/**
+ * Oared ship, bow toward local +Z. o: {len, wide, hull, viking (dragon prow and
+ * striped sail) or Greek (bronze ram, painted eye), sail, sail2, lambda, shields}
+ */
+export function ship(B, M, x, y, z, ry, o = {}) {
+  const { len = 16, wide = 1.5, hull = 0x4a3222, viking = false, sail = 0xa01414, sail2, lambda = false, shields = null, mast = true } = o;
+  const c = Math.cos(ry), s = Math.sin(ry), P = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
+  B.geo(M.flat, new THREE.SphereGeometry(1, 14, 8), [x, y + 0.45, z], [0, ry, 0], [wide, 1.15, len / 2], hull);
+  B.box(M.woodH, wide * 1.5, 0.14, len * 0.84, x, y + 0.95, z, { ry, c: 0x7a5a3a });
+  for (const sx of [-1, 1]) {
+    const [gx, gz] = P(sx * wide * 0.78, 0); B.box(M.woodH, 0.12, 0.42, len * 0.82, gx, y + 0.95, gz, { ry, c: hull });
+    for (let i = 0; i < 8; i++) { const [ox, oz] = P(sx * (wide * 0.8 + 1.1), -len * 0.3 + i * len * 0.085); B.box(M.wood, 2.6, 0.05, 0.1, ox, y + 0.55, oz, { ry, rz: sx * -0.42, c: 0x8a6a44 }); }
+    if (shields) for (let i = 0; i < 9; i++) { const [hx, hz] = P(sx * (wide * 0.86), -len * 0.34 + i * len * 0.085); B.geo(M.flat, new THREE.CylinderGeometry(0.34, 0.34, 0.05, 12), [hx, y + 1.2, hz], [0, ry, Math.PI / 2], 1, shields[i % shields.length]); }
+    if (!viking) { const [ex, ez] = P(sx * wide * 0.7, len * 0.36); B.geo(M.flat, new THREE.SphereGeometry(0.22, 8, 6), [ex, y + 0.9, ez], [0, ry, 0], [0.3, 1, 1.5], 0xf0ece0); }
+  }
+  for (const e of [1, -1]) {                       // stem and stern posts
+    const tilt = viking ? 0.42 : 0.6, h = viking ? 3.4 : e < 0 ? 3.2 : 1.3, zl = e * (len / 2 - 0.55);
+    const [px, pz] = P(0, zl + e * Math.sin(tilt) * h * 0.5);
+    B.cyl(M.flat, 0.09, 0.2, h, px, y + 0.6 + (Math.cos(tilt) * h - h) / 2, pz, { ry, rx: e * tilt, c: hull, seg: 6 });
+    if (viking && e > 0) { const [dx, dz] = P(0, zl + Math.sin(tilt) * h + 0.2); B.box(M.flat, 0.2, 0.26, 0.5, dx, y + 0.5 + Math.cos(tilt) * h, dz, { ry, rx: 0.3, c: 0xc9a030 }); }
+  }
+  if (!viking) { const [rx_, rz_] = P(0, len / 2 + 0.2); B.geo(M.metal, new THREE.ConeGeometry(0.34, 1.7, 6), [rx_, y + 0.3, rz_], [Math.PI / 2, ry, 0], 1, 0xc9a050); }
+  if (mast) {
+    B.cyl(M.wood, 0.1, 0.13, 7.2, x, y + 0.9, z, { c: 0x6a4a2e, seg: 6 });
+    B.box(M.wood, 5.4, 0.1, 0.1, x, y + 7.2, z, { ry, c: 0x6a4a2e });
+    if (sail2 !== undefined) for (let i = 0; i < 5; i++) { const [sx_, sz_] = P(-2 + i, 0); B.box(M.cloth, 1.0, 4.2, 0.04, sx_, y + 2.95, sz_, { ry, c: i % 2 ? sail2 : sail }); }
+    else B.box(M.cloth, 5.0, 4.2, 0.04, x, y + 2.95, z, { ry, c: sail });
+    if (lambda) for (const k of [-1, 1]) { const [lx, lz] = P(k * 0.6, 0.04); B.box(M.cloth, 0.34, 2.9, 0.03, lx, y + 3.5, lz, { ry, rz: k * 0.4, c: 0xf0ece0 }); }
+  }
+  B.world.addBox(x, z, wide * 2.3, len, ry, y - 2, y + 2.3);
+}
+
+/** Fire bowl on a tripod. Returns the flame position [x, y, z]. */
+export function brazier(B, M, x, y, z, s = 1) {
+  for (let i = 0; i < 3; i++) B.cyl(M.metal, 0.025 * s, 0.03 * s, 1.15 * s, x + Math.cos(i * 2.09) * 0.2 * s, y, z + Math.sin(i * 2.09) * 0.2 * s, { c: 0x2a2a2e, seg: 5, rz: Math.cos(i * 2.09) * -0.22, rx: Math.sin(i * 2.09) * 0.22 });
+  B.cyl(M.metal, 0.36 * s, 0.2 * s, 0.22 * s, x, y + 1.05 * s, z, { c: 0x3a3a3e, seg: 10 });
+  B.geo(M.glow, new THREE.ConeGeometry(0.22 * s, 0.55 * s, 6), [x, y + 1.5 * s, z], [0, 0, 0], 1, 0xff7a20);
+  B.world.addCyl(x, z, 0.32 * s, y - 1, y + 1.3 * s);
+  return [x, y + 1.45 * s, z];
+}
+
 export { gBox, gCyl, gSph, gCone, gCap, xf, merge, paint };

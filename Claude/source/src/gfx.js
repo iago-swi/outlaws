@@ -21,7 +21,7 @@ void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4
 const SKY_FRAG = /* glsl */ `
 varying vec3 vDir;
 uniform vec3 uTop, uHorizon, uGround, uSunDir, uSunColor, uCloudLit, uCloudShade, uMoonDir;
-uniform float uTime, uCover, uCloudScale, uStars, uSunSize, uHaze;
+uniform float uTime, uCover, uCloudScale, uStars, uSunSize, uHaze, uAurora;
 ${NOISE_GLSL}
 void main(){
   vec3 d = normalize(vDir);
@@ -38,6 +38,13 @@ void main(){
     col += vec3(0.9,0.95,1.) * st * uStars * (0.6+0.4*sin(uTime*2.+hash21(floor(sp))*40.));
     float md = max(dot(d, uMoonDir), 0.);
     col += vec3(1.,0.97,0.88) * (smoothstep(0.9990,0.9993,md)*6. + pow(md,300.)*0.5) * uStars;
+  }
+  if (uAurora > 0. && h > 0.04) {             // northern lights: rippling curtains of green and violet
+    vec2 ap = d.xz/(h+0.22);
+    float band = fbm(vec2(ap.x*0.55 + uTime*0.012, ap.y*0.3 + 3.));
+    float fold = 0.6 + 0.4*sin(ap.x*9. + fbm(ap*2.2 + uTime*0.04)*7.);
+    float cur = smoothstep(0.36, 0.6, band) * fold * smoothstep(0.04, 0.3, h) * smoothstep(1.0, 0.55, h) * smoothstep(0.6, -0.3, d.z);
+    col += (vec3(0.1, 1.0, 0.5) + vec3(0.55, 0.1, 0.95)*smoothstep(0.3, 0.8, h)) * cur * uAurora * 1.5;
   }
   if (h > 0.0 && uCover > 0.) {
     vec2 p = d.xz/(h+0.1) * uCloudScale + vec2(uTime*0.006, uTime*0.002);
@@ -304,7 +311,7 @@ export class Gfx {
           uSunDir: this.shared.uSunDir, uSunColor: this.shared.uSunColor, uTime: this.shared.uTime,
           uCloudLit: { value: new THREE.Color() }, uCloudShade: { value: new THREE.Color() },
           uCover: { value: 0.5 }, uCloudScale: { value: 0.6 }, uStars: { value: 0 }, uSunSize: { value: 0.0006 },
-          uHaze: { value: 0.5 }, uMoonDir: { value: new THREE.Vector3(0, 1, 0) },
+          uHaze: { value: 0.5 }, uMoonDir: { value: new THREE.Vector3(0, 1, 0) }, uAurora: { value: 0 },
         },
         vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, side: THREE.BackSide, depthWrite: false, fog: false,
       }),
@@ -361,6 +368,7 @@ export class Gfx {
     sk.uCover.value = e.cloudCover ?? 0.5; sk.uCloudScale.value = e.cloudScale ?? 0.6;
     sk.uStars.value = e.stars ?? 0; sk.uSunSize.value = e.sunSize ?? 0.0006; sk.uHaze.value = e.haze ?? 0.5;
     if (e.moonDir) sk.uMoonDir.value.set(...e.moonDir).normalize();
+    sk.uAurora.value = e.aurora ?? 0;
     S.uFogColor.value.set(e.fogColor); S.uFogDensity.value = e.fogDensity;
     this.scene.fog.color.set(e.fogColor); this.scene.fog.density = e.fogDensity;
     this.sun.color.set(e.sunLight ?? e.sunColor); this.sun.intensity = e.sunIntensity;

@@ -3,13 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lone Hand — Three Legends</title>
+<title>Lone Hand</title>
 <link rel="icon" href="data:,">
 <style>
   :root { --ink:#f4ead4; --dim:rgba(244,234,212,.62); --accent:#e0a040; --danger:#c8402c; --font:'IM Fell English', Georgia, serif; --display:'IM Fell English', Georgia, serif; }
   body.theme-west  { --accent:#e8a84a; --display:'Rye', Georgia, serif; }
   body.theme-japan { --accent:#e0523c; --display:'IM Fell English', Georgia, serif; }
   body.theme-swiss { --accent:#d8392e; --display:'Pirata One', Georgia, serif; }
+  body.theme-greece { --accent:#e6c05a; --display:'Cinzel', Georgia, serif; }
+  body.theme-north { --accent:#8fd0f0; --display:'Cinzel', Georgia, serif; }
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:#000; overflow:hidden; color:var(--ink); font-family:var(--font); user-select:none; -webkit-user-select:none; }
   canvas#view { position:fixed; inset:0; width:100%; height:100%; display:block; }
@@ -25,6 +27,11 @@
   #hud { z-index:4; opacity:0; transition:opacity .5s; text-shadow:0 2px 6px rgba(0,0,0,.75); }
   body.playing #hud { opacity:1; }
   body.playing { cursor:none; }
+  /* PAX (practice mode) hint: olive branch + word, top right */
+  #practice { position:fixed; top:2.8vh; right:3.4vw; z-index:7; display:flex; align-items:center; gap:8px; font-family:var(--display); font-size:17px; letter-spacing:.3em; color:var(--accent); text-shadow:0 2px 6px rgba(0,0,0,.8); opacity:0; transform:translateY(-6px); transition:opacity .5s, transform .5s; pointer-events:none; }
+  #practice svg { width:30px; height:30px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.7)); }
+  body.practice #practice { opacity:.95; transform:none; }
+  body.practice #hpbar i { background:linear-gradient(90deg,#9fd8b0,#eafff0); }
   #cross { position:absolute; left:50%; top:50%; width:0; height:0; }
   #cross i { position:absolute; background:rgba(255,248,230,.92); box-shadow:0 0 3px rgba(0,0,0,.9); }
   #cross .d { width:3px; height:3px; left:-1.5px; top:-1.5px; border-radius:50%; }
@@ -74,23 +81,25 @@
   .kicker { font-size:15px; letter-spacing:.5em; text-transform:uppercase; color:var(--dim); margin-bottom:1.2vh; }
   h1 { font-family:var(--font); font-weight:normal; font-size:clamp(64px,11vw,170px); letter-spacing:.14em; margin:0 0 0 .14em; line-height:.95; text-shadow:0 4px 40px rgba(0,0,0,.6); }
   .sub { font-style:italic; font-size:clamp(18px,1.7vw,26px); color:var(--ink); opacity:.9; margin-top:1.4vh; text-shadow:0 2px 12px rgba(0,0,0,.8); }
-  #cards { display:flex; gap:1.6vw; margin-top:5.5vh; }
-  .card { cursor:pointer; width:min(23vw,330px); padding:20px 22px 18px; text-align:left; background:rgba(14,10,8,.5); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); transition:transform .25s, border-color .25s, background .25s; }
+  #cards { display:flex; gap:1.1vw; margin-top:5vh; }
+  .card { cursor:pointer; width:min(18vw,270px); padding:16px 17px 15px; text-align:left; background:rgba(14,10,8,.5); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); transition:transform .25s, border-color .25s, background .25s; }
   .card:hover { transform:translateY(-6px); border-color:var(--c); background:rgba(14,10,8,.72); }
   .card .n { font-size:13px; letter-spacing:.4em; color:var(--c); }
-  .card .t { font-size:34px; line-height:1.05; margin:8px 0 6px; }
-  .card .p { font-size:16px; color:var(--dim); font-style:italic; line-height:1.3; }
+  .card .t { font-size:30px; line-height:1.05; margin:8px 0 6px; }
+  .card .p { font-size:14.5px; color:var(--dim); font-style:italic; line-height:1.3; }
   .card .k { float:right; font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; font-size:40px; line-height:1; color:var(--c); opacity:.9; }
-  .card.w { --c:#e8a84a; } .card.w .t { font-family:'Rye', serif; font-size:29px; }
+  .card.w { --c:#e8a84a; } .card.w .t { font-family:'Rye', serif; font-size:25px; }
   .card.j { --c:#e0523c; }
-  .card.s { --c:#e8e2d2; } .card.s .t { font-family:'Pirata One', serif; font-size:38px; }
+  .card.s { --c:#e8e2d2; } .card.s .t { font-family:'Pirata One', serif; font-size:34px; }
+  .card.g { --c:#e6c05a; } .card.g .t { font-family:'Cinzel', serif; font-size:27px; letter-spacing:.06em; }
+  .card.n { --c:#8fd0f0; } .card.n .t { font-family:'Cinzel', serif; font-size:27px; letter-spacing:.06em; }
   .foot { position:absolute !important; bottom:13.5vh; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
 
   #intro { justify-content:flex-end; align-items:flex-start; text-align:left; padding:0 6vw 14.5vh; }
   #intro .veil { background:linear-gradient(90deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,0) 55%); }
   #intro .chap { font-size:15px; letter-spacing:.5em; text-transform:uppercase; color:var(--accent); }
   #intro h2, .big { font-family:var(--display); font-weight:normal; font-size:clamp(44px,min(7.4vw,11.5vh),118px); margin:.5vh 0 0; line-height:1; text-shadow:0 4px 30px rgba(0,0,0,.7); }
-  #intro .kanji { font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; color:var(--accent); margin-right:.25em; }
+  #intro .kanji { font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP','Palatino Linotype',serif; color:var(--accent); margin-right:.25em; }
   #intro .story { max-width:540px; font-size:clamp(16px,2.6vh,20px); line-height:1.42; margin-top:1.4vh; color:var(--ink); opacity:.92; }
   #intro .keys { margin-top:1.8vh; font-size:14px; color:var(--dim); line-height:1.8; }
   kbd { font-family:var(--font); font-size:13px; letter-spacing:.08em; border:1px solid rgba(244,234,212,.45); border-radius:3px; padding:1px 7px 2px; margin-right:4px; color:var(--ink); background:rgba(0,0,0,.3); }
@@ -135,13 +144,15 @@
 
 <div id="title" class="layer screen">
   <div class="veil"></div>
-  <div class="kicker">Three legends &nbsp;·&nbsp; Three frontiers</div>
+  <div class="kicker">Five frontiers &nbsp;·&nbsp; Fifteen legends</div>
   <h1>LONE HAND</h1>
-  <div class="sub">A gunslinger, a samurai and a crossbowman — each alone against many.</div>
+  <div class="sub">From Dry Gulch to the fjords of the North — one hero, alone against many.</div>
   <div id="cards">
     <div class="card w" data-level="0"><div class="n">I</div><div class="t">Dry Gulch</div><div class="p">Arizona Territory, 1881.<br>A revolver, a dusty street, a gang that owns the town.</div></div>
     <div class="card j" data-level="1"><span class="k">侍</span><div class="n">II</div><div class="t">Kagemori</div><div class="p">Japan, 1600.<br>Bow and katana on the shrine path at dusk.</div></div>
     <div class="card s" data-level="2"><div class="n">III</div><div class="t">Uri</div><div class="p">The Waldstätten, 1307.<br>A crossbow against the Habsburg bailiff's men.</div></div>
+    <div class="card g" data-level="3"><div class="n">IV</div><div class="t">Ithaca</div><div class="p">Greece, the age of heroes.<br>Javelins and sword against the Spartans.</div></div>
+    <div class="card n" data-level="4"><div class="n">V</div><div class="t">Jarnvik</div><div class="p">Norway, winter of 985.<br>Throwing axes under the northern lights.</div></div>
   </div>
   <div class="foot">Choose a chapter</div>
 </div>
@@ -159,6 +170,7 @@
 <div id="pause" class="layer screen mid"><div class="veil"></div><div class="big">Paused</div><div class="go">Click to resume</div><div class="sub" style="font-size:16px;margin-top:2vh">M — sound on/off &nbsp;·&nbsp; Q — back to the chapters</div></div>
 <div id="dead" class="layer screen mid"><div class="veil"></div><div class="big"></div><div class="sub"></div><div class="go">Click to try again</div></div>
 <div id="clear" class="layer screen mid"><div class="veil"></div><div class="kicker"></div><div class="big"></div><div class="stats"></div><div class="go"></div></div>
+<div id="practice" title="Practice mode: enemies cannot hurt you"><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M5 27C11 22 18 15 27 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><ellipse cx="10.5" cy="19" rx="4.6" ry="1.9" transform="rotate(-78 10.5 19)"/><ellipse cx="13.5" cy="24" rx="4.6" ry="1.9" transform="rotate(-8 13.5 24)"/><ellipse cx="15.5" cy="13.5" rx="4.6" ry="1.9" transform="rotate(-80 15.5 13.5)"/><ellipse cx="19" cy="18.5" rx="4.6" ry="1.9" transform="rotate(-12 19 18.5)"/><ellipse cx="20.5" cy="8.5" rx="4.2" ry="1.8" transform="rotate(-84 20.5 8.5)"/><ellipse cx="24.5" cy="12.5" rx="4.2" ry="1.8" transform="rotate(-14 24.5 12.5)"/></svg><span>PAX</span></div>
 <div id="load" class="layer screen on"><p>Preparing the frontier…</p></div>
 
 <script type="module" src="/src/main.js"></script>

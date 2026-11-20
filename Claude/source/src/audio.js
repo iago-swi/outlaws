@@ -101,7 +101,7 @@ export class Sound {
   poof() { this.noise({ type: 'lowpass', f0: 2400, f1: 300, dur: 0.4, vol: 0.4, att: 0.02 }); }
   fanfare(kind) {
     if (!this.ctx) return;
-    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : [57, 60, 64, 69];
+    const base = kind === 'japan' ? [62, 67, 69, 74] : kind === 'swiss' ? [65, 69, 72, 77] : kind === 'greece' ? [62, 65, 69, 74] : kind === 'north' ? [50, 57, 62, 65] : [57, 60, 64, 69];
     base.forEach((n, i) => this.pluck(n, this.t + i * 0.16, 0.5, 0.7));
     this.pluck(base[0] - 12, this.t, 0.5, 0.5);
   }
@@ -160,7 +160,7 @@ export class Sound {
   startMusic(kind) {
     this.stopMusic();
     if (!this.ctx) return;
-    const dt = kind === 'west' ? 0.29 : kind === 'japan' ? 0.4 : 0.46;
+    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34 }[kind] || 0.3;
     this.mus = { kind, k: 0, next: this.t + 0.4, dt, walk: 2 };
     this.mus.timer = setInterval(() => {
       const m = this.mus; if (!m || !this.ctx) return;
@@ -202,6 +202,27 @@ export class Sound {
     if (Math.floor(k / 24) % 2 === 1) for (const n of mel[bar]) if (n[0] === s) this.lead('horn', n[2] - 12, t, n[1] * m.dt * 0.95, 0.2);
   }
 
+  music_greece(k, t, m) {
+    // lyre and reed pipe in the Dorian mode, in a limping 7-beat measure (3+2+2)
+    const sc = [62, 64, 65, 67, 69, 71, 72, 74, 76], s = k % 7, bar = Math.floor(k / 7);
+    if (s === 0) { this.pluck(38, t, 0.5, 0.3); this.tone({ t, f0: 110, f1: 70, dur: 0.22, vol: 0.3, dest: this.music }); }
+    if (s === 3 || s === 5) { this.tone({ t, f0: 190, f1: 120, dur: 0.1, vol: 0.14, dest: this.music }); this.pluck(50, t, 0.3, 0.4); }
+    const arp = [0, 4, 2, 4, 1, 3, 2][s] + (bar % 4 === 2 ? 1 : 0) + (bar % 8 > 5 ? 2 : 0);
+    this.pluck(sc[Math.min(sc.length - 1, arp)], t, 0.26, 0.8);
+    const mel = [[0, 3, 69], [3, 2, 72], [5, 2, 71]], mel2 = [[0, 3, 74], [3, 4, 72]], mel3 = [[0, 2, 71], [2, 1, 69], [3, 4, 67]], mel4 = [[0, 7, 69]];
+    if (Math.floor(bar / 8) % 2 === 1) for (const n of [mel, mel2, mel3, mel4][bar % 4]) if (n[0] === s) this.lead('flute', n[2], t, n[1] * m.dt * 0.95, 0.09);
+  }
+  music_north(k, t, m) {
+    // slow war drum, a droning bowed lyre and a distant horn
+    const s = k % 8, bar = Math.floor(k / 8), roots = [38, 38, 36, 38, 41, 38, 36, 38][bar % 8];
+    if (s === 0 || s === 5) this.tone({ t, f0: 82, f1: 44, dur: 0.5, vol: s === 0 ? 0.5 : 0.32, dest: this.music, rev: 0.5 });
+    if (s === 3) this.noise({ t, type: 'bandpass', f0: 240, dur: 0.12, vol: 0.12, q: 2, dest: this.music });
+    if (s === 0) { this.pluck(roots, t, 0.5, 0.25); this.pluck(roots + 7, t + 0.03, 0.3, 0.25); }
+    if (s === 2 || s === 6) this.pluck([62, 65, 57, 60, 62, 67, 65, 62][(bar + s) % 8], t, 0.24, 0.5);
+    const mel = [[[0, 6, 50]], [[0, 3, 53], [4, 4, 50]], [[0, 6, 48]], [[0, 8, 50]]];
+    if (Math.floor(bar / 4) % 2 === 1) for (const n of mel[bar % 4]) if (n[0] === s) this.lead('horn', n[2], t, n[1] * m.dt * 0.95, 0.2);
+  }
+
   // --- ambience ----------------------------------------------------------------
   startAmbient(kind) {
     this.stopAmbient();
@@ -214,12 +235,13 @@ export class Sound {
       this.amb.push(s);
       return { g, f };
     };
-    const wind = loop('bandpass', 420, 0.5, kind === 'west' ? 0.3 : 0.16);
+    const wind = loop('bandpass', 420, 0.5, kind === 'west' ? 0.3 : kind === 'north' ? 0.42 : 0.16);
     const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 0.13; lg.gain.value = 180;
     lfo.connect(lg); lg.connect(wind.f.frequency); lfo.start(); this.amb.push(lfo);
     this.fall = null;
     if (kind === 'swiss') this.fall = loop('lowpass', 1500, 0.4, 0);
     if (kind === 'japan') this.fall = loop('lowpass', 2600, 0.3, 0);
+    if (kind === 'greece' || kind === 'north') this.fall = loop('lowpass', 700, 0.3, 0);          // surf on the shore
     this.ambKind = kind;
     this.ambTimer = setInterval(() => {
       if (!this.ctx || this.ctx.state !== 'running') return;
@@ -230,6 +252,11 @@ export class Sound {
       } else if (kind === 'japan') {
         if (r < 0.6) { const f = 3900 + Math.random() * 600; for (let i = 0; i < 9; i++) this.tone({ t: t + i * 0.055, f0: f, dur: 0.04, vol: 0.022, dest: this.ambient }); }
         else if (r < 0.7) { this.tone({ t, type: 'triangle', f0: 760, f1: 620, dur: 0.14, vol: 0.12, dest: this.ambient, rev: 0.9 }); }
+      } else if (kind === 'greece') {
+        if (r < 0.7) { const f = 4400 + Math.random() * 500; for (let i = 0; i < 16; i++) this.tone({ t: t + i * 0.035, type: 'square', f0: f, dur: 0.02, vol: 0.008, dest: this.ambient }); }   // cicadas
+        else if (r < 0.82) this.tone({ t, type: 'sawtooth', f0: 1500, f1: 1100, dur: 0.35, vol: 0.02, lp: 2600, dest: this.ambient, rev: 0.6 });                                              // gull
+      } else if (kind === 'north') {
+        if (r < 0.1) this.tone({ t, type: 'sawtooth', f0: 520, f1: 380, dur: 1.4, vol: 0.016, lp: 900, dest: this.ambient, rev: 0.9 });                                                         // far wolf
       } else if (r < 0.12) {
         this.tone({ t, type: 'sawtooth', f0: 1900, f1: 1300, dur: 0.7, vol: 0.02, lp: 2600, dest: this.ambient, rev: 0.8 });   // distant hawk
       }
