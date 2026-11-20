@@ -13,16 +13,10 @@ files.
 **[Play it in your browser](https://iago-swi.github.io/outlaws/Claude/)**
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
-| --- | --- | --- |
-| ![Dry Gulch at golden hour: three outlaws stand in the sunlit main street between the telegraph office, the bank and the sheriff's office, with the six-shooter in the foreground](screenshot.jpg) | ![The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground](screenshot-japan.jpg) | ![An alpine chalet with flower boxes, a cow, an Austrian soldier, the lake and snow peaks behind, the crossbow in the foreground](screenshot-uri.jpg) |
-
-| Chapter IV · Ithaca | Chapter V · Jarnvik |
-| --- | --- |
-| ![A Greek island in bright sun: Spartans with red cloaks and lambda shields among olive trees and white houses, a temple with columns on the hill behind, a javelin in the foreground](screenshot-greece.jpg) | ![A snowy Viking village at night under green northern lights: a bonfire, longhouses, a palisade gate and two Vikings, a throwing axe in the foreground](screenshot-north.jpg) |
-
-| Chapter VI · Sainte-Aubine |
-| --- |
-| ![A Norman village square before dawn: German soldiers, an officer and two guard dogs on the cobbles between stone houses, a tank and a truck behind, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground](screenshot-normandy.jpg) |
+| :---: | :---: | :---: |
+| <img src="screenshot.jpg" width="270" alt="Dry Gulch at golden hour: three outlaws stand in the sunlit main street between the telegraph office, the bank and the sheriff's office, with the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="270" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground"> | <img src="screenshot-uri.jpg" width="270" alt="An alpine chalet with flower boxes, a cow, an Austrian soldier, the lake and snow peaks behind, the crossbow in the foreground"> |
+| **Chapter IV · Ithaca** | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
+| <img src="screenshot-greece.jpg" width="270" alt="A Greek island in bright sun: Spartans with red cloaks and lambda shields among olive trees and white houses, a temple with columns on the hill behind, a javelin in the foreground"> | <img src="screenshot-north.jpg" width="270" alt="A snowy Viking village at night under green northern lights: a bonfire, longhouses, a palisade gate and two Vikings, a throwing axe in the foreground"> | <img src="screenshot-normandy.jpg" width="270" alt="A Norman village square before dawn: German soldiers, an officer and two guard dogs on the cobbles between stone houses, a tank and a truck behind, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
 
 ## Run it
 
