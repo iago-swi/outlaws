@@ -9,7 +9,12 @@ import { fbm, vnoise, smooth } from '../util.js';
 export const west = {
   id: 'west', theme: 'theme-west', chapter: 'Chapter I', title: 'Dry Gulch', place: 'Dry Gulch · Arizona Territory · 1881',
   story: 'The Crowe gang rode in at noon and took the town. The sheriff is dead, the telegraph is cut, and you are the last man with a badge and a loaded gun. Clear the street before sundown.',
-  hero: 'gunslinger', weapon: 'revolver', sleeve: 0x9a8a6a, weaponName: 'Six-shooter', alt: 'right mouse — take aim',
+  weapon: 'revolver',
+  heroes: [
+    { look: 'earp', name: 'Wyatt Earp', who: 'Lawman of Tombstone, 1881', trait: 'Iron nerve', effect: 'takes 25% less damage', mods: { armor: 0.75 }, sleeve: 0x18181c, cuff: 0xe8e4d8 },
+    { look: 'calamity', name: 'Calamity Jane', who: 'Scout and sharpshooter of Deadwood', trait: 'Frontier scout', effect: 'moves 18% faster', mods: { speed: 1.18 }, sleeve: 0xa67848, cuff: 0x8a623a },
+    { look: 'billy', name: 'Billy the Kid', who: 'The fastest gun in New Mexico', trait: 'Quick draw', effect: 'fires and reloads much faster', mods: { fire: 0.68, reload: 0.6 }, sleeve: 0xd9d2c0, cuff: 0x3a2a1c },
+  ], weaponName: 'Six-shooter', alt: 'right mouse — take aim',
   keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload',
   foes: 'outlaws left', foesNone: 'The street is yours', bossName: 'Silas Crowe', bossDown: 'Silas Crowe is down', pickupText: 'Tonic  +35',
   deadTitle: 'Boot Hill', deadSub: 'They buried you where you fell.', clearTitle: 'Dry Gulch is free',

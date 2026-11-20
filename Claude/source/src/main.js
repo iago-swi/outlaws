@@ -32,10 +32,12 @@ class Game {
     this.world = new World();
     this.player = new Player(this);
     this.shots = new Shots(this);
-    this.enemies = []; this.pickups = []; this.rand = rng(1);
+    this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0;
     this.time = 0; this.noise = 0; this.state = 'boot'; this.index = 0; this.timeScale = 1; this.slow = 0;
     this.flashLight = new THREE.PointLight(0xffb060, 0, 16, 2);
     this.gfx.scene.add(this.flashLight);
+    this.heroLight = new THREE.PointLight(0xffe8d0, 0, 10, 1.4);   // lights the hero on the selection screen in dark chapters
+    this.gfx.scene.add(this.heroLight);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.ui = {
       hp: $('#vital .num'), hpbar: $('#hpbar i'), pips: $('#pips'), wname: $('#arms .name'), alt: $('#arms .alt'), foes: $('#foes'),
@@ -49,7 +51,10 @@ class Game {
 
   bindUI() {
     document.querySelectorAll('.card').forEach((c) => c.addEventListener('click', () => { this.sound.init(); this.openLevel(+c.dataset.level); }));
-    $('#intro').addEventListener('click', () => this.begin());
+    // hero cards: pointing at one previews that hero in the opening shot, clicking starts the chapter
+    const cardOf = (e) => { const c = e.target.closest('.hero'); return c ? +c.dataset.hero : -1; };
+    $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex) this.applyHero(k); });
+    $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro') { this.applyHero(k); this.begin(); } });
     $('#pause').addEventListener('click', () => { if (this.state === 'pause') { this.setState('play'); this.input.lock(); } });
     $('#dead').addEventListener('click', () => { if (this.state === 'dead' && this.player.deadT > 1) this.openLevel(this.index, true); });
     $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
@@ -60,6 +65,11 @@ class Game {
     addEventListener('keydown', (e) => {
       if (e.code === 'KeyM') { this.muted = !this.muted; this.sound.setMuted(this.muted); }
       if (e.code === 'KeyQ' && this.state === 'pause') this.toTitle();
+      if (this.state === 'intro') {
+        const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
+        if (k >= 0 && k < this.def.heroes.length) this.applyHero(k);
+        if (e.code === 'Enter') this.begin();
+      }
       if ((e.code === 'Escape' || e.code === 'KeyP') && this.state === 'play' && !this.input.locked) this.setState('pause');
     });
   }
@@ -86,19 +96,36 @@ class Game {
     this.gfx.setEnvironment(L.env);
     for (const [type, x, z, o] of L.enemies) this.enemies.push(new Enemy(this, type, x, z, o));
     for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[2]);
-    this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon, def.sleeve);
-    const hero = makeHumanoid(this.M, lookFor(def.hero, this.rand));
-    hero.group.position.copy(this.player.pos); hero.group.rotation.y = L.spawn.yaw + Math.PI;
-    hero.armR.rotation.x = -0.35; hero.armL.rotation.x = 0.1; hero.armL.rotation.z = 0.12; hero.armR.rotation.z = -0.1;
-    this.gfx.root.add(hero.group); this.hero = hero.group;
+    this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon);
+    this.hero = null;
+    const want = params.has('hero') ? +params.get('hero') - 1 : 0;
+    this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, def.heroes.length - 1));
     document.body.classList.remove('theme-west', 'theme-japan', 'theme-swiss'); document.body.classList.add(def.theme);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.timeScale = 1; this.slow = 0; this.noise = 0; this.cache = {};
-    this.ui.place.textContent = def.place; this.ui.wname.textContent = def.weaponName; this.ui.alt.textContent = def.alt;
+    this.ui.wname.textContent = def.weaponName; this.ui.alt.textContent = def.alt;
     this.ui.boss.classList.remove('on');
     this.gfx.camera.fov = 72; this.gfx.camera.updateProjectionMatrix();
     this.gfx.fade = 0; this.gfx.fadeTarget = 1; this.gfx.damage = 0;
     this.perfT = 0; this.perfN = 0; this.skipPerf = true;        // ignore the loading hitch when measuring speed
+  }
+
+  /** Switch the playable character: figure in the opening shot, hands, and the hero's trait. */
+  applyHero(k) {
+    const d = this.def, h = d.heroes[k], P = this.player;
+    this.heroIndex = k; this.heroPick[d.id] = k;
+    if (this.hero) { this.hero.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); this.hero.removeFromParent(); }
+    const rig = makeHumanoid(this.M, lookFor(h.look, this.rand)), look = lookFor(h.look, this.rand);
+    rig.group.position.copy(P.pos); rig.group.rotation.y = this.level.spawn.yaw + Math.PI;
+    const up = look.weapon === 'halberd' || look.weapon === 'katana';        // carry long weapons upright
+    rig.armR.rotation.x = up ? -1.2 : look.weapon === 'bow' ? -0.9 : -0.35; rig.armR.rotation.z = up ? 0.14 : -0.1;
+    rig.armL.rotation.x = 0.1; rig.armL.rotation.z = 0.12;
+    this.gfx.root.add(rig.group); this.hero = rig.group; this.hero.visible = this.state === 'intro';
+    P.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, ...h.mods };
+    P.maxHp = P.mods.hp; P.hp = P.maxHp;
+    P.setWeapon(d.weapon, h.sleeve, h.cuff);
+    this.ui.place.textContent = h.name + ' · ' + d.place; this.cache = {};
+    document.querySelectorAll('#heroes .hero').forEach((c) => c.classList.toggle('sel', +c.dataset.hero === k));
   }
 
   openLevel(i, direct = false) {
@@ -119,6 +146,8 @@ class Game {
     $('#intro h2').innerHTML = (d.kanji ? `<span class="kanji">${d.kanji}</span>` : '') + d.title;
     $('#intro .story').textContent = d.story;
     $('#intro .keys').innerHTML = d.keys;
+    $('#heroes').innerHTML = d.heroes.map((h, i) => `<div class="hero${i === this.heroIndex ? ' sel' : ''}" data-hero="${i}"><span class="hk">${i + 1}</span>`
+      + `<div class="hn">${h.name}</div><div class="hw">${h.who}</div><div class="ht"><b>${h.trait}</b> — ${h.effect}</div></div>`).join('');
   }
 
   begin() {
@@ -227,7 +256,7 @@ class Game {
   hurtPlayer(dmg, from, melee) {
     const P = this.player;
     if (P.dead || this.state !== 'play') return;
-    P.hp -= dmg; this.gfx.damage = Math.min(1.1, this.gfx.damage + 0.45 + dmg / 45);
+    dmg *= P.mods.armor; P.hp -= dmg; P.hurtT = 0; this.gfx.damage = Math.min(1.1, this.gfx.damage + 0.45 + dmg / 45);
     P.recoil((Math.random() - 0.3) * (melee ? 1.6 : 0.8));
     const dx = from.x - P.pos.x, dz = from.z - P.pos.z;
     const rel = Math.atan2(Math.cos(P.yaw) * dx - Math.sin(P.yaw) * dz, -Math.sin(P.yaw) * dx - Math.cos(P.yaw) * dz);
@@ -282,8 +311,8 @@ class Game {
       const p = this.pickups[i]; p.t += dt;
       p.mesh.rotation.y = p.t * 1.2; p.mesh.position.y = p.y + 0.55 + Math.sin(p.t * 2.2) * 0.08;
       if (Math.random() < dt * 5) this.gfx.glow.spawn(p.x + (Math.random() - 0.5) * 0.5, p.y + 0.3, p.z + (Math.random() - 0.5) * 0.5, 0, 0.6 + Math.random() * 0.5, 0, { life: 1.2, s0: 0.05, s1: 0.0, r: 1.2, g: 2.2, b: 0.9, a: 0.9 });
-      if (!P.dead && P.hp < 100 && (p.x - P.pos.x) ** 2 + (p.z - P.pos.z) ** 2 < 1.7 && Math.abs(p.y - P.pos.y) < 2) {
-        P.hp = Math.min(100, P.hp + 35); this.gfx.heal = 1; this.sound.pickup(); this.say(this.def.pickupText);
+      if (!P.dead && P.hp < P.maxHp && (p.x - P.pos.x) ** 2 + (p.z - P.pos.z) ** 2 < 1.7 && Math.abs(p.y - P.pos.y) < 2) {
+        P.hp = Math.min(P.maxHp, P.hp + 35); this.gfx.heal = 1; this.sound.pickup(); this.say(this.def.pickupText);
         p.mesh.removeFromParent(); this.pickups.splice(i, 1);
       }
     }
@@ -296,7 +325,7 @@ class Game {
   updateHud(dt) {
     const P = this.player, u = this.ui, c = this.cache;
     const hp = Math.ceil(P.hp);
-    if (c.hp !== hp) { c.hp = hp; u.hp.textContent = hp; u.hpbar.style.width = hp + '%'; }
+    if (c.hp !== hp) { c.hp = hp; u.hp.textContent = hp; u.hpbar.style.width = Math.min(100, (hp / P.maxHp) * 100) + '%'; }
     const h = P.weapon.hud(), key = h.ammo + '/' + h.mag + h.reloading;
     if (c.ammo !== key) {
       c.ammo = key; u.pips.className = h.mag === 1 ? 'long' : '';
@@ -356,9 +385,11 @@ class Game {
       else {
         const a = -P.yaw - Math.PI / 2 + 0.55 - this.cineT * 0.11;   // start in front of the hero, drift around
         this.orbit(P.pos.x, P.pos.y + 1.25, P.pos.z, 3.6 + Math.sin(this.cineT * 0.2) * 0.5, 0.55, a, 0.15);
-        this.gfx.camera.rotateY(0.3);                                  // keep the hero right of the text
+        this.gfx.camera.rotateY(0.52);                                 // keep the hero right of the text
+        this.heroLight.position.copy(this.gfx.camera.position).y += 0.6;
       }
     } else if (this.state === 'play' || this.state === 'dead' || this.state === 'clear') this.updatePlay(dt);
+    this.heroLight.intensity = this.state === 'intro' ? (L.heroLight || 0) : 0;
     if (L.update) L.update(dt, this.time, this);
     if (L.water && this.sound.ctx) {
       let v = 0;

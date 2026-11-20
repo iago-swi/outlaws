@@ -8,7 +8,12 @@ import { fbm, smooth, clamp } from '../util.js';
 export const japan = {
   id: 'japan', theme: 'theme-japan', chapter: 'Chapter II', title: 'Kagemori', kanji: '影森', place: 'Kagemori shrine · Japan · 1600',
   story: 'Your lord is dead and his killers hold the shrine of the shadow forest. Ninja wait among the bamboo, masterless swordsmen guard the steps. Walk the path of the gates and take back the sacred ground.',
-  hero: 'samurai', weapon: 'bow', sleeve: 0x24304e, weaponName: 'Yumi & katana', alt: 'right mouse — katana',
+  weapon: 'bow',
+  heroes: [
+    { look: 'musashi', name: 'Miyamoto Musashi', who: 'Undefeated duellist, master of two swords', trait: 'Two swords', effect: 'faster katana cuts with longer reach', mods: { melee: 0.62, reach: 0.6 }, sleeve: 0x2c2c32, cuff: 0x1a1a1e },
+    { look: 'tomoe', name: 'Tomoe Gozen', who: 'Woman warrior of the Genpei War', trait: 'Peerless archer', effect: 'draws the bow almost twice as fast', mods: { draw: 0.55 }, sleeve: 0xf0ece0, cuff: 0xa81c1c },
+    { look: 'date', name: 'Date Masamune', who: 'The One-Eyed Dragon of Sendai', trait: 'Black armour', effect: 'takes 30% less damage', mods: { armor: 0.7 }, sleeve: 0x17171c, cuff: 0xd9b23a },
+  ], weaponName: 'Yumi & katana', alt: 'right mouse — katana',
   keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> loose an arrow &nbsp; <kbd>Right mouse</kbd> katana cut',
   foes: 'foes remain', foesNone: 'The shrine is silent', bossName: 'Kurogane, the Iron Ronin', bossDown: 'Kurogane has fallen', pickupText: 'Rice cake  +35',
   deadTitle: 'Honour lost', deadSub: 'The forest keeps your name.', clearTitle: 'The shrine is restored',
@@ -274,7 +279,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     spawn: { x: 0.3, z: 76.5, yaw: 0 },
     vista: { c: [0, 3, 30], r: 30, h: 8, a: 1.2, speed: 0.03 },
     enemies, pickups: [[-2.5, 41], [18, 24, 2], [-23, -1.5, 2], [0, -30.5, 4], [14, -52, 4]],
-    dust: [0.42, 0.4, 0.34], water: [[POND.x, POND.z, 26]],
+    dust: [0.42, 0.4, 0.34], water: [[POND.x, POND.z, 26]], heroLight: 70,
     makePickup: () => new THREE.Mesh(cake, M.flat),
     update(dt, t, g) {
       mt -= dt;

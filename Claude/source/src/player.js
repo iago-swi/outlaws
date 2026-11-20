@@ -67,6 +67,9 @@ export class Player {
     this.yaw = 0; this.pitch = 0; this.hp = 100; this.dead = false; this.onGround = true;
     this.camY = 1.65; this.bob = 0; this.bobAmt = 0; this.kick = 0; this.kickV = 0; this.land = 0; this.roll = 0;
     this.fov = 72; this.aim = 0; this.swayX = 0; this.swayY = 0; this.deadT = 0; this.stepPhase = 0;
+    // hero traits: multipliers set by the chosen character (1 = no change)
+    this.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0 };
+    this.maxHp = 100; this.hurtT = 99;
     this.vm = new THREE.Group();               // viewmodel root, scaled down so it never pokes through walls
     this.vm.scale.setScalar(0.3);
     game.gfx.camera.add(this.vm);
@@ -88,14 +91,14 @@ export class Player {
   spawn(x, z, yaw, weaponKind, sleeve) {
     const W = this.game.world;
     this.pos.set(x, W.groundAt(x, z, 100), z); this.vel.set(0, 0, 0);
-    this.yaw = yaw; this.pitch = 0; this.hp = 100; this.dead = false; this.deadT = 0; this.camY = this.pos.y + 1.65;
+    this.yaw = yaw; this.pitch = 0; this.hp = this.maxHp; this.hurtT = 99; this.dead = false; this.deadT = 0; this.camY = this.pos.y + 1.65;
     this.kick = this.kickV = 0; this.aim = 0;
     this.setWeapon(weaponKind, sleeve);
   }
 
-  setWeapon(kind, sleeve = 0x9a8a6a) {
+  setWeapon(kind, sleeve = 0x9a8a6a, cuff) {
     this.vm.clear();
-    this.weapon = new Weapon(this, kind, sleeve);
+    this.weapon = new Weapon(this, kind, sleeve, cuff);
     this.vm.add(this.weapon.root);
   }
 
@@ -114,6 +117,8 @@ export class Player {
       return;
     }
     this.vm.visible = true;
+    this.hurtT += dt;
+    if (this.mods.regen && this.hurtT > 4 && this.hp < this.maxHp) this.hp = Math.min(this.maxHp, this.hp + this.mods.regen * dt);
     const K = input.keys;
     if (active) {
       const sens = 0.0022 * (1 - this.aim * 0.45);
@@ -131,7 +136,7 @@ export class Player {
     const sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);
     let wx = -sy * f + cy * s, wz = -cy * f - sy * s;
     const wl = Math.hypot(wx, wz);
-    const top = (sprint && f > 0 ? 8.6 : 5.6) * (1 - this.aim * 0.4);
+    const top = (sprint && f > 0 ? 8.6 : 5.6) * (1 - this.aim * 0.4) * this.mods.speed;
     if (wl > 0) { wx = wx / wl * top; wz = wz / wl * top; }
     const acc = this.onGround ? 11 : 2.5;
     this.vel.x = damp(this.vel.x, wx, acc, dt); this.vel.z = damp(this.vel.z, wz, acc, dt);
@@ -178,8 +183,8 @@ export class Player {
 // ---------------------------------------------------------------------------
 
 class Weapon {
-  constructor(player, kind, sleeve) {
-    this.p = player; this.game = player.game; this.kind = kind; this.sleeve = sleeve;
+  constructor(player, kind, sleeve, cuff) {
+    this.p = player; this.game = player.game; this.kind = kind; this.sleeve = sleeve; this.cuffIn = cuff; this.m = player.mods;
     this.root = new THREE.Group();
     this.cd = 0; this.t = 0; this.state = 'ready'; this.kick = 0; this.kickV = 0; this.meleeT = 0; this.meleeHit = false;
     this.muzzle = new THREE.Object3D();
@@ -200,7 +205,7 @@ class Weapon {
 
   // ---- revolver -------------------------------------------------------------
   build_revolver(M) {
-    this.ammo = this.mag = 6; this.canAim = true; this.aimFov = 50; this.cuff = 0x4a3020;
+    this.ammo = this.mag = 6; this.canAim = true; this.aimFov = 50; this.cuff = this.cuffIn ?? 0x4a3020;
     this.hip = new THREE.Vector3(0.17, -0.17, -0.4); this.ads = new THREE.Vector3(0, -0.088, -0.36);
     const g = (this.gun = new THREE.Group()); g.scale.setScalar(1.5);
     const D = 0x34373e, L = 0x6c727c;
@@ -224,7 +229,7 @@ class Weapon {
   update_revolver(dt, input, active) {
     const P = this.p, G = this.game;
     if (this.state === 'reload') {
-      this.t += dt;
+      this.t += dt / this.m.reload;
       const T = 1.45, k = this.t / T;
       if (!this.clicked && k > 0.35) { this.clicked = 1; G.sound.click(1900); }
       if (this.clicked === 1 && k > 0.6) { this.clicked = 2; G.sound.click(2400); }
@@ -232,7 +237,7 @@ class Weapon {
     } else if (active) {
       if ((input.pressed.has('KeyR') && this.ammo < this.mag) || (input.shoot && this.ammo === 0 && this.cd <= 0)) { this.state = 'reload'; this.t = 0; this.clicked = 0; }
       else if (input.shoot && this.cd <= 0 && this.ammo > 0) {
-        this.ammo--; this.cd = 0.33; this.kickV += 9; P.recoil(0.55); this.drumRot += Math.PI / 3;
+        this.ammo--; this.cd = 0.33 * this.m.fire; this.kickV += 9; P.recoil(0.55); this.drumRot += Math.PI / 3;
         this.flashT = 0.05; this.flash.rotation.z = Math.random() * 6.28; this.flash.scale.setScalar(0.8 + Math.random() * 0.5);
         G.playerHitscan(this.muzzle, P.aim > 0.5 ? 0.002 : 0.012, 35);
         G.sound.gun(1, 0);
@@ -248,7 +253,7 @@ class Weapon {
 
   // ---- bow + katana -----------------------------------------------------------
   build_bow(M) {
-    this.canAim = false; this.aimFov = 72; this.draw = 0; this.cuff = 0x1a1e2c;
+    this.canAim = false; this.aimFov = 72; this.draw = 0; this.cuff = this.cuffIn ?? 0x1a1e2c;
     const g = (this.gun = new THREE.Group());
     const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -0.64, 0.13), new THREE.Vector3(0, -0.38, -0.02), new THREE.Vector3(0, 0, -0.055), new THREE.Vector3(0, 0.5, -0.03), new THREE.Vector3(0, 0.98, 0.17)]);
     const stave = new THREE.TubeGeometry(curve, 28, 0.0115, 6);
@@ -284,13 +289,13 @@ class Weapon {
     const P = this.p, G = this.game;
     if (this.state === 'ready') { if (active && input.shoot && this.meleeT <= 0) { this.state = 'draw'; this.t = 0; } }
     else if (this.state === 'draw') {
-      this.t += dt;
+      this.t += dt / this.m.draw;
       if (this.t >= 0.34) {
         this.state = 'nock'; this.t = 0; this.kickV += 5;
         G.playerShoot('arrow', 82, 60, 7);
         G.sound.bow();
       }
-    } else if (this.state === 'nock') { this.t += dt; if (this.t >= 0.5) this.state = 'ready'; }
+    } else if (this.state === 'nock') { this.t += dt / this.m.draw; if (this.t >= 0.5) this.state = 'ready'; }
     const target = this.state === 'draw' ? ease(Math.min(1, this.t / 0.3)) : 0;
     this.draw = this.state === 'draw' ? target : damp(this.draw, 0, 40, dt);
     const snap = this.state === 'nock' ? Math.sin(this.t * 90) * Math.exp(-this.t * 14) * 0.02 : 0;
@@ -309,7 +314,7 @@ class Weapon {
 
   // ---- crossbow + halberd -------------------------------------------------------
   build_crossbow(M) {
-    this.canAim = true; this.aimFov = 38; this.cocked = 1; this.cuff = 0x6a5a40;
+    this.canAim = true; this.aimFov = 38; this.cocked = 1; this.cuff = this.cuffIn ?? 0x6a5a40;
     this.hip = new THREE.Vector3(0.15, -0.19, -0.42); this.ads = new THREE.Vector3(0, -0.098, -0.34);
     const g = (this.gun = new THREE.Group());
     const W1 = 0x5a3a1e, W2 = 0x7a5a30;
@@ -343,7 +348,7 @@ class Weapon {
   update_crossbow(dt, input, active) {
     const P = this.p, G = this.game;
     if (this.state === 'reload') {
-      this.t += dt;
+      this.t += dt / this.m.reload;
       const T = 1.0;
       this.cocked = ease(clamp((this.t - 0.2) / 0.5, 0, 1));
       if (!this.clicked && this.t > 0.7) { this.clicked = 1; G.sound.click(1500); }
@@ -374,10 +379,10 @@ class Weapon {
       const want = active && (input.pressed.has('KeyF') || input.pressed.has('KeyV') || (!this.canAim && input.melee));
       if (want && this.meleeT <= 0 && this.state !== 'draw') { this.meleeT = 0.0001; this.meleeHit = false; G.sound.slash(); }
       if (this.meleeT > 0) {
-        this.meleeT += dt;
+        this.meleeT += dt / this.m.melee;
         const k = this.meleeT / this.meleeDur, M = this.melee;
         M.visible = true;
-        if (!this.meleeHit && k >= this.meleeAt) { this.meleeHit = true; G.playerMelee(this.meleeRange, this.meleeCone, this.meleeDmg); }
+        if (!this.meleeHit && k >= this.meleeAt) { this.meleeHit = true; G.playerMelee(this.meleeRange + this.m.reach, this.meleeCone, this.meleeDmg); }
         if (this.kind === 'bow') {            // diagonal cut, upper right to lower left
           const e = ease(clamp(k * 1.5, 0, 1));
           M.position.set(lerp(0.5, -0.4, e), lerp(0.2, -0.42, e), -0.55);

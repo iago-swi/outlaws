@@ -10,7 +10,12 @@ import { fbm, ridged, smooth } from '../util.js';
 export const swiss = {
   id: 'swiss', theme: 'theme-swiss', chapter: 'Chapter III', title: 'Uri', place: 'Lake of Uri · the Waldstätten · 1307',
   story: 'The Habsburg bailiff has set his hat on a pole and ordered free men to bow to it. You did not bow. Now his soldiers hold the village and the camp by the lake. Cross the valley, crossbow in hand, and end his rule.',
-  hero: 'tell', weapon: 'crossbow', sleeve: 0xcfc6ae, weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd',
+  weapon: 'crossbow',
+  heroes: [
+    { look: 'tell', name: 'Wilhelm Tell', who: 'The crossbowman of Bürglen, Uri', trait: 'Master shot', effect: 'reloads the crossbow 40% faster', mods: { reload: 0.6 }, sleeve: 0xcfc6ae, cuff: 0x6a5a40 },
+    { look: 'winkelried', name: 'Arnold von Winkelried', who: 'Hero of Sempach, from Nidwalden', trait: 'Breaks the line', effect: 'starts with 150 health', mods: { hp: 150 }, sleeve: 0x8a8f96, cuff: 0x6a6f76 },
+    { look: 'stauffacher', name: 'Werner Stauffacher', who: 'Man of Schwyz, of the Rütli oath', trait: 'Steadfast', effect: 'slowly recovers health out of danger', mods: { regen: 3 }, sleeve: 0x8a1c1c, cuff: 0x4a3020 },
+  ], weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd',
   keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> shoot a bolt &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>F</kbd> halberd thrust',
   foes: 'soldiers remain', foesNone: 'The valley is free', bossName: 'The Bailiff', bossDown: 'The bailiff has fallen', pickupText: 'Alp cheese  +35',
   deadTitle: 'Fallen', deadSub: 'The mountains will remember.', clearTitle: 'The valley is free',
