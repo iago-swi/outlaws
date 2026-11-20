@@ -5,7 +5,8 @@ late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpin
 a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
 and the Tibetan plateau in 1959, one hero faces many enemies alone, in a real-time 3D
 world you can walk through freely. Many buildings can be entered. Twenty-four heroes
-from history and legend are playable, three per chapter.
+from history and legend are playable, three per chapter. In Duel mode two players
+fight each other online, as a hero or as one of twenty-five villains.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -23,12 +24,22 @@ files.
 | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** |
 | <img src="screenshot-russia.jpg" width="400" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth, panel blocks with lit windows and a tower behind, a militiaman, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="400" alt="A Tibetan village under snow peaks and a deep blue sky: whitewashed flat-roofed houses with dark red parapets, a white chorten, strings of prayer flags, the monastery on the ridge behind, Chinese soldiers, a rifle in the foreground"> |
 
+| Duel · choose your fighter | Duel · face to face |
+| :---: | :---: |
+| <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Dry Gulch: a row of three heroes marked with gold stars (Wyatt Earp, Calamity Jane, Billy the Kid) above a row of three villains marked with red skulls (Jesse James, Ike Clanton, Belle Starr), with Wyatt Earp standing in the desert"> | <img src="screenshot-duel.jpg" width="400" alt="A duel in the main street of Dry Gulch at golden hour: the other player, as Jesse James in a long coat, stands by the well; the score line reads You 0–0 Jesse James, round 1; the six-shooter is in the foreground"> |
+
+![The title screen: the game's name over a Japanese garden at dusk, eight chapter cards in two rows and the Duel button](screenshot-title.jpg)
+
 ## Run it
 
 Play online with the link above. To play offline, download the folder and open
 `index.html` in a current version of Chrome or Edge, or double-click `Play.bat` on
 Windows. No installation, build step, web server or internet
-connection is needed. A mouse and keyboard are required; there are no touch controls.
+connection is needed, except for Duel mode. A mouse and keyboard are required; there are
+no touch controls.
+
+The title screen shows a different chapter behind it on every visit, and takes that
+chapter's accent colour and lettering.
 
 ## How to play
 
@@ -122,6 +133,75 @@ fighting; the player clears the road ahead of him. Gompo Tashi Andrugtsang and A
 did fight in those years; Songtsen Gampo is a king of the seventh century. The Red Guards
 belong to the years after 1966 and are in the chapter by request, not by the calendar.
 
+### Duel: two players online
+
+Click **Duel** on the title screen. Two players, each on their own computer, hunt each
+other in one of the eight chapters; the goal is to kill the other player.
+
+1. One player chooses the chapter, the rules and whether a few computer enemies stay in
+   the world, then clicks *Create and get the invite link*.
+2. They send the link, or its five-letter code, to the other player, who opens it.
+3. Both choose a fighter. The duel starts when both have chosen.
+
+| Rule | How it ends |
+| --- | --- |
+| First to 3 rounds | Each kill ends a round. Both players start again with full health, at opposite ends of the map, and change ends every round. |
+| One life | The first kill decides. |
+| 5 minutes, most kills | A player comes back three seconds after dying, at the end of the map farther from the opponent. |
+
+In a duel each chapter offers its villains beside its three heroes. Heroes stand in a
+row marked with a gold star, villains in a row marked with a red skull, and every card
+carries the same mark. Like a hero, a villain has their own look and one strength.
+
+| Chapter | Villain | Who | Strength |
+| --- | --- | --- | --- |
+| I | Jesse James | Bank and train robber of Missouri | Train robber: moves 15% faster |
+| I | Ike Clanton | Rustler of Tombstone, Earp's enemy at the O.K. Corral | Rustler: starts with 130 health |
+| I | Belle Starr | The Bandit Queen of Indian Territory | Two guns: fires 30% faster |
+| II | Oda Nobunaga | Warlord, the Demon King of the Sixth Heaven | Warlord: takes 25% less damage |
+| II | Sasaki Kojirō | Musashi's rival, master of the long sword | The Drying Pole: the katana reaches 0.8 m further |
+| II | Fūma Kotarō | Leader of the Fūma ninja clan | Night raider: moves 20% faster |
+| III | Hermann Gessler | Habsburg bailiff of Uri, of the hat on the pole | Bailiff: takes 20% less damage |
+| III | Charles the Bold | Duke of Burgundy, beaten at Grandson, Murten and Nancy | Burgundian steel: starts with 150 health |
+| III | Duke Leopold I | Habsburg duke, routed at Morgarten in 1315 | Knight: halberd thrusts hit 40% harder |
+| IV | Polyphemus | The Cyclops, son of Poseidon | Giant: starts with 180 health, but is a large target |
+| IV | Medusa | The Gorgon whose gaze turns men to stone | Deadly gaze: javelins fly faster and hit harder |
+| IV | Antinous | Leader of the suitors in Ulysses' hall | Usurper: moves 15% faster |
+| V | Erik Bloodaxe | King of Norway, slayer of his brothers | Bloodaxe: throws axes much faster |
+| V | Ivar the Boneless | Ragnar's son, leader of the Great Heathen Army | Cunning: takes 25% less damage |
+| V | Loki | Trickster god, father of the wolf Fenrir | Shape-shifter: moves 20% faster |
+| VI | Adolf Hitler | Dictator of Nazi Germany, 1933–1945 | Dictator: pistol; takes 20% less damage |
+| VI | Benito Mussolini | Fascist dictator of Italy, 1922–1943 | Strongman: Sten gun; starts with 120 health |
+| VI | Hermann Göring | Head of the Luftwaffe, Hitler's deputy | Huntsman: scoped rifle |
+| VII | Joseph Stalin | Soviet dictator, 1924–1953 | Man of steel: takes 25% less damage |
+| VII | Yuri Andropov | Head of the KGB, 1967–1982 | Chekist: moves 15% faster |
+| VII | Lavrentiy Beria | Stalin's chief of secret police | Secret police: pistol whose shots hit 50% harder |
+| VII | Leonid Brezhnev | Soviet leader, 1964–1982 | Chest of medals: submachine gun; starts with 130 health |
+| VIII | Mao Zedong | Chairman of Communist China, 1949–1976 | Chairman: rifle; takes 20% less damage |
+| VIII | Langdarma | The king who persecuted the Dharma, 9th century | Horned king: bow and sword; starts with 140 health |
+| VIII | Jiang Qing | Madame Mao, leader of the Gang of Four | Red Guard: pistol; moves 20% faster |
+
+The villains can only be played in a duel. The dictators are there to be fought: they
+are shown without party symbols and with a plain description of who they were. Several
+villains, like several heroes, do not belong to their chapter's year.
+
+Things to know in a duel:
+
+- The whole map is used. The larger dot on the compass is your opponent.
+- Weapons do 60% of their usual damage against the other player, so a duel is not over
+  in one hit. A hit to the head still counts two and a half times.
+- If computer enemies are in the world, there are six of them; they attack whichever
+  player is nearer, and being killed by one counts for your opponent.
+- A duel cannot be paused, and practice mode is switched off.
+
+**Connecting.** The two browsers talk to each other directly. The invite link uses a
+free public service (PeerJS) only to introduce them; nothing of the game passes through
+it. Each player can see the other's network address, as in any direct connection. If the
+invite link fails, open *Connect with copy-paste codes* on the Duel screen: one player
+makes a code, the other pastes it and sends a reply code back, and no outside service is
+involved. On some company or mobile networks neither way gets through, because the game
+has no relay server.
+
 ### Controls
 
 | Key | Action |
@@ -156,10 +236,11 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.47 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 6,350 lines of plain JavaScript (ES modules) in 17 files under [source/src/](source/src/), plus 200 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.60 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 6,890 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
+| Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
 | Type | Rye, Pirata One, IM Fell English and Cinzel (SIL Open Font License), bundled through Fontsource. |
 | Storage | None. Progress is not saved; all eight chapters are open from the start. |
@@ -178,6 +259,9 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
 | [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps and iron bars. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
+| [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
+| [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
+| [villains.js](source/src/villains.js) | The twenty-five villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
 ### Rendering pipeline
@@ -324,7 +408,8 @@ barrels. A description object selects skin, clothes, hat, beard, extras such as 
 poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-The same builder makes the twenty-four playable heroes, the human enemy types, the
+The same builder makes the twenty-four playable heroes, the twenty-five duel villains
+(the one-eyed Cyclops and Medusa with her snakes included), the human enemy types, the
 bystanders (among them the Dalai Lama, his monks and riders in chapter VIII) and the
 statues of chapters IV and VII. There are thirty-one enemy types in all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
 same parts to the enemy code (a body, and the front and back pairs of legs in place of
@@ -379,6 +464,36 @@ Practice mode is one flag. All damage to the player passes through a single func
 which returns at once while the flag is set, so enemy behaviour is untouched. The word
 is detected by keeping the last few typed characters and testing whether they end in
 `pax`.
+
+### Duel mode
+
+Each browser runs its own copy of the chosen chapter and simulates only its own player.
+Twenty times a second it tells the other browser where that player is, where they look
+and whether they aim or swing, in a small JSON message over a WebRTC data channel.
+
+- **The opponent's figure.** The other player appears as a figure built by the character
+  builder and moved toward the latest report. It is placed in the same list as the
+  computer enemies. That one decision makes every existing weapon work against it
+  (bullets, arrows, thrown weapons, blades), puts it on the compass and makes it solid,
+  without a second set of combat code.
+- **Who decides a hit.** The shooter does. When my shot hits your figure on my screen, my
+  browser sends the damage and yours applies it, with your fighter's own strengths. This
+  favours the shooter slightly when the connection is slow, which feels fairer than shots
+  that visibly hit and do nothing. A player's own browser decides when that player is
+  dead and announces it; both sides then count the score by the same rule.
+- **What you see of the other's fire.** Tracers and projectiles are sent as "ghosts":
+  they are drawn and heard, but hit nothing on the receiving side.
+- **Shared computer enemies.** If the host asked for them, six of the chapter's enemies
+  stay. They are simulated on the host only and turn on whichever player is nearer. The
+  guest receives their positions ten times a second and shows them as puppets; a guest's
+  hit on a puppet is sent to the host, which applies it.
+- **Spawn points.** The two ends of the map are the chapter's own start and the place
+  where its boss stands.
+- **The handshake.** A WebRTC connection needs a first exchange of addresses. With the
+  invite link, the PeerJS broker carries it under a random five-letter code. With the
+  copy-paste codes, the players carry it themselves: the code is the connection offer,
+  base64-encoded. There is no relay (TURN) server, so two players behind strict network
+  address translation cannot connect.
 
 ### Weapons
 
@@ -477,7 +592,7 @@ npm run build
 over `index.html` in this folder to publish it.
 
 Four address flags help while editing: `?level=2` jumps into a chapter (1 to 8),
-`&hero=3` picks its third hero, `&free` starts play at once without mouse capture (arrow
+`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture (arrow
 keys turn), and `&peace` makes enemies passive. In the browser console,
 `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
 
@@ -503,6 +618,14 @@ rifle shot. No chapter was played through to the end by hand, and not every new 
 was looked at. All eight chapters were loaded once more in the published build on GitHub
 Pages, without errors.
 
+Duel mode was tested between two tabs of one automated browser on one computer:
+connecting by invite link and by copy-paste codes, the choice of fighters, the start at
+opposite ends, a full three-round match to the end screen, the timed rule with
+respawning, a player leaving, and the shared computer enemies (they attack both players,
+and a guest's hit kills one on the host). It has not been tried between two computers on
+different networks, only guns were fired at the other player in these tests, and the
+effect of real network delay is unknown.
+
 The game was not tuned by long sessions of hand play, so the difficulty is a first
 estimate, and frame rate on slower graphics hardware has not been measured.
 
@@ -514,8 +637,12 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - A chapter takes up to about a second and a half longer to load than before, for the
   route grid.
 - Wind moves plants but not their shadows.
+- Duel mode has no relay server, no rematch button and no chat; if one player switches
+  to another browser tab, their game stops sending until they come back.
+- On the title screen the chapter behind the cards is loaded without its route grid;
+  entering a chapter loads it again in full.
 
 ### Licences of bundled components
 
-three.js is under the MIT licence; the four fonts are under the SIL Open Font License
-1.1. The licence texts are in [licenses/](licenses/).
+three.js and PeerJS are under the MIT licence; the four fonts are under the SIL Open
+Font License 1.1. The licence texts are in [licenses/](licenses/).
