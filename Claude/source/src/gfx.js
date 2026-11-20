@@ -373,6 +373,8 @@ export class Gfx {
     this.scene.fog.color.set(e.fogColor); this.scene.fog.density = e.fogDensity;
     this.sun.color.set(e.sunLight ?? e.sunColor); this.sun.intensity = e.sunIntensity;
     this.hemi.color.set(e.hemiSky); this.hemi.groundColor.set(e.hemiGround); this.hemi.intensity = e.hemiIntensity;
+    // the lamp that lights the scene may differ from the sun drawn in the sky (moonlight at dawn)
+    this.lightDir = (this.lightDir || new THREE.Vector3()).set(...(e.lightDir || e.sunDir)).normalize();
     this.shadowRange = e.shadowRange ?? 80;
     const c = this.sun.shadow.camera;
     c.left = -this.shadowRange; c.right = this.shadowRange; c.top = this.shadowRange; c.bottom = -this.shadowRange;
@@ -419,7 +421,7 @@ export class Gfx {
     // the shadow map follows the camera (snapped, so shadows do not crawl)
     const fx = Math.round(S.uCam.value.x / 4) * 4, fz = Math.round(S.uCam.value.z / 4) * 4;
     this.sun.target.position.set(fx, 0, fz);
-    this.sun.position.set(fx, 0, fz).addScaledVector(S.uSunDir.value, 220);
+    this.sun.position.set(fx, 0, fz).addScaledVector(this.lightDir || S.uSunDir.value, 220);
     this.sun.target.updateMatrixWorld();
 
     // where is the sun on screen? (for the light shafts)

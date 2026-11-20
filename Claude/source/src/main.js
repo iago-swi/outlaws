@@ -18,8 +18,9 @@ import { japan } from './levels/japan.js';
 import { swiss } from './levels/swiss.js';
 import { greece } from './levels/greece.js';
 import { north } from './levels/north.js';
+import { war } from './levels/war.js';
 
-const LEVELS = [west, japan, swiss, greece, north];
+const LEVELS = [west, japan, swiss, greece, north, war];
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 
@@ -77,7 +78,7 @@ class Game {
       }
       if (e.code === 'KeyQ' && this.state === 'pause') this.toTitle();
       if (this.state === 'intro') {
-        const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
+        const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);  // hero keys
         if (k >= 0 && k < this.def.heroes.length) this.applyHero(k);
         if (e.code === 'Enter') this.begin();
       }
@@ -98,7 +99,7 @@ class Game {
 
   setState(s) {
     this.state = s; this.input.active = s === 'play'; if (s === 'play') this.pausedByP = false;
-    document.body.classList.toggle('playing', s === 'play');
+    document.body.classList.toggle('playing', s === 'play'); if (s !== 'play') document.body.classList.remove('scoped');
     document.body.classList.toggle('cine', s === 'title' || s === 'intro');
     this.show(s === 'play' ? null : s);
     if (this.hero) this.hero.visible = s === 'intro';
@@ -120,10 +121,9 @@ class Game {
     this.hero = null;
     const want = params.has('hero') ? +params.get('hero') - 1 : 0;
     this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, def.heroes.length - 1));
-    document.body.classList.remove('theme-west', 'theme-japan', 'theme-swiss', 'theme-greece', 'theme-north'); document.body.classList.add(def.theme);
+    document.body.classList.remove('theme-west', 'theme-japan', 'theme-swiss', 'theme-greece', 'theme-north', 'theme-war'); document.body.classList.add(def.theme);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.timeScale = 1; this.slow = 0; this.noise = 0; this.cache = {};
-    this.ui.wname.textContent = def.weaponName; this.ui.alt.textContent = def.alt;
     this.ui.boss.classList.remove('on');
     this.gfx.camera.fov = 72; this.gfx.camera.updateProjectionMatrix();
     this.gfx.fade = 0; this.gfx.fadeTarget = 1; this.gfx.damage = 0;
@@ -141,9 +141,10 @@ class Game {
     rig.armR.rotation.x = up ? -1.2 : look.weapon === 'bow' ? -0.9 : -0.35; rig.armR.rotation.z = up ? 0.14 : -0.1;
     rig.armL.rotation.x = 0.1; rig.armL.rotation.z = 0.12;
     this.gfx.root.add(rig.group); this.hero = rig.group; this.hero.visible = this.state === 'intro';
-    P.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1, ...h.mods };
+    P.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1, gun: 1, stealth: 1, ...h.mods };
     P.maxHp = P.mods.hp; P.hp = P.maxHp;
-    P.setWeapon(d.weapon, h.sleeve, h.cuff);
+    P.setWeapon(h.weapon ?? d.weapon, h.sleeve, h.cuff);
+    this.ui.wname.textContent = h.weaponName ?? d.weaponName; this.ui.alt.textContent = h.alt ?? d.alt;
     this.ui.place.textContent = h.name + ' · ' + d.place; this.cache = {};
     document.querySelectorAll('#heroes .hero').forEach((c) => c.classList.toggle('sel', +c.dataset.hero === k));
   }
@@ -348,7 +349,7 @@ class Game {
     if (c.hp !== hp) { c.hp = hp; u.hp.textContent = hp; u.hpbar.style.width = Math.min(100, (hp / P.maxHp) * 100) + '%'; }
     const h = P.weapon.hud(), key = h.ammo + '/' + h.mag + h.reloading;
     if (c.ammo !== key) {
-      c.ammo = key; u.pips.className = h.mag === 1 ? 'long' : '';
+      c.ammo = key; u.pips.className = h.mag === 1 ? 'long' : h.mag > 10 ? 'many' : '';
       u.pips.innerHTML = Array.from({ length: h.mag }, (_, i) => `<i class="${i < h.ammo ? '' : 'off'}"></i>`).join('');
     }
     const alive = this.enemies.filter((e) => e.alive);
@@ -378,6 +379,7 @@ class Game {
       if (s === 'l') el.style.left = -(g + 9) + 'px'; else if (s === 'r') el.style.left = g + 'px';
       else if (s === 'u') el.style.top = -(g + 9) + 'px'; else el.style.top = g + 'px';
     }
+    document.body.classList.toggle('scoped', !!P.weapon.scope && P.aim > 0.8 && !P.dead);
     this.hitT = Math.max(0, this.hitT - dt); u.hit.style.opacity = Math.min(1, this.hitT * 8);
     this.dmgT = Math.max(0, this.dmgT - dt); u.dmg.style.opacity = Math.min(1, this.dmgT * 2);
     if (this.msgT > 0) { this.msgT -= dt; if (this.msgT <= 0) u.msg.classList.remove('on'); }
