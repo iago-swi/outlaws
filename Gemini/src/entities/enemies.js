@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { createSpartanShieldTexture, createVikingShieldTexture } from '../engine/textures.js';
 
 const ENEMY_SPECS = {
   cowboy: {
@@ -102,6 +103,87 @@ const ENEMY_SPECS = {
     style: 'boss_ranged',
     scale: 1.32,
     projectileColor: 0xff5238
+  },
+  // Level 4: Ancient Greece (Spartan Warriors)
+  spartan_hoplite: {
+    name: 'Spartan Hoplite',
+    hp: 95,
+    speed: 4.8,
+    range: 3.5,
+    fireRate: 1.05,
+    damage: 17,
+    score: 230,
+    style: 'melee',
+    projectileColor: 0xffd266
+  },
+  spartan_skirmisher: {
+    name: 'Spartan Javelineer',
+    hp: 78,
+    speed: 4.1,
+    range: 35,
+    fireRate: 1.4,
+    damage: 14,
+    score: 240,
+    style: 'ranged',
+    projectileColor: 0xffd266
+  },
+  boss_greece: {
+    name: 'ARCHIDAMOS — SPARTAN POLEMARCH',
+    hp: 460,
+    speed: 4.7,
+    range: 36,
+    fireRate: 0.85,
+    damage: 18,
+    score: 1800,
+    style: 'boss_hybrid',
+    scale: 1.32,
+    projectileColor: 0xff8c2b
+  },
+  // Level 5: Scandinavia (Historical Vikings — No Horned Helmets!)
+  viking_warrior: {
+    name: 'Viking Huscarl',
+    hp: 95,
+    speed: 4.6,
+    range: 24,
+    fireRate: 1.35,
+    damage: 16,
+    score: 240,
+    style: 'hybrid',
+    projectileColor: 0xaef0ff
+  },
+  viking_archer: {
+    name: 'Norse Bowman',
+    hp: 74,
+    speed: 3.8,
+    range: 38,
+    fireRate: 1.45,
+    damage: 14,
+    score: 230,
+    style: 'ranged',
+    projectileColor: 0xd9f6ff
+  },
+  viking_berserker: {
+    name: 'Viking Berserker',
+    hp: 105,
+    speed: 6.2,
+    range: 3.4,
+    fireRate: 0.88,
+    damage: 19,
+    score: 280,
+    style: 'melee',
+    projectileColor: 0xffffff
+  },
+  boss_scandinavia: {
+    name: 'JARL HAKON — LORD OF THE FJORD',
+    hp: 490,
+    speed: 4.9,
+    range: 36,
+    fireRate: 0.82,
+    damage: 19,
+    score: 2000,
+    style: 'boss_hybrid',
+    scale: 1.34,
+    projectileColor: 0x62f2c8
   }
 };
 
@@ -129,6 +211,10 @@ function buildEnemyMesh(type) {
   else if (type === 'boss_japan') { coatColor = 0x7d1414; pantsColor = 0x1a1414; }
   else if (type === 'halberdier' || type === 'arquebusier') { coatColor = 0xb52424; pantsColor = 0x363230; }
   else if (type === 'boss_swiss') { coatColor = 0x8f1818; pantsColor = 0x282628; }
+  else if (type === 'spartan_hoplite' || type === 'spartan_skirmisher' || type === 'boss_greece') { coatColor = 0xb87e2d; pantsColor = 0xa82020; }
+  else if (type === 'viking_warrior' || type === 'viking_archer') { coatColor = 0x4b4f58; pantsColor = 0x3a2e25; }
+  else if (type === 'viking_berserker') { coatColor = 0x5c4330; pantsColor = 0x2d231c; }
+  else if (type === 'boss_scandinavia') { coatColor = 0x293342; pantsColor = 0x26201c; }
 
   const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.68 });
   const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.78 });
@@ -311,6 +397,116 @@ function buildEnemyMesh(type) {
       musket.rotation.x = Math.PI / 2;
       musket.position.set(0, -0.25, 0.42);
       armR.add(musket);
+    }
+  } else if (type === 'spartan_hoplite' || type === 'spartan_skirmisher' || type === 'boss_greece') {
+    // Spartan Bronze Cuirass, Flowing Red Cloak, Crested Bronze Corinthian Helmet & Round Lambda (Λ) Shield!
+    const bronzeMat = new THREE.MeshStandardMaterial({ color: isBoss ? 0xeab548 : 0xc98f36, metalness: 0.84, roughness: 0.28 });
+    const cuirass = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.56, 0.34), bronzeMat);
+    cuirass.position.set(0, 1.2, 0);
+    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.64, 1.15, 0.1), redMat);
+    cloak.position.set(0, 1.02, -0.22);
+    cloak.rotation.x = 0.14;
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 0.36, 8), redMat);
+    skirt.position.set(0, 0.78, 0);
+    root.add(cuirass, cloak, skirt);
+
+    // Crested Bronze Corinthian Helmet
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.245, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.72), bronzeMat);
+    helm.position.y = 0.06;
+    const cheekL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.18, 0.14), bronzeMat);
+    cheekL.position.set(-0.17, -0.05, 0.12);
+    const cheekR = cheekL.clone();
+    cheekR.position.x = 0.17;
+    // Tall crimson horsehair crest (transverse for Boss!)
+    const crest = new THREE.Mesh(
+      isBoss ? new THREE.BoxGeometry(0.58, 0.24, 0.11) : new THREE.BoxGeometry(0.11, 0.24, 0.54),
+      redMat
+    );
+    crest.position.set(0, 0.34, isBoss ? 0 : -0.04);
+    head.add(helm, cheekL, cheekR, crest);
+
+    // Round Spartan Bronze Shield emblazoned with the Greek letter Lambda (Λ)!
+    const shieldMat = new THREE.MeshStandardMaterial({ map: createSpartanShieldTexture(), metalness: 0.5, roughness: 0.38 });
+    const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.06, 20), [bronzeMat, shieldMat, bronzeMat]);
+    shield.rotation.x = Math.PI / 2;
+    shield.position.set(-0.08, -0.18, 0.24);
+    armL.add(shield);
+
+    // Dory Spear or Javelin
+    const spearLen = type === 'spartan_hoplite' ? 2.25 : 1.75;
+    const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, spearLen, 8), darkLeather);
+    spear.rotation.x = Math.PI / 2;
+    spear.position.set(0, -0.26, 0.45);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.28, 4), bronzeMat);
+    tip.rotation.x = Math.PI / 2;
+    tip.position.set(0, -0.26, 0.45 + spearLen * 0.5 + 0.1);
+    armR.add(spear, tip);
+  } else if (type === 'viking_warrior' || type === 'viking_archer' || type === 'viking_berserker' || type === 'boss_scandinavia') {
+    // Historical Vikings — Strictly NO Horned Helmets!
+    const furMat = new THREE.MeshStandardMaterial({ color: type === 'viking_berserker' ? 0x4a3525 : 0x3b332d, roughness: 0.95 });
+    const beardCol = type === 'viking_berserker' ? 0x7c3b1e : 0x4d3a28;
+    const beardMat = new THREE.MeshStandardMaterial({ color: beardCol, roughness: 0.92 });
+    const helmMat = isBoss ? goldMat : steelMat;
+
+    // Fur shoulder mantle & beard
+    const furMantle = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.26, 0.4), furMat);
+    furMantle.position.set(0, 1.48, -0.02);
+    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.95, 0.1), isBoss ? redMat : furMat);
+    cloak.position.set(0, 1.0, -0.22);
+    root.add(furMantle, cloak);
+
+    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.34, 10), beardMat);
+    beard.rotation.x = Math.PI;
+    beard.position.set(0, -0.2, 0.1);
+    head.add(beard);
+
+    if (type === 'viking_berserker') {
+      // Bareheaded wild fur-hooded Berserker (zero horns!)
+      const wolfHood = new THREE.Mesh(new THREE.SphereGeometry(0.245, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.62), furMat);
+      wolfHood.position.set(0, 0.08, -0.03);
+      head.add(wolfHood);
+    } else {
+      // Historical Iron Spangenhelm / Gjermundbu Spectacle Helmet (smooth domed iron, NO horns!)
+      const spangen = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), helmMat);
+      spangen.position.y = 0.08;
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.022, 6, 16), helmMat);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = 0.08;
+      const nasal = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.15, 0.03), helmMat);
+      nasal.position.set(0, 0.01, 0.22);
+      head.add(spangen, rim, nasal);
+    }
+
+    // Round painted Viking wooden shield (except berserker who dual-wields axes!)
+    if (type !== 'viking_berserker' && type !== 'viking_archer') {
+      const shTex = createVikingShieldTexture(isBoss ? 3 : 0);
+      const shMat = new THREE.MeshStandardMaterial({ map: shTex, roughness: 0.72 });
+      const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 18), [darkLeather, shMat, darkLeather]);
+      shield.rotation.x = Math.PI / 2;
+      shield.position.set(-0.08, -0.18, 0.24);
+      armL.add(shield);
+    }
+
+    if (type === 'viking_archer') {
+      const bow = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.024, 6, 14, Math.PI * 0.9), darkLeather);
+      bow.rotation.y = Math.PI / 2;
+      bow.rotation.z = -Math.PI * 0.45;
+      bow.position.set(0, -0.18, 0.28);
+      armL.add(bow);
+    } else {
+      const addAxe = (targetArm) => {
+        const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.92, 8), darkLeather);
+        haft.rotation.x = Math.PI / 2;
+        haft.position.set(0, -0.26, 0.34);
+        const headAxe = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.26, 0.22), steelMat);
+        headAxe.position.set(0, -0.26, 0.74);
+        targetArm.add(haft, headAxe);
+      };
+      addAxe(armR);
+      if (type === 'viking_berserker') {
+        armL.rotation.x = -1.1;
+        addAxe(armL);
+      }
     }
   }
 

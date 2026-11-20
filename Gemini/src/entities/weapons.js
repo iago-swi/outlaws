@@ -236,6 +236,90 @@ export const ERA_WEAPONS = {
       altHint: 'Arc Throw Fire-Bomb',
       projColor: 0xff6e24
     }
+  ],
+  greece: [
+    {
+      id: 'javelin',
+      name: 'BRONZE JAVELIN',
+      shortName: 'Javelin',
+      kind: 'hitscan',
+      sound: 'javelin',
+      damage: 56,
+      headMult: 2.1,
+      pellets: 1,
+      spread: 0.009,
+      fireRate: 0.56,
+      magSize: 5,
+      reserve: 45,
+      reloadTime: 0.88,
+      recoil: 0.16,
+      altMode: 'scope',
+      scopeLabel: 'AEGEAN SPEAR SIGHT',
+      scopeFov: 36,
+      altHint: 'RMB: Steady Aim Focus',
+      tracerColor: 0xffe49e
+    },
+    {
+      id: 'xiphos',
+      name: 'XIPHOS SHORT SWORD',
+      shortName: 'Short Sword',
+      kind: 'melee',
+      sound: 'slash',
+      damage: 66,
+      headMult: 1.5,
+      range: 3.9,
+      fireRate: 0.34,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.22,
+      altMode: 'heavy_slash',
+      altHint: 'RMB: Heroic Thrust Cleave',
+      slashColor: 0xffe6a3
+    }
+  ],
+  scandinavia: [
+    {
+      id: 'throwing_axe',
+      name: 'THROWING AXE',
+      shortName: 'Throwing Axe',
+      kind: 'hitscan',
+      sound: 'axe_throw',
+      damage: 58,
+      headMult: 2.1,
+      pellets: 1,
+      spread: 0.011,
+      fireRate: 0.54,
+      magSize: 5,
+      reserve: 45,
+      reloadTime: 0.85,
+      recoil: 0.17,
+      altMode: 'scope',
+      scopeLabel: 'NORSE RAIDER AIM',
+      scopeFov: 38,
+      altHint: 'RMB: Steady Aim Focus',
+      tracerColor: 0xc2f5ff
+    },
+    {
+      id: 'viking_sword',
+      name: 'ULFBERHT SWORD',
+      shortName: 'Viking Sword',
+      kind: 'melee',
+      sound: 'slash',
+      damage: 72,
+      headMult: 1.5,
+      range: 4.1,
+      fireRate: 0.38,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.24,
+      altMode: 'heavy_slash',
+      altHint: 'RMB: Shield-Breaker Cleave',
+      slashColor: 0x9ef5e8
+    }
   ]
 };
 
@@ -484,6 +568,66 @@ export function buildWeaponViewmodel(weaponId) {
     flame.name = 'spark';
     g.add(pot, neck, flame);
     g.position.set(0.26, -0.24, -0.46);
+  } else if (weaponId === 'javelin') {
+    const bronzeMat = new THREE.MeshStandardMaterial({ color: 0xdba34b, metalness: 0.86, roughness: 0.24 });
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 1.35, 8), woodMat);
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.set(0, 0.02, -0.35);
+    const gripWrap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.24, 8), crimsonMat);
+    gripWrap.rotation.x = Math.PI / 2;
+    gripWrap.position.set(0, 0.02, -0.05);
+    const socket = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.016, 0.12, 8), bronzeMat);
+    socket.rotation.x = Math.PI / 2;
+    socket.position.set(0, 0.02, -1.0);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.036, 0.24, 4), bronzeMat);
+    tip.rotation.x = -Math.PI / 2;
+    tip.position.set(0, 0.02, -1.16);
+    g.add(shaft, gripWrap, socket, tip);
+    g.rotation.set(0.06, 0.08, 0);
+    g.position.set(0.27, -0.2, -0.25);
+  } else if (weaponId === 'xiphos') {
+    const bronzeMat = new THREE.MeshStandardMaterial({ color: 0xe3ac52, metalness: 0.88, roughness: 0.22 });
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.66, 0.068), bronzeMat);
+    blade.position.set(0, 0.34, 0);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.036, 0.16, 4), bronzeMat);
+    tip.position.set(0, 0.74, 0);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.036, 0.18), brassMat);
+    guard.position.set(0, 0.01, 0);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.22, 8), darkWood);
+    hilt.position.set(0, -0.12, 0);
+    const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 8), brassMat);
+    pommel.position.set(0, -0.24, 0);
+    g.add(blade, tip, guard, hilt, pommel);
+    g.rotation.set(-0.38, -0.26, 0.26);
+    g.position.set(0.32, -0.32, -0.52);
+  } else if (weaponId === 'throwing_axe') {
+    const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.022, 0.56, 8), woodMat);
+    haft.position.set(0, 0.06, 0);
+    const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.16, 8), darkWood);
+    wrap.position.set(0, -0.14, 0);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.14, 0.16), steelMat);
+    head.position.set(0, 0.28, -0.06);
+    const beard = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.22, 0.12), brightSteel);
+    beard.position.set(0, 0.23, -0.15);
+    g.add(haft, wrap, head, beard);
+    g.rotation.set(0.28, -0.18, 0.18);
+    g.position.set(0.28, -0.26, -0.48);
+  } else if (weaponId === 'viking_sword') {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.88, 0.064), brightSteel);
+    blade.position.set(0, 0.44, 0);
+    const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.72, 0.02), steelMat);
+    fuller.position.set(0, 0.42, 0);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.034, 0.14, 4), brightSteel);
+    tip.position.set(0, 0.94, 0);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.036, 0.22), steelMat);
+    guard.position.set(0, 0.0, 0);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.22, 8), darkWood);
+    hilt.position.set(0, -0.12, 0);
+    const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.055, 0.1), brassMat);
+    pommel.position.set(0, -0.24, 0);
+    g.add(blade, fuller, tip, guard, hilt, pommel);
+    g.rotation.set(-0.34, -0.24, 0.24);
+    g.position.set(0.32, -0.34, -0.52);
   }
 
   g.userData.basePos = g.position.clone();
