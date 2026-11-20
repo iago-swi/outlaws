@@ -68,7 +68,7 @@ export class Player {
     this.camY = 1.65; this.bob = 0; this.bobAmt = 0; this.kick = 0; this.kickV = 0; this.land = 0; this.roll = 0;
     this.fov = 72; this.aim = 0; this.swayX = 0; this.swayY = 0; this.deadT = 0; this.stepPhase = 0;
     // hero traits: multipliers set by the chosen character (1 = no change)
-    this.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0 };
+    this.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1 };
     this.maxHp = 100; this.hurtT = 99;
     this.vm = new THREE.Group();               // viewmodel root, scaled down so it never pokes through walls
     this.vm.scale.setScalar(0.3);
@@ -343,7 +343,7 @@ class Weapon {
     h.add(mesh([gBox(0.01, 0.3, 0.26, 0xd4d9df, [0, -0.13, -1.12]), gCone(0.028, 0.42, 0xd4d9df, [0, 0, -1.5], [-Math.PI / 2, 0, 0], 1, 6),
       gBox(0.01, 0.1, 0.1, 0xd4d9df, [0, 0.07, -1.14], [0.6, 0, 0]), gBox(0.03, 0.03, 0.3, 0x8a8f96, [0, 0, -1.15])], M.metal));
     h.visible = false;
-    this.meleeDur = 0.55; this.meleeAt = 0.38; this.meleeRange = 3.7; this.meleeCone = 0.72; this.meleeDmg = 95;
+    this.meleeDur = 0.55; this.meleeAt = 0.38; this.meleeRange = 3.7; this.meleeCone = 0.72; this.meleeDmg = 95; this.meleeStyle = 'thrust';
   }
   update_crossbow(dt, input, active) {
     const P = this.p, G = this.game;
@@ -369,6 +369,64 @@ class Weapon {
     g.rotation.set(this.kick * 0.25 - rl * 0.55 + P.swayY - m * 0.5, 0.04 * (1 - P.aim) + P.swayX + rl * 0.12, rl * 0.25 + P.swayX * 0.8 + m * 0.5);
   }
 
+  // ---- thrown weapons: javelins (Greece) and axes (the North), each with a sword ----
+  build_javelin(M) { this.buildThrown(M, true); }
+  build_axe(M) { this.buildThrown(M, false); }
+  update_javelin(dt, input, active) { this.updateThrown(dt, input, active, true); }
+  update_axe(dt, input, active) { this.updateThrown(dt, input, active, false); }
+
+  buildThrown(M, jav) {
+    this.thrown = true; this.canAim = false; this.aimFov = 72; this.cuff = this.cuffIn ?? (jav ? 0xb8893a : 0x4a3a2a);
+    const g = (this.gun = new THREE.Group());
+    this.base = jav ? [0.3, -0.15, -0.5, 0.05, 0.1] : [0.3, -0.24, -0.5, -0.35, 0.05];
+    g.add(mesh(jav ? [fist([0, 0, 0], [Math.PI / 2, 0, Math.PI], 1.05), ...this.arm(this.sleeve, [0.06, -0.11, 0.2], [1.05, 0, 0.3], 0.34)]
+      : [fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.04, -0.2, 0.12], [0.5, 0, 0.2], 0.36)], M.flat));
+    this.missile = new THREE.Group();
+    if (jav) {
+      this.missile.add(mesh([gCyl(0.011, 0.011, 1.5, 0x7a5430, [0, 0.012, -0.25], [Math.PI / 2, 0, 0], 1, 6), gBox(0.03, 0.03, 0.12, 0x3a2414, [0, 0.012, 0])], M.flat));
+      this.missile.add(mesh([gCone(0.024, 0.2, 0xd4d9df, [0, 0.012, -1.1], [-Math.PI / 2, 0, 0], 1, 6)], M.metal));
+    } else {
+      this.missile.add(mesh([gCyl(0.014, 0.016, 0.5, 0x6a4a2a, [0, 0.12, 0], [0, 0, 0], 1, 6)], M.flat));
+      this.missile.add(mesh([gBox(0.012, 0.17, 0.15, 0xd4d9df, [0, 0.32, -0.09]), gBox(0.03, 0.055, 0.06, 0x6a6f76, [0, 0.33, 0])], M.metal));
+    }
+    g.add(this.missile);
+    this.root.add(g);
+    // rim of the round shield on the left arm
+    const sh = mesh(jav ? [gCyl(0.44, 0.44, 0.035, 0xb8893a, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 22), gCyl(0.37, 0.37, 0.04, 0x9a6f2a, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 22)]
+      : [gCyl(0.44, 0.44, 0.035, 0x8a1c1c, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 22), gBox(0.88, 0.1, 0.04, 0xe8e0d0, [0, 0, 0]), gBox(0.1, 0.88, 0.04, 0xe8e0d0, [0, 0, 0]),
+        gCyl(0.09, 0.09, 0.07, 0x9a9fa6, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 10), gCyl(0.445, 0.445, 0.03, 0x4a3a2a, [0, 0, 0.004], [Math.PI / 2, 0, 0], 1, 22)], M.flat);
+    sh.scale.setScalar(0.72); sh.position.set(-0.62, -0.6, -0.7); sh.rotation.set(0.3, 0.7, 0.12); this.shield = sh; this.root.add(sh);
+    // sword (right mouse button)
+    const k = (this.melee = new THREE.Group()), len = jav ? 0.52 : 0.7;
+    k.add(mesh([gBox(0.03, 0.17, 0.036, 0x3a2414, [0, 0, 0]), gBox(jav ? 0.13 : 0.19, 0.03, 0.045, jav ? 0xc9a050 : 0x8a8f96, [0, 0.095, 0]), gSph(0.03, jav ? 0xc9a050 : 0x8a8f96, [0, -0.1, 0]),
+      fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.06, -0.22, 0.14], [0.6, 0, 0.3], 0.4)], M.flat));
+    k.add(mesh([gBox(0.008, len, jav ? 0.06 : 0.05, 0xdfe4ea, [0, 0.11 + len / 2, 0])], M.metal));
+    k.visible = false;
+    this.meleeDur = 0.4; this.meleeAt = 0.42; this.meleeRange = jav ? 3.0 : 3.2; this.meleeCone = 0.55; this.meleeDmg = 100; this.meleeStyle = 'cut';
+  }
+  updateThrown(dt, input, active, jav) {
+    const P = this.p, G = this.game, b = this.base;
+    if (this.state === 'ready') { if (active && input.shoot && this.meleeT <= 0) { this.state = 'wind'; this.t = 0; } }
+    else if (this.state === 'wind') {
+      this.t += dt / this.m.fire;
+      if (this.t >= 0.16) {
+        this.state = 'recover'; this.t = 0; this.kickV += 5; P.recoil(0.2);
+        G.playerShoot(this.kind, (jav ? 50 : 36) * (1 + (this.m.power - 1) * 0.7), (jav ? 85 : 80) * this.m.power, jav ? 6 : 7);
+        G.sound.whiz();
+      }
+    } else { this.t += dt / this.m.fire; if (this.t >= 0.55) this.state = 'ready'; }
+    const wind = this.state === 'wind' ? ease(Math.min(1, this.t / 0.16)) : 0;
+    const rec = this.state === 'recover' ? this.t / 0.55 : 1;
+    this.missile.visible = this.state !== 'recover' || rec > 0.45;
+    const rise = this.state === 'recover' ? 1 - ease(clamp((rec - 0.45) / 0.55, 0, 1)) : 0;      // next missile comes up from below
+    const fwd = this.state === 'recover' && rec < 0.3 ? Math.sin((rec / 0.3) * Math.PI) : 0;       // follow-through of the throw
+    const m = this.meleeT > 0 ? Math.sin(Math.min(1, this.meleeT / this.meleeDur) * Math.PI) : 0;
+    const g = this.gun;
+    g.position.set(b[0] - m * 0.2, b[1] - rise * 0.4 - m * 0.4 + wind * 0.05, b[2] + wind * 0.24 - fwd * 0.3 + this.kick * 0.02);
+    g.rotation.set(b[3] + P.swayY - wind * (jav ? 0.12 : 0.7) + fwd * (jav ? 0.2 : 1.0) - m * 0.4, b[4] + P.swayX, P.swayX * 0.8);
+    this.shield.position.set(-0.62 - P.swayX * 0.6, -0.6 - P.swayY * 0.4 - fwd * 0.03, -0.7);
+  }
+
   // ---- shared -----------------------------------------------------------------
   update(dt, input, active) {
     const G = this.game;
@@ -382,8 +440,8 @@ class Weapon {
         this.meleeT += dt / this.m.melee;
         const k = this.meleeT / this.meleeDur, M = this.melee;
         M.visible = true;
-        if (!this.meleeHit && k >= this.meleeAt) { this.meleeHit = true; G.playerMelee(this.meleeRange + this.m.reach, this.meleeCone, this.meleeDmg); }
-        if (this.kind === 'bow') {            // diagonal cut, upper right to lower left
+        if (!this.meleeHit && k >= this.meleeAt) { this.meleeHit = true; G.playerMelee(this.meleeRange + this.m.reach, this.meleeCone, this.meleeDmg * this.m.meleeDmg); }
+        if (this.meleeStyle !== 'thrust') {    // diagonal cut, upper right to lower left
           const e = ease(clamp(k * 1.5, 0, 1));
           M.position.set(lerp(0.5, -0.4, e), lerp(0.2, -0.42, e), -0.55);
           M.rotation.set(lerp(-0.5, -1.35, e), 0, lerp(-1.0, 1.9, e));
@@ -402,6 +460,7 @@ class Weapon {
   hud() {
     if (this.kind === 'revolver') return { ammo: this.ammo, mag: this.mag, reloading: this.state === 'reload' };
     if (this.kind === 'bow') return { ammo: this.state === 'nock' ? 0 : 1, mag: 1, reloading: false };
+    if (this.thrown) return { ammo: this.state === 'ready' ? 1 : 0, mag: 1, reloading: false };
     return { ammo: this.state === 'ready' ? 1 : 0, mag: 1, reloading: this.state === 'reload' };
   }
 }

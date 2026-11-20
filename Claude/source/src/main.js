@@ -4,6 +4,7 @@ import '@fontsource/rye';
 import '@fontsource/pirata-one';
 import '@fontsource/im-fell-english';
 import '@fontsource/im-fell-english/400-italic.css';
+import '@fontsource/cinzel';
 import * as THREE from 'three';
 import { Gfx } from './gfx.js';
 import { Sound } from './audio.js';
@@ -15,8 +16,10 @@ import { rng, clamp, damp } from './util.js';
 import { west } from './levels/west.js';
 import { japan } from './levels/japan.js';
 import { swiss } from './levels/swiss.js';
+import { greece } from './levels/greece.js';
+import { north } from './levels/north.js';
 
-const LEVELS = [west, japan, swiss];
+const LEVELS = [west, japan, swiss, greece, north];
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 
@@ -32,7 +35,7 @@ class Game {
     this.world = new World();
     this.player = new Player(this);
     this.shots = new Shots(this);
-    this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0;
+    this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0; this.practice = false; this.typed = '';
     this.time = 0; this.noise = 0; this.state = 'boot'; this.index = 0; this.timeScale = 1; this.slow = 0;
     this.flashLight = new THREE.PointLight(0xffb060, 0, 16, 2);
     this.gfx.scene.add(this.flashLight);
@@ -64,20 +67,37 @@ class Game {
     };
     addEventListener('keydown', (e) => {
       if (e.code === 'KeyM') { this.muted = !this.muted; this.sound.setMuted(this.muted); }
+      // easter egg: typing PAX ("peace") switches practice mode on and off
+      if (e.key && e.key.length === 1) {
+        this.typed = (this.typed + e.key.toLowerCase()).slice(-12);
+        if (this.typed.endsWith('pax')) {
+          this.typed = ''; this.togglePractice();
+          if (this.state === 'pause' && this.pausedByP) { this.setState('play'); this.say(this.practice ? 'Practice mode — they cannot hurt you' : 'Practice mode off'); }   // the P of PAX had paused the game
+        }
+      }
       if (e.code === 'KeyQ' && this.state === 'pause') this.toTitle();
       if (this.state === 'intro') {
         const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code);
         if (k >= 0 && k < this.def.heroes.length) this.applyHero(k);
         if (e.code === 'Enter') this.begin();
       }
-      if ((e.code === 'Escape' || e.code === 'KeyP') && this.state === 'play' && !this.input.locked) this.setState('pause');
+      if ((e.code === 'Escape' || e.code === 'KeyP') && this.state === 'play' && !this.input.locked) { this.pausedByP = e.code === 'KeyP'; this.setState('pause'); }
     });
+  }
+
+  /** Practice mode: enemies still fight, but nothing they do can hurt you. */
+  togglePractice() {
+    this.practice = !this.practice;
+    document.body.classList.toggle('practice', this.practice);
+    this.sound.init(); this.sound.pickup();
+    if (this.practice) this.gfx.damage = 0;
+    if (this.state === 'play') this.say(this.practice ? 'Practice mode — they cannot hurt you' : 'Practice mode off');
   }
 
   show(id) { for (const s of ['title', 'intro', 'pause', 'dead', 'clear']) $('#' + s).classList.toggle('on', s === id); }
 
   setState(s) {
-    this.state = s; this.input.active = s === 'play';
+    this.state = s; this.input.active = s === 'play'; if (s === 'play') this.pausedByP = false;
     document.body.classList.toggle('playing', s === 'play');
     document.body.classList.toggle('cine', s === 'title' || s === 'intro');
     this.show(s === 'play' ? null : s);
@@ -100,7 +120,7 @@ class Game {
     this.hero = null;
     const want = params.has('hero') ? +params.get('hero') - 1 : 0;
     this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, def.heroes.length - 1));
-    document.body.classList.remove('theme-west', 'theme-japan', 'theme-swiss'); document.body.classList.add(def.theme);
+    document.body.classList.remove('theme-west', 'theme-japan', 'theme-swiss', 'theme-greece', 'theme-north'); document.body.classList.add(def.theme);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.timeScale = 1; this.slow = 0; this.noise = 0; this.cache = {};
     this.ui.wname.textContent = def.weaponName; this.ui.alt.textContent = def.alt;
@@ -121,7 +141,7 @@ class Game {
     rig.armR.rotation.x = up ? -1.2 : look.weapon === 'bow' ? -0.9 : -0.35; rig.armR.rotation.z = up ? 0.14 : -0.1;
     rig.armL.rotation.x = 0.1; rig.armL.rotation.z = 0.12;
     this.gfx.root.add(rig.group); this.hero = rig.group; this.hero.visible = this.state === 'intro';
-    P.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, ...h.mods };
+    P.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1, ...h.mods };
     P.maxHp = P.mods.hp; P.hp = P.maxHp;
     P.setWeapon(d.weapon, h.sleeve, h.cuff);
     this.ui.place.textContent = h.name + ' · ' + d.place; this.cache = {};
@@ -255,7 +275,7 @@ class Game {
 
   hurtPlayer(dmg, from, melee) {
     const P = this.player;
-    if (P.dead || this.state !== 'play') return;
+    if (P.dead || this.state !== 'play' || this.practice) return;
     dmg *= P.mods.armor; P.hp -= dmg; P.hurtT = 0; this.gfx.damage = Math.min(1.1, this.gfx.damage + 0.45 + dmg / 45);
     P.recoil((Math.random() - 0.3) * (melee ? 1.6 : 0.8));
     const dx = from.x - P.pos.x, dz = from.z - P.pos.z;
@@ -279,7 +299,7 @@ class Game {
     this.setState('clear');
     if (document.pointerLockElement) document.exitPointerLock();
     this.sound.stopMusic(); this.sound.fanfare(d.id);
-    $('#clear .kicker').textContent = last ? 'The last chapter is written' : d.chapter + ' complete';
+    $('#clear .kicker').textContent = (last ? 'The last chapter is written' : d.chapter + ' complete') + (this.practice ? ' · practice mode' : '');
     $('#clear .big').textContent = d.clearTitle;
     const acc = s.shots ? Math.min(100, Math.round((s.hits / s.shots) * 100)) : 0, mm = Math.floor(s.t / 60), ss = String(Math.floor(s.t % 60)).padStart(2, '0');
     $('#clear .stats').innerHTML = `<div><b>${mm}:${ss}</b>Time</div><div><b>${acc}%</b>Accuracy</div><div><b>${s.heads}</b>Headshots</div><div><b>${Math.round(this.player.hp)}</b>Health</div>`;
@@ -410,7 +430,7 @@ class Game {
   }
 
   async start() {
-    await Promise.all(['48px Rye', '48px "Pirata One"', '48px "IM Fell English"'].map((f) => document.fonts.load(f).catch(() => {})));
+    await Promise.all(['48px Rye', '48px "Pirata One"', '48px "IM Fell English"', '48px Cinzel'].map((f) => document.fonts.load(f).catch(() => {})));
     const lv = params.has('level') ? clamp(+params.get('level') - 1, 0, LEVELS.length - 1) : 0;
     this.loadLevel(lv); this.cineT = 0;
     if (params.has('level')) { this.fillIntro(); this.setState('intro'); if (params.has('free')) this.begin(); }
