@@ -4,6 +4,13 @@ Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to comp
 
 **Play it in your browser: <https://iago-swi.github.io/outlaws/>**
 
+| Version | Play | Source and controls |
+| --- | --- | --- |
+| Claude · Lone Hand | [Play](https://iago-swi.github.io/outlaws/Claude/) | [Claude/](Claude/) |
+| Gemini · Five Horizons | [Play](https://iago-swi.github.io/outlaws/Gemini/) | [Gemini/](Gemini/) |
+
+To play offline, download or clone this repository and open `index.html` in your browser. It is a landing page that links to both versions. Each version is self-contained in its own folder, with its own README.
+
 ## Claude version
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
@@ -26,6 +33,22 @@ Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to comp
 
 ## Game history
 
+**1997 — Outlaws.** LucasArts released *Outlaws*, a first-person shooter set in the Old West, on an enhanced version of the engine it had built for *Dark Forces*. Retired marshal James Anderson hunts the gang that killed his wife and took his daughter. The game is remembered for its hand-drawn animated story scenes, for Clint Bajakian’s score in the manner of the Italian Westerns, and for making the player reload by hand. It is often credited as one of the first shooters with a sniper scope. [The game on Wikipedia](https://en.wikipedia.org/wiki/Outlaws_(1997_video_game)) · [Gameplay video](https://www.youtube.com/watch?v=9n4ghEkKV-Q)
+
+**1998 — Handful of Missions.** LucasArts followed with a free add-on of further single-player missions and multiplayer maps.
+
+**2025 — The remaster.** Nightdive Studios brought the game and its add-on back as *Outlaws + Handful of Missions: Remaster*, with higher-resolution art and support for current systems. [The remaster on Steam](https://store.steampowered.com/app/3366780/Outlaws_Handful_of_Missions_Remaster/)
+
 **2026 — Lone Hand.** The frontiers are open 3D places to walk through: the main street of Dry Gulch at golden hour, a path of torii gates through a bamboo forest, and a valley on the Lake of Uri. The gunslinger carries a six-shooter, the samurai a bow and a katana, and the crossbowman of Uri a crossbow and a halberd. Two further chapters followed: a Greek island held by Spartans, fought with javelins and a short sword, and a Norwegian fjord under the northern lights, fought with throwing axes. A sixth is set in Normandy before dawn on 6 June 1944: three people who resisted the Nazi regime, with a scoped rifle, a Sten gun and a pistol, cross hedgerows and a guarded village to silence a coastal battery. [Explore the Claude edition](Claude/)
 
 **2026 — Five Horizons.** Built with Three.js, custom GLSL shaders, procedural PBR textures, and Web Audio synthesis, *Five Horizons* spans five eras with live 3D hero selection (three heroes per era), sixteen era weapons, and five boss showdowns — from Red Gulch, Kyoto Mist, and Rütli Valley (with bearded Waldstätten halberdiers flying the Uri bull flag) to the white-marble Aegean Isle against Spartans and the aurora-lit Norwegian fjord against rival Vikings. [Explore the Gemini edition](Gemini/)
+
+## Structure
+
+```text
+outlaws/
+|-- Claude/    # version built with Claude: game, source code, screenshots, technical README
+|-- Gemini/    # version built with Gemini
+|-- index.html # shared landing page
+`-- README.md
+```

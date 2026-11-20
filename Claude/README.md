@@ -20,8 +20,9 @@ files.
 
 ## Run it
 
-Play online with the link above. To play offline, download the folder and open `index.html` in a current version of Chrome or Edge, or
-double-click `Play.bat` on Windows. No installation, build step, web server or internet
+Play online with the link above. To play offline, download the folder and open
+`index.html` in a current version of Chrome or Edge, or double-click `Play.bat` on
+Windows. No installation, build step, web server or internet
 connection is needed. A mouse and keyboard are required; there are no touch controls.
 
 ## How to play
@@ -32,18 +33,19 @@ show where the remaining enemies are; the last three come looking for you. Healt
 
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | bow (yumi) and katana | ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | crossbow and halberd | Habsburg halberdiers, crossbowmen, knights, the bailiff |
-| IV · Ithaca, Greece, the age of heroes | javelins and short sword | Spartan hoplites, javelin throwers, their captain |
-| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | rival Vikings, berserkers, bowmen, the grey jarl |
-| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | German riflemen, officers, machine-gunners, guard dogs, the battery commander |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 15: cowboys, sombrero bandits, the gang boss Silas Crowe |
+| II · Kagemori, Japan, 1600 | bow (yumi) and katana | 17: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 16: Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| IV · Ithaca, Greece, the age of heroes | javelins and short sword | 20: Spartan hoplites, javelin throwers, their captain |
+| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 19: rival Vikings, berserkers, bowmen, the grey jarl |
+| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 23: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
 
 ### Choose your hero
 
 Each chapter starts with a choice of three heroes from history and legend. Point at a
 card to see the figure in the opening shot, then click it, or press `1` to `3` and
-`Enter`. Every hero has their own look and one strength.
+`Enter`. Every hero has their own look and one strength; in chapter VI the strength is
+the hero's own gun.
 
 ![The hero selection for Dry Gulch: cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
 
@@ -89,7 +91,7 @@ and the flag carry a plain bar cross.
 | Right mouse button | Aim (six-shooter, crossbow, the guns of chapter VI; through the scope with the rifle); katana or sword cut in chapters II, IV and V |
 | `F` | Halberd thrust in chapter III, knife in chapter VI (also the katana and the swords) |
 | `R` | Reload the six-shooter and the guns of chapter VI |
-| `Esc` or `P` | Pause; then `Q` returns to the chapter list |
+| `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
 | `M` | Sound on/off |
 
 The hero selection is shown over a short shot that circles the chosen figure; when the
@@ -113,26 +115,26 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | | |
 | --- | --- |
 | Delivery | One `index.html` of 1.39 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 5,150 lines of plain JavaScript (ES modules) in 15 files under [source/src/](source/src/), plus 160 lines of HTML and CSS. No framework. |
+| Source | About 5,150 lines of plain JavaScript (ES modules) in 15 files under [source/src/](source/src/), plus 190 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
 | Type | Rye, Pirata One, IM Fell English and Cinzel (SIL Open Font License), bundled through Fontsource. |
-| Storage | None. Progress is not saved; all three chapters are open from the start. |
+| Storage | None. Progress is not saved; all six chapters are open from the start. |
 | Requirements | A browser with WebGL 2 and half-float render targets. A dedicated graphics card is recommended. |
 
 ### Source layout
 
 | File | Responsibility |
 | --- | --- |
-| [main.js](source/src/main.js) | Game loop, level loading, combat rules, win and death, HUD, menu screens, opening camera. |
-| [gfx.js](source/src/gfx.js) | Renderer, sky dome, sun and shadows, bloom, final screen pass, particles, water and wind shaders. |
+| [main.js](source/src/main.js) | Game loop, level loading, hero selection, combat rules, win and death, practice mode, HUD, menu screens, opening camera. |
+| [gfx.js](source/src/gfx.js) | Renderer, sky dome (clouds, stars, northern lights), sun and shadows, bloom, final screen pass, particles, water and wind shaders. |
 | [tex.js](source/src/tex.js) | Procedural textures and the shared material library. |
 | [build.js](source/src/build.js) | Geometry helpers, the mesh-merging `Builder`, terrain height field, collision and ray casting. |
-| [actors.js](source/src/actors.js) | Character builder, enemy looks and behaviour, projectiles. |
-| [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, the four weapon view models. |
+| [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
+| [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
@@ -140,14 +142,16 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 Each frame is drawn in this order:
 
-1. **Shadow map.** One directional light (the sun) renders a 4096 × 4096 shadow map
-   covering 70 to 95 m around the camera. The light follows the camera in 4 m steps so
+1. **Shadow map.** One directional light (the sun, or the moon in chapters V and VI)
+   renders a 4096 × 4096 shadow map covering 70 to 95 m around the camera. The light follows the camera in 4 m steps so
    shadow edges do not crawl.
 2. **Scene.** The world is rendered into a half-float (HDR) target with 4× multisampling.
    Lighting is the sun, a sky/ground hemisphere light, and a blurred environment map
    baked from the sky shader when a level loads, so metal has something to reflect.
-   Chapter II adds up to nine point lights for lanterns.
-3. **Bloom.** three.js `UnrealBloomPass` with a threshold between 1.15 and 1.35, so only
+   Lanterns, fires and lamps are point lights without shadows: nine in chapter II, six
+   or fewer in the others.
+3. **Bloom.** three.js `UnrealBloomPass` with a threshold between 1.0 and 1.5, set per
+   chapter, so only
    values brighter than white glow: the sun, lit windows, lanterns, muzzle flashes.
 4. **Final pass.** A single fragment shader applies, in order: light shafts, exposure,
    ACES tone mapping, saturation and contrast, split toning (separate tints for shadows
@@ -198,8 +202,8 @@ therefore be a red barn, a grey boardwalk and a brown fence.
 Levels are assembled from simple shapes by code. Two techniques keep the frame cheap:
 
 - **Merging.** A `Builder` collects every static shape and merges them into one mesh
-  per material when the level is finished. A town of several thousand boxes is drawn in
-  about twenty calls.
+  per material when the level is finished. The static scenery of a town, several
+  thousand boxes, becomes about twenty meshes.
 - **Instancing.** Repeated objects are drawn as instances of one geometry: 2,300 bamboo
   stalks with foliage cards, 2,100 pines and 42,000 grass tufts in the Alps, and cacti,
   rocks and sagebrush in the desert. Wind sway is added in the vertex shader by patching
@@ -207,13 +211,14 @@ Levels are assembled from simple shapes by code. Two techniques keep the frame c
 
 Terrain is a height field: 700 m with 230 segments for the desert, 360 m with 180 for
 the shrine forest, 1,200 m with 400 (161,000 vertices) for the Alps, 1,000 m with 320
-for the Greek island and 1,200 m with 380 for the fjord. The mountains use ridged
+for the Greek island, 1,200 m with 380 for the fjord and 1,000 m with 300 for Normandy. The mountains use ridged
 noise; grass, rock, sand and snow are chosen per vertex from altitude and slope. Around
 the Greek island the sea bed is coloured from pale sand to deep blue and the water is
 half transparent, which gives turquoise shallows without a depth pass.
 
 Ships (Greek galleys with a bronze ram, Viking longships with a dragon prow and striped
-sail) come from one parameterised builder, as do houses, temples and longhouses.
+sail) come from one parameterised builder. Each chapter has its own small builders for
+houses, temples, longhouses, hedgerows, bunkers and vehicles.
 
 Layouts are deterministic. Each chapter uses a seeded random generator, so the world is
 the same on every run.
@@ -244,15 +249,17 @@ bystanders and the marble statues of chapter IV. There are twenty-three enemy ty
 all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
 same parts to the enemy code (a body, and the front and back pairs of legs in place of
 the two legs), with two low hit spheres, a bark instead of a shout, and a roll onto the
-side when it falls. They run at 7.6 m/s, faster than any human enemy, and bite at 1.7 m. Each enemy has five hit spheres; a head hit does 2.5 times the
-damage.
+side when it falls. They run at 7.6 m/s, faster than any human enemy, and bite at 1.7 m.
+
+A human enemy has five hit spheres stacked from feet to head; a head hit does 2.5 times
+the damage.
 
 | State | What the enemy does |
 | --- | --- |
 | Hidden | Ninja only. Invisible until the player comes within 12 to 15 m, then appears in a puff of smoke. |
-| Idle | Stands or patrols near its post. A line-of-sight ray is cast every 0.18 to 0.3 s. Gunshots are heard at a distance; the bow and crossbow are silent. |
+| Idle | Stands or patrols near its post. A line-of-sight ray is cast every 0.18 to 0.3 s. Gunshots are heard at a distance; bows, the crossbow and thrown weapons are silent. |
 | Combat, ranged | Keeps within a distance band, strafes, and raises the weapon for 0.4 to 0.9 s before firing. Machine-gunners stay behind their sandbags and fire bursts of five. |
-| Combat, melee | Runs in, winds up for 0.3 to 0.5 s, then strikes if still in reach. Ninja zigzag and throw shuriken; berserkers zigzag; hoplites and halberdiers thrust. |
+| Combat, melee | Runs in, winds up for 0.2 to 0.5 s, then strikes if still in reach. Ninja zigzag and throw shuriken; berserkers zigzag; hoplites and halberdiers thrust. |
 
 Enemy shots are real projectiles, not instant hits. They are aimed with only 45% of the
 lead a moving target needs, so standing still gets you hit and strafing avoids most
@@ -312,9 +319,9 @@ The rifle's scope narrows the field of view to 15 degrees. A full-screen HTML la
 draws the black surround and the cross-hairs, the weapon model is hidden, and mouse
 sensitivity is scaled with the field of view so that aiming stays steady.
 
-Arrows, bolts, javelins and axes stay lodged in walls, trees and enemies. The weapon and hands at the
-bottom of the screen are drawn at 30% scale close to the camera, which looks the same
-in perspective but stops them poking through walls.
+Arrows, bolts, javelins and axes stay lodged in walls, trees and enemies. The weapon and
+hands at the bottom of the screen are drawn at 30% scale close to the camera, which
+looks the same in perspective but stops them poking through walls.
 
 ### Input
 
@@ -344,6 +351,21 @@ The render resolution follows the device pixel ratio up to 1.5. The game average
 frame time over 80 frames; if the average is above 34 ms it lowers the pixel ratio by
 0.25, down to 0.75.
 
+Measured in the published build at 1280 × 720, standing at the start of each chapter.
+A frame includes the shadow pass and the post-processing passes.
+
+| Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders |
+| --- | --- | --- | --- | --- |
+| I · Dry Gulch | 265 | 0.73 million | 8,400 | 168 |
+| II · Kagemori | 202 | 0.42 million | 11,400 | 1,199 |
+| III · Uri | 316 | 1.81 million | 52,800 | 201 |
+| IV · Ithaca | 157 | 0.71 million | 18,200 | 262 |
+| V · Jarnvik | 62 | 0.78 million | 2,100 | 168 |
+| VI · Sainte-Aubine | 257 | 0.69 million | 18,600 | 173 |
+
+Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has the most
+colliders because every bamboo stalk near the path is solid.
+
 ### Build from source
 
 Run these in the `source` folder.
@@ -364,20 +386,23 @@ npm run build
 `npm run build` writes the self-contained file to `source/dist/index.html`; copy it
 over `index.html` in this folder to publish it.
 
-Four address flags help while editing: `?level=2` jumps into a chapter (1 to 6), `&hero=3` picks
-its third hero, `&free` starts play at once without mouse capture (arrow keys turn), and
-`&peace` makes enemies passive. In the
-browser console, `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the
-camera.
+Four address flags help while editing: `?level=2` jumps into a chapter (1 to 6),
+`&hero=3` picks its third hero, `&free` starts play at once without mouse capture (arrow
+keys turn), and `&peace` makes enemies passive. In the browser console,
+`game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
 
 ### Testing and known limits
 
 The game was checked with scripted runs in an automated browser: loading each chapter,
 firing each weapon with simulated clicks, selecting heroes and measuring their
-strengths, enemy attacks, practice mode, death and retry, and finishing a chapter.
+strengths, enemy attacks, practice mode, death and retry, and the end-of-chapter screen
+(reached by removing the enemies in a script, not by playing through).
 Chapters IV, V and VI were checked for loading, weapons, enemy damage and practice
 mode (chapter VI also for the scope and for a dog reaching and biting the player), but
-not played through to the end. It was not tuned by long sessions of hand play, so the difficulty is a first
+not played through to the end. All six chapters were loaded once more in the published
+build on GitHub Pages, without errors.
+
+The game was not tuned by long sessions of hand play, so the difficulty is a first
 estimate, and frame rate on slower graphics hardware has not been measured.
 
 - No touch controls and no gamepad support.
