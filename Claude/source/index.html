@@ -86,14 +86,22 @@
   .card.s { --c:#e8e2d2; } .card.s .t { font-family:'Pirata One', serif; font-size:38px; }
   .foot { position:absolute !important; bottom:13.5vh; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
 
-  #intro { justify-content:flex-end; align-items:flex-start; text-align:left; padding:0 6vw 17vh; }
+  #intro { justify-content:flex-end; align-items:flex-start; text-align:left; padding:0 6vw 14.5vh; }
   #intro .veil { background:linear-gradient(90deg, rgba(0,0,0,.62) 0%, rgba(0,0,0,0) 55%); }
   #intro .chap { font-size:15px; letter-spacing:.5em; text-transform:uppercase; color:var(--accent); }
-  #intro h2, .big { font-family:var(--display); font-weight:normal; font-size:clamp(54px,7.4vw,118px); margin:.5vh 0 0; line-height:1; text-shadow:0 4px 30px rgba(0,0,0,.7); }
+  #intro h2, .big { font-family:var(--display); font-weight:normal; font-size:clamp(44px,min(7.4vw,11.5vh),118px); margin:.5vh 0 0; line-height:1; text-shadow:0 4px 30px rgba(0,0,0,.7); }
   #intro .kanji { font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; color:var(--accent); margin-right:.25em; }
-  #intro .story { max-width:520px; font-size:20px; line-height:1.45; margin-top:1.8vh; color:var(--ink); opacity:.92; }
-  #intro .keys { margin-top:2.4vh; font-size:15px; color:var(--dim); line-height:1.9; }
+  #intro .story { max-width:540px; font-size:clamp(16px,2.6vh,20px); line-height:1.42; margin-top:1.4vh; color:var(--ink); opacity:.92; }
+  #intro .keys { margin-top:1.8vh; font-size:14px; color:var(--dim); line-height:1.8; }
   kbd { font-family:var(--font); font-size:13px; letter-spacing:.08em; border:1px solid rgba(244,234,212,.45); border-radius:3px; padding:1px 7px 2px; margin-right:4px; color:var(--ink); background:rgba(0,0,0,.3); }
+  #intro .pick { margin-top:2.6vh; font-size:14px; letter-spacing:.34em; text-transform:uppercase; color:var(--accent); }
+  #heroes { display:flex; gap:14px; margin-top:1.3vh; }
+  .hero { cursor:pointer; width:min(21vw,250px); padding:14px 16px 14px; background:rgba(14,10,8,.55); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(6px); transition:transform .2s, border-color .2s, background .2s; }
+  .hero.sel { border-color:var(--accent); background:rgba(14,10,8,.8); transform:translateY(-5px); }
+  .hero .hk { float:right; font-size:12px; color:var(--dim); border:1px solid rgba(244,234,212,.35); border-radius:3px; padding:0 6px; }
+  .hero .hn { font-family:var(--display); font-size:23px; line-height:1.12; }
+  .hero .hw { font-style:italic; font-size:15px; color:var(--dim); margin:5px 0 9px; line-height:1.3; }
+  .hero .ht { font-size:14.5px; line-height:1.35; } .hero .ht b { color:var(--accent); font-weight:normal; }
   .go { margin-top:3vh; font-size:16px; letter-spacing:.34em; text-transform:uppercase; color:var(--ink); animation:pulse 1.8s ease-in-out infinite; }
   @keyframes pulse { 50% { opacity:.35; } }
   .mid .veil { background:rgba(0,0,0,.5); }
@@ -144,7 +152,8 @@
   <h2></h2>
   <div class="story"></div>
   <div class="keys"></div>
-  <div class="go">Click to begin</div>
+  <div class="pick">Choose your hero</div>
+  <div id="heroes"></div>
 </div>
 
 <div id="pause" class="layer screen mid"><div class="veil"></div><div class="big">Paused</div><div class="go">Click to resume</div><div class="sub" style="font-size:16px;margin-top:2vh">M — sound on/off &nbsp;·&nbsp; Q — back to the chapters</div></div>

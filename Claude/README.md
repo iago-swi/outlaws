@@ -26,11 +26,37 @@ Clear every enemy to finish a chapter. The dots on the compass at the top of the
 show where the remaining enemies are; the last three come looking for you. Health items
 (tonic, rice cake, alp cheese) restore 35 points.
 
-| Chapter | You are | Weapons | Enemies |
+| Chapter | Weapons | Enemies |
+| --- | --- | --- |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | cowboys, sombrero bandits, the gang boss Silas Crowe |
+| II · Kagemori, Japan, 1600 | bow (yumi) and katana | ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd | Habsburg halberdiers, crossbowmen, knights, the bailiff |
+
+### Choose your hero
+
+Each chapter starts with a choice of three heroes from history and legend. Point at a
+card to see the figure in the opening shot, then click it, or press `1` to `3` and
+`Enter`. Every hero has their own look and one strength.
+
+![The hero selection for Dry Gulch: cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
+
+| Chapter | Hero | Who | Strength |
 | --- | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | a gunslinger | six-shooter | cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | a samurai | bow (yumi) and katana | ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | a bearded crossbowman | crossbow and halberd | Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| I | Wyatt Earp | Lawman of Tombstone, 1881 | Iron nerve: takes 25% less damage |
+| I | Calamity Jane | Scout and sharpshooter of Deadwood | Frontier scout: moves 18% faster |
+| I | Billy the Kid | The fastest gun in New Mexico | Quick draw: fires and reloads much faster |
+| II | Miyamoto Musashi | Undefeated duellist, master of two swords | Two swords: faster katana cuts with longer reach |
+| II | Tomoe Gozen | Woman warrior of the Genpei War | Peerless archer: draws the bow almost twice as fast |
+| II | Date Masamune | The One-Eyed Dragon of Sendai | Black armour: takes 30% less damage |
+| III | Wilhelm Tell | The crossbowman of Bürglen, Uri | Master shot: reloads the crossbow 40% faster |
+| III | Arnold von Winkelried | Hero of Sempach, from Nidwalden | Breaks the line: starts with 150 health |
+| III | Werner Stauffacher | Man of Schwyz, of the Rütli oath | Steadfast: slowly recovers health out of danger |
+
+The heroes are drawn from history and legend, not from any film or comic. Winkelried
+belongs to 1386 and Tomoe Gozen to the twelfth century; they appear here as legends
+beside the heroes of each chapter's own year.
+
+### Controls
 
 | Key | Action |
 | --- | --- |
@@ -44,8 +70,9 @@ show where the remaining enemies are; the last three come looking for you. Healt
 | `Esc` or `P` | Pause; then `Q` returns to the chapter list |
 | `M` | Sound on/off |
 
-Each chapter opens with a short shot that circles the hero before the view drops into
-first person.
+The hero selection is shown over a short shot that circles the chosen figure; when the
+chapter begins the view drops into first person. The hero's name stays in the top-left
+corner, and the same hero is kept when you retry after dying.
 
 ## Technical notes
 
@@ -54,7 +81,7 @@ first person.
 | | |
 | --- | --- |
 | Delivery | One `index.html` of 1.25 MB: markup, CSS, JavaScript, GLSL and three fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 4,100 lines of plain JavaScript (ES modules) in 12 files under [source/src/](source/src/), plus 160 lines of HTML and CSS. No framework. |
+| Source | About 4,200 lines of plain JavaScript (ES modules) in 12 files under [source/src/](source/src/), plus 160 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
@@ -164,7 +191,8 @@ barrels. A description object selects skin, clothes, hat, beard, extras such as 
 poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-There are eleven enemy types. Each has five hit spheres; a head hit does 2.5 times the
+The same builder makes the nine playable heroes, the eleven enemy types and the
+bystanders. Each enemy has five hit spheres; a head hit does 2.5 times the
 damage.
 
 | State | What the enemy does |
@@ -177,6 +205,27 @@ damage.
 Enemy shots are real projectiles, not instant hits. They are aimed with only 45% of the
 lead a moving target needs, so standing still gets you hit and strafing avoids most
 fire. There is no path finding: an enemy that makes no progress sidesteps for a moment.
+
+### Playable heroes
+
+Heroes are data. Each chapter lists three entries with a name, a look for the character
+builder, sleeve colours for the first-person hands, and a small object of multipliers:
+
+| Multiplier | Effect | Used by |
+| --- | --- | --- |
+| `armor` | Scales every hit the player takes | Wyatt Earp (0.75), Date Masamune (0.7) |
+| `speed` | Scales walking and running speed | Calamity Jane (1.18) |
+| `fire`, `reload` | Scale the time between shots and the reload | Billy the Kid (0.68, 0.6), Wilhelm Tell (reload 0.6) |
+| `draw` | Scales the bow's draw and nock time | Tomoe Gozen (0.55) |
+| `melee`, `reach` | Scale the katana's swing time and add reach in metres | Miyamoto Musashi (0.62, +0.6) |
+| `hp` | Starting and maximum health | Arnold von Winkelried (150) |
+| `regen` | Health per second after 4 s without being hit | Werner Stauffacher (3) |
+
+Weapon timers advance by `dt / multiplier`, so a strength changes the pace of an action
+without a second set of animations. Choosing a hero rebuilds the figure in the scene and
+the weapon view model with that hero's sleeves; pointing at a card does the same, which
+is what makes the preview live. The dusk chapter adds a point light near the camera on
+the selection screen so dark figures stay readable.
 
 ### Weapons
 
@@ -236,20 +285,22 @@ npm run build
 `npm run build` writes the self-contained file to `source/dist/index.html`; copy it
 over `index.html` in this folder to publish it.
 
-Three address flags help while editing: `?level=2` jumps into a chapter, `&free` plays
-without mouse capture (arrow keys turn), and `&peace` makes enemies passive. In the
+Four address flags help while editing: `?level=2` jumps into a chapter, `&hero=3` picks
+its third hero, `&free` starts play at once without mouse capture (arrow keys turn), and
+`&peace` makes enemies passive. In the
 browser console, `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the
 camera.
 
 ### Testing and known limits
 
 The game was checked with scripted runs in an automated browser: loading each chapter,
-firing each weapon with simulated clicks, enemy attacks, death and retry, and finishing
-a chapter. It was not tuned by long sessions of hand play, so the difficulty is a first
+firing each weapon with simulated clicks, selecting each hero and measuring each
+strength, enemy attacks, death and retry, and finishing a chapter. It was not tuned by long sessions of hand play, so the difficulty is a first
 estimate, and frame rate on slower graphics hardware has not been measured.
 
 - No touch controls and no gamepad support.
 - Progress is not saved between sessions.
+- The nine heroes' strengths are not balanced against each other.
 - Enemies have no path finding and can be held up by buildings.
 - Wind moves plants but not their shadows.
 

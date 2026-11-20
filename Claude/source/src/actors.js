@@ -78,6 +78,10 @@ export function makeHumanoid(M, sp) {
     if (f === 'bandana') T.push(gBox(0.21, 0.09, 0.13, S.accent ?? 0x8a1c1c, [0, HY - 0.06, 0.06]), gCone(0.07, 0.12, S.accent ?? 0x8a1c1c, [0, HY - 0.16, 0.1], [Math.PI, 0, 0], [1, 1, 0.4]));
     if (f === 'headband') T.push(gCyl(0.132, 0.132, 0.03, S.accent ?? 0xffffff, [0, HY + 0.05, 0]));
     if (f === 'topknot') T.push(gSph(0.045, S.hair, [0, HY + 0.17, -0.04]));
+    if (f === 'longhair') T.push(gSph(0.136, S.hair, [0, HY - 0.01, -0.05], [1.05, 1.25, 0.9]), gBox(0.2, 0.36, 0.07, S.hair, [0, HY - 0.27, -0.125], [0.12, 0, 0]),
+      gBox(0.045, 0.3, 0.11, S.hair, [0.122, HY - 0.13, -0.01]), gBox(0.045, 0.3, 0.11, S.hair, [-0.122, HY - 0.13, -0.01]));
+    if (f === 'eyepatch') T.push(gBox(0.062, 0.046, 0.02, 0x0a0a0a, [-0.046, HY + 0.028, 0.124]), gBox(0.272, 0.016, 0.272, 0x0a0a0a, [0, HY + 0.05, 0], [0, 0, 0.22]));
+    if (f === 'neckerchief') T.push(gCyl(0.072, 0.075, 0.045, S.accent ?? 0xa81c1c, [0, 0.615, 0]), gCone(0.095, 0.15, S.accent ?? 0xa81c1c, [0, 0.54, 0.095], [Math.PI, 0, 0], [1, 1, 0.45]));
   }
   const HT = HY + 0.105;                     // top of the head
   switch (S.hat) {
@@ -104,7 +108,8 @@ export function makeHumanoid(M, sp) {
     case 'kabuto':
       TM.push(gSph(0.145, S.hatC ?? 0x1a1a1e, [0, HT - 0.035, 0], [1, 0.85, 1.05]));
       T.push(gCone(0.26, 0.12, S.hatC ?? 0x1a1a1e, [0, HT - 0.1, -0.05], [0.25, 0, 0], [1, 1, 1.1], 14),
-        gBox(0.02, 0.2, 0.012, 0xd9b23a, [0.07, HT + 0.1, 0.1], [0, 0, -0.5]), gBox(0.02, 0.2, 0.012, 0xd9b23a, [-0.07, HT + 0.1, 0.1], [0, 0, 0.5]),
+        ...(S.crest ? [xf(new THREE.TorusGeometry(0.21, 0.016, 4, 16, Math.PI * 0.9), [0.02, HT + 0.27, 0.1], [0, 0, Math.PI + 0.42], [1, 1, 0.6], 0xe0b828)]   // great crescent moon
+          : [gBox(0.02, 0.2, 0.012, 0xd9b23a, [0.07, HT + 0.1, 0.1], [0, 0, -0.5]), gBox(0.02, 0.2, 0.012, 0xd9b23a, [-0.07, HT + 0.1, 0.1], [0, 0, 0.5])]),
         gBox(0.16, 0.1, 0.02, 0x8a1c1c, [0, HY - 0.07, 0.12]));              // face guard
       break;
     case 'hood':
@@ -202,6 +207,23 @@ export function lookFor(type, r) {
       face: ['moustache'], weapon: 'revolver', cuff: 0x4a3020 };
     case 'samurai': return { skin: 0xd6a37c, hair: 0x0c0c0c, shirt: 0x24304e, pants: 0x1a1e2c, boots: 0xe0d8c0, legR: 0.1, hat: null, face: ['topknot', 'headband'], accent: 0xf0f0f0,
       extras: ['kimono', 'obi', 'hakama', 'quiver', 'scabbard'], trim: 0xd9b23a, wideSleeve: true, weapon: 'bow' };
+    // ---- the nine playable heroes ----
+    case 'earp': return { skin: 0xd0a07a, hair: 0x2a1c12, shirt: 0xe8e4d8, sleeve: 0x16161a, pants: 0x18181c, boots: 0x0c0c0c, hat: 'cowboy', hatC: 0x121214, hatBand: 0x2e2e34,
+      extras: ['coat', 'star'], coat: 0x16161a, face: ['moustache'], weapon: 'revolver', cuff: 0xe8e4d8 };
+    case 'calamity': return { skin: 0xd8a882, hair: 0x6a3a1a, shirt: 0xa67848, pants: 0x74563a, boots: 0x3a2414, belt: 0x2a1c12, hat: 'cowboy', hatC: 0x6a4a2a, hatBand: 0x2a1c12,
+      extras: ['bandolier'], face: ['longhair', 'neckerchief'], accent: 0xa81c1c, weapon: 'revolver', cuff: 0x8a623a, scale: 0.97 };
+    case 'billy': return { skin: 0xdcb08c, hair: 0x6a4a28, shirt: 0xd9d2c0, pants: 0x4a4038, boots: 0x2a1c12, hat: 'cowboy', hatC: 0x3a3028, hatBand: 0x1a1410,
+      extras: ['vest'], vest: 0x3a2a1c, face: ['neckerchief'], accent: 0x2a4a7a, weapon: 'revolver', scale: 0.95 };
+    case 'musashi': return { skin: 0xd0a078, hair: 0x0c0c0c, shirt: 0x2c2c32, pants: 0x5a5d64, boots: 0xd8cfb8, legR: 0.1, hat: null, face: ['longhair', 'topknot', 'moustache'],
+      extras: ['kimono', 'obi', 'hakama', 'scabbard'], trim: 0x9a9fa6, accent: 0x15151a, wideSleeve: true, weapon: 'katana' };
+    case 'tomoe': return { skin: 0xe6c0a0, hair: 0x0a0a0a, shirt: 0xf0ece0, pants: 0x8a1c1c, boots: 0xe0d8c0, legR: 0.1, hat: null, face: ['longhair', 'headband'], accent: 0xf4f4f4,
+      extras: ['armor', 'hakama', 'quiver'], armor: 0xa81c1c, armor2: 0x7a1414, wideSleeve: true, weapon: 'bow', scale: 0.96 };
+    case 'date': return { skin: 0xd6a37c, hair: 0x0c0c0c, shirt: 0x2a2a34, pants: 0x24242c, boots: 0x101014, belt: 0xc9a23a, hat: 'kabuto', hatC: 0x1e1e26, crest: true, face: ['eyepatch'],
+      extras: ['armor', 'hakama', 'scabbard'], armor: 0x30303a, armor2: 0x1c1c24, glove: 0x15151a, wideSleeve: true, weapon: 'katana', scale: 1.03 };
+    case 'winkelried': return { skin: 0xd09a74, hair: 0x6a4a28, shirt: 0x9a9fa6, pants: 0x8a8f96, boots: 0x3a2818, hat: null, face: ['beard'], extras: ['tabard'],
+      tabard: [0xc81c1c, 0xc81c1c, 0xf0ece0], glove: 0x8a8f96, weapon: 'halberd', scale: 1.05 };
+    case 'stauffacher': return { skin: 0xd09a74, hair: 0xbcb8ae, shirt: 0x8a1c1c, pants: 0x4a3a2a, boots: 0x3a2818, belt: 0x2a1c12, hat: 'cowl', hatC: 0x8a1c1c, face: ['longbeard'],
+      extras: ['smock'], weapon: 'crossbow', bootTop: true };
     case 'tell': return { skin: 0xd09a74, hair: 0x5a3a1c, shirt: 0xcfc6ae, sleeve: 0xcfc6ae, pants: 0x5a4a34, boots: 0x3a2818, hat: 'felt', hatC: 0x3a4a2a, plume: 0xf0ece0, face: ['longbeard'],
       extras: ['smock', 'quiver'], belt: 0x3a2414, weapon: 'crossbow', bootTop: true };
     case 'confederate': return { skin: pick(SKINS), hair: pick([0x5a3a1c, 0x8a6a3a, 0x3a2a1a, 0x9a9a90]), shirt: pick([0xcfc6ae, 0x8a7a5a, 0x6a5a40, 0x7a3a2a]), pants: pick([0x5a4a34, 0x4a4030, 0x3a3a3a]), boots: 0x3a2818,
