@@ -1,13 +1,13 @@
 # Outlaws
 
-Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to compare what different AI assistants produce from the same brief. Both take you through five frontiers: the American West, feudal Japan, central Switzerland, ancient Greece and Viking Scandinavia. The Claude version goes on to Normandy in 1944.
+Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to compare what different AI assistants produce from the same brief. Both take you through six frontiers: the American West, feudal Japan, central Switzerland, ancient Greece, Viking Scandinavia and Normandy on 6 June 1944.
 
 **Play it in your browser: <https://iago-swi.github.io/outlaws/>**
 
 | Version | Play | Source and controls |
 | --- | --- | --- |
 | Claude · Lone Hand | [Play](https://iago-swi.github.io/outlaws/Claude/) | [Claude/](Claude/) |
-| Gemini · Five Horizons | [Play](https://iago-swi.github.io/outlaws/Gemini/) | [Gemini/](Gemini/) |
+| Gemini · Six Horizons | [Play](https://iago-swi.github.io/outlaws/Gemini/) | [Gemini/](Gemini/) |
 
 To play offline, download or clone this repository and open `index.html` in your browser. It is a landing page that links to both versions. Each version is self-contained in its own folder, with its own README.
 
@@ -26,10 +26,10 @@ To play offline, download or clone this repository and open `index.html` in your
 | Act I · Red Gulch | Act II · Kyoto Mist | Act III · Rütli Valley |
 | :---: | :---: | :---: |
 | <img src="Gemini/screenshot-west.png" width="270" alt="First-person 3D view of Red Gulch at sunset with wooden storefronts, Monument Valley mesas, covered wagons, and the .45 Peacemaker revolver in the foreground."> | <img src="Gemini/screenshot-japan.png" width="270" alt="First-person 3D view of Kyoto Mist with vermilion Torii gates framing Mount Fuji, glowing Shoji screens, blooming sakura trees, bamboo groves, and the katana in the foreground."> | <img src="Gemini/screenshot-swiss.png" width="270" alt="First-person 3D view of Rütli Valley with snow-capped Alps, cascading waterfall, bearded Waldstätten halberdiers under the Uri bull banner, Austrian soldiers before a stone keep, and Tell's crossbow in the foreground."> |
-| **Act IV · Aegean Isle** | **Act V · Fjord of the North** | |
-| <img src="Gemini/screenshot-greece.png" width="270" alt="First-person 3D view of a Greek island in bright Mediterranean sun with whitewashed village houses, olive trees, cypresses, Spartans with red cloaks and lambda shields, a white marble temple ahead, and a bronze javelin in the foreground."> | <img src="Gemini/screenshot-scandinavia.png" width="270" alt="First-person 3D view of a snowy Norwegian fjord under glowing green northern lights, with a timber palisade gate, snow-roofed longhouses, a Great Hall ahead, falling snow, and a throwing axe in the foreground."> | |
+| **Act IV · Aegean Isle** | **Act V · Fjord of the North** | **Act VI · Normandy** |
+| <img src="Gemini/screenshot-greece.png" width="270" alt="First-person 3D view of a Greek island in bright Mediterranean sun with whitewashed village houses, olive trees, cypresses, Spartans with red cloaks and lambda shields, a white marble temple ahead, and a bronze javelin in the foreground."> | <img src="Gemini/screenshot-scandinavia.png" width="270" alt="First-person 3D view of a snowy Norwegian fjord under glowing green northern lights, with a timber palisade gate, snow-roofed longhouses, a Great Hall ahead, falling snow, and a throwing axe in the foreground."> | <img src="Gemini/screenshot-normandy.png" width="270" alt="First-person 3D view of Normandy before dawn on 6 June 1944 with bocage hedgerows, a stone church tower, sweeping searchlights across a twilight sky, occupying soldiers, a guard dog, coastal concrete bunkers ahead, and a scoped bolt-action rifle in the foreground."> |
 
-*Five Horizons* is a real-time WebGL2 / Three.js 3D first-person shooter across five eras, featuring custom GLSL atmospheric skies and northern lights, animated sea, lake and waterfall shaders, procedural Canvas PBR textures, ACES Filmic selective bloom, vintage sniper optics, manual reloading, and procedural Web Audio soundtracks. Each level begins with a live 3D hero selection screen offering three figures from history and legend — fifteen in all, including Wyatt Earp, Miyamoto Musashi, Wilhelm Tell, Ulysses, and Erik the Red — each with a distinct 3D figure and one gameplay strength. **[Play it in your browser](https://iago-swi.github.io/outlaws/Gemini/)**, or serve the repository locally and open `Gemini/index.html`. [Controls and technical notes](Gemini/README.md)
+*Six Horizons* is a real-time WebGL2 / Three.js 3D first-person shooter across six eras, featuring custom GLSL atmospheric skies and northern lights, animated sea, lake and waterfall shaders, sweeping pre-dawn searchlights, procedural Canvas PBR textures, ACES Filmic selective bloom, vintage sniper optics, manual reloading, and procedural Web Audio soundtracks. Each level begins with a live 3D hero selection screen offering three figures from history and legend — eighteen in all, including Wyatt Earp, Miyamoto Musashi, Wilhelm Tell, Ulysses, Erik the Red, and Lyudmila Pavlichenko — each with a distinct 3D figure and one strength or signature weapon. **[Play it in your browser](https://iago-swi.github.io/outlaws/Gemini/)**, or serve the repository locally and open `Gemini/index.html`. [Controls and technical notes](Gemini/README.md)
 
 ## Game history
 
@@ -41,7 +41,7 @@ To play offline, download or clone this repository and open `index.html` in your
 
 **2026 — Lone Hand.** The frontiers are open 3D places to walk through: the main street of Dry Gulch at golden hour, a path of torii gates through a bamboo forest, and a valley on the Lake of Uri. The gunslinger carries a six-shooter, the samurai a bow and a katana, and the crossbowman of Uri a crossbow and a halberd. Two further chapters followed: a Greek island held by Spartans, fought with javelins and a short sword, and a Norwegian fjord under the northern lights, fought with throwing axes. A sixth is set in Normandy before dawn on 6 June 1944: three people who resisted the Nazi regime, with a scoped rifle, a Sten gun and a pistol, cross hedgerows and a guarded village to silence a coastal battery. [Explore the Claude edition](Claude/)
 
-**2026 — Five Horizons.** Built with Three.js, custom GLSL shaders, procedural PBR textures, and Web Audio synthesis, *Five Horizons* spans five eras with live 3D hero selection (three heroes per era), sixteen era weapons, and five boss showdowns — from Red Gulch, Kyoto Mist, and Rütli Valley (with bearded Waldstätten halberdiers flying the Uri bull flag) to the white-marble Aegean Isle against Spartans and the aurora-lit Norwegian fjord against rival Vikings. [Explore the Gemini edition](Gemini/)
+**2026 — Six Horizons.** Built with Three.js, custom GLSL shaders, procedural PBR textures, and Web Audio synthesis, *Six Horizons* spans six eras with live 3D hero selection (eighteen heroes in all), twenty era weapons, and six boss showdowns — from Red Gulch, Kyoto Mist, and Rütli Valley (with bearded Waldstätten halberdiers flying the Uri bull flag) to the white-marble Aegean Isle against Spartans, the aurora-lit Norwegian fjord against rival Vikings, and pre-dawn Normandy on 6 June 1944 against occupying troops and guard dogs before a cliffside gun battery. [Explore the Gemini edition](Gemini/)
 
 ## Structure
 

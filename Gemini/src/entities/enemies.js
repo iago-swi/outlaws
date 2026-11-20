@@ -184,12 +184,144 @@ const ENEMY_SPECS = {
     style: 'boss_hybrid',
     scale: 1.34,
     projectileColor: 0x62f2c8
+  },
+  // Level 6: Normandy, 6 June 1944 (German Occupying Forces & Guard Dogs — Plain Military Markings Only)
+  german_rifleman: {
+    name: 'German Rifleman',
+    hp: 85,
+    speed: 3.9,
+    range: 40,
+    fireRate: 1.45,
+    damage: 15,
+    score: 240,
+    style: 'ranged',
+    projectileColor: 0xffe08a
+  },
+  german_officer: {
+    name: 'German Officer',
+    hp: 85,
+    speed: 4.5,
+    range: 32,
+    fireRate: 1.05,
+    damage: 13,
+    score: 270,
+    style: 'ranged',
+    projectileColor: 0xffc666
+  },
+  german_mg: {
+    name: 'MG Bunker Gunner',
+    hp: 115,
+    speed: 0,
+    range: 44,
+    fireRate: 0.36,
+    damage: 7,
+    score: 340,
+    style: 'turret',
+    projectileColor: 0xff9e42
+  },
+  guard_dog: {
+    name: 'Guard Dog',
+    hp: 38,
+    speed: 7.8,
+    range: 2.35,
+    fireRate: 0.85,
+    damage: 14,
+    score: 180,
+    style: 'dog',
+    projectileColor: 0xffffff
+  },
+  boss_normandy: {
+    name: 'MAJOR VOGEL — BATTERY COMMANDER',
+    hp: 460,
+    speed: 4.4,
+    range: 42,
+    fireRate: 0.65,
+    damage: 15,
+    score: 2200,
+    style: 'boss_ranged',
+    scale: 1.28,
+    projectileColor: 0xff6e38
   }
 };
 
 function buildEnemyMesh(type) {
   const root = new THREE.Group();
   const isBoss = type.startsWith('boss_');
+
+  // Dedicated low quadruped Guard Dog figure (smaller, lower, fast biter)
+  if (type === 'guard_dog') {
+    const tanFur = new THREE.MeshStandardMaterial({ color: 0x8f663c, roughness: 0.92 });
+    const saddleFur = new THREE.MeshStandardMaterial({ color: 0x261f1a, roughness: 0.94 });
+    const noseMat = new THREE.MeshStandardMaterial({ color: 0x141110, roughness: 0.6 });
+    const collarMat = new THREE.MeshStandardMaterial({ color: 0x70241c, roughness: 0.7 });
+
+    // Horizontal torso (~0.52m off ground — noticeably lower than human soldiers!)
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.78), tanFur);
+    torso.position.set(0, 0.50, 0);
+    torso.castShadow = true;
+    torso.userData.hitZone = 'body';
+
+    const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.2, 0.48), saddleFur);
+    saddle.position.set(0, 0.58, -0.02);
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.032, 6, 12), collarMat);
+    collar.position.set(0, 0.56, 0.34);
+
+    // 4 animated quadruped legs
+    const legGeo = new THREE.CylinderGeometry(0.052, 0.044, 0.42, 7);
+    const legL = new THREE.Mesh(legGeo, tanFur);
+    legL.position.set(-0.11, 0.21, 0.26);
+    const legR = new THREE.Mesh(legGeo, tanFur);
+    legR.position.set(0.11, 0.21, 0.26);
+    const armL = new THREE.Mesh(legGeo, tanFur);
+    armL.position.set(-0.11, 0.21, -0.26);
+    const armR = new THREE.Mesh(legGeo, tanFur);
+    armR.position.set(0.11, 0.21, -0.26);
+
+    // Canine head, snout & pointed ears
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.3), tanFur);
+    head.position.set(0, 0.68, 0.44);
+    head.userData.hitZone = 'head';
+    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.13, 0.22), saddleFur);
+    snout.position.set(0, -0.03, 0.2);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.036, 6, 6), noseMat);
+    nose.position.set(0, 0.0, 0.31);
+    const earL = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.16, 4), saddleFur);
+    earL.position.set(-0.08, 0.17, -0.02);
+    const earR = earL.clone();
+    earR.position.x = 0.08;
+    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffe066 });
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.022, 6, 6), eyeMat);
+    eyeL.position.set(-0.06, 0.04, 0.14);
+    const eyeR = eyeL.clone();
+    eyeR.position.x = 0.06;
+    head.add(snout, nose, earL, earR, eyeL, eyeR);
+
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.045, 0.42, 6), saddleFur);
+    tail.position.set(0, 0.56, -0.5);
+    tail.rotation.x = -0.65;
+
+    const muzzle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 4, 4),
+      new THREE.MeshBasicMaterial({ color: 0xffd25a, transparent: true, opacity: 0 })
+    );
+    head.add(muzzle);
+
+    const hpBg = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.75, 0.09),
+      new THREE.MeshBasicMaterial({ color: 0x160d0a, side: THREE.DoubleSide })
+    );
+    hpBg.position.set(0, 1.15, 0);
+    hpBg.visible = false;
+    const hpFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.7, 0.06),
+      new THREE.MeshBasicMaterial({ color: 0xe83b2c, side: THREE.DoubleSide })
+    );
+    hpFill.position.set(0, 0, 0.01);
+    hpBg.add(hpFill);
+
+    root.add(torso, saddle, collar, legL, legR, armL, armR, head, tail, hpBg);
+    return { root, legL, legR, armL, armR, torso, head, muzzle, hpBg, hpFill };
+  }
 
   const skinMat = new THREE.MeshStandardMaterial({
     color: type === 'bandito' ? 0xc68a5c : 0xe3b18a,
@@ -215,6 +347,8 @@ function buildEnemyMesh(type) {
   else if (type === 'viking_warrior' || type === 'viking_archer') { coatColor = 0x4b4f58; pantsColor = 0x3a2e25; }
   else if (type === 'viking_berserker') { coatColor = 0x5c4330; pantsColor = 0x2d231c; }
   else if (type === 'boss_scandinavia') { coatColor = 0x293342; pantsColor = 0x26201c; }
+  else if (type === 'german_rifleman' || type === 'german_mg') { coatColor = 0x565e55; pantsColor = 0x474d46; }
+  else if (type === 'german_officer' || type === 'boss_normandy') { coatColor = 0x3c433c; pantsColor = 0x303630; }
 
   const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.68 });
   const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.78 });
@@ -508,6 +642,54 @@ function buildEnemyMesh(type) {
         addAxe(armL);
       }
     }
+  } else if (type === 'german_rifleman' || type === 'german_officer' || type === 'german_mg' || type === 'boss_normandy') {
+    // Plain field-grey military uniform — strictly NO political symbols or SS runes
+    const helmMat = new THREE.MeshStandardMaterial({ color: 0x3b423c, metalness: 0.45, roughness: 0.48 });
+    const gunMetal = new THREE.MeshStandardMaterial({ color: 0x2d3236, metalness: 0.8, roughness: 0.32 });
+
+    // Leather military belt & shoulder straps
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.1, 0.34), darkLeather);
+    belt.position.set(0, 0.92, 0);
+    root.add(belt);
+
+    if (type === 'german_officer' || isBoss) {
+      // Long officer overcoat & plain peaked military cap
+      const coatSkirt = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.62, 0.34), coatMat);
+      coatSkirt.position.set(0, 0.64, -0.02);
+      root.add(coatSkirt);
+
+      const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.21, 0.16, 14), coatMat);
+      capCrown.position.y = 0.18;
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.03, 0.22), darkLeather);
+      visor.position.set(0, 0.1, 0.18);
+      visor.rotation.x = 0.18;
+      head.add(capCrown, visor);
+
+      // Pistol or MP40-style submachine gun for boss
+      const gun = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, isBoss ? 0.68 : 0.36), gunMetal);
+      gun.position.set(0, -0.26, isBoss ? 0.34 : 0.2);
+      armR.add(gun);
+    } else {
+      // Plain rounded steel Stahlhelm helmet
+      const stahl = new THREE.Mesh(new THREE.SphereGeometry(0.245, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), helmMat);
+      stahl.position.y = 0.08;
+      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 0.1, 14, 1, true), helmMat);
+      rim.position.y = 0.04;
+      head.add(stahl, rim);
+
+      if (type === 'german_mg') {
+        // Stationary heavy machine gun mounted forward
+        const mgBody = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.046, 1.15, 8), gunMetal);
+        mgBody.rotation.x = Math.PI / 2;
+        mgBody.position.set(0, -0.22, 0.56);
+        armR.add(mgBody);
+      } else {
+        const rifle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.05, 8), darkLeather);
+        rifle.rotation.x = Math.PI / 2;
+        rifle.position.set(0, -0.26, 0.42);
+        armR.add(rifle);
+      }
+    }
   }
 
   // Muzzle flash beacon on weapon tip
@@ -570,8 +752,8 @@ export class Enemy {
     this.muzzleFlash = 0;
     this.deathTimer = 0;
     this.walkPhase = Math.random() * Math.PI * 2;
-    this.radius = this.isBoss ? 0.68 : 0.46;
-    this.headHeight = this.isBoss ? 2.15 : 1.72;
+    this.radius = this.style === 'dog' ? 0.36 : this.isBoss ? 0.68 : 0.46;
+    this.headHeight = this.style === 'dog' ? 0.72 : this.isBoss ? 2.15 : 1.72;
   }
 
   getHitMeshes() {
@@ -608,7 +790,7 @@ export class Enemy {
     return false;
   }
 
-  update(dt, playerPos, collision, callbacks) {
+  update(dt, playerPos, collision, callbacks, detectMult = 1.0) {
     if (!this.alive) {
       // Dramatic collapse animation
       this.deathTimer = Math.min(1, this.deathTimer + dt * 2.8);
@@ -622,7 +804,7 @@ export class Enemy {
 
     // Billboard mini HP bar toward player
     if (this.parts.hpBg.visible) {
-      this.parts.hpBg.lookAt(playerPos.x, this.mesh.position.y + 2.3, playerPos.z);
+      this.parts.hpBg.lookAt(playerPos.x, this.mesh.position.y + (this.style === 'dog' ? 1.15 : 2.3), playerPos.z);
     }
 
     // Hurt flash feedback
@@ -641,17 +823,24 @@ export class Enemy {
     const toPlayer = new THREE.Vector3().subVectors(playerPos, this.mesh.position);
     const horizDist = Math.hypot(toPlayer.x, toPlayer.z);
 
-    // Wake up when player gets close or enters sight
-    const eyePos = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + 1.55, this.mesh.position.z);
+    // Wake up when player gets close or enters sight (scaled by hero stealth multiplier!)
+    const eyeY = this.style === 'dog' ? 0.7 : 1.55;
+    const eyePos = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + eyeY, this.mesh.position.z);
     const playerEye = new THREE.Vector3(playerPos.x, playerPos.y + 1.45, playerPos.z);
+    const sightRange = 42 * detectMult;
+    const proxRange = (this.style === 'dog' ? 28 : 26) * detectMult;
     const canSee = horizDist < 54 && collision.hasLineOfSight(eyePos, playerEye);
 
     if (!this.alert) {
-      if (horizDist < 26 || (canSee && horizDist < 42)) {
+      if (horizDist < proxRange || (canSee && horizDist < sightRange)) {
         this.alert = true;
+        if (this.style === 'dog' && callbacks.onDogBark) {
+          callbacks.onDogBark(this);
+        }
       } else {
-        // Gentle idle patrol sway
-        this.parts.torso.position.y = 1.16 + Math.sin(performance.now() * 0.002 + this.walkPhase) * 0.025;
+        // Gentle idle sway
+        const baseTorsoY = this.style === 'dog' ? 0.50 : 1.16;
+        this.parts.torso.position.y = baseTorsoY + Math.sin(performance.now() * 0.002 + this.walkPhase) * 0.02;
         return;
       }
     }
@@ -674,22 +863,25 @@ export class Enemy {
     const right = new THREE.Vector3(Math.cos(targetYaw), 0, -Math.sin(targetYaw));
     const move = new THREE.Vector3();
 
-    const isMelee = this.style === 'melee';
+    const isMelee = this.style === 'melee' || this.style === 'dog';
+    const isTurret = this.style === 'turret';
     const isHybrid = this.style === 'hybrid' || this.style === 'boss_hybrid';
-    const desiredMin = isMelee ? 2.1 : isHybrid ? 7.0 : 12.5;
-    const desiredMax = isMelee ? 2.6 : isHybrid ? 15.0 : 25.0;
+    const desiredMin = this.style === 'dog' ? 1.55 : isMelee ? 2.1 : isHybrid ? 7.0 : 12.5;
+    const desiredMax = this.style === 'dog' ? 2.0 : isMelee ? 2.6 : isHybrid ? 15.0 : 25.0;
 
-    if (!canSee || horizDist > desiredMax) {
-      move.add(forward);
-    } else if (horizDist < desiredMin && !isMelee) {
-      move.addScaledVector(forward, -0.55);
+    if (!isTurret) {
+      if (!canSee || horizDist > desiredMax) {
+        move.add(forward);
+      } else if (horizDist < desiredMin && !isMelee) {
+        move.addScaledVector(forward, -0.55);
+      }
+
+      if (horizDist < desiredMax + 6 && this.style !== 'dog') {
+        move.addScaledVector(right, this.strafeDir * (this.style === 'skirmisher' ? 1.15 : 0.65));
+      }
     }
 
-    if (horizDist < desiredMax + 6) {
-      move.addScaledVector(right, this.strafeDir * (this.style === 'skirmisher' ? 1.15 : 0.65));
-    }
-
-    if (move.lengthSq() > 0.01) {
+    if (move.lengthSq() > 0.01 && this.speed > 0) {
       move.normalize().multiplyScalar(this.speed * dt);
       this.mesh.position.x += move.x;
       this.mesh.position.z += move.z;
@@ -697,21 +889,32 @@ export class Enemy {
       const fy = collision.getFloorHeight(this.mesh.position.x, this.mesh.position.z, this.mesh.position.y);
       this.mesh.position.y += (fy - this.mesh.position.y) * Math.min(1, dt * 14);
 
-      // Animate legs walking
-      this.walkPhase += dt * this.speed * 2.2;
-      this.parts.legL.rotation.x = Math.sin(this.walkPhase) * 0.55;
-      this.parts.legR.rotation.x = -Math.sin(this.walkPhase) * 0.55;
-      this.parts.armL.rotation.x = -0.35 - Math.sin(this.walkPhase) * 0.35;
+      // Animate legs running
+      this.walkPhase += dt * this.speed * (this.style === 'dog' ? 2.8 : 2.2);
+      this.parts.legL.rotation.x = Math.sin(this.walkPhase) * 0.6;
+      this.parts.legR.rotation.x = -Math.sin(this.walkPhase) * 0.6;
+      if (this.style === 'dog') {
+        this.parts.armL.rotation.x = -Math.sin(this.walkPhase) * 0.6;
+        this.parts.armR.rotation.x = Math.sin(this.walkPhase) * 0.6;
+      } else {
+        this.parts.armL.rotation.x = -0.35 - Math.sin(this.walkPhase) * 0.35;
+      }
     }
 
     // Attack logic
     this.fireCooldown -= dt;
     if (this.fireCooldown <= 0) {
+      const biteRange = this.style === 'dog' ? 2.45 : 3.5;
       if (isMelee || (isHybrid && horizDist < 3.6)) {
-        if (horizDist < 3.5) {
+        if (horizDist < biteRange) {
           this.fireCooldown = this.fireRate;
-          this.parts.armR.rotation.x = -2.1;
-          setTimeout(() => { if (this.parts.armR) this.parts.armR.rotation.x = -1.1; }, 160);
+          if (this.style === 'dog') {
+            this.parts.head.rotation.x = 0.35;
+            setTimeout(() => { if (this.parts.head) this.parts.head.rotation.x = 0; }, 160);
+          } else {
+            this.parts.armR.rotation.x = -2.1;
+            setTimeout(() => { if (this.parts.armR) this.parts.armR.rotation.x = -1.1; }, 160);
+          }
           callbacks.onMeleeHitPlayer(this.damage, this);
         }
       } else if (canSee && horizDist <= this.range) {

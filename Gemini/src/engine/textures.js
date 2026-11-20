@@ -653,6 +653,7 @@ export function createSignTexture(text, opts = {}) {
   return tex;
 }
 
+
 export function createBannerTexture(type = 'austria') {
   const key = `banner_${type}`;
   if (cache.has(key)) return cache.get(key);
@@ -785,6 +786,7 @@ export function createBannerTexture(type = 'austria') {
   return tex;
 }
 
+
 export function createWantedPosterTexture() {
   const key = 'wanted_poster';
   if (cache.has(key)) return cache.get(key);
@@ -916,6 +918,7 @@ export function createSpartanShieldTexture() {
   return tex;
 }
 
+
 export function createVikingShieldTexture(variant = 0) {
   const key = `viking_shield_${variant}`;
   if (cache.has(key)) return cache.get(key);
@@ -965,6 +968,7 @@ export function createVikingShieldTexture(variant = 0) {
   return tex;
 }
 
+
 export function createSailTexture(variant = 'greece') {
   const key = `sail_${variant}`;
   if (cache.has(key)) return cache.get(key);
@@ -990,3 +994,77 @@ export function createSailTexture(variant = 'greece') {
   return tex;
 }
 
+
+
+export function getConcreteTexture(repeatX = 2, repeatY = 2) {
+  const key = `concrete_${repeatX}_${repeatY}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 512;
+  const col = makeCanvas(size, size);
+  const ctx = col.getContext('2d');
+  const bump = makeCanvas(size, size);
+  const bctx = bump.getContext('2d');
+
+  ctx.fillStyle = '#7e817d';
+  ctx.fillRect(0, 0, size, size);
+  bctx.fillStyle = '#808080';
+  bctx.fillRect(0, 0, size, size);
+
+  for (let y = 0; y < size; y += 64) {
+    ctx.fillStyle = 'rgba(42, 45, 42, 0.35)';
+    ctx.fillRect(0, y, size, 3);
+    bctx.fillStyle = '#383838';
+    bctx.fillRect(0, y, size, 3);
+  }
+  for (let i = 0; i < 360; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const r = 6 + Math.random() * 24;
+    ctx.fillStyle = Math.random() > 0.5 ? 'rgba(170,174,168,0.14)' : 'rgba(55,58,54,0.16)';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let i = 0; i < 45; i++) {
+    const x = Math.random() * size;
+    ctx.fillStyle = 'rgba(45, 50, 42, 0.16)';
+    ctx.fillRect(x, 0, 3 + Math.random() * 6, size);
+  }
+
+  const res = {
+    map: finalizeTexture(col, repeatX, repeatY, true),
+    bumpMap: finalizeTexture(bump, repeatX, repeatY, false)
+  };
+  cache.set(key, res);
+  return res;
+}
+
+/**
+ * Plain military bar cross (Balkenkreuz) — strictly no forbidden political symbols
+ */
+export function createBalkenkreuzTexture(bgHex = '#565c52') {
+  const key = `balkenkreuz_${bgHex}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 256;
+  const c = makeCanvas(size, size);
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = bgHex;
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.fillStyle = '#ebe8df';
+  ctx.fillRect(100, 32, 56, 192);
+  ctx.fillRect(32, 100, 192, 56);
+
+  ctx.fillStyle = '#1b1d1c';
+  ctx.fillRect(110, 42, 36, 172);
+  ctx.fillRect(42, 110, 172, 36);
+
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}

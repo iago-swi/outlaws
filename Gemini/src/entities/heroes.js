@@ -218,6 +218,47 @@ export const ERA_HEROES = {
         meleeDamageMult: 1.35
       }
     }
+  ],
+  normandy: [
+    {
+      id: 'pavlichenko',
+      era: 'normandy',
+      name: 'Lyudmila Pavlichenko',
+      bio: 'Soviet sniper of the Eastern Front.',
+      strengthLabel: 'Scoped Bolt Rifle',
+      strengthDesc: 'Telescopic bolt-action rifle (RMB scope); one shot fells an ordinary soldier, slow fire & 5-round clip.',
+      hudTag: 'SNIPER RIFLE',
+      defaultWeaponIdx: 0,
+      weaponIds: ['mosin_scoped', 'combat_knife'],
+      mods: {}
+    },
+    {
+      id: 'hall',
+      era: 'normandy',
+      name: 'Virginia Hall',
+      bio: 'American spy with the French Resistance, "the limping lady".',
+      strengthLabel: 'Sten SMG & Stealth',
+      strengthDesc: 'Full-auto 32-round Sten SMG; enemies notice her later by sight and sound.',
+      hudTag: 'STEN + STEALTH',
+      defaultWeaponIdx: 0,
+      weaponIds: ['sten_smg', 'combat_knife'],
+      mods: {
+        stealthMult: 0.42,
+        soundAlertRadius: 13
+      }
+    },
+    {
+      id: 'bavaud',
+      era: 'normandy',
+      name: 'Maurice Bavaud',
+      bio: 'Young man from Neuchâtel, Switzerland, who set out to shoot Hitler in 1938.',
+      strengthLabel: 'Heavy Pistol',
+      strengthDesc: 'Carries a hard-hitting semi-automatic pistol that deals high damage per shot.',
+      hudTag: 'HEAVY PISTOL',
+      defaultWeaponIdx: 0,
+      weaponIds: ['heavy_pistol', 'combat_knife'],
+      mods: {}
+    }
   ]
 };
 
@@ -975,6 +1016,112 @@ export function buildHeroFigure(heroId) {
     p.armR.add(sword);
   }
 
+  // ==================== LEVEL 6: NORMANDY, 6 JUNE 1944 ====================
+  else if (heroId === 'pavlichenko') {
+    // Lyudmila Pavlichenko: Olive Soviet uniform, side cap (pilotka), dark hair, scoped bolt-action rifle
+    const oliveMat = new THREE.MeshStandardMaterial({ color: 0x5d6442, roughness: 0.84 });
+    const p = addBaseBody({ torsoMat: oliveMat, legsMat: oliveMat, armsMat: oliveMat, bootsMat: blackCloth, skin: skinFair, slim: true });
+
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.34, 0.44, 10), oliveMat);
+    skirt.position.set(0, 0.74, 0);
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.1, 0.33), brownLeather);
+    belt.position.set(0, 0.96, 0);
+    const collar = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.09, 0.32), oliveMat);
+    collar.position.set(0, 1.54, 0);
+    root.add(skirt, belt, collar);
+
+    // Neat dark hair & Olive Soviet Garrison Side Cap (Pilotka) with tiny crimson star
+    const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.14), darkHair);
+    hairBack.position.set(0, -0.05, -0.13);
+    const hairSideL = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.05, 0.24, 8), darkHair);
+    hairSideL.position.set(-0.17, -0.04, -0.02);
+    const hairSideR = hairSideL.clone();
+    hairSideR.position.x = 0.17;
+
+    const pilotka = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.15, 0.42), oliveMat);
+    pilotka.position.set(0.03, 0.21, 0.02);
+    pilotka.rotation.z = -0.18;
+    const star = new THREE.Mesh(new THREE.SphereGeometry(0.028, 6, 6), crimsonMat);
+    star.position.set(0.05, 0.21, 0.23);
+    p.head.add(hairBack, hairSideL, hairSideR, pilotka, star);
+
+    // Scoped Bolt-Action Rifle
+    const rifle = makeRifle();
+    const scopeTube = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.36, 10), darkCharcoal);
+    scopeTube.rotation.x = Math.PI / 2;
+    scopeTube.position.set(0, 0.08, 0.05);
+    rifle.add(scopeTube);
+    rifle.position.set(-0.08, -0.24, 0.12);
+    rifle.rotation.set(0.3, -0.45, 0);
+    p.armR.add(rifle);
+  } else if (heroId === 'hall') {
+    // Virginia Hall: Tan trench coat, dark beret, chestnut hair, subtle wooden prosthetic lower leg, Sten SMG
+    const trenchMat = new THREE.MeshStandardMaterial({ color: 0x9c8b6d, roughness: 0.85 });
+    const beretMat = new THREE.MeshStandardMaterial({ color: 0x262834, roughness: 0.88 });
+    const p = addBaseBody({ torsoMat: trenchMat, legsMat: darkCharcoal, armsMat: trenchMat, bootsMat: brownLeather, skin: skinFair, slim: true });
+
+    // Belted trench coat skirt & lapels
+    const coatSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.38, 0.66, 12), trenchMat);
+    coatSkirt.position.set(0, 0.64, 0);
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.1, 0.34), trenchMat);
+    belt.position.set(0, 0.96, 0);
+    const lapel = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.32, 0.04), darkCharcoal);
+    lapel.position.set(0, 1.36, 0.155);
+    // Respectful subtle prosthetic wooden lower-left leg detail
+    const prosthetic = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.055, 0.36, 8), darkWood);
+    prosthetic.position.set(0, -0.18, 0);
+    p.legL.add(prosthetic);
+    root.add(coatSkirt, belt, lapel);
+
+    // Chestnut hair & tilted dark French Beret
+    const hair = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.34, 0.14), chestnutHair);
+    hair.position.set(0, -0.05, -0.13);
+    const beret = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.21, 0.1, 16), beretMat);
+    beret.position.set(-0.04, 0.19, -0.01);
+    beret.rotation.z = 0.22;
+    p.head.add(hair, beret);
+
+    // Sten Mk II SMG with side magazine
+    const sten = new THREE.Group();
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.62, 10), darkCharcoal);
+    tube.rotation.x = Math.PI / 2;
+    tube.position.set(0, 0, 0.22);
+    const mag = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.026, 0.042), darkCharcoal);
+    mag.position.set(-0.12, 0, 0.18);
+    sten.add(tube, mag);
+    sten.position.set(0, -0.32, 0.06);
+    sten.rotation.x = 0.65;
+    p.armR.add(sten);
+  } else if (heroId === 'bavaud') {
+    // Maurice Bavaud: Young Swiss man in a tailored dark overcoat, clean-shaven, heavy pistol
+    const overcoatMat = new THREE.MeshStandardMaterial({ color: 0x22262e, roughness: 0.82 });
+    const p = addBaseBody({ torsoMat: overcoatMat, legsMat: darkCharcoal, armsMat: overcoatMat, bootsMat: blackCloth, skin: skinFair, slim: true });
+
+    const coatSkirt = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.68, 0.32), overcoatMat);
+    coatSkirt.position.set(0, 0.62, 0);
+    const collarShirt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.26, 0.04), pureWhite);
+    collarShirt.position.set(0, 1.38, 0.155);
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.22, 0.05), darkCharcoal);
+    tie.position.set(0, 1.35, 0.165);
+    root.add(coatSkirt, collarShirt, tie);
+
+    // Neat young man's combed dark hair, clean-shaven
+    const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.215, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.54), darkHair);
+    hairTop.position.set(0, 0.065, -0.02);
+    p.head.add(hairTop);
+
+    // Heavy semi-automatic pistol
+    const pistol = new THREE.Group();
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.068, 0.28), darkCharcoal);
+    slide.position.set(0, 0.02, 0.16);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.12, 0.06), brownLeather);
+    grip.position.set(0, -0.06, 0.02);
+    pistol.add(slide, grip);
+    pistol.position.set(0, -0.34, 0.05);
+    pistol.rotation.x = 0.62;
+    p.armR.add(pistol);
+  }
+
   // Ground pedestal disc beneath hero figure for clean turntable framing
   const plinthColor = heroId === 'earp' || heroId === 'jane' || heroId === 'billy'
     ? 0x6b4428
@@ -984,7 +1131,9 @@ export function buildHeroFigure(heroId) {
         ? 0xe8e0d0
         : heroId === 'erik' || heroId === 'leif' || heroId === 'ragnar'
           ? 0x4b5c6e
-          : 0x5d6269;
+          : heroId === 'pavlichenko' || heroId === 'hall' || heroId === 'bavaud'
+            ? 0x5c605c
+            : 0x5d6269;
   const plinth = new THREE.Mesh(
     new THREE.CylinderGeometry(0.72, 0.82, 0.16, 20),
     new THREE.MeshStandardMaterial({ color: plinthColor, roughness: 0.78 })

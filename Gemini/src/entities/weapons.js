@@ -320,6 +320,87 @@ export const ERA_WEAPONS = {
       altHint: 'RMB: Shield-Breaker Cleave',
       slashColor: 0x9ef5e8
     }
+  ],
+  normandy: [
+    {
+      id: 'mosin_scoped',
+      name: 'BOLT-ACTION SNIPER RIFLE',
+      shortName: 'Sniper Rifle',
+      kind: 'hitscan',
+      sound: 'sniper',
+      damage: 105,
+      headMult: 2.2,
+      pellets: 1,
+      spread: 0.002,
+      fireRate: 1.25,
+      magSize: 5,
+      reserve: 30,
+      reloadTime: 1.65,
+      recoil: 0.24,
+      altMode: 'scope',
+      scopeLabel: 'PU 3.5× TELESCOPIC SIGHT',
+      scopeFov: 18,
+      altHint: 'RMB: Telescopic Scope',
+      tracerColor: 0xfff3c4
+    },
+    {
+      id: 'sten_smg',
+      name: 'STEN MK II SMG',
+      shortName: 'Sten SMG',
+      kind: 'hitscan',
+      sound: 'smg',
+      autoFire: true,
+      damage: 19,
+      headMult: 1.75,
+      pellets: 1,
+      spread: 0.032,
+      fireRate: 0.11,
+      magSize: 32,
+      reserve: 160,
+      reloadTime: 1.15,
+      recoil: 0.065,
+      altMode: 'none',
+      altHint: 'Hold LMB: Full-Auto Fire',
+      tracerColor: 0xffd27a
+    },
+    {
+      id: 'heavy_pistol',
+      name: 'BAVAUD HEAVY PISTOL',
+      shortName: 'Heavy Pistol',
+      kind: 'hitscan',
+      sound: 'revolver',
+      damage: 58,
+      headMult: 2.0,
+      pellets: 1,
+      spread: 0.008,
+      fireRate: 0.34,
+      magSize: 8,
+      reserve: 64,
+      reloadTime: 0.95,
+      recoil: 0.15,
+      altMode: 'none',
+      altHint: 'High-Impact Sidearm',
+      tracerColor: 0xffe49e
+    },
+    {
+      id: 'combat_knife',
+      name: 'RESISTANCE KNIFE',
+      shortName: 'Knife',
+      kind: 'melee',
+      sound: 'slash',
+      damage: 65,
+      headMult: 1.6,
+      range: 3.3,
+      fireRate: 0.32,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.16,
+      altMode: 'heavy_slash',
+      altHint: 'RMB: Close Thrust',
+      slashColor: 0xd8ecff
+    }
   ]
 };
 
@@ -628,6 +709,75 @@ export function buildWeaponViewmodel(weaponId) {
     g.add(blade, fuller, tip, guard, hilt, pommel);
     g.rotation.set(-0.34, -0.24, 0.24);
     g.position.set(0.32, -0.34, -0.52);
+  } else if (weaponId === 'mosin_scoped') {
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.02, 0.96, 8), steelMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.028, -0.56);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.072, 0.78), woodMat);
+    body.position.set(0, -0.008, -0.26);
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.09, 6), brightSteel);
+    bolt.rotation.z = Math.PI / 2;
+    bolt.position.set(0.05, 0.02, -0.06);
+    // PU Telescopic Sight
+    const scope = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.025, 0.38, 12), steelMat);
+    scope.rotation.x = Math.PI / 2;
+    scope.position.set(0, 0.082, -0.18);
+    const mount = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.048, 0.12), steelMat);
+    mount.position.set(0, 0.052, -0.16);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.019, 0.01, 12), new THREE.MeshBasicMaterial({ color: 0x9be2ff }));
+    lens.rotation.x = Math.PI / 2;
+    lens.position.set(0, 0.082, 0.015);
+    const stock = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.11, 0.34), woodMat);
+    stock.position.set(0, -0.048, 0.2);
+    stock.rotation.x = 0.12;
+    g.add(barrel, body, bolt, scope, mount, lens, stock);
+    g.position.set(0.24, -0.24, -0.32);
+  } else if (weaponId === 'sten_smg') {
+    // Iconic tubular Sten Mk II with side-mounted horizontal magazine & skeletal wire stock
+    const receiver = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.42, 12), steelMat);
+    receiver.rotation.x = Math.PI / 2;
+    receiver.position.set(0, 0.01, -0.16);
+    const shroud = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.28, 12), steelMat);
+    shroud.rotation.x = Math.PI / 2;
+    shroud.position.set(0, 0.01, -0.48);
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.14, 8), steelMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.01, -0.66);
+    // Horizontal Left-Side Magazine (signature Sten silhouette!)
+    const sideMag = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.028, 0.046), steelMat);
+    sideMag.position.set(-0.14, 0.01, -0.24);
+    const stockBar = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.34, 8), steelMat);
+    stockBar.rotation.x = Math.PI / 2;
+    stockBar.position.set(0, -0.02, 0.18);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.13, 0.05), darkWood);
+    grip.position.set(0, -0.08, 0.05);
+    grip.rotation.x = 0.22;
+    g.add(receiver, shroud, barrel, sideMag, stockBar, grip);
+    g.position.set(0.24, -0.22, -0.34);
+  } else if (weaponId === 'heavy_pistol') {
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.068, 0.34), steelMat);
+    slide.position.set(0, 0.035, -0.22);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.044, 0.28), darkWood);
+    frame.position.set(0, -0.01, -0.18);
+    const sight = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.02, 0.02), brightSteel);
+    sight.position.set(0, 0.075, -0.37);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.15, 0.068), darkWood);
+    grip.position.set(0, -0.09, -0.05);
+    grip.rotation.x = 0.26;
+    g.add(slide, frame, sight, grip);
+    g.position.set(0.23, -0.22, -0.36);
+  } else if (weaponId === 'combat_knife') {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.34, 0.045), brightSteel);
+    blade.position.set(0, 0.18, 0);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.1, 4), brightSteel);
+    tip.position.set(0, 0.39, 0);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.022, 0.11), steelMat);
+    guard.position.set(0, 0.01, 0);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.022, 0.16, 8), darkWood);
+    hilt.position.set(0, -0.08, 0);
+    g.add(blade, tip, guard, hilt);
+    g.rotation.set(-0.42, -0.28, 0.32);
+    g.position.set(0.28, -0.26, -0.48);
   }
 
   g.userData.basePos = g.position.clone();

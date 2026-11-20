@@ -43,6 +43,13 @@ body.theme-scandinavia {
   --border-glow: rgba(54, 217, 154, 0.5);
 }
 
+body.theme-normandy {
+  --accent: #c98f6b;
+  --accent-bright: #ffd4b8;
+  --accent-deep: #3d3552;
+  --border-glow: rgba(201, 143, 107, 0.5);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -765,9 +772,9 @@ body.pax-active .health-fill {
 
 .level-cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-bottom: 18px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 11px;
+  margin-bottom: 16px;
 }
 
 .level-card {
@@ -1087,9 +1094,20 @@ body.pax-active .health-fill {
   font-size: 14px;
   line-height: 1.5;
   color: rgba(244, 230, 204, 0.82);
-  margin: 10px 0 16px;
-  padding-bottom: 12px;
+  margin: 10px 0 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid rgba(255, 232, 194, 0.14);
+}
+
+.hero-historical-note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--accent-bright);
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid var(--accent);
+  padding: 6px 10px;
+  margin: -4px 0 12px;
+  border-radius: 0 4px 4px 0;
 }
 
 .hero-cards-list {
@@ -1143,6 +1161,10 @@ body.theme-greece .hero-card.active {
 
 body.theme-scandinavia .hero-card.active {
   background: rgba(14, 52, 54, 0.84);
+}
+
+body.theme-normandy .hero-card.active {
+  background: rgba(46, 38, 62, 0.84);
 }
 
 .hero-card-key {
