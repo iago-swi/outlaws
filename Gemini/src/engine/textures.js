@@ -333,6 +333,49 @@ export function getGroundTexture(theme = 'desert', repeatX = 24, repeatY = 24) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
       ctx.fillRect(Math.random() * size, Math.random() * size, 2, 2);
     }
+  } else if (theme === 'soviet_snow') {
+    ctx.fillStyle = '#adb4bc';
+    ctx.fillRect(0, 0, size, size);
+    bctx.fillStyle = '#808080';
+    bctx.fillRect(0, 0, size, size);
+    for (let i = 0; i < 420; i++) {
+      const x = Math.random() * size;
+      const y = Math.random() * size;
+      const r = 10 + Math.random() * 34;
+      const t = Math.random();
+      ctx.fillStyle = t > 0.55 ? 'rgba(225, 232, 240, 0.34)' : t > 0.25 ? 'rgba(130, 138, 146, 0.24)' : 'rgba(92, 98, 104, 0.2)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 1.3, r * 0.75, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (theme === 'tibet_ochre') {
+    ctx.fillStyle = '#b48d52';
+    ctx.fillRect(0, 0, size, size);
+    bctx.fillStyle = '#808080';
+    bctx.fillRect(0, 0, size, size);
+    for (let i = 0; i < 480; i++) {
+      const x = Math.random() * size;
+      const y = Math.random() * size;
+      const r = 8 + Math.random() * 28;
+      const t = Math.random();
+      ctx.fillStyle = t > 0.6
+        ? 'rgba(198, 160, 96, 0.24)'
+        : t > 0.3
+          ? 'rgba(148, 110, 58, 0.22)'
+          : 'rgba(128, 108, 72, 0.2)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 1.4, r * 0.7, Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+      bctx.fillStyle = t > 0.5 ? 'rgba(195,195,195,0.16)' : 'rgba(65,65,65,0.16)';
+      bctx.beginPath();
+      bctx.arc(x, y, r * 0.45, 0, Math.PI * 2);
+      bctx.fill();
+    }
+    // Dry winter grass tufts & mountain scree
+    for (let i = 0; i < 200; i++) {
+      ctx.fillStyle = Math.random() > 0.5 ? '#8e6a3a' : '#d2b47c';
+      ctx.fillRect(Math.random() * size, Math.random() * size, 3, 2);
+    }
   }
 
   const res = {
@@ -654,6 +697,8 @@ export function createSignTexture(text, opts = {}) {
 }
 
 
+
+
 export function createBannerTexture(type = 'austria') {
   const key = `banner_${type}`;
   if (cache.has(key)) return cache.get(key);
@@ -785,6 +830,8 @@ export function createBannerTexture(type = 'austria') {
   cache.set(key, tex);
   return tex;
 }
+
+
 
 
 export function createWantedPosterTexture() {
@@ -919,6 +966,8 @@ export function createSpartanShieldTexture() {
 }
 
 
+
+
 export function createVikingShieldTexture(variant = 0) {
   const key = `viking_shield_${variant}`;
   if (cache.has(key)) return cache.get(key);
@@ -969,6 +1018,8 @@ export function createVikingShieldTexture(variant = 0) {
 }
 
 
+
+
 export function createSailTexture(variant = 'greece') {
   const key = `sail_${variant}`;
   if (cache.has(key)) return cache.get(key);
@@ -993,6 +1044,8 @@ export function createSailTexture(variant = 'greece') {
   cache.set(key, tex);
   return tex;
 }
+
+
 
 
 
@@ -1062,6 +1115,111 @@ export function createBalkenkreuzTexture(bgHex = '#565c52') {
   ctx.fillRect(110, 42, 36, 172);
   ctx.fillRect(42, 110, 172, 36);
 
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}
+
+
+
+/**
+ * Soviet 1974 prefabricated five-storey concrete apartment panel with lit & dark windows
+ */
+export function getSovietPanelTexture(repeatX = 3, repeatY = 2) {
+  const key = `soviet_panel_${repeatX}_${repeatY}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 512;
+  const c = makeCanvas(size, size);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#8b8f91';
+  ctx.fillRect(0, 0, size, size);
+
+  const cols = 4;
+  const rows = 5;
+  const cw = size / cols;
+  const ch = size / rows;
+  for (let r = 0; r < rows; r++) {
+    for (let col = 0; col < cols; col++) {
+      const x = col * cw;
+      const y = r * ch;
+      const shade = 132 + Math.floor(hash2D(col, r) * 20);
+      ctx.fillStyle = `rgb(${shade},${shade + 2},${shade + 3})`;
+      ctx.fillRect(x + 2, y + 2, cw - 4, ch - 4);
+      // Panel seam
+      ctx.strokeStyle = '#5a5d60';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x + 1, y + 1, cw - 2, ch - 2);
+      // Window
+      const wx = x + 18;
+      const wy = y + 16;
+      const ww = cw - 36;
+      const wh = ch - 32;
+      const lit = hash2D(col * 3 + 1, r * 5 + 2) > 0.42;
+      ctx.fillStyle = lit ? '#e8c474' : '#323a44';
+      ctx.fillRect(wx, wy, ww, wh);
+      ctx.strokeStyle = '#d6d4cc';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(wx, wy, ww, wh);
+      ctx.beginPath();
+      ctx.moveTo(wx + ww * 0.5, wy);
+      ctx.lineTo(wx + ww * 0.5, wy + wh);
+      ctx.moveTo(wx, wy + wh * 0.38);
+      ctx.lineTo(wx + ww, wy + wh * 0.38);
+      ctx.stroke();
+    }
+  }
+
+  const tex = finalizeTexture(c, repeatX, repeatY, true);
+  cache.set(key, tex);
+  return tex;
+}
+
+export function createSloganBannerTexture(text, bg = '#a61c1c', fg = '#f7e4b2', width = 512, height = 128) {
+  const key = 'slogan_' + text + '_' + bg + '_' + fg + '_' + width + '_' + height;
+  if (cache.has(key)) return cache.get(key);
+  const c = makeCanvas(width, height);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = fg;
+  ctx.lineWidth = 6;
+  ctx.strokeRect(6, 6, width - 12, height - 12);
+  ctx.fillStyle = fg;
+  ctx.font = 'bold ' + Math.floor(height * 0.46) + 'px Georgia, serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, width / 2, height / 2 + 2, width - 32);
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}
+
+export function createThangkaTexture() {
+  const key = 'tibet_thangka';
+  if (cache.has(key)) return cache.get(key);
+  const c = makeCanvas(256, 384);
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#1d3c6a';
+  ctx.fillRect(0, 0, 256, 384);
+  ctx.strokeStyle = '#d4a63a';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(12, 12, 232, 360);
+  ctx.fillStyle = '#7e1d1c';
+  ctx.fillRect(28, 36, 200, 312);
+  ctx.fillStyle = '#e5b842';
+  ctx.beginPath(); ctx.arc(128, 150, 56, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#992822';
+  ctx.beginPath(); ctx.arc(128, 150, 44, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#f0c858';
+  ctx.beginPath(); ctx.arc(128, 138, 18, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(86, 224); ctx.lineTo(128, 156); ctx.lineTo(170, 224); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#e67e88';
+  for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.ellipse(128 + i * 16, 238, 12, 20, i * 0.14, 0, Math.PI * 2); ctx.fill(); }
   const tex = finalizeTexture(c, 1, 1, true);
   tex.wrapS = THREE.ClampToEdgeWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;

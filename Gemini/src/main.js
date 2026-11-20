@@ -16,6 +16,8 @@ import { LEVEL3_META, buildLevel3 } from './levels/level3_swiss.js';
 import { LEVEL4_META, buildLevel4 } from './levels/level4_greece.js';
 import { LEVEL5_META, buildLevel5 } from './levels/level5_scandinavia.js';
 import { LEVEL6_META, buildLevel6 } from './levels/level6_normandy.js';
+import { LEVEL7_META, buildLevel7 } from './levels/level7_soviet.js';
+import { LEVEL8_META, buildLevel8 } from './levels/level8_tibet.js';
 
 const LEVELS = [
   { meta: LEVEL1_META, builder: buildLevel1 },
@@ -23,7 +25,9 @@ const LEVELS = [
   { meta: LEVEL3_META, builder: buildLevel3 },
   { meta: LEVEL4_META, builder: buildLevel4 },
   { meta: LEVEL5_META, builder: buildLevel5 },
-  { meta: LEVEL6_META, builder: buildLevel6 }
+  { meta: LEVEL6_META, builder: buildLevel6 },
+  { meta: LEVEL7_META, builder: buildLevel7 },
+  { meta: LEVEL8_META, builder: buildLevel8 }
 ];
 
 const DIFFICULTY = {
@@ -98,7 +102,9 @@ class OutlawsGame {
       swiss: ERA_HEROES.swiss[0].id,
       greece: ERA_HEROES.greece[0].id,
       scandinavia: ERA_HEROES.scandinavia[0].id,
-      normandy: ERA_HEROES.normandy[0].id
+      normandy: ERA_HEROES.normandy[0].id,
+      soviet: ERA_HEROES.soviet[0].id,
+      tibet: ERA_HEROES.tibet[0].id
     };
     this.activeHero = ERA_HEROES.west[0];
     this.timeSinceLastDamage = 999;
@@ -450,9 +456,12 @@ class OutlawsGame {
     this.particles = new ParticleSystem(this.worldGroup);
 
     const built = builder(this.worldGroup, this.collision, this.particles);
+    // Build real 2D A* navigation grid directly from this level's exact collision shapes
+    this.collision.buildNavGrid(1.35);
     this.animatedCallbacks = built.animated || [];
     this.pickups = built.pickups || [];
     this.tellApple = built.tellApple || null;
+    this.enterableBuildings = built.enterableBuildings || [];
 
     // Setup Player, Difficulty & Chosen Hero Modifiers
     const diff = DIFFICULTY[this.difficultyKey];
@@ -478,7 +487,7 @@ class OutlawsGame {
       if (sp.isBossWave) {
         this.bossSpawnPending = sp;
       } else {
-        const enemy = new Enemy(sp.type, sp.pos, diff.enemyMult);
+        const enemy = new Enemy(sp.type, sp.pos, diff.enemyMult, sp.options || {});
         this.worldGroup.add(enemy.mesh);
         this.enemies.push(enemy);
       }
@@ -779,16 +788,17 @@ class OutlawsGame {
       const range = heavy ? w.range + 1.0 : w.range;
       let hitAny = false;
       for (const enemy of this.enemies) {
-        if (!enemy.alive) continue;
-        const toE = new THREE.Vector3(
-          enemy.mesh.position.x - origin.x,
-          (enemy.mesh.position.y + 1.1) - origin.y,
-          enemy.mesh.position.z - origin.z
+        if (!enemy.alive || !enemy.mesh.visible) continue;
+        const targetChest = new THREE.Vector3(
+          enemy.mesh.position.x,
+          enemy.mesh.position.y + (enemy.style === 'dog' ? 0.55 : 1.15),
+          enemy.mesh.position.z
         );
+        const toE = new THREE.Vector3().subVectors(targetChest, origin);
         const dist = toE.length();
         if (dist <= range) {
           toE.normalize();
-          if (toE.dot(forward) > 0.35) {
+          if (toE.dot(forward) > 0.35 && this.collision.hasLineOfSight(origin, targetChest)) {
             hitAny = true;
             this._damageEnemy(enemy, dmg, heavy, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.3, 0)));
           }
@@ -1239,8 +1249,8 @@ class OutlawsGame {
     const moving = wish.lengthSq() > 0.01;
     if (moving) wish.normalize().multiplyScalar(speed);
 
-    this.player.pos.x += wish.x * dt;
-    this.player.pos.z += wish.z * dt;
+    // Sub-stepped horizontal movement so fast runners never skip thin walls or iron bars
+    this.collision.moveHorizontal(this.player.pos, wish.x * dt, wish.z * dt, 0.52, this.player.pos.y);
 
     // Gravity & Jump
     if (this.keys['Space'] && this.player.grounded) {
@@ -1250,8 +1260,7 @@ class OutlawsGame {
     this.player.vel.y -= 20.5 * dt;
     this.player.pos.y += this.player.vel.y * dt;
 
-    // Collisions & Floor Height
-    this.collision.resolveHorizontal(this.player.pos, 0.55, this.player.pos.y);
+    // Floor Height & Climbable Steps
     const floorY = this.collision.getFloorHeight(this.player.pos.x, this.player.pos.z, this.player.pos.y);
     if (this.player.pos.y <= floorY) {
       this.player.pos.y = floorY;
@@ -1286,8 +1295,8 @@ class OutlawsGame {
       }
     }
 
-    // Continuous fire while holding LMB on rapid or full-auto weapons (e.g. Sten Mk II SMG)
-    if (this.mouseDownL && this.fireTimer <= 0 && !this.reloading && w && (w.autoFire || w.fireRate <= 0.4)) {
+    // Continuous fire while holding LMB on rapid or full-auto weapons (Sten SMG, Soviet PPSh SMG)
+    if (this.mouseDownL && this.fireTimer <= 0 && !this.reloading && w && (w.auto || w.autoFire || w.fireRate <= 0.4)) {
       this.tryFire(false);
     }
 
@@ -1453,9 +1462,57 @@ class OutlawsGame {
       enemy.update(dt, this.player.pos, this.collision, callbacks, detectMult);
     }
 
+    // Solid living bodies: push overlapping player & enemies apart cleanly, then re-clamp walls
+    this._resolveLivingSeparation();
+
     // Also wake boss if player charges deep into the northern stronghold!
     if (this.bossSpawnPending && this.player.pos.z < -12) {
       this._checkStageProgression();
+    }
+  }
+
+  _resolveLivingSeparation() {
+    const alive = this.enemies.filter((e) => e.alive && e.mesh.visible);
+    const pRadius = 0.52;
+
+    // Player vs each living enemy
+    for (const e of alive) {
+      if (Math.abs(e.mesh.position.y - this.player.pos.y) > 1.7) continue;
+      const dx = this.player.pos.x - e.mesh.position.x;
+      const dz = this.player.pos.z - e.mesh.position.z;
+      const minD = pRadius + e.radius;
+      const distSq = dx * dx + dz * dz;
+      if (distSq < minD * minD) {
+        const dist = Math.sqrt(distSq) || 0.001;
+        const overlap = (minD - dist) * 0.52;
+        const nx = dx / dist;
+        const nz = dz / dist;
+        this.collision.moveHorizontal(this.player.pos, nx * overlap, nz * overlap, pRadius, this.player.pos.y);
+        if (e.speed > 0) {
+          this.collision.moveHorizontal(e.mesh.position, -nx * overlap, -nz * overlap, e.radius, e.mesh.position.y);
+        }
+      }
+    }
+
+    // Living enemy vs living enemy
+    for (let i = 0; i < alive.length; i++) {
+      const a = alive[i];
+      for (let j = i + 1; j < alive.length; j++) {
+        const b = alive[j];
+        if (Math.abs(a.mesh.position.y - b.mesh.position.y) > 1.7) continue;
+        const dx = a.mesh.position.x - b.mesh.position.x;
+        const dz = a.mesh.position.z - b.mesh.position.z;
+        const minD = a.radius + b.radius;
+        const distSq = dx * dx + dz * dz;
+        if (distSq < minD * minD) {
+          const dist = Math.sqrt(distSq) || 0.001;
+          const overlap = (minD - dist) * 0.5;
+          const nx = dx / dist;
+          const nz = dz / dist;
+          if (a.speed > 0) this.collision.moveHorizontal(a.mesh.position, nx * overlap, nz * overlap, a.radius, a.mesh.position.y);
+          if (b.speed > 0) this.collision.moveHorizontal(b.mesh.position, -nx * overlap, -nz * overlap, b.radius, b.mesh.position.y);
+        }
+      }
     }
   }
 
@@ -1507,5 +1564,5 @@ class OutlawsGame {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  new OutlawsGame();
+  window.__OUTLAWS_GAME__ = new OutlawsGame();
 });

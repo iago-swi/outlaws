@@ -401,6 +401,167 @@ export const ERA_WEAPONS = {
       altHint: 'RMB: Close Thrust',
       slashColor: 0xd8ecff
     }
+  ],
+  soviet: [
+    {
+      id: 'soviet_smg',
+      name: 'PPSH-41 SUBMACHINE GUN',
+      shortName: 'Soviet SMG',
+      kind: 'hitscan',
+      sound: 'smg',
+      damage: 25,
+      headMult: 1.75,
+      pellets: 1,
+      spread: 0.036,
+      fireRate: 0.115,
+      auto: true,
+      magSize: 35,
+      reserve: 175,
+      reloadTime: 1.35,
+      recoil: 0.085,
+      altMode: 'none',
+      altHint: 'Hold LMB: Automatic Fire',
+      tracerColor: 0xffe49e
+    },
+    {
+      id: 'soviet_pistol',
+      name: 'MAKAROV 9MM PISTOL',
+      shortName: 'Pistol',
+      kind: 'hitscan',
+      sound: 'revolver',
+      damage: 44,
+      headMult: 2.1,
+      pellets: 1,
+      spread: 0.011,
+      fireRate: 0.28,
+      magSize: 8,
+      reserve: 64,
+      reloadTime: 1.0,
+      recoil: 0.13,
+      altMode: 'none',
+      altHint: 'Accurate Sidearm',
+      tracerColor: 0xffe49e
+    },
+    {
+      id: 'combat_knife',
+      name: 'UTILITY KNIFE',
+      shortName: 'Knife',
+      kind: 'melee',
+      sound: 'slash',
+      damage: 65,
+      headMult: 1.6,
+      range: 3.3,
+      fireRate: 0.32,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.16,
+      altMode: 'heavy_slash',
+      altHint: 'RMB: Close Thrust',
+      slashColor: 0xd8ecff
+    }
+  ],
+  tibet: [
+    {
+      id: 'khampa_rifle',
+      name: 'KHAMPA BOLT-ACTION RIFLE',
+      shortName: 'Bolt Rifle',
+      kind: 'hitscan',
+      sound: 'sniper',
+      damage: 105,
+      headMult: 2.3,
+      pellets: 1,
+      spread: 0.004,
+      fireRate: 0.92,
+      magSize: 5,
+      reserve: 45,
+      reloadTime: 1.45,
+      recoil: 0.21,
+      altMode: 'scope',
+      scopeLabel: 'IRON SIGHTS FOCUS',
+      scopeFov: 40,
+      altHint: 'RMB: Iron Sights Aim',
+      tracerColor: 0xfff3c4
+    },
+    {
+      id: 'tibet_pistol',
+      name: 'RESISTANCE PISTOL',
+      shortName: 'Pistol',
+      kind: 'hitscan',
+      sound: 'revolver',
+      damage: 48,
+      headMult: 2.1,
+      pellets: 1,
+      spread: 0.012,
+      fireRate: 0.27,
+      magSize: 10,
+      reserve: 70,
+      reloadTime: 1.0,
+      recoil: 0.13,
+      altMode: 'none',
+      altHint: 'Nimble Sidearm',
+      tracerColor: 0xffe49e
+    },
+    {
+      id: 'tibet_bow',
+      name: 'TIBETAN RECURVE BOW',
+      shortName: 'Bow',
+      kind: 'hitscan',
+      sound: 'bow',
+      damage: 80,
+      headMult: 2.2,
+      pellets: 1,
+      spread: 0.006,
+      fireRate: 0.58,
+      magSize: 1,
+      reserve: 55,
+      reloadTime: 0.42,
+      recoil: 0.1,
+      altMode: 'scope',
+      scopeLabel: 'ROYAL ARCHER FOCUS',
+      scopeFov: 36,
+      altHint: 'RMB: Aim Focus',
+      tracerColor: 0xf6d58a
+    },
+    {
+      id: 'tibet_sword',
+      name: 'ROYAL TIBETAN SWORD',
+      shortName: 'Sword',
+      kind: 'melee',
+      sound: 'slash',
+      damage: 78,
+      headMult: 1.6,
+      range: 4.1,
+      fireRate: 0.36,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.2,
+      altMode: 'heavy_slash',
+      altHint: 'RMB: Sweeping Strike',
+      slashColor: 0xffdf99
+    },
+    {
+      id: 'combat_knife',
+      name: 'KHAMPA KNIFE',
+      shortName: 'Knife',
+      kind: 'melee',
+      sound: 'slash',
+      damage: 65,
+      headMult: 1.6,
+      range: 3.3,
+      fireRate: 0.32,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.16,
+      altMode: 'heavy_slash',
+      altHint: 'RMB: Close Thrust',
+      slashColor: 0xd8ecff
+    }
   ]
 };
 
@@ -778,6 +939,84 @@ export function buildWeaponViewmodel(weaponId) {
     g.add(blade, tip, guard, hilt);
     g.rotation.set(-0.42, -0.28, 0.32);
     g.position.set(0.28, -0.26, -0.48);
+  } else if (weaponId === 'soviet_smg') {
+    // PPSh-41 with ventilated shroud, drum magazine & birch stock
+    const shroud = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.028, 0.56, 10), steelMat);
+    shroud.rotation.x = Math.PI / 2;
+    shroud.position.set(0, 0.024, -0.42);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.068, 0.36), woodMat);
+    body.position.set(0, -0.014, -0.08);
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.095, 0.052, 14), steelMat);
+    drum.rotation.x = Math.PI / 2;
+    drum.position.set(0, -0.085, -0.26);
+    const stock = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.11, 0.32), woodMat);
+    stock.position.set(0, -0.05, 0.22);
+    stock.rotation.x = 0.14;
+    g.add(shroud, body, drum, stock);
+    g.position.set(0.24, -0.23, -0.34);
+  } else if (weaponId === 'soviet_pistol' || weaponId === 'tibet_pistol') {
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.064, 0.3), steelMat);
+    slide.position.set(0, 0.032, -0.2);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.24), darkWood);
+    frame.position.set(0, -0.01, -0.16);
+    const sight = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.018, 0.018), brightSteel);
+    sight.position.set(0, 0.07, -0.34);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.064), weaponId === 'soviet_pistol' ? crimsonMat : woodMat);
+    grip.position.set(0, -0.085, -0.04);
+    grip.rotation.x = 0.26;
+    g.add(slide, frame, sight, grip);
+    g.position.set(0.23, -0.22, -0.36);
+  } else if (weaponId === 'khampa_rifle') {
+    // Bolt-action rifle with clean iron sights (front blade + rear notch)
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.02, 0.98, 8), steelMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.028, -0.58);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.056, 0.072, 0.8), woodMat);
+    body.position.set(0, -0.008, -0.26);
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.09, 6), brightSteel);
+    bolt.rotation.z = Math.PI / 2;
+    bolt.position.set(0.048, 0.022, -0.06);
+    const frontSight = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.034, 0.018), steelMat);
+    frontSight.position.set(0, 0.058, -1.04);
+    const rearSight = new THREE.Mesh(new THREE.BoxGeometry(0.034, 0.024, 0.02), steelMat);
+    rearSight.position.set(0, 0.052, -0.28);
+    const stock = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.11, 0.34), woodMat);
+    stock.position.set(0, -0.048, 0.2);
+    stock.rotation.x = 0.12;
+    g.add(barrel, body, bolt, frontSight, rearSight, stock);
+    g.position.set(0.24, -0.24, -0.32);
+  } else if (weaponId === 'tibet_bow') {
+    // Ornate Tibetan recurve horsebow with gold tips & crimson fletched arrow
+    const bowCurve = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.018, 8, 22, Math.PI * 0.9), crimsonMat);
+    bowCurve.rotation.z = -Math.PI * 0.45;
+    bowCurve.position.set(0, 0.06, -0.22);
+    const stringMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.86, 6), new THREE.MeshBasicMaterial({ color: 0xf4e8d1 }));
+    stringMesh.position.set(0, 0.06, 0.03);
+    const arrowShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.72, 6), woodMat);
+    arrowShaft.rotation.x = Math.PI / 2;
+    arrowShaft.position.set(0.02, 0.02, -0.24);
+    const arrowTip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.07, 4), brassMat);
+    arrowTip.rotation.x = -Math.PI / 2;
+    arrowTip.position.set(0.02, 0.02, -0.62);
+    const fletch = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.004, 0.1), brassMat);
+    fletch.position.set(0.02, 0.02, 0.07);
+    g.add(bowCurve, stringMesh, arrowShaft, arrowTip, fletch);
+    g.position.set(0.25, -0.18, -0.45);
+  } else if (weaponId === 'tibet_sword') {
+    // Royal Tibetan broadsword with gilt guard & turquoise-studded pommel
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.86, 0.06), brightSteel);
+    blade.position.set(0, 0.44, 0);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.14, 4), brightSteel);
+    tip.position.set(0, 0.93, 0);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.2), brassMat);
+    guard.position.set(0, 0.01, 0);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.24, 8), crimsonMat);
+    hilt.position.set(0, -0.12, 0);
+    const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 8), brassMat);
+    pommel.position.set(0, -0.26, 0);
+    g.add(blade, tip, guard, hilt, pommel);
+    g.rotation.set(-0.34, -0.24, 0.24);
+    g.position.set(0.32, -0.34, -0.52);
   }
 
   g.userData.basePos = g.position.clone();

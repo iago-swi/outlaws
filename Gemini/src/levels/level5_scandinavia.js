@@ -7,6 +7,14 @@ import {
   createSailTexture
 } from '../engine/textures.js';
 import { createSkyDome, createWaterMesh, createAuroraMesh } from '../engine/shaders.js';
+import {
+  buildHollowRoom,
+  addSolidBox,
+  addHearth,
+  addPewRow,
+  addAltar,
+  addBunk
+} from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
 
 export const LEVEL5_META = {
@@ -17,14 +25,14 @@ export const LEVEL5_META = {
   title: 'FJORD OF THE NORTH',
   subtitle: 'Frost, Iron & Northern Lights',
   heroName: 'ERIK THE RED',
-  objective: 'Storm the Palisade & Defeat Rival Jarl Hakon at the Great Hall',
+  objective: 'Storm the Palisade, Defeat the Horned Chieftains & Claim the Great Hall',
   quote: '"Beneath dancing northern lights, longships grind upon frozen shingle. Cross the timber palisade and claim the Great Hall."',
   musicTheme: 'scandinavia',
   enemyIcon: 'ᛟ',
   currency: 'ℳ ',
-  spawnPos: new THREE.Vector3(0, 0, 46),
+  spawnPos: new THREE.Vector3(0, 0, 54),
   spawnYaw: 0,
-  cameraPreview: { center: new THREE.Vector3(0, 6, -4), radius: 42, height: 15, speed: 0.12 }
+  cameraPreview: { center: new THREE.Vector3(0, 6, -6), radius: 46, height: 16, speed: 0.12 }
 };
 
 export function buildLevel5(scene, collision, particles) {
@@ -32,375 +40,258 @@ export function buildLevel5(scene, collision, particles) {
   const animated = [];
   const pickups = [];
 
-  collision.bounds = { minX: -48, maxX: 48, minZ: -54, maxZ: 52 };
+  collision.bounds = { minX: -74, maxX: 74, minZ: -76, maxZ: 70 };
 
   // 1. Arctic Twilight Sky Dome + Animated GLSL Northern Lights (Aurora Borealis!)
   const moonDir = new THREE.Vector3(-0.35, 0.42, -0.84).normalize();
   const sky = createSkyDome({
-    topColor: 0x050c24,
-    midColor: 0x0d2247,
-    horizonColor: 0x204d6e,
-    sunColor: 0xd9f7ff,
-    sunDirection: moonDir,
-    cloudTint: 0x437a9c,
-    cloudDensity: 0.25
+    topColor: 0x050c24, midColor: 0x0d2247, horizonColor: 0x204d6e,
+    sunColor: 0xd9f7ff, sunDirection: moonDir, cloudTint: 0x437a9c, cloudDensity: 0.25
   });
   scene.add(sky.mesh);
   animated.push((t) => { sky.uniforms.uTime.value = t; });
 
-  // Twin sweeping GLSL Aurora Borealis curtains shimmering overhead!
-  const aurora1 = createAuroraMesh(280, 68);
-  aurora1.mesh.position.set(0, 68, -110);
+  const aurora1 = createAuroraMesh(320, 74);
+  aurora1.mesh.position.set(0, 72, -125);
   aurora1.mesh.rotation.x = 0.22;
   scene.add(aurora1.mesh);
 
-  const aurora2 = createAuroraMesh(240, 56);
-  aurora2.mesh.position.set(35, 76, -80);
+  const aurora2 = createAuroraMesh(270, 60);
+  aurora2.mesh.position.set(40, 80, -90);
   aurora2.mesh.rotation.y = -0.35;
   aurora2.mesh.rotation.x = 0.26;
   scene.add(aurora2.mesh);
-
   animated.push((t) => {
     aurora1.uniforms.uTime.value = t;
     aurora2.uniforms.uTime.value = t * 0.85 + 2.1;
   });
 
-  scene.fog = new THREE.FogExp2(0x162d47, 0.0068);
+  scene.fog = new THREE.FogExp2(0x162d47, 0.0058);
+  scene.add(new THREE.HemisphereLight(0x7ad6c8, 0x2a3b4f, 1.05));
 
-  // Crisp Nordic moonlight + emerald aurora bounce fill!
-  const hemi = new THREE.HemisphereLight(0x7ad6c8, 0x2a3b4f, 1.05);
-  scene.add(hemi);
-
-  const moonLight = new THREE.DirectionalLight(0xcbe8ff, 1.95);
-  moonLight.position.copy(moonDir).multiplyScalar(110);
+  const moonLight = new THREE.DirectionalLight(0xcbe8ff, 1.9);
+  moonLight.position.copy(moonDir).multiplyScalar(120);
   moonLight.castShadow = true;
   moonLight.shadow.mapSize.set(2048, 2048);
-  moonLight.shadow.camera.left = -68;
-  moonLight.shadow.camera.right = 68;
-  moonLight.shadow.camera.top = 68;
-  moonLight.shadow.camera.bottom = -68;
+  moonLight.shadow.camera.left = -85;
+  moonLight.shadow.camera.right = 85;
+  moonLight.shadow.camera.top = 85;
+  moonLight.shadow.camera.bottom = -85;
   moonLight.shadow.near = 10;
-  moonLight.shadow.far = 230;
+  moonLight.shadow.far = 260;
   moonLight.shadow.bias = -0.0005;
   scene.add(moonLight);
 
-  const auroraGlow = new THREE.DirectionalLight(0x3af0b0, 0.65);
+  const auroraGlow = new THREE.DirectionalLight(0x3af0b0, 0.6);
   auroraGlow.position.set(45, 55, -70);
   scene.add(auroraGlow);
 
-  // 2. Icy Norwegian Fjord Sea & Snow-Blanketed Peninsula
-  const fjord = createWaterMesh(440, 440, {
-    deepColor: 0x061d36,
-    shallowColor: 0x164a6e,
-    foamColor: 0xcbe8ff,
-    sunColor: 0xaef7e6,
-    sunDir: moonDir,
-    opacity: 0.92,
-    waveScale: 0.14
+  // 2. Icy Norwegian Fjord & Snow Peninsula
+  const fjord = createWaterMesh(540, 540, {
+    deepColor: 0x061d36, shallowColor: 0x164a6e, foamColor: 0xcbe8ff,
+    sunColor: 0xaef7e6, sunDir: moonDir, opacity: 0.92, waveScale: 0.14
   });
   fjord.mesh.position.set(0, -0.25, 0);
   scene.add(fjord.mesh);
   animated.push((t) => { fjord.uniforms.uTime.value = t; });
 
-  const snowTex = getGroundTexture('arctic_snow', 20, 22);
+  const snowTex = getGroundTexture('arctic_snow', 28, 28);
   const ground = new THREE.Mesh(
-    new THREE.BoxGeometry(106, 1.2, 118),
-    new THREE.MeshStandardMaterial({
-      map: snowTex.map,
-      bumpMap: snowTex.bumpMap,
-      bumpScale: 0.22,
-      roughness: 0.85
-    })
+    new THREE.BoxGeometry(160, 1.2, 158),
+    new THREE.MeshStandardMaterial({ map: snowTex.map, roughness: 0.86 })
   );
   ground.position.set(0, -0.6, -2);
   ground.receiveShadow = true;
   scene.add(ground);
 
-  // Trodden frozen earth & stone road from Longship Landing to the Great Hall
-  const cobbleTex = getGroundTexture('cobble', 3, 24);
+  const cobbleTex = getGroundTexture('cobble', 3, 28);
   const trail = new THREE.Mesh(
-    new THREE.PlaneGeometry(6.8, 88),
-    new THREE.MeshStandardMaterial({ map: cobbleTex.map, color: 0xaab7c4, bumpMap: cobbleTex.bumpMap, bumpScale: 0.2, roughness: 0.88 })
+    new THREE.PlaneGeometry(7.2, 114),
+    new THREE.MeshStandardMaterial({ map: cobbleTex.map, color: 0xaab7c4, roughness: 0.88 })
   );
   trail.rotation.x = -Math.PI / 2;
-  trail.position.set(0, 0.04, 1);
+  trail.position.set(0, 0.04, 4);
   trail.receiveShadow = true;
   scene.add(trail);
 
-  // Shared Materials
-  const darkTimberTex = getWoodPlanks('alpine', 2, 2);
+  // Shared materials
+  const nordicWood = getWoodPlanks('alpine', 2, 2);
   const stoneTex = getStoneTexture('castle', 2, 2);
-  const matTimber = new THREE.MeshStandardMaterial({ map: darkTimberTex.map, bumpMap: darkTimberTex.bumpMap, bumpScale: 0.16, roughness: 0.86 });
-  const matDarkWood = new THREE.MeshStandardMaterial({ color: 0x2b1d14, roughness: 0.88 });
-  const matStone = new THREE.MeshStandardMaterial({ map: stoneTex.map, color: 0x6f7a85, bumpMap: stoneTex.bumpMap, bumpScale: 0.25, roughness: 0.9 });
-  const matSnow = new THREE.MeshStandardMaterial({ color: 0xedf6ff, roughness: 0.72 });
-  const matCliff = new THREE.MeshStandardMaterial({ color: 0x394452, roughness: 0.94 });
-  const matPine = new THREE.MeshStandardMaterial({ color: 0x163829, roughness: 0.88 });
-  const matWindowFire = new THREE.MeshStandardMaterial({ color: 0xffc666, emissive: 0xff8424, emissiveIntensity: 1.5, roughness: 0.3 });
-  const matSail = new THREE.MeshStandardMaterial({ map: createSailTexture('scandinavia'), side: THREE.DoubleSide, roughness: 0.8 });
-  const matFlame = new THREE.MeshBasicMaterial({ color: 0xffaa33 });
+  const matTimber = new THREE.MeshStandardMaterial({ map: nordicWood.map, color: 0x6b523c, roughness: 0.86 });
+  const matDarkWood = new THREE.MeshStandardMaterial({ color: 0x2e2119, roughness: 0.88 });
+  const matFloor = new THREE.MeshStandardMaterial({ color: 0x453428, roughness: 0.9 });
+  const matSnowRoof = new THREE.MeshStandardMaterial({ color: 0xe3edf7, roughness: 0.78 });
+  const matStone = new THREE.MeshStandardMaterial({ map: stoneTex.map, color: 0x7b8590, roughness: 0.9 });
+  const matPine = new THREE.MeshStandardMaterial({ color: 0x1c3d2d, roughness: 0.88 });
+  const matGold = new THREE.MeshStandardMaterial({ color: 0xdca43a, metalness: 0.75, roughness: 0.3 });
+  const matHay = new THREE.MeshStandardMaterial({ color: 0xc29e4a, roughness: 0.95 });
+  const matSail = new THREE.MeshStandardMaterial({ map: createSailTexture('scandinavia'), side: THREE.DoubleSide, roughness: 0.82 });
 
-  // ---- TIMBER PALISADE WALL & OPEN GATE (Mid-South Settlement Defense!) ----
-  function addPalisadeSegment(x1, z1, x2, z2) {
-    const dx = x2 - x1, dz = z2 - z1;
-    const len = Math.hypot(dx, dz);
-    const angle = Math.atan2(dx, dz);
-    const count = Math.max(3, Math.floor(len / 0.65));
-    const g = new THREE.Group();
-    g.position.set((x1 + x2) * 0.5, 0, (z1 + z2) * 0.5);
-    g.rotation.y = angle;
+  // ---- TIMBER PALISADE WALL WITH WIDE OPEN MAIN GATE (z = 6) ----
+  addSolidBox(scene, collision, -24, 2.0, 6, 36, 4.0, 1.1, matTimber, 'wood');
+  addSolidBox(scene, collision, 24, 2.0, 6, 36, 4.0, 1.1, matTimber, 'wood');
+  // Gate watch posts
+  addSolidBox(scene, collision, -5.6, 2.6, 6, 1.2, 5.2, 1.4, matDarkWood, 'wood');
+  addSolidBox(scene, collision, 5.6, 2.6, 6, 1.2, 5.2, 1.4, matDarkWood, 'wood');
+  const gateBeam = new THREE.Mesh(new THREE.BoxGeometry(12.6, 0.8, 1.2), matDarkWood);
+  gateBeam.position.set(0, 4.8, 6);
+  scene.add(gateBeam);
 
-    for (let i = 0; i <= count; i++) {
-      const pz = -len * 0.5 + (i / count) * len;
-      const h = 3.4 + ((i * 19) % 5) * 0.14;
-      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, h, 7), matTimber);
-      stake.position.set(0, h * 0.5, pz);
-      stake.castShadow = true;
-      g.add(stake);
-    }
-    const cross = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.26, len), matDarkWood);
-    cross.position.y = 2.1;
-    g.add(cross);
-    scene.add(g);
-    collision.addBox((x1 + x2) * 0.5, 1.8, (z1 + z2) * 0.5, Math.abs(dx) + 0.7, 3.6, Math.abs(dz) + 0.7, 'wood');
+  // ---- 1. ENTERABLE JARL'S GREAT HALL (North Climax — posts, central hearth, benches, high seat!) ----
+  const greatHall = buildHollowRoom(scene, collision, {
+    cx: 0, cz: -42, w: 16, d: 16, h: 5.0, floorY: 0.25,
+    wallMat: matTimber, floorMat: matFloor, roofMat: matSnowRoof, roofStyle: 'gable',
+    south: [
+      { type: 'door', offset: 0, width: 3.4, height: 3.4 },
+      { type: 'window', offset: -5.2, width: 1.8 },
+      { type: 'window', offset: 5.2, width: 1.8 }
+    ],
+    west: [{ type: 'window', offset: 0, width: 2.0 }],
+    east: [{ type: 'window', offset: 0, width: 2.0 }],
+    interiorLight: { color: 0xffa64d, intensity: 2.5, distance: 20 }
+  });
+  // Interior carved roof posts (solid!), central long hearth, benches, Jarl's high seat!
+  for (const [px, pz] of [[-5.0, -38], [5.0, -38], [-5.0, -45], [5.0, -45]]) {
+    addSolidBox(scene, collision, px, greatHall.floorY + 2.5, pz, 0.45, 5.0, 0.45, matDarkWood, 'wood');
+  }
+  addHearth(scene, collision, 0, greatHall.floorY, -41.5, 1.25);
+  addPewRow(scene, collision, -5.6, greatHall.floorY, -41.5, 1.2, matDarkWood);
+  addPewRow(scene, collision, 5.6, greatHall.floorY, -41.5, 1.2, matDarkWood);
+  // Jarl's carved High Seat throne at north end
+  addSolidBox(scene, collision, 0, greatHall.floorY + 0.55, -48.2, 2.2, 1.1, 1.3, matDarkWood, 'wood');
+  const throneBack = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.4, 0.28), matDarkWood);
+  throneBack.position.set(0, greatHall.floorY + 1.8, -48.7);
+  const dragonFinial = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 0), matGold);
+  dragonFinial.position.set(0, greatHall.floorY + 3.15, -48.7);
+  scene.add(throneBack, dragonFinial);
+
+  // ---- 2. EVERY LONGHOUSE IS ENTERABLE (hearth & benches inside!) ----
+  function buildLonghouse(cx, cz, w, d, doorSide) {
+    const opts = {
+      cx, cz, w, d, h: 4.0, floorY: 0.18,
+      wallMat: matTimber, floorMat: matFloor, roofMat: matSnowRoof, roofStyle: 'gable',
+      interiorLight: { color: 0xffa652, intensity: 1.6, distance: 14 }
+    };
+    opts[doorSide] = [{ type: 'door', offset: 0, width: 2.5, height: 2.9 }];
+    const opp = doorSide === 'east' ? 'west' : doorSide === 'west' ? 'east' : 'north';
+    opts[opp] = [{ type: 'window', offset: 0, width: 1.6 }];
+    const room = buildHollowRoom(scene, collision, opts);
+    // Central hearth & wooden benches tucked along walls
+    addHearth(scene, collision, cx, room.floorY, cz, 0.85);
+    addSolidBox(scene, collision, cx, room.floorY + 0.36, cz - d * 0.36, w * 0.52, 0.72, 0.65, matDarkWood, 'wood');
+    addSolidBox(scene, collision, cx, room.floorY + 0.36, cz + d * 0.36, w * 0.52, 0.72, 0.65, matDarkWood, 'wood');
+    return room;
   }
 
-  addPalisadeSegment(-34, 24, -6, 24);
-  addPalisadeSegment(6, 24, 34, 24);
+  buildLonghouse(-24, -14, 11, 13, 'east');
+  buildLonghouse(24, -14, 11, 13, 'west');
+  buildLonghouse(-22, 24, 11, 12, 'east');
+  buildLonghouse(22, 24, 11, 12, 'west');
 
-  // Palisade Gatehouse Timber Arch + Warm Torches
-  for (const gx of [-6, 6]) {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 6.2, 8), matDarkWood);
-    post.position.set(gx, 3.1, 24);
-    post.castShadow = true;
-    scene.add(post);
-  }
-  const lintel = new THREE.Mesh(new THREE.BoxGeometry(13.6, 0.65, 0.85), matDarkWood);
-  lintel.position.set(0, 5.7, 24);
-  scene.add(lintel);
+  // ---- 3. OUTLYING NORDIC FARM (West snow clearing) ----
+  const farm = buildHollowRoom(scene, collision, {
+    cx: -52, cz: 26, w: 10, d: 9, h: 3.7, floorY: 0.18,
+    wallMat: matTimber, floorMat: matFloor, roofMat: matSnowRoof, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    south: [{ type: 'window', offset: 0, width: 1.6 }],
+    interiorLight: { color: 0xffb366, intensity: 1.4, distance: 12 }
+  });
+  addBunk(scene, collision, -55.0, farm.floorY, 28.6, false, matDarkWood, 0x5c3e2c);
+  addSolidBox(scene, collision, -44, 0.6, 32, 1.8, 1.2, 1.3, matHay, 'wood');
+  addSolidBox(scene, collision, -41.5, 0.6, 32, 1.8, 1.2, 1.3, matHay, 'wood');
 
-  // ---- VIKING LONGHOUSES & THE GRAND GREAT HALL (MEAD HALL) ----
-  function buildLonghouse(x, z, w, h, d, rotY = 0, isGreatHall = false) {
+  // ---- 4. SMALL TEMPLE OF THE OLD GODS (East ridge clearing!) ----
+  const hov = buildHollowRoom(scene, collision, {
+    cx: 50, cz: -34, w: 10.5, d: 10.5, h: 4.4, floorY: 0.22,
+    wallMat: matDarkWood, floorMat: matFloor, roofMat: matSnowRoof, roofStyle: 'hip',
+    west: [{ type: 'door', offset: 0, width: 2.5, height: 3.0 }],
+    south: [{ type: 'window', offset: 0, width: 1.6 }],
+    interiorLight: { color: 0x62f2c8, intensity: 1.7, distance: 14 }
+  });
+  // Carved timber pagan altar & standing runestone inside
+  addAltar(scene, collision, 53.2, hov.floorY, -34, 1.2, 2.8, matStone, 0x8f2424);
+  addSolidBox(scene, collision, 53.4, hov.floorY + 1.9, -34, 0.65, 2.0, 1.1, matStone, 'stone');
+
+  // ---- VIKING LONGSHIPS ON SOUTHERN SHORE (solid!) ----
+  function addLongship(lx, lz, rotY) {
     const g = new THREE.Group();
-    g.position.set(x, 0, z);
+    g.position.set(lx, 0, lz);
     g.rotation.y = rotY;
-
-    // Stone base plinth
-    const base = new THREE.Mesh(new THREE.BoxGeometry(w + 1.0, 1.0, d + 1.0), matStone);
-    base.position.y = 0.5;
-    base.receiveShadow = true;
-    g.add(base);
-
-    // Timber walls
-    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matTimber);
-    body.position.y = 1.0 + h * 0.5;
-    body.castShadow = true;
-    body.receiveShadow = true;
-    g.add(body);
-
-    // Steep Snow-Blanketed Nordic Pitched Roof
-    const roofH = isGreatHall ? 4.8 : 3.2;
-    const roofShape = new THREE.Shape();
-    roofShape.moveTo(-(w * 0.62), 0);
-    roofShape.lineTo(w * 0.62, 0);
-    roofShape.lineTo(0, roofH);
-    roofShape.closePath();
-    const roofGeo = new THREE.ExtrudeGeometry(roofShape, { depth: d + 2.2, bevelEnabled: false });
-    roofGeo.translate(0, 0, -(d + 2.2) * 0.5);
-    const roof = new THREE.Mesh(roofGeo, matSnow);
-    roof.position.y = 1.0 + h - 0.15;
-    roof.castShadow = true;
-    g.add(roof);
-
-    // Dark timber gable ridge beam & carved Viking Dragon-Head Finials!
-    const ridge = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.45, d + 3.2), matDarkWood);
-    ridge.position.y = 1.0 + h + roofH - 0.1;
-    g.add(ridge);
-    for (const fz of [-(d * 0.5 + 1.4), d * 0.5 + 1.4]) {
-      const finial = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.4, 5), matDarkWood);
-      finial.position.set(0, 1.0 + h + roofH + 0.45, fz);
-      finial.rotation.x = fz > 0 ? 0.4 : -0.4;
-      g.add(finial);
-    }
-
-    // Glowing fire-lit doorway & shields mounted beside entrance
-    const door = new THREE.Mesh(new THREE.BoxGeometry(isGreatHall ? 3.2 : 2.1, isGreatHall ? 3.8 : 2.8, 0.25), matWindowFire);
-    door.position.set(0, 1.0 + (isGreatHall ? 1.9 : 1.4), d * 0.5 + 0.06);
-    g.add(door);
-
-    const shMat = new THREE.MeshStandardMaterial({ map: createVikingShieldTexture(isGreatHall ? 3 : 1), roughness: 0.7 });
-    for (const sx of [-w * 0.3, w * 0.3]) {
-      const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.1, 16), [matDarkWood, shMat, matDarkWood]);
-      sh.rotation.x = Math.PI / 2;
-      sh.position.set(sx, 3.0, d * 0.5 + 0.14);
-      g.add(sh);
-    }
-
-    // Warm glowing hearth point light in front
-    const hearthPt = new THREE.PointLight(0xff9238, isGreatHall ? 14 : 8, isGreatHall ? 28 : 18, 1.5);
-    hearthPt.position.set(0, 3.2, d * 0.5 + 2.2);
-    g.add(hearthPt);
-    animated.push((t) => {
-      hearthPt.intensity = (isGreatHall ? 13 : 7.5) + Math.sin(t * 9.5 + x) * 1.6;
-    });
-
-    scene.add(g);
-    const cos = Math.abs(Math.cos(rotY));
-    collision.addBox(x, (h + 2) * 0.5, z, cos > 0.5 ? w + 0.8 : d + 0.8, h + 3, cos > 0.5 ? d + 0.8 : w + 0.8, 'wood');
-  }
-
-  // Grand Great Hall (Mead Hall) at Northern Peak!
-  buildLonghouse(0, -35, 16, 6.2, 13, 0, true);
-
-  // Viking Longhouses lining the snowy fjord village
-  buildLonghouse(-22, 8, 9.5, 4.2, 13.5, Math.PI / 2.2);
-  buildLonghouse(22, 6, 9.5, 4.2, 13.5, -Math.PI / 2.2);
-  buildLonghouse(-21, -15, 9.0, 4.0, 12.0, Math.PI / 3);
-  buildLonghouse(21, -16, 9.0, 4.0, 12.0, -Math.PI / 3);
-
-  // ---- VIKING LONGSHIPS (DRAKKAR) WITH ROW OF SHIELDS & STRIPED SAILS ----
-  function addLongship(x, z, rotY) {
-    const g = new THREE.Group();
-    g.position.set(x, 0.08, z);
-    g.rotation.y = rotY;
-
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.25, 14.5), matTimber);
-    hull.position.y = 0.65;
-    hull.castShadow = true;
-    // Sweeping Dragon Prow & Stern
-    const prow = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.55, 4.2, 8), matDarkWood);
-    prow.position.set(0, 2.2, 7.6);
-    prow.rotation.x = 0.38;
-    const dragonHead = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.55, 1.15), matDarkWood);
-    dragonHead.position.set(0, 4.0, 8.5);
-    const stern = prow.clone();
-    stern.position.set(0, 2.0, -7.5);
-    stern.rotation.x = -0.35;
-
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 8.6, 8), matDarkWood);
-    mast.position.set(0, 5.0, 0);
-    const yard = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 6.4, 8), matDarkWood);
-    yard.rotation.z = Math.PI / 2;
-    yard.position.set(0, 7.3, 0.15);
-    const sail = new THREE.Mesh(new THREE.PlaneGeometry(5.9, 4.8), matSail);
-    sail.position.set(0, 4.9, 0.35);
-
-    g.add(hull, prow, dragonHead, stern, mast, yard, sail);
-
-    // Row of painted historical Viking round shields mounted along both gunwales!
-    for (let i = 0; i < 6; i++) {
-      const sz = -4.5 + i * 1.8;
-      const sMat = new THREE.MeshStandardMaterial({ map: createVikingShieldTexture(i), roughness: 0.7 });
-      for (const side of [-1, 1]) {
-        const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.08, 14), [matDarkWood, sMat, matDarkWood]);
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(3.4, 1.35, 13.0), matDarkWood);
+    hull.position.y = 0.7;
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 9.2, 8), matTimber);
+    mast.position.y = 4.9;
+    const sail = new THREE.Mesh(new THREE.PlaneGeometry(6.0, 5.0), matSail);
+    sail.position.set(0, 5.4, 0.35);
+    g.add(hull, mast, sail);
+    const shTex = createVikingShieldTexture(1);
+    const shMat = new THREE.MeshStandardMaterial({ map: shTex, roughness: 0.72 });
+    for (let i = -2; i <= 2; i++) {
+      for (const s of [-1.75, 1.75]) {
+        const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 12), [matDarkWood, shMat, matDarkWood]);
         sh.rotation.z = Math.PI / 2;
-        sh.position.set(side * 1.78, 1.15, sz);
+        sh.position.set(s, 1.15, i * 1.9);
         g.add(sh);
       }
     }
-
     scene.add(g);
-    animated.push((t) => {
-      g.position.y = 0.12 + Math.sin(t * 1.6 + x) * 0.11;
-      g.rotation.z = Math.sin(t * 1.2 + z) * 0.035;
-    });
+    collision.addBox(lx, 1.3, lz, 4.4, 2.6, 13.0, 'wood');
   }
+  addLongship(-34, 56, 0.22);
+  addLongship(34, 54, -0.28);
 
-  addLongship(56, 20, -0.38);
-  addLongship(-56, 12, 0.42);
-  addLongship(36, 48, -1.15);
-
-  // ---- FLICKERING IRON FIRE BRAZIERS ALONG THE SNOWY PATH ----
-  function addBrazier(bx, bz) {
-    const stand = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.24, 1.3, 8), matStone);
-    stand.position.set(bx, 0.65, bz);
-    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.85, 7), matFlame);
-    flame.position.set(bx, 1.65, bz);
-    const pt = new THREE.PointLight(0xff8e2b, 8.5, 19, 1.6);
-    pt.position.set(bx, 2.0, bz);
-    scene.add(stand, flame, pt);
-    animated.push((t) => {
-      pt.intensity = 8.0 + Math.sin(t * 11 + bx) * 1.5;
-      flame.scale.y = 0.82 + Math.sin(t * 15 + bz) * 0.22;
-    });
-    collision.addBox(bx, 0.7, bz, 0.9, 1.5, 0.9, 'stone');
-  }
-  for (const bz of [34, 14, -6, -24]) {
-    addBrazier(-5.2, bz);
-    addBrazier(5.2, bz);
-  }
-
-  // Low Snowy Boulders & Timber Barricades for tactical cover
-  const coverSpots = [
-    [-9, 16, 4.6, 1.4, 1.2],
-    [9, 10, 4.6, 1.4, 1.2],
-    [-9, -4, 4.8, 1.45, 1.2],
-    [9, -14, 4.8, 1.45, 1.2]
-  ];
-  for (const [cx, cz, cw, ch, cd] of coverSpots) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(cw, ch, cd), matTimber);
-    b.position.set(cx, ch * 0.5, cz);
-    b.castShadow = true;
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(cw + 0.1, 0.22, cd + 0.1), matSnow);
-    cap.position.set(cx, ch + 0.08, cz);
-    scene.add(b, cap);
-    collision.addBox(cx, ch * 0.5, cz, cw, ch, cd, 'wood');
-  }
-
-  // ---- SNOW-LADEN NORDIC PINE TREES ----
+  // Snow-Blanketed Nordic Pines & Fjord Cliffs (ALL solid!)
   function addSnowPine(tx, tz, scale = 1) {
     const g = new THREE.Group();
     g.position.set(tx, 0, tz);
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.36, 2.6, 7), matDarkWood);
-    trunk.position.y = 1.3;
-    trunk.castShadow = true;
-    g.add(trunk);
-
-    for (const [py, r, h] of [[3.5, 2.4, 3.2], [5.4, 1.85, 2.8], [7.1, 1.3, 2.4], [8.5, 0.8, 1.8]]) {
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.36, 2.5, 7), matDarkWood);
+    tr.position.y = 1.25;
+    g.add(tr);
+    for (const [py, r, h] of [[3.2, 2.4, 3.0], [5.1, 1.85, 2.6], [6.8, 1.25, 2.1]]) {
       const cone = new THREE.Mesh(new THREE.ConeGeometry(r, h, 8), matPine);
       cone.position.y = py;
-      cone.castShadow = true;
-      const snowCap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.88, h * 0.45, 8), matSnow);
-      snowCap.position.y = py + h * 0.28;
-      g.add(cone, snowCap);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.72, h * 0.45, 8), matSnowRoof);
+      cap.position.y = py + h * 0.3;
+      g.add(cone, cap);
     }
     g.scale.setScalar(scale);
     scene.add(g);
-    collision.addBox(tx, 2.0, tz, 1.1 * scale, 4.0 * scale, 1.1 * scale, 'wood');
+    collision.addBox(tx, 2.0, tz, 1.15 * scale, 4.0 * scale, 1.15 * scale, 'wood');
+  }
+  for (const [px, pz, sc] of [
+    [-14, 42, 1.2], [14, 42, 1.2], [-38, 12, 1.3], [38, 12, 1.25],
+    [-42, -16, 1.3], [42, -16, 1.25], [-34, -46, 1.35], [34, -48, 1.3],
+    [-58, -32, 1.25], [58, 22, 1.2], [-60, 44, 1.2]
+  ]) addSnowPine(px, pz, sc);
+
+  // Distant Fjord Mountains
+  for (const [mx, mz, r, h] of [
+    [-125, -155, 75, 88], [0, -175, 92, 112], [125, -150, 78, 92],
+    [-165, 10, 74, 86], [165, 15, 76, 88]
+  ]) {
+    const m = new THREE.Mesh(new THREE.ConeGeometry(r, h, 7), matStone);
+    m.position.set(mx, h * 0.45, mz);
+    const s = new THREE.Mesh(new THREE.ConeGeometry(r * 0.56, h * 0.52, 7), matSnowRoof);
+    s.position.set(mx, h * 0.72, mz);
+    scene.add(m, s);
   }
 
-  const pines = [
-    [-14, 38, 1.2], [14, 38, 1.15], [-34, 34, 1.3], [34, 32, 1.25],
-    [-36, 0, 1.35], [36, -2, 1.3], [-34, -26, 1.25], [34, -26, 1.3],
-    [-15, -28, 1.15], [15, -28, 1.15]
-  ];
-  for (const [x, z, s] of pines) addSnowPine(x, z, s);
+  // Tactical timber barricades & crates
+  for (const [bx, bz, bw, bd] of [
+    [-8, 34, 4.2, 1.0], [8, 32, 4.2, 1.0], [-9, -2, 4.4, 1.0], [9, -2, 4.4, 1.0],
+    [-9, -24, 4.6, 1.0], [9, -24, 4.6, 1.0]
+  ]) addSolidBox(scene, collision, bx, 0.7, bz, bw, 1.4, bd, matTimber, 'wood');
 
-  // ---- SHEER SNOWY NORWEGIAN FJORD CLIFFS & ISLANDS ----
-  const cliffs = [
-    [-125, -135, 76, 95], [-10, -165, 88, 110], [105, -130, 80, 98],
-    [-155, -20, 74, 88], [155, -15, 76, 92], [-135, 110, 68, 76], [135, 110, 70, 78]
-  ];
-  for (const [cx, cz, r, h] of cliffs) {
-    const crag = new THREE.Mesh(new THREE.ConeGeometry(r, h, 7), matCliff);
-    crag.position.set(cx, h * 0.44, cz);
-    crag.rotation.y = cx * 0.2;
-    const cap = new THREE.Mesh(new THREE.ConeGeometry(r * 0.58, h * 0.48, 7), matSnow);
-    cap.position.set(cx, h * 0.72, cz);
-    cap.rotation.y = cx * 0.2;
-    scene.add(crag, cap);
-  }
-
-  // ---- FALLING WINTER SNOWFLAKES ----
   particles.initAmbient('snow', collision.bounds);
 
   // ---- PICKUPS ----
   const pickupDefs = [
-    { type: 'health', pos: new THREE.Vector3(-11, 0.8, 30), label: 'WARM MEAD HORN (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(11, 0.8, 16),  label: 'THROWING AXE BUNDLE' },
-    { type: 'health', pos: new THREE.Vector3(-12, 0.8, 2),  label: 'LONGHOUSE FEAST (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(12, 0.8, -12), label: 'RAIDER AXE RACK' },
-    { type: 'health', pos: new THREE.Vector3(-11, 0.8, -22), label: 'HEARTH TONIC (+35 HP)' }
+    { type: 'health', pos: new THREE.Vector3(-22, 0.9, 24),  label: 'LONGHOUSE MEAD (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-52, 0.9, 26),  label: 'FARMHOUSE RATIONS (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(50, 0.9, -34),  label: 'TEMPLE OFFERING (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(0, 1.0, -45),   label: 'GREAT HALL MEAD (+35 HP)' },
+    { type: 'ammo',   pos: new THREE.Vector3(22, 0.9, 24),   label: 'THROWING AXE RACK' },
+    { type: 'ammo',   pos: new THREE.Vector3(-24, 0.9, -14), label: 'FORGED IRON AXES' }
   ];
   for (const pd of pickupDefs) {
     const mesh = createPickupMesh(pd.type);
@@ -409,20 +300,48 @@ export function buildLevel5(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- ENEMIES (Viking Huscarls, Bowmen, Berserkers & Boss Jarl Hakon — NO Horned Helmets!) ----
+  // ---- 27 ENEMIES (including 4 Horned Viking Chieftains + Horned Jarl Hakon Boss + random horned Vikings!) ----
   const enemySpawns = [
-    { type: 'viking_archer',    pos: new THREE.Vector3(-8, 0, 20) },
-    { type: 'viking_warrior',   pos: new THREE.Vector3(8, 0, 18) },
-    { type: 'viking_berserker', pos: new THREE.Vector3(0, 0, 11) },
-    { type: 'viking_archer',    pos: new THREE.Vector3(-12, 0, 4) },
-    { type: 'viking_warrior',   pos: new THREE.Vector3(11, 0, -2) },
-    { type: 'viking_berserker', pos: new THREE.Vector3(-6, 0, -9) },
-    { type: 'viking_archer',    pos: new THREE.Vector3(10, 0, -15) },
-    { type: 'viking_warrior',   pos: new THREE.Vector3(-10, 0, -20) },
-    { type: 'viking_berserker', pos: new THREE.Vector3(6, 0, -23) },
-    { type: 'viking_archer',    pos: new THREE.Vector3(-4, 0, -26) },
-    { type: 'boss_scandinavia', pos: new THREE.Vector3(0, 0, -25), isBossWave: true }
+    // Shore & Southern Longhouses + Farm
+    { type: 'viking_warrior',   pos: new THREE.Vector3(-8, 0, 38) },
+    { type: 'viking_archer',    pos: new THREE.Vector3(8, 0, 36) },
+    { type: 'viking_warrior',   pos: new THREE.Vector3(-21, 0.18, 24) }, // SW Longhouse
+    { type: 'viking_archer',    pos: new THREE.Vector3(21, 0.18, 24) },  // SE Longhouse
+    { type: 'viking_chieftain', pos: new THREE.Vector3(0, 0, 18) },      // Chieftain #1 guarding palisade approach
+    { type: 'viking_berserker', pos: new THREE.Vector3(-36, 0, 26) },
+    { type: 'viking_warrior',   pos: new THREE.Vector3(-51, 0.18, 26) }, // Outlying Farm
+    { type: 'viking_archer',    pos: new THREE.Vector3(-12, 0, 14) },
+    { type: 'viking_warrior',   pos: new THREE.Vector3(12, 0, 14) },
+    // Beyond Palisade Gate & Middle Longhouses
+    { type: 'viking_berserker', pos: new THREE.Vector3(-6, 0, -2) },
+    { type: 'viking_archer',    pos: new THREE.Vector3(7, 0, -4) },
+    { type: 'viking_chieftain', pos: new THREE.Vector3(-14, 0, -14) },   // Chieftain #2 by West Longhouse
+    { type: 'viking_warrior',   pos: new THREE.Vector3(-23, 0.18, -14) }, // Inside West Longhouse
+    { type: 'viking_warrior',   pos: new THREE.Vector3(23, 0.18, -14) },  // Inside East Longhouse
+    { type: 'viking_archer',    pos: new THREE.Vector3(14, 0, -16) },
+    { type: 'viking_berserker', pos: new THREE.Vector3(0, 0, -16) },
+    // East Temple of the Old Gods
+    { type: 'viking_warrior',   pos: new THREE.Vector3(36, 0, -28) },
+    { type: 'viking_chieftain', pos: new THREE.Vector3(42, 0, -34) },    // Chieftain #3 guarding Temple of Old Gods
+    { type: 'viking_archer',    pos: new THREE.Vector3(50, 0.22, -34) }, // Inside Temple of Old Gods
+    // Great Hall Approaches & Interior
+    { type: 'viking_archer',    pos: new THREE.Vector3(-12, 0, -28) },
+    { type: 'viking_warrior',   pos: new THREE.Vector3(12, 0, -28) },
+    { type: 'viking_berserker', pos: new THREE.Vector3(-6, 0, -30) },
+    { type: 'viking_warrior',   pos: new THREE.Vector3(6, 0, -30) },
+    { type: 'viking_chieftain', pos: new THREE.Vector3(0, 0.25, -39) },  // Chieftain #4 inside Jarl's Great Hall!
+    { type: 'viking_warrior',   pos: new THREE.Vector3(-4, 0.25, -43) }, // Inside Great Hall
+    { type: 'viking_archer',    pos: new THREE.Vector3(4, 0.25, -43) },  // Inside Great Hall
+    // Boss Jarl Hakon (wearing horned helmet!)
+    { type: 'boss_scandinavia', pos: new THREE.Vector3(0, 0, -28), isBossWave: true }
   ];
 
-  return { enemySpawns, pickups, animated, disposables };
+  const enterableBuildings = [
+    { name: "Jarl's Great Hall", inside: new THREE.Vector3(-2.6, 0.25, -39.5), outside: new THREE.Vector3(0, 0, -31.5) },
+    { name: 'West Longhouse', inside: new THREE.Vector3(-24, 0.18, -14), outside: new THREE.Vector3(-16.5, 0, -14) },
+    { name: 'Temple of the Old Gods', inside: new THREE.Vector3(50, 0.22, -34), outside: new THREE.Vector3(42.5, 0, -34) },
+    { name: 'Outlying Farm', inside: new THREE.Vector3(-52, 0.18, 26), outside: new THREE.Vector3(-45, 0, 26) }
+  ];
+
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
 }

@@ -223,6 +223,77 @@ export class SoundEngine {
           this._taiko(now, 0.18);
         }
       }, 370);
+    } else if (theme === 'soviet') {
+      // Slow A-minor waltz (3/4 feel) with trembling balalaika + winter wind, crow & distant tram bell
+      const bass = [110.0, 164.81, 164.81, 110.0, 164.81, 164.81, 130.81, 196.0, 196.0, 98.0, 146.83, 146.83];
+      const melody = [329.63, 392.0, 440.0, 523.25, 493.88, 440.0, 392.0, 329.63, 293.66, 329.63, 392.0, 329.63];
+
+      this.musicTimer = setInterval(() => {
+        if (!this.ctx || this.muted) return;
+        const s = this.step++;
+        const now = this.ctx.currentTime;
+        const beat = s % 3;
+
+        // Waltz oom-pah-pah accompaniment
+        this._tone(bass[s % bass.length], 'triangle', beat === 0 ? 0.42 : 0.22, beat === 0 ? 0.2 : 0.12, now, this.musicGain, 680);
+
+        // Trembling balalaika tremolo (3 rapid bright plucks per beat)
+        const mNote = melody[s % melody.length];
+        for (let t = 0; t < 3; t++) {
+          this._tone(mNote, 'triangle', 0.13, 0.11, now + t * 0.11, this.musicGain, 2800);
+        }
+
+        // Winter wind sigh every 6 beats
+        if (s % 6 === 0) {
+          this._noiseBurst(0.9, 0.06, 480, 'bandpass', 2.4);
+        }
+        // Distant tram bell (double brass ding) every 18 beats
+        if (s % 18 === 11) {
+          this._tone(1320, 'sine', 0.35, 0.09, now, this.musicGain, 4000);
+          this._tone(1320, 'sine', 0.35, 0.08, now + 0.18, this.musicGain, 4000);
+        }
+        // Winter crow caw every 24 beats
+        if (s % 24 === 17) {
+          this._tone(420, 'sawtooth', 0.16, 0.07, now, this.musicGain, 1100);
+          this._tone(395, 'sawtooth', 0.18, 0.06, now + 0.24, this.musicGain, 1050);
+        }
+      }, 420);
+    } else if (theme === 'tibet') {
+      // Tibetan dungchen long horns, resonant singing bowl, small temple bells, 5-note flute + wind/flags
+      const flute = [293.66, 329.63, 392.0, 440.0, 523.25, 440.0, 392.0, 329.63];
+
+      this.musicTimer = setInterval(() => {
+        if (!this.ctx || this.muted) return;
+        const s = this.step++;
+        const now = this.ctx.currentTime;
+
+        // Deep long horn (dungchen) drone every 8 steps
+        if (s % 8 === 0) {
+          this._alphorn(82.41, 2.4, 0.24, now);
+        }
+        // Singing bowl resonance every 6 steps
+        if (s % 6 === 2) {
+          this._tone(246.94, 'sine', 1.8, 0.16, now, this.musicGain, 1200);
+          this._tone(495.5, 'sine', 1.4, 0.08, now, this.musicGain, 2000);
+        }
+        // Small temple bells (tingsha)
+        if (s % 4 === 1) {
+          this._tone(1760, 'sine', 0.45, 0.07, now, this.musicGain, 5000);
+          this._tone(2349, 'sine', 0.35, 0.05, now + 0.05, this.musicGain, 5000);
+        }
+        // 5-note pentatonic mountain flute
+        if (s % 2 === 0) {
+          const fn = flute[(s >> 1) % flute.length];
+          this._whistle(fn, 0.95, 0.11, now);
+        }
+        // High-altitude wind & snapping prayer flags
+        if (s % 5 === 0) {
+          this._noiseBurst(0.7, 0.07, 680, 'bandpass', 1.8);
+        }
+        if (s % 7 === 3) {
+          this._noiseBurst(0.06, 0.08, 1600, 'highpass', 1.0);
+        }
+      }, 450);
     }
   }
 
