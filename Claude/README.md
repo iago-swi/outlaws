@@ -142,6 +142,9 @@ other in one of the eight chapters; the goal is to kill the other player.
    the world, then clicks *Create and get the invite link*.
 2. They send the link, or its five-letter code, to the other player, who opens it.
 3. Both choose a fighter. The duel starts when both have chosen.
+4. After a duel the two players stay connected. A click on the end screen leads back to
+   the Duel screen, where the host picks the next chapter and rules and starts again.
+   No new link or code is needed until one of the players leaves.
 
 | Rule | How it ends |
 | --- | --- |
@@ -487,6 +490,10 @@ and whether they aim or swing, in a small JSON message over a WebRTC data channe
   stay. They are simulated on the host only and turn on whichever player is nearer. The
   guest receives their positions ten times a second and shows them as puppets; a guest's
   hit on a puppet is sent to the host, which applies it.
+- **Between duels.** The data channel is kept open when a duel ends. Starting the next
+  duel is the same message that started the first one (the host's settings), so a
+  rematch needs no new handshake; the level, the figures and the scores are rebuilt on
+  both sides.
 - **Spawn points.** The two ends of the map are the chapter's own start and the place
   where its boss stands.
 - **The handshake.** A WebRTC connection needs a first exchange of addresses. With the
@@ -621,7 +628,8 @@ Pages, without errors.
 Duel mode was tested between two tabs of one automated browser on one computer:
 connecting by invite link and by copy-paste codes, the choice of fighters, the start at
 opposite ends, a full three-round match to the end screen, the timed rule with
-respawning, a player leaving, and the shared computer enemies (they attack both players,
+respawning, a player leaving, three duels in a row over one connection, and the shared
+computer enemies (they attack both players,
 and a guest's hit kills one on the host). It has not been tried between two computers on
 different networks, only guns were fired at the other player in these tests, and the
 effect of real network delay is unknown.
@@ -637,7 +645,7 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - A chapter takes up to about a second and a half longer to load than before, for the
   route grid.
 - Wind moves plants but not their shadows.
-- Duel mode has no relay server, no rematch button and no chat; if one player switches
+- Duel mode has no relay server and no chat; if one player switches
   to another browser tab, their game stops sending until they come back.
 - On the title screen the chapter behind the cards is loaded without its route grid;
   entering a chapter loads it again in full.

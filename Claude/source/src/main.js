@@ -71,7 +71,7 @@ class Game {
     this.canvas.addEventListener('mousedown', () => { if (this.state === 'play' && !this.input.locked && !this.input.free) this.input.lock(); });   // a click captures the mouse again
     $('#pause').addEventListener('click', () => { if (this.state === 'pause') { this.setState('play'); this.input.lock(); } });
     $('#dead').addEventListener('click', () => { if (this.state === 'dead' && this.player.deadT > 1) this.openLevel(this.index, true); });
-    $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.duel) { this.toTitle(); return; } if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
+    $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.duel) { if (this.duel.link.open) this.duel.again(); else this.toTitle(); return; } if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
     this.input.onLock = (locked) => {
       if (locked) { if (this.state === 'pause') this.setState('play'); }
       else if (this.state === 'play' && !this.input.free) this.setState('pause');
@@ -202,15 +202,29 @@ class Game {
   }
 
   // ---- duel: lobby, choice of fighter, end ---------------------------------------
-  openDuel() { this.setState('duel'); this.duelStatus(''); }
-  closeDuel() { if (this.duel) { this.duel.leave(); this.duel = null; } document.querySelector('#dlinkbox').classList.add('hidden'); this.setState('title'); }
+  openDuel() { this.duelLobbyMode(null); this.setState('duel'); this.duelStatus(''); }
+  closeDuel() { if (this.duel) { this.duel.leave(); this.duel = null; } this.duelLobbyMode(null); this.setState('title'); }
+  /** The Duel screen has two faces: looking for an opponent, or still connected to one between two duels. */
+  duelLobbyMode(d) {
+    const el = $('#duel'), linked = !!d;
+    el.classList.toggle('linked', linked); el.classList.toggle('host', linked && d.isHost); el.classList.toggle('guest', linked && !d.isHost);
+    $('#dlinkbox').classList.add('hidden');
+    $('#dhosttitle').textContent = linked ? 'The next duel' : 'Create a duel';
+    $('#dback').textContent = linked ? 'Leave the duel' : 'Back to the chapters';
+    if (linked) { $('#dlevel').value = d.cfg.level; $('#drules').value = d.cfg.rules; $('#dfoes').value = d.cfg.foes; }
+  }
+  duelLounge() {
+    const d = this.duel;
+    this.duelLobbyMode(d); this.setState('duel');
+    this.duelStatus(d.isHost ? 'Still connected to your opponent. Choose the next duel and start it.' : 'Still connected. Waiting for the host to start the next duel…');
+  }
   /** The line under the cards while the two players choose. */
   duelPickInfo() {
     const D = this.duel, r = this.roster(), mine = D.myPick >= 0, theirs = D.theirPick >= 0;
     const n = this.def.heroes.length, as = (k) => r[k].name + (k >= n ? ', a villain' : ', a hero');
     $('#intro .pick').textContent = (mine ? 'You are ' + as(D.myPick) + '. ' : 'Choose your fighter. ') + (theirs ? 'Your opponent is ' + as(D.theirPick) + '.' : mine ? 'Waiting for your opponent…' : 'Your opponent is still choosing.');
   }
-  duelAborted() { this.duel = null; if (this.state === 'intro') this.toTitle(); else this.duelStatus('The connection was lost.'); }
+  duelAborted() { this.duel = null; this.duelLobbyMode(null); this.setState('duel'); this.duelStatus('Your opponent left, or the connection was lost. You can create a new duel.'); }
   duelOver(title, a, b) {
     this.setState('clear');
     if (document.pointerLockElement) document.exitPointerLock();
@@ -218,7 +232,7 @@ class Game {
     $('#clear .kicker').textContent = 'Duel · ' + RULES[this.duel.cfg.rules];
     $('#clear .big').textContent = title;
     $('#clear .stats').innerHTML = `<div><b>${a}</b>You</div><div><b>${b}</b>${this.duel.remote ? this.duel.remote.name : 'Opponent'}</div>`;
-    $('#clear .go').textContent = 'Click to return to the chapters';
+    $('#clear .go').textContent = this.duel.link.open ? 'Click to play again' : 'Click to return to the chapters';
   }
   /** Damage dealt by a computer enemy: to this player, or in a duel to the other one. */
   hurtTarget(P, dmg, from, melee) {

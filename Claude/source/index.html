@@ -147,6 +147,10 @@
   #dmanual summary { cursor:pointer; color:var(--ink); } #dmanual .dpanel { margin-top:8px; } #dmanual .dcol { width:50%; background:none; border:0; padding:0; backdrop-filter:none; }
   #dstatus { min-height:22px; margin-top:1.4vh; font-style:italic; font-size:17px; color:var(--accent); }
   #dback { margin-top:1.2vh; cursor:pointer; }
+  #dagain, #dguestnote { display:none; } #dguestnote { margin:12px 0 0; font-size:15px; color:var(--dim); line-height:1.4; }
+  #duel.linked #djoincol, #duel.linked #dmanual, #duel.linked #dcreate { display:none; }
+  #duel.linked.host #dagain { display:inline-block; } #duel.linked.guest #dguestnote { display:block; }
+  #duel.linked.guest select { pointer-events:none; opacity:.55; }
   .hero { cursor:pointer; width:min(21vw,250px); padding:14px 16px 14px; background:rgba(14,10,8,.55); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(6px); transition:transform .2s, border-color .2s, background .2s; }
   .hero.sel { border-color:var(--accent); background:rgba(14,10,8,.8); transform:translateY(-5px); }
   .hero .hk { float:right; font-size:12px; color:var(--dim); border:1px solid rgba(244,234,212,.35); border-radius:3px; padding:0 6px; }
@@ -209,14 +213,16 @@
   <div class="big">Duel</div>
   <div class="dpanel">
     <div class="dcol">
-      <h3>Create a duel</h3>
+      <h3 id="dhosttitle">Create a duel</h3>
       <label>Chapter <select id="dlevel"><option value="0">I · Dry Gulch</option><option value="1">II · Kagemori</option><option value="2">III · Uri</option><option value="3">IV · Ithaca</option><option value="4">V · Jarnvik</option><option value="5">VI · Sainte-Aubine</option><option value="6">VII · Stalnogorsk</option><option value="7">VIII · Che La</option></select></label>
       <label>Rules <select id="drules"><option value="rounds">First to 3 rounds</option><option value="one">One life</option><option value="timed">5 minutes, most kills</option></select></label>
       <label>Enemies <select id="dfoes"><option value="0">None</option><option value="1">A few, hostile to both</option></select></label>
       <button id="dcreate">Create and get the invite link</button>
+      <button id="dagain">Start the next duel</button>
+      <p id="dguestnote">The host chooses the next duel. You stay connected: no new code is needed.</p>
       <div id="dlinkbox" class="hidden">Code <span id="dcodeout"></span><br>Invite link<input id="dlink" readonly><button id="dcopy">Copy the link</button></div>
     </div>
-    <div class="dcol">
+    <div class="dcol" id="djoincol">
       <h3>Join a duel</h3>
       <label>Code from your opponent <input id="dcodein" maxlength="5" autocomplete="off"></label>
       <button id="djoinbtn">Join</button>

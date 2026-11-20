@@ -73,7 +73,11 @@ export class Duel {
     else this.game.duelStatus('Connected. Waiting for the host…');
   }
   lost() { if (this.phase !== 'over' && this.phase !== 'left') this.finish('left'); }
-  enterPick() { this.phase = 'pick'; this.myPick = this.theirPick = -1; this.game.openLevel(this.cfg.level); }
+  enterPick() { this.phase = 'pick'; this.myPick = this.theirPick = -1; this.remote = null; this.ai = []; this.wait = 0; this.game.openLevel(this.cfg.level); }
+  /** After a duel the two browsers stay connected: back to the Duel screen, where the host starts the next one. */
+  again() { if (this.phase === 'over' && this.link.open) { this.phase = 'lounge'; this.game.duelLounge(); } }
+  /** Host: start another duel over the same connection, with the same or new settings. */
+  startNext(cfg) { if (!this.isHost || !this.link.open || this.phase === 'pick' || this.phase === 'play') return; this.cfg = cfg; this.send({ t: 'setup', c: cfg }); this.enterPick(); }
 
   /** Which of the chapter's computer enemies stay in a duel: none, or six spread over the map. */
   enemyList(list) {
@@ -140,7 +144,7 @@ export class Duel {
     if (this.phase === 'over' || this.phase === 'left') return;
     const [a, b] = this.score, was = this.phase;
     this.phase = 'over';
-    if (was === 'lobby' || was === 'pick') { this.game.duelAborted(); return; }
+    if (was === 'lobby' || was === 'pick' || was === 'lounge') { this.game.duelAborted(); return; }
     this.game.duelOver(why === 'left' ? 'Your opponent left' : a > b ? 'You win the duel' : a < b ? 'You lose the duel' : 'A draw', a, b);
   }
   leave() { if (this.phase !== 'left') { this.send({ t: 'bye' }); this.phase = 'left'; const l = this.link; setTimeout(() => l.close(), 250); } }
@@ -194,7 +198,7 @@ export class Duel {
       if (m.k === 'bullet') { G.muzzle(m.a[0], m.a[1], m.a[2], m.a[3], m.a[4], m.a[5], 0.7); G.sound.gun(Math.max(0.15, 0.8 - d / 90), Math.min(1, d / 70)); } else if (d < 40) G.sound.bow();
     };
     switch (m.t) {
-      case 'setup': if (!this.isHost) { this.cfg = m.c; this.enterPick(); } break;
+      case 'setup': if (!this.isHost && this.phase !== 'pick' && this.phase !== 'play') { this.cfg = m.c; this.enterPick(); } break;   // the first duel, or the next one
       case 'pick': this.theirPick = m.k; G.duelPickInfo(); this.tryStart(); break;
       case 'go': if (!this.isHost && this.phase === 'pick') this.startMatch(); break;
       case 's':
@@ -245,6 +249,7 @@ export function bindDuelUI(G) {
       G.duelStatus('Send the link or the code to your opponent, then wait here.');
     } catch (e) { fail(e); }
   });
+  $('#dagain').addEventListener('click', () => { if (G.duel) G.duel.startNext(cfg()); });
   $('#dcopy').addEventListener('click', () => copy($('#dlink').value, 'Link copied. Send it to your opponent, then wait here.'));
   $('#djoinbtn').addEventListener('click', () => join($('#dcodein').value));
   // without the invite service: two codes, pasted by hand
