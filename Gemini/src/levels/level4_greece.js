@@ -7,6 +7,13 @@ import {
   createSailTexture
 } from '../engine/textures.js';
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
+import {
+  buildHollowRoom,
+  addSolidBox,
+  addDesk,
+  addBunk,
+  addAltar
+} from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
 
 export const LEVEL4_META = {
@@ -17,14 +24,14 @@ export const LEVEL4_META = {
   title: 'AEGEAN ISLE',
   subtitle: 'Marble & Turquoise Sea',
   heroName: 'ULYSSES',
-  objective: 'Break the Spartan Garrison & Claim the Marble Temple',
+  objective: 'Break the Spartan Garrison & Claim the Marble Temple Sanctuary',
   quote: '"Under the blazing Aegean sun, bronze rings against marble. Walk from the sandy shore to the pillared sanctuary."',
   musicTheme: 'greece',
   enemyIcon: 'Λ',
   currency: 'Δ ',
-  spawnPos: new THREE.Vector3(0, 0, 44),
+  spawnPos: new THREE.Vector3(0, 0, 52),
   spawnYaw: 0,
-  cameraPreview: { center: new THREE.Vector3(0, 6, -4), radius: 42, height: 15, speed: 0.13 }
+  cameraPreview: { center: new THREE.Vector3(0, 6, -6), radius: 46, height: 16, speed: 0.13 }
 };
 
 export function buildLevel4(scene, collision, particles) {
@@ -32,343 +39,238 @@ export function buildLevel4(scene, collision, particles) {
   const animated = [];
   const pickups = [];
 
-  collision.bounds = { minX: -46, maxX: 46, minZ: -52, maxZ: 50 };
+  collision.bounds = { minX: -72, maxX: 74, minZ: -74, maxZ: 68 };
 
-  // 1. Blazing Mediterranean Sun & Cobalt Azure Sky Dome
+  // 1. Mediterranean Sun & Azure Sky
   const sunDir = new THREE.Vector3(0.45, 0.58, -0.68).normalize();
   const sky = createSkyDome({
-    topColor: 0x0a489c,
-    midColor: 0x3b96eb,
-    horizonColor: 0xdff5ff,
-    sunColor: 0xfffbe0,
-    sunDirection: sunDir,
-    cloudTint: 0xffffff,
-    cloudDensity: 0.34
+    topColor: 0x0a489c, midColor: 0x3b96eb, horizonColor: 0xdff5ff,
+    sunColor: 0xfffbe0, sunDirection: sunDir, cloudTint: 0xffffff, cloudDensity: 0.34
   });
   scene.add(sky.mesh);
   animated.push((t) => { sky.uniforms.uTime.value = t; });
 
-  scene.fog = new THREE.FogExp2(0xc4e8f7, 0.0044);
+  scene.fog = new THREE.FogExp2(0xc4e8f7, 0.004);
+  scene.add(new THREE.HemisphereLight(0xe8f6ff, 0xc7a974, 0.86));
 
-  const hemi = new THREE.HemisphereLight(0xe8f6ff, 0xc7a974, 0.85);
-  scene.add(hemi);
-
-  const sunLight = new THREE.DirectionalLight(0xfff6dc, 2.35);
-  sunLight.position.copy(sunDir).multiplyScalar(115);
+  const sunLight = new THREE.DirectionalLight(0xfff6dc, 2.25);
+  sunLight.position.copy(sunDir).multiplyScalar(120);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(2048, 2048);
-  sunLight.shadow.camera.left = -68;
-  sunLight.shadow.camera.right = 68;
-  sunLight.shadow.camera.top = 68;
-  sunLight.shadow.camera.bottom = -68;
+  sunLight.shadow.camera.left = -85;
+  sunLight.shadow.camera.right = 85;
+  sunLight.shadow.camera.top = 85;
+  sunLight.shadow.camera.bottom = -85;
   sunLight.shadow.near = 10;
-  sunLight.shadow.far = 230;
+  sunLight.shadow.far = 260;
   sunLight.shadow.bias = -0.0005;
   scene.add(sunLight);
 
-  const seaBounce = new THREE.DirectionalLight(0x64e0eb, 0.55);
+  const seaBounce = new THREE.DirectionalLight(0x64e0eb, 0.5);
   seaBounce.position.set(-55, 18, 40);
   scene.add(seaBounce);
 
-  // 2. Expansive Turquoise Aegean Sea surrounding the Greek Island!
-  const sea = createWaterMesh(440, 440, {
-    deepColor: 0x065c87,
-    shallowColor: 0x26d0ce,
-    foamColor: 0xf0fdff,
-    sunColor: 0xfffce0,
-    sunDir,
-    opacity: 0.92,
-    waveScale: 0.16
+  // 2. Turquoise Aegean Sea & Main Sunlit Sandy Island
+  const sea = createWaterMesh(520, 520, {
+    deepColor: 0x065c87, shallowColor: 0x26d0ce, foamColor: 0xf0fdff,
+    sunColor: 0xfffce0, sunDir, opacity: 0.92, waveScale: 0.16
   });
   sea.mesh.position.set(0, -0.22, 0);
   scene.add(sea.mesh);
   animated.push((t) => { sea.uniforms.uTime.value = t; });
 
-  // Main Sunlit Sandy Island Platform
-  const sandTex = getGroundTexture('greek_sand', 18, 20);
-  const islandGeo = new THREE.BoxGeometry(102, 1.2, 114);
+  const sandTex = getGroundTexture('greek_sand', 26, 26);
   const island = new THREE.Mesh(
-    islandGeo,
-    new THREE.MeshStandardMaterial({
-      map: sandTex.map,
-      bumpMap: sandTex.bumpMap,
-      bumpScale: 0.2,
-      roughness: 0.92
-    })
+    new THREE.BoxGeometry(156, 1.2, 152),
+    new THREE.MeshStandardMaterial({ map: sandTex.map, bumpMap: sandTex.bumpMap, bumpScale: 0.18, roughness: 0.92 })
   );
-  island.position.set(0, -0.6, -2);
+  island.position.set(2, -0.6, -2);
   island.receiveShadow = true;
   scene.add(island);
 
-  // White Marble Sacred Way leading from the Beach Village to the Acropolis Temple
-  const marbleTex = getMarbleTexture(3, 22);
+  // White Marble Sacred Way (no bumpMap on bright white marble to prevent bloom NaN!)
+  const marbleTex = getMarbleTexture(3, 24);
   const sacredWay = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.2, 86),
+    new THREE.PlaneGeometry(7.6, 108),
     new THREE.MeshStandardMaterial({ map: marbleTex.map, roughness: 0.68, metalness: 0.04 })
   );
   sacredWay.rotation.x = -Math.PI / 2;
-  sacredWay.position.set(0, 0.04, 1);
+  sacredWay.position.set(0, 0.04, 4);
   sacredWay.receiveShadow = true;
   scene.add(sacredWay);
 
-  // Shared Materials
-  const marbleMat = new THREE.MeshStandardMaterial({ map: marbleTex.map, roughness: 0.62, metalness: 0.05 });
-  const plasterMat = new THREE.MeshStandardMaterial({ color: 0xfaf7f0, roughness: 0.84 });
-  const aegeanBlue = new THREE.MeshStandardMaterial({ color: 0x1d6ec2, roughness: 0.55 });
+  const marbleMat = new THREE.MeshStandardMaterial({ map: marbleTex.map, roughness: 0.64, metalness: 0.04 });
+  const plasterMat = new THREE.MeshStandardMaterial({ color: 0xf4efe4, roughness: 0.84 });
+  const aegeanBlue = new THREE.MeshStandardMaterial({ color: 0x1d6ec2, roughness: 0.58 });
   const terraTex = getRoofTileTexture('terracotta', 3, 2);
-  const terraMat = new THREE.MeshStandardMaterial({ map: terraTex.map, bumpMap: terraTex.bumpMap, bumpScale: 0.18, roughness: 0.78 });
+  const terraMat = new THREE.MeshStandardMaterial({ map: terraTex.map, bumpMap: terraTex.bumpMap, bumpScale: 0.16, roughness: 0.78 });
   const clayMat = new THREE.MeshStandardMaterial({ color: 0xc2653c, roughness: 0.78 });
   const stoneTex = getStoneTexture('castle', 2, 2);
   const rockMat = new THREE.MeshStandardMaterial({ map: stoneTex.map, color: 0xd9cdb8, roughness: 0.9 });
   const woodMat = new THREE.MeshStandardMaterial({ color: 0x6b4426, roughness: 0.85 });
-  const bronzeMat = new THREE.MeshStandardMaterial({ color: 0xdca442, metalness: 0.85, roughness: 0.28 });
+  const bronzeMat = new THREE.MeshStandardMaterial({ color: 0xdca442, metalness: 0.82, roughness: 0.28 });
   const oliveLeaf = new THREE.MeshStandardMaterial({ color: 0x6f8c56, roughness: 0.85 });
   const cypressLeaf = new THREE.MeshStandardMaterial({ color: 0x244d2a, roughness: 0.88 });
   const sailMat = new THREE.MeshStandardMaterial({ map: createSailTexture('greece'), side: THREE.DoubleSide, roughness: 0.8 });
   const flameMat = new THREE.MeshBasicMaterial({ color: 0xffb338 });
 
-  // ---- WHITE MARBLE ACROPOLIS TEMPLE (Northern Climax!) ----
-  const templeGrp = new THREE.Group();
-  templeGrp.position.set(0, 0, -36);
+  // ---- 1. ENTERABLE MARBLE ACROPOLIS TEMPLE WITH INNER CELLA & GREAT GOLDEN STATUE ----
+  // Wide walkable stylobate plinth (0.38m climbable)
+  const stylobate = new THREE.Mesh(new THREE.BoxGeometry(24, 0.38, 22), marbleMat);
+  stylobate.position.set(0, 0.19, -40);
+  stylobate.receiveShadow = true;
+  scene.add(stylobate);
+  collision.addWalkable(0, -40, 24.6, 22.6, 0.38);
 
-  // 3-tier Stepped Marble Stylobate Platform
-  const step1 = new THREE.Mesh(new THREE.BoxGeometry(24, 0.55, 17), marbleMat);
-  step1.position.y = 0.275;
-  step1.receiveShadow = true;
-  const step2 = new THREE.Mesh(new THREE.BoxGeometry(22.4, 0.55, 15.6), marbleMat);
-  step2.position.y = 0.825;
-  step2.receiveShadow = true;
-  const step3 = new THREE.Mesh(new THREE.BoxGeometry(20.8, 0.55, 14.2), marbleMat);
-  step3.position.y = 1.375;
-  step3.receiveShadow = true;
-  templeGrp.add(step1, step2, step3);
+  // Hollow inner Temple Cella room
+  const cella = buildHollowRoom(scene, collision, {
+    cx: 0, cz: -40, w: 14, d: 13, h: 5.4, floorY: 0.38,
+    wallMat: marbleMat, floorMat: marbleMat, roofMat: terraMat, roofStyle: 'gable',
+    south: [{ type: 'door', offset: 0, width: 3.4, height: 3.8 }],
+    west: [{ type: 'window', offset: 0, width: 2.0 }],
+    east: [{ type: 'window', offset: 0, width: 2.0 }],
+    interiorLight: { color: 0xffe4a8, intensity: 2.0, distance: 18 }
+  });
 
-  // Inner Cella Sanctuary Chamber
-  const cella = new THREE.Mesh(new THREE.BoxGeometry(11.5, 7.2, 8.2), marbleMat);
-  cella.position.set(0, 1.65 + 3.6, -0.5);
-  cella.castShadow = true;
-  cella.receiveShadow = true;
-  templeGrp.add(cella);
-
-  // Tall Fluted Doric Marble Columns around the Peristyle!
+  // Outer Ring of Fluted Doric Marble Columns (EVERY column has solid collision!)
   const colPositions = [
-    [-9.2, 5.8], [-5.5, 5.8], [-1.85, 5.8], [1.85, 5.8], [5.5, 5.8], [9.2, 5.8],
-    [-9.2, -5.8], [-5.5, -5.8], [-1.85, -5.8], [1.85, -5.8], [5.5, -5.8], [9.2, -5.8],
-    [-9.2, 0], [9.2, 0]
+    [-10, -50], [-5, -50], [0, -50], [5, -50], [10, -50],
+    [-10, -30], [-5, -30], [5, -30], [10, -30],
+    [-10, -45], [-10, -40], [-10, -35],
+    [10, -45], [10, -40], [10, -35]
   ];
   for (const [cx, cz] of colPositions) {
-    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.56, 7.6, 14), marbleMat);
-    col.position.set(cx, 1.65 + 3.8, cz);
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.54, 5.8, 12), marbleMat);
+    col.position.set(cx, 0.38 + 2.9, cz);
     col.castShadow = true;
-    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.36, 1.25), marbleMat);
-    cap.position.set(cx, 1.65 + 7.75, cz);
-    templeGrp.add(col, cap);
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.34, 1.3), marbleMat);
+    cap.position.set(cx, 0.38 + 5.9, cz);
+    scene.add(col, cap);
+    collision.addBox(cx, 3.2, cz, 1.15, 6.0, 1.15, 'stone');
+  }
+  // Marble Entablature Beams around the perimeter
+  for (const [bx, bz, bw, bd] of [
+    [0, -50, 22, 1.4], [0, -30, 22, 1.4], [-10, -40, 1.4, 21], [10, -40, 1.4, 21]
+  ]) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.85, bd), marbleMat);
+    beam.position.set(bx, 6.65, bz);
+    scene.add(beam);
   }
 
-  // Marble Entablature & Carved Triangular Pediment Roof
-  const architrave = new THREE.Mesh(new THREE.BoxGeometry(21.2, 1.15, 14.4), marbleMat);
-  architrave.position.y = 1.65 + 8.45;
-  architrave.castShadow = true;
-  const pedShape = new THREE.Shape();
-  pedShape.moveTo(-10.8, 0);
-  pedShape.lineTo(10.8, 0);
-  pedShape.lineTo(0, 3.5);
-  pedShape.closePath();
-  const pedGeo = new THREE.ExtrudeGeometry(pedShape, { depth: 14.6, bevelEnabled: false });
-  pedGeo.translate(0, 0, -7.3);
-  const pediment = new THREE.Mesh(pedGeo, marbleMat);
-  pediment.position.y = 1.65 + 9.0;
-  pediment.castShadow = true;
-  templeGrp.add(architrave, pediment);
+  // Great Golden Cult Statue inside the Temple inner room!
+  addSolidBox(scene, collision, 0, cella.floorY + 0.6, -43.5, 2.4, 1.2, 2.2, marbleMat, 'stone');
+  const statTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.72, 2.4, 10), bronzeMat);
+  statTorso.position.set(0, cella.floorY + 2.4, -43.5);
+  const statHead = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 10), bronzeMat);
+  statHead.position.set(0, cella.floorY + 3.9, -43.5);
+  const statSpear = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.2, 6), bronzeMat);
+  statSpear.position.set(0.9, cella.floorY + 2.8, -43.2);
+  scene.add(statTorso, statHead, statSpear);
 
-  // Flickering Golden Bronze Brazier Bowls flanking the Temple Steps
-  for (const bx of [-5.2, 5.2]) {
-    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.25, 1.35, 10), bronzeMat);
-    bowl.position.set(bx, 1.65 + 0.65, 8.2);
-    const fire = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.85, 7), flameMat);
-    fire.position.set(bx, 1.65 + 1.65, 8.2);
-    const pt = new THREE.PointLight(0xffa43b, 9, 20, 1.6);
-    pt.position.set(bx, 1.65 + 2.0, 8.2);
-    templeGrp.add(bowl, fire, pt);
-    animated.push((t) => {
-      pt.intensity = 8.5 + Math.sin(t * 9 + bx) * 1.4;
-      fire.scale.y = 0.85 + Math.sin(t * 13 + bx) * 0.2;
-    });
+  // ---- 2. EVERY WHITEWASHED GREEK VILLAGE HOUSE IS ENTERABLE ----
+  function buildGreekHouse(cx, cz, w, d, doorSide) {
+    const opts = {
+      cx, cz, w, d, h: 3.8, floorY: 0.16,
+      wallMat: plasterMat, floorMat: rockMat, roofMat: terraMat, roofStyle: 'parapet',
+      parapetColor: 0x1d6ec2,
+      interiorLight: { color: 0xffd599, intensity: 1.5, distance: 12 }
+    };
+    opts[doorSide] = [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }];
+    const opp = doorSide === 'east' ? 'west' : doorSide === 'west' ? 'east' : doorSide === 'south' ? 'north' : 'south';
+    opts[opp] = [{ type: 'window', offset: 0, width: 1.7 }];
+    const room = buildHollowRoom(scene, collision, opts);
+    // Blue shutters / trim + interior table & clay amphorae
+    addDesk(scene, collision, cx + (doorSide === 'east' ? -2.2 : 2.2), room.floorY, cz, 1.5, 0.85, woodMat, 1);
+    const amp = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.34, 0.95, 10), clayMat);
+    amp.position.set(cx, room.floorY + 0.48, cz - d * 0.32);
+    scene.add(amp);
+    collision.addBox(cx, room.floorY + 0.48, cz - d * 0.32, 0.72, 0.96, 0.72, 'stone');
+    return room;
   }
-  scene.add(templeGrp);
-  collision.addBox(0, 5.0, -36, 22, 10, 15, 'stone');
 
-  // ---- WHITEWASHED CYCLADIC GREEK VILLAGE HOUSES ----
-  function buildGreekHouse(x, z, w, h, d, rotY = 0) {
+  buildGreekHouse(-22, 22, 9.5, 9.0, 'east');
+  buildGreekHouse(22, 22, 9.5, 9.0, 'west');
+  buildGreekHouse(-22, -6, 10.0, 9.5, 'east');
+  buildGreekHouse(22, -6, 10.0, 9.5, 'west');
+
+  // ---- 3. OUTLYING FISHERMEN'S CAPE (2 Enterable Houses + Beacon Tower + Ships!) ----
+  const fh1 = buildGreekHouse(44, 34, 9.0, 8.5, 'west');
+  addBunk(scene, collision, 46.2, fh1.floorY, 36.4, false, woodMat, 0x2665a8);
+  const fh2 = buildGreekHouse(48, 16, 9.0, 8.5, 'west');
+  addAltar(scene, collision, 50.8, fh2.floorY, 16, 1.2, 2.2, rockMat, 0x1d6ec2);
+
+  // Enterable Coastal Beacon Tower (far east cape!)
+  const beacon = buildHollowRoom(scene, collision, {
+    cx: 56, cz: -14, w: 8.5, d: 8.5, h: 4.2, floorY: 0.2,
+    wallMat: rockMat, floorMat: rockMat, roofMat: rockMat, roofStyle: 'none',
+    west: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    south: [{ type: 'window', offset: 0, width: 1.5 }],
+    interiorLight: { color: 0xffb355, intensity: 1.4, distance: 12 }
+  });
+  const towerUpper = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 4.0, 8.5, 10), rockMat);
+  towerUpper.position.set(56, beacon.roofY + 4.25, -14);
+  const brazier = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.1, 0.9, 10), bronzeMat);
+  brazier.position.set(56, beacon.roofY + 8.9, -14);
+  const beaconFlame = new THREE.Mesh(new THREE.ConeGeometry(1.3, 2.6, 8), flameMat);
+  beaconFlame.position.set(56, beacon.roofY + 10.5, -14);
+  scene.add(towerUpper, brazier, beaconFlame);
+  animated.push((t) => { beaconFlame.scale.y = 0.85 + Math.sin(t * 9) * 0.22; });
+
+  // Greek Trireme / Fishing Ships on the southern & eastern shores (solid!)
+  function addGreekShip(sx, sz, rotY) {
     const g = new THREE.Group();
-    g.position.set(x, 0, z);
+    g.position.set(sx, 0, sz);
     g.rotation.y = rotY;
-
-    const body = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), plasterMat);
-    body.position.y = h * 0.5;
-    body.castShadow = true;
-    body.receiveShadow = true;
-    g.add(body);
-
-    // Sun-baked Terracotta pitched roof
-    const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.82, 2.2, 4), terraMat);
-    roof.rotation.y = Math.PI / 4;
-    roof.scale.set((w + 1.2) / Math.max(w, d), 1, (d + 1.2) / Math.max(w, d));
-    roof.position.y = h + 1.05;
-    roof.castShadow = true;
-    g.add(roof);
-
-    // Bright Aegean-blue door & framed shutters
-    const door = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.5, 0.2), aegeanBlue);
-    door.position.set(0, 1.25, d * 0.5 + 0.04);
-    g.add(door);
-    for (const wx of [-w * 0.3, w * 0.3]) {
-      const shutter = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 0.18), aegeanBlue);
-      shutter.position.set(wx, h * 0.58, d * 0.5 + 0.04);
-      g.add(shutter);
-    }
-
-    // Clay Amphora jars beside doorway
-    for (const ax of [-1.45, 1.55]) {
-      const jar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.3, 0.88, 10), clayMat);
-      jar.position.set(ax, 0.44, d * 0.5 + 0.52);
-      jar.castShadow = true;
-      g.add(jar);
-    }
-
-    scene.add(g);
-    const cos = Math.abs(Math.cos(rotY));
-    collision.addBox(x, h * 0.5, z, cos > 0.5 ? w : d, h + 2.5, cos > 0.5 ? d : w, 'stone');
-  }
-
-  buildGreekHouse(-20, 22, 10, 4.8, 8.2, Math.PI / 2);
-  buildGreekHouse(20, 20, 10.5, 5.2, 8.4, -Math.PI / 2);
-  buildGreekHouse(-22, 0, 11, 5.0, 8.6, Math.PI / 2.1);
-  buildGreekHouse(21, -4, 9.5, 4.6, 8.0, -Math.PI / 1.9);
-  buildGreekHouse(-19, -20, 9.5, 4.5, 7.8, Math.PI / 3);
-
-  // ---- ANCIENT GREEK SHIPS (TRIREMES) ON THE SANDY SHORE ----
-  function addGreekShip(x, z, rotY) {
-    const g = new THREE.Group();
-    g.position.set(x, 0.1, z);
-    g.rotation.y = rotY;
-
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.4, 13.5), woodMat);
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.4, 10.5), woodMat);
     hull.position.y = 0.7;
-    hull.castShadow = true;
-    const prow = new THREE.Mesh(new THREE.ConeGeometry(1.6, 3.8, 4), woodMat);
-    prow.rotation.x = Math.PI / 2;
-    prow.position.set(0, 0.85, 8.2);
-    const ram = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.8, 6), bronzeMat);
-    ram.rotation.x = Math.PI / 2;
-    ram.position.set(0, 0.42, 10.2);
-    const stern = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, 3.2, 8), woodMat);
-    stern.position.set(0, 2.2, -6.5);
-    stern.rotation.x = -0.35;
-    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.2, 8.5, 8), woodMat);
-    mast.position.set(0, 5.0, 0);
-    const yard = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 6.2, 8), woodMat);
-    yard.rotation.z = Math.PI / 2;
-    yard.position.set(0, 7.2, 0.2);
-    const sail = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 4.6, 6, 4), sailMat);
-    sail.position.set(0, 4.9, 0.5);
-
-    g.add(hull, prow, ram, stern, mast, yard, sail);
+    const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 8.5, 8), woodMat);
+    mast.position.y = 4.6;
+    const sail = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 4.8), sailMat);
+    sail.position.set(0, 5.2, 0.35);
+    g.add(hull, mast, sail);
     scene.add(g);
-    animated.push((t) => {
-      g.position.y = 0.15 + Math.sin(t * 1.7 + x) * 0.12;
-      g.rotation.z = Math.sin(t * 1.3 + z) * 0.04;
-    });
+    collision.addBox(sx, 1.2, sz, 4.2, 2.4, 10.5, 'wood');
   }
-  addGreekShip(54, 24, -0.45);
-  addGreekShip(-54, 14, 0.55);
-  addGreekShip(34, 48, -1.25); // Pulled right onto the sandy beach near spawn!
+  addGreekShip(-36, 54, 0.3);
+  addGreekShip(34, 56, -0.35);
 
-  // ---- TACTICAL MARBLE LOW WALLS & BROKEN FLUTED COLUMNS ----
-  const coverWalls = [
-    [-8.5, 28, 5.4, 1.4, 1.1],
-    [8.5, 16, 5.2, 1.4, 1.1],
-    [-9.5, 6, 5.6, 1.4, 1.1],
-    [9.5, -14, 5.4, 1.45, 1.1],
-    [-8.5, -18, 5.4, 1.45, 1.1]
-  ];
-  for (const [wx, wz, ww, wh, wd] of coverWalls) {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(ww, wh, wd), marbleMat);
-    wall.position.set(wx, wh * 0.5, wz);
-    wall.castShadow = true;
-    wall.receiveShadow = true;
-    scene.add(wall);
-    collision.addBox(wx, wh * 0.5, wz, ww, wh, wd, 'stone');
-
-    // Decorative marble pillar stub beside wall
-    const stub = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.5, 2.8, 12), marbleMat);
-    stub.position.set(wx + ww * 0.5 + 0.6, 1.4, wz);
-    stub.castShadow = true;
-    scene.add(stub);
-    collision.addBox(wx + ww * 0.5 + 0.6, 1.4, wz, 1.1, 2.8, 1.1, 'stone');
+  // Olive Trees, Cypresses, Marble Columns & Low Walls (ALL solid!)
+  function addOliveTree(tx, tz) {
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.42, 3.0, 7), woodMat);
+    tr.position.set(tx, 1.5, tz);
+    const crown = new THREE.Mesh(new THREE.IcosahedronGeometry(2.3, 1), oliveLeaf);
+    crown.position.set(tx, 3.6, tz);
+    crown.scale.set(1.3, 0.72, 1.2);
+    scene.add(tr, crown);
+    collision.addBox(tx, 1.8, tz, 1.0, 3.6, 1.0, 'wood');
   }
-
-  // ---- OLIVE TREES & MEDITERRANEAN CYPRESSES ----
-  function addOliveTree(tx, tz, scale = 1) {
-    const g = new THREE.Group();
-    g.position.set(tx, 0, tz);
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.45, 2.6, 8), woodMat);
-    trunk.position.y = 1.3;
-    trunk.rotation.z = 0.14;
-    trunk.castShadow = true;
-    g.add(trunk);
-    for (const [px, py, pz, r] of [[0, 3.2, 0, 2.0], [-1.3, 2.8, 0.6, 1.4], [1.4, 2.9, -0.5, 1.5]]) {
-      const f = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), oliveLeaf);
-      f.position.set(px, py, pz);
-      f.scale.set(1.3, 0.72, 1.2);
-      f.castShadow = true;
-      g.add(f);
-    }
-    g.scale.setScalar(scale);
-    scene.add(g);
-    collision.addBox(tx, 1.6, tz, 1.0 * scale, 3.2 * scale, 1.0 * scale, 'wood');
+  function addCypress(tx, tz) {
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.28, 2.0, 6), woodMat);
+    tr.position.set(tx, 1.0, tz);
+    const leaf = new THREE.Mesh(new THREE.ConeGeometry(1.15, 7.2, 8), cypressLeaf);
+    leaf.position.set(tx, 5.2, tz);
+    scene.add(tr, leaf);
+    collision.addBox(tx, 2.2, tz, 1.1, 4.4, 1.1, 'wood');
   }
+  for (const [ox, oz] of [[-12, 34], [12, 36], [-36, 12], [-44, -18], [36, 4], [40, -28], [-28, -32], [28, -34]]) addOliveTree(ox, oz);
+  for (const [cx, cz] of [[-10, 12], [10, 12], [-12, -20], [12, -20], [-34, -40], [34, -40], [56, 28], [-50, 26]]) addCypress(cx, cz);
 
-  function addCypress(tx, tz, scale = 1) {
-    const g = new THREE.Group();
-    g.position.set(tx, 0, tz);
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 2.0, 7), woodMat);
-    trunk.position.y = 1.0;
-    const crown = new THREE.Mesh(new THREE.ConeGeometry(1.15, 9.5, 10), cypressLeaf);
-    crown.position.y = 6.0;
-    crown.castShadow = true;
-    g.add(trunk, crown);
-    g.scale.setScalar(scale);
-    scene.add(g);
-    collision.addBox(tx, 2.0, tz, 0.9 * scale, 4.0 * scale, 0.9 * scale, 'wood');
-  }
+  // Low Marble Cover Parapets
+  for (const [wx, wz, ww, wd] of [
+    [-7, 30, 4.5, 1.0], [8, 26, 4.5, 1.0], [-8, 4, 4.5, 1.0], [8, 0, 4.5, 1.0],
+    [-8, -18, 4.8, 1.0], [8, -18, 4.8, 1.0], [34, 24, 1.0, 4.5]
+  ]) addSolidBox(scene, collision, wx, 0.65, wz, ww, 1.3, wd, marbleMat, 'stone');
 
-  const olives = [[-13, 34, 1.1], [14, 32, 1.0], [-30, 12, 1.25], [32, 8, 1.2], [-32, -14, 1.15], [30, -18, 1.2]];
-  for (const [x, z, s] of olives) addOliveTree(x, z, s);
-
-  const cypresses = [[-12, -26, 1.15], [12, -26, 1.15], [-14, -34, 1.25], [14, -34, 1.25], [-14, 14, 1.0], [14, 10, 1.05], [-28, 30, 1.1], [28, -28, 1.2]];
-  for (const [x, z, s] of cypresses) addCypress(x, z, s);
-
-  // ---- DISTANT ROCKY GREEK ISLETS RISING FROM THE AEGEAN SEA ----
-  const islets = [
-    [-115, -95, 38, 22], [110, -85, 42, 26], [-125, 45, 34, 18], [128, 52, 40, 20], [10, -145, 58, 34]
-  ];
-  for (const [ix, iz, r, h] of islets) {
-    const isl = new THREE.Mesh(new THREE.ConeGeometry(r, h, 8), rockMat);
-    isl.position.set(ix, h * 0.42 - 1, iz);
-    scene.add(isl);
-  }
-
-  // ---- AMBIENT AEGEAN SUNLIGHT BREEZE PARTICLES ----
-  particles.initAmbient('aegean', collision.bounds);
+  particles.initAmbient('dust', collision.bounds);
 
   // ---- PICKUPS ----
   const pickupDefs = [
-    { type: 'health', pos: new THREE.Vector3(-11, 0.8, 24), label: 'AEGEAN AMBROSIA (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(11, 0.8, 14),  label: 'BRONZE JAVELIN BUNDLE' },
-    { type: 'health', pos: new THREE.Vector3(-12, 0.8, 2),  label: 'OLIVE OIL & HONEY (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(12, 0.8, -14), label: 'HOPLITE JAVELIN RACK' },
-    { type: 'health', pos: new THREE.Vector3(-11, 0.8, -22), label: 'TEMPLE OFFERING (+35 HP)' }
+    { type: 'health', pos: new THREE.Vector3(-22, 0.9, 22),  label: 'AEGEAN WINE & OLIVES (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(44, 0.9, 34),   label: 'FISHERMAN STEW (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(56, 0.9, -14),  label: 'BEACON TOWER TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(0, 1.1, -39),   label: 'TEMPLE AMBROSIA (+35 HP)' },
+    { type: 'ammo',   pos: new THREE.Vector3(22, 0.9, 22),   label: 'BRONZE JAVELIN BUNDLE' },
+    { type: 'ammo',   pos: new THREE.Vector3(-22, 0.9, -6),  label: 'SPARTAN JAVELIN RACK' }
   ];
   for (const pd of pickupDefs) {
     const mesh = createPickupMesh(pd.type);
@@ -377,20 +279,40 @@ export function buildLevel4(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- ENEMY ROSTER (Spartan Hoplites, Spartan Javelineers & Boss Archidamos) ----
+  // ---- 25 ENEMIES (Shore, Village Houses, Fishermen's Cape, Beacon Tower, Acropolis Temple, Boss Archidamos) ----
   const enemySpawns = [
-    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-8, 0, 22) },
-    { type: 'spartan_skirmisher', pos: new THREE.Vector3(9, 0, 18) },
-    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-4, 0, 10) },
-    { type: 'spartan_skirmisher', pos: new THREE.Vector3(-12, 0, 4) },
-    { type: 'spartan_hoplite',    pos: new THREE.Vector3(10, 0, -2) },
-    { type: 'spartan_skirmisher', pos: new THREE.Vector3(0, 0, -8) },
-    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-10, 0, -14) },
-    { type: 'spartan_skirmisher', pos: new THREE.Vector3(10, 0, -18) },
-    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-5, 0, -24) },
-    { type: 'spartan_skirmisher', pos: new THREE.Vector3(6, 0, -24) },
-    { type: 'boss_greece',        pos: new THREE.Vector3(0, 0, -25), isBossWave: true }
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-8, 0, 36) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(8, 0, 34) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-21, 0.16, 22) }, // House 1
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(21, 0.16, 22) },  // House 2
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(0, 0, 16) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(-12, 0, 10) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(12, 0, 8) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(34, 0, 30) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(44, 0.16, 33) },  // Cape House 1
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(47, 0.16, 16) },  // Cape House 2
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(46, 0, -4) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(55, 0.2, -14) },  // Inside Beacon Tower
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-21, 0.16, -6) }, // House 3
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(21, 0.16, -6) },  // House 4
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-8, 0, -14) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(8, 0, -14) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-16, 0, -24) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(16, 0, -24) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-6, 0, -26) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(6, 0, -26) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-3, 0.38, -38) }, // Inside Temple Cella
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(3, 0.38, -38) },  // Inside Temple Cella
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-16, 0, -40) },
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(16, 0, -40) },
+    { type: 'boss_greece',        pos: new THREE.Vector3(0, 0.38, -32), isBossWave: true }
   ];
 
-  return { enemySpawns, pickups, animated, disposables };
+  const enterableBuildings = [
+    { name: 'Marble Temple Cella', inside: new THREE.Vector3(0, 0.38, -39), outside: new THREE.Vector3(0, 0.38, -31) },
+    { name: 'Beacon Tower', inside: new THREE.Vector3(56, 0.2, -14), outside: new THREE.Vector3(49, 0, -14) },
+    { name: 'Village House', inside: new THREE.Vector3(-22, 0.16, 22), outside: new THREE.Vector3(-14.5, 0, 22) }
+  ];
+
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
 }

@@ -259,6 +259,96 @@ export const ERA_HEROES = {
       weaponIds: ['heavy_pistol', 'combat_knife'],
       mods: {}
     }
+  ],
+  soviet: [
+    {
+      id: 'solzhenitsyn',
+      era: 'soviet',
+      name: 'Aleksandr Solzhenitsyn',
+      bio: 'Chronicler of the camps, winter of 1974.',
+      strengthLabel: 'Camp Survivor',
+      strengthDesc: 'Carries an automatic submachine gun and takes 15% less damage.',
+      hudTag: 'SMG · -15% DMG',
+      defaultWeaponIdx: 0,
+      weaponIds: ['soviet_smg', 'combat_knife'],
+      mods: {
+        damageTakenMult: 0.85
+      }
+    },
+    {
+      id: 'sakharov',
+      era: 'soviet',
+      name: 'Andrei Sakharov',
+      bio: 'Physicist and defender of human rights.',
+      strengthLabel: 'Precision Shot',
+      strengthDesc: 'Carries a pistol whose shots hit 60% harder.',
+      hudTag: '+60% PISTOL DMG',
+      defaultWeaponIdx: 0,
+      weaponIds: ['soviet_pistol', 'combat_knife'],
+      mods: {
+        weaponOverrides: {
+          soviet_pistol: { damageMult: 1.6 }
+        }
+      }
+    },
+    {
+      id: 'nureyev',
+      era: 'soviet',
+      name: 'Rudolf Nureyev',
+      bio: 'Dancer who leapt to freedom.',
+      strengthLabel: 'Grace in Winter',
+      strengthDesc: 'Moves 25% faster and is noticed later by enemies.',
+      hudTag: '+25% SPD · STEALTH',
+      defaultWeaponIdx: 0,
+      weaponIds: ['soviet_pistol', 'combat_knife'],
+      mods: {
+        moveSpeedMult: 1.25,
+        stealthMult: 0.52,
+        soundAlertRadius: 15
+      }
+    }
+  ],
+  tibet: [
+    {
+      id: 'gompo',
+      era: 'tibet',
+      name: 'Gompo Tashi Andrugtsang',
+      bio: 'Leader of the Khampa resistance, 1959.',
+      strengthLabel: 'Khampa Marksman',
+      strengthDesc: 'Carries a bolt-action rifle with iron sights; one shot fells a soldier.',
+      hudTag: '1-SHOT RIFLE',
+      defaultWeaponIdx: 0,
+      weaponIds: ['khampa_rifle', 'combat_knife'],
+      mods: {}
+    },
+    {
+      id: 'pachen',
+      era: 'tibet',
+      name: 'Ani Pachen',
+      bio: 'Tibetan warrior nun of Kham.',
+      strengthLabel: 'Mountain Stride',
+      strengthDesc: 'Carries a pistol and knife; moves 20% faster across the high valley.',
+      hudTag: '+20% SPEED',
+      defaultWeaponIdx: 0,
+      weaponIds: ['tibet_pistol', 'combat_knife'],
+      mods: {
+        moveSpeedMult: 1.20
+      }
+    },
+    {
+      id: 'songtsen',
+      era: 'tibet',
+      name: 'Songtsen Gampo',
+      bio: 'Founder of the Tibetan Empire.',
+      strengthLabel: 'Imperial Mantle',
+      strengthDesc: 'Fights with bow and sword and takes 20% less damage.',
+      hudTag: 'BOW · -20% DMG',
+      defaultWeaponIdx: 0,
+      weaponIds: ['tibet_bow', 'tibet_sword'],
+      mods: {
+        damageTakenMult: 0.80
+      }
+    }
   ]
 };
 
@@ -1120,6 +1210,202 @@ export function buildHeroFigure(heroId) {
     pistol.position.set(0, -0.34, 0.05);
     pistol.rotation.x = 0.62;
     p.armR.add(pistol);
+  } else if (heroId === 'solzhenitsyn') {
+    // Aleksandr Solzhenitsyn: full beard, winter fur ushanka hat, dark padded telogreika jacket, Soviet SMG
+    const paddedMat = new THREE.MeshStandardMaterial({ color: 0x3b4238, roughness: 0.92 });
+    const furMat = new THREE.MeshStandardMaterial({ color: 0x4b3b2f, roughness: 0.96 });
+    const p = addBaseBody({ torsoMat: paddedMat, legsMat: darkCharcoal, armsMat: paddedMat, bootsMat: blackCloth, skin: skinWeathered });
+    const jacketLower = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.34, 0.34), paddedMat);
+    jacketLower.position.set(0, 0.82, 0);
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.09, 0.36), brownLeather);
+    belt.position.set(0, 0.96, 0);
+    root.add(jacketLower, belt);
+
+    // Full beard (no upper-lip moustache, characteristic bearded chin)
+    const beard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.24, 0.16), brownBeard);
+    beard.position.set(0, -0.15, 0.14);
+    // Fur ushanka hat with ear flaps
+    const hatCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.25, 0.2, 12), furMat);
+    hatCrown.position.set(0, 0.21, 0);
+    const flapL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.16), furMat);
+    flapL.position.set(-0.24, 0.06, -0.02);
+    const flapR = flapL.clone();
+    flapR.position.x = 0.24;
+    p.head.add(beard, hatCrown, flapL, flapR);
+
+    // Soviet SMG with drum mag
+    const smg = new THREE.Group();
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.62, 8), darkCharcoal);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0, 0.22);
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.05, 12), darkCharcoal);
+    drum.rotation.x = Math.PI / 2;
+    drum.position.set(0, -0.09, 0.18);
+    smg.add(barrel, drum);
+    smg.position.set(0, -0.32, 0.05);
+    smg.rotation.x = 0.62;
+    p.armR.add(smg);
+  } else if (heroId === 'sakharov') {
+    // Andrei Sakharov: balding head with side hair, glasses, grey tailored suit, pistol
+    const greySuit = new THREE.MeshStandardMaterial({ color: 0x6b7076, roughness: 0.8 });
+    const silverHair = new THREE.MeshStandardMaterial({ color: 0xbcbab4, roughness: 0.9 });
+    const p = addBaseBody({ torsoMat: greySuit, legsMat: greySuit, armsMat: greySuit, bootsMat: blackCloth, skin: skinElder, slim: true });
+    const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.28, 0.04), pureWhite);
+    shirt.position.set(0, 1.36, 0.155);
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.24, 0.05), darkCharcoal);
+    tie.position.set(0, 1.33, 0.165);
+    root.add(shirt, tie);
+
+    // Balding crown with side fringe hair
+    const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, 0.22), silverHair);
+    sideL.position.set(-0.2, 0.04, -0.04);
+    const sideR = sideL.clone();
+    sideR.position.x = 0.2;
+    const backHair = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.16, 0.08), silverHair);
+    backHair.position.set(0, 0.02, -0.18);
+    // Glasses
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1d, metalness: 0.6, roughness: 0.3 });
+    const lensL = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.01, 6, 12), glassMat);
+    lensL.position.set(-0.072, 0.02, 0.215);
+    const lensR = lensL.clone();
+    lensR.position.x = 0.072;
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.012, 0.012), glassMat);
+    bridge.position.set(0, 0.02, 0.215);
+    p.head.add(sideL, sideR, backHair, lensL, lensR, bridge);
+
+    const pistol = new THREE.Group();
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.064, 0.26), darkCharcoal);
+    slide.position.set(0, 0.02, 0.15);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.055), brownLeather);
+    grip.position.set(0, -0.06, 0.02);
+    pistol.add(slide, grip);
+    pistol.position.set(0, -0.34, 0.05);
+    pistol.rotation.x = 0.62;
+    p.armR.add(pistol);
+  } else if (heroId === 'nureyev') {
+    // Rudolf Nureyev: sculpted dark hair, sleek black overcoat, flowing long white scarf, pistol
+    const p = addBaseBody({ torsoMat: blackCloth, legsMat: blackCloth, armsMat: blackCloth, bootsMat: blackCloth, skin: skinFair, slim: true });
+    const coatSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.36, 0.72, 12), blackCloth);
+    coatSkirt.position.set(0, 0.62, 0);
+    // Iconic long white scarf wrapped around neck & streaming down chest/back
+    const scarfRing = new THREE.Mesh(new THREE.TorusGeometry(0.18, 0.055, 8, 16), pureWhite);
+    scarfRing.rotation.x = Math.PI / 2;
+    scarfRing.position.set(0, 1.54, 0.02);
+    const scarfTailF = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.76, 0.045), pureWhite);
+    scarfTailF.position.set(0.09, 1.15, 0.175);
+    scarfTailF.rotation.z = 0.08;
+    const scarfTailB = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.85, 0.045), pureWhite);
+    scarfTailB.position.set(-0.08, 1.12, -0.18);
+    scarfTailB.rotation.x = 0.12;
+    root.add(coatSkirt, scarfRing, scarfTailF, scarfTailB);
+
+    // Swept dark hair
+    const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.225, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), darkHair);
+    hairTop.position.set(0, 0.07, -0.02);
+    const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.12), darkHair);
+    hairBack.position.set(0, -0.02, -0.14);
+    p.head.add(hairTop, hairBack);
+
+    const pistol = new THREE.Group();
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.06, 0.25), darkCharcoal);
+    slide.position.set(0, 0.02, 0.14);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.11, 0.055), blackCloth);
+    grip.position.set(0, -0.06, 0.02);
+    pistol.add(slide, grip);
+    pistol.position.set(0, -0.34, 0.05);
+    pistol.rotation.x = 0.62;
+    p.armR.add(pistol);
+  } else if (heroId === 'gompo') {
+    // Gompo Tashi Andrugtsang: fox-fur hat, long fur-trimmed chuba coat, bolt-action rifle
+    const coatMat = new THREE.MeshStandardMaterial({ color: 0x5c3622, roughness: 0.88 });
+    const foxFur = new THREE.MeshStandardMaterial({ color: 0xd48b42, roughness: 0.94 });
+    const p = addBaseBody({ torsoMat: coatMat, legsMat: darkCharcoal, armsMat: coatMat, bootsMat: brownLeather, skin: skinWeathered });
+    const coatLower = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.72, 12), coatMat);
+    coatLower.position.set(0, 0.6, 0);
+    const furTrim = new THREE.Mesh(new THREE.CylinderGeometry(0.425, 0.44, 0.14, 12), foxFur);
+    furTrim.position.set(0, 0.28, 0);
+    const sash = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.12, 0.34), crimsonMat);
+    sash.position.set(0, 0.96, 0);
+    root.add(coatLower, furTrim, sash);
+
+    // Traditional Khampa fox-fur ring hat with dark silk crown
+    const furRing = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.095, 10, 16), foxFur);
+    furRing.rotation.x = Math.PI / 2;
+    furRing.position.set(0, 0.2, 0);
+    const crown = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.2, 10), crimsonMat);
+    crown.position.set(0, 0.28, 0);
+    p.head.add(furRing, crown);
+
+    const rifle = makeRifle();
+    rifle.position.set(-0.08, -0.24, 0.12);
+    rifle.rotation.set(0.3, -0.45, 0);
+    p.armR.add(rifle);
+  } else if (heroId === 'pachen') {
+    // Ani Pachen: shaved head, dark red Tibetan nun's robe, bright yellow sash, pistol
+    const maroonRobe = new THREE.MeshStandardMaterial({ color: 0x6f191c, roughness: 0.85 });
+    const saffronYellow = new THREE.MeshStandardMaterial({ color: 0xe6b622, roughness: 0.78 });
+    const p = addBaseBody({ torsoMat: maroonRobe, legsMat: maroonRobe, armsMat: maroonRobe, bootsMat: brownLeather, skin: skinWeathered, slim: true });
+    const robeSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.42, 0.78, 12), maroonRobe);
+    robeSkirt.position.set(0, 0.56, 0);
+    // Diagonal & waist yellow sash
+    const waistSash = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.11, 0.34), saffronYellow);
+    waistSash.position.set(0, 0.94, 0);
+    const diagSash = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.78, 0.33), saffronYellow);
+    diagSash.position.set(-0.06, 1.24, 0);
+    diagSash.rotation.z = -0.36;
+    root.add(robeSkirt, waistSash, diagSash);
+
+    // Clean shaved head (no hair mesh)
+    const pistol = new THREE.Group();
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.044, 0.064, 0.26), darkCharcoal);
+    slide.position.set(0, 0.02, 0.15);
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.055), darkWood);
+    grip.position.set(0, -0.06, 0.02);
+    pistol.add(slide, grip);
+    pistol.position.set(0, -0.34, 0.05);
+    pistol.rotation.x = 0.62;
+    p.armR.add(pistol);
+  } else if (heroId === 'songtsen') {
+    // Songtsen Gampo: royal crimson silk turban, rich red imperial robe with gold brocade trim, bow & sword
+    const royalRed = new THREE.MeshStandardMaterial({ color: 0x9c1b1d, roughness: 0.72 });
+    const p = addBaseBody({ torsoMat: royalRed, legsMat: royalRed, armsMat: royalRed, bootsMat: brownLeather, skin: skinWeathered });
+    const robeSkirt = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.44, 0.78, 12), royalRed);
+    robeSkirt.position.set(0, 0.56, 0);
+    const goldHem = new THREE.Mesh(new THREE.CylinderGeometry(0.445, 0.455, 0.1, 12), goldMat);
+    goldHem.position.set(0, 0.22, 0);
+    const goldCollar = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.045, 8, 16), goldMat);
+    goldCollar.rotation.x = Math.PI / 2;
+    goldCollar.position.set(0, 1.54, 0);
+    const goldBelt = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.34), goldMat);
+    goldBelt.position.set(0, 0.96, 0);
+    root.add(robeSkirt, goldHem, goldCollar, goldBelt);
+
+    // Tall royal silk turban with gold finial ornament
+    const turbanBase = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.22, 0.26, 14), royalRed);
+    turbanBase.position.set(0, 0.24, 0);
+    const turbanTop = new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), royalRed);
+    turbanTop.position.set(0, 0.42, 0);
+    const turbanBand = new THREE.Mesh(new THREE.TorusGeometry(0.23, 0.03, 6, 16), goldMat);
+    turbanBand.rotation.x = Math.PI / 2;
+    turbanBand.position.set(0, 0.2, 0);
+    const crownGem = new THREE.Mesh(new THREE.OctahedronGeometry(0.06, 0), goldMat);
+    crownGem.position.set(0, 0.32, 0.22);
+    p.head.add(turbanBase, turbanTop, turbanBand, crownGem);
+
+    // Tibetan bow in left hand + royal sword in right hand
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.022, 8, 18, Math.PI * 0.95), goldMat);
+    bow.rotation.z = -Math.PI * 0.48;
+    bow.position.set(-0.08, -0.1, 0.12);
+    p.armL.add(bow);
+    const sword = new THREE.Group();
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.85, 0.08), brightSteel);
+    blade.position.y = 0.48;
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.24), goldMat);
+    guard.position.y = 0.04;
+    sword.add(blade, guard);
+    sword.position.set(0, -0.32, 0.08);
+    sword.rotation.x = 0.72;
+    p.armR.add(sword);
   }
 
   // Ground pedestal disc beneath hero figure for clean turntable framing
@@ -1133,7 +1419,11 @@ export function buildHeroFigure(heroId) {
           ? 0x4b5c6e
           : heroId === 'pavlichenko' || heroId === 'hall' || heroId === 'bavaud'
             ? 0x5c605c
-            : 0x5d6269;
+            : heroId === 'solzhenitsyn' || heroId === 'sakharov' || heroId === 'nureyev'
+              ? 0x6b7078
+              : heroId === 'gompo' || heroId === 'pachen' || heroId === 'songtsen'
+                ? 0x8f3a2c
+                : 0x5d6269;
   const plinth = new THREE.Mesh(
     new THREE.CylinderGeometry(0.72, 0.82, 0.16, 20),
     new THREE.MeshStandardMaterial({ color: plinthColor, roughness: 0.78 })

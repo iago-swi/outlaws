@@ -173,6 +173,18 @@ const ENEMY_SPECS = {
     style: 'melee',
     projectileColor: 0xffffff
   },
+  viking_chieftain: {
+    name: 'Viking Chieftain',
+    hp: 190,
+    speed: 5.0,
+    range: 3.6,
+    fireRate: 0.92,
+    damage: 21,
+    score: 420,
+    style: 'melee',
+    scale: 1.18,
+    projectileColor: 0xffffff
+  },
   boss_scandinavia: {
     name: 'JARL HAKON — LORD OF THE FJORD',
     hp: 490,
@@ -241,6 +253,87 @@ const ENEMY_SPECS = {
     style: 'boss_ranged',
     scale: 1.28,
     projectileColor: 0xff6e38
+  },
+  // Level 7: Soviet Russia — Stalnogorsk, Winter 1974
+  kgb_agent: {
+    name: 'Committee Agent',
+    hp: 80,
+    speed: 4.5,
+    range: 34,
+    fireRate: 1.2,
+    damage: 14,
+    score: 260,
+    style: 'ranged',
+    projectileColor: 0xffd570
+  },
+  soviet_militia: {
+    name: 'Soviet Militiaman',
+    hp: 90,
+    speed: 4.1,
+    range: 36,
+    fireRate: 0.72,
+    damage: 10,
+    score: 280,
+    style: 'ranged',
+    projectileColor: 0xffa64d
+  },
+  boss_soviet: {
+    name: 'COLONEL VORONIN — COMMITTEE CHIEF',
+    hp: 490,
+    speed: 4.7,
+    range: 42,
+    fireRate: 0.58,
+    damage: 16,
+    score: 2400,
+    style: 'boss_ranged',
+    scale: 1.28,
+    projectileColor: 0xff4c38
+  },
+  // Level 8: Tibet — Road South of Lhasa, March 1959
+  pla_rifleman: {
+    name: 'Occupying Rifleman',
+    hp: 85,
+    speed: 4.0,
+    range: 40,
+    fireRate: 1.38,
+    damage: 14,
+    score: 260,
+    style: 'ranged',
+    projectileColor: 0xffe08a
+  },
+  pla_mg: {
+    name: 'Machine-Gunner',
+    hp: 100,
+    speed: 3.1,
+    range: 42,
+    fireRate: 0.55,
+    damage: 8,
+    score: 310,
+    style: 'ranged',
+    projectileColor: 0xff9e42
+  },
+  red_guard: {
+    name: 'Red Guard',
+    hp: 80,
+    speed: 6.1,
+    range: 3.2,
+    fireRate: 0.9,
+    damage: 16,
+    score: 240,
+    style: 'melee',
+    projectileColor: 0xffffff
+  },
+  boss_tibet: {
+    name: 'COMMANDER ZHAO — GARRISON CHIEF',
+    hp: 510,
+    speed: 4.6,
+    range: 42,
+    fireRate: 0.62,
+    damage: 17,
+    score: 2600,
+    style: 'boss_ranged',
+    scale: 1.3,
+    projectileColor: 0xff5a36
   }
 };
 
@@ -346,9 +439,16 @@ function buildEnemyMesh(type) {
   else if (type === 'spartan_hoplite' || type === 'spartan_skirmisher' || type === 'boss_greece') { coatColor = 0xb87e2d; pantsColor = 0xa82020; }
   else if (type === 'viking_warrior' || type === 'viking_archer') { coatColor = 0x4b4f58; pantsColor = 0x3a2e25; }
   else if (type === 'viking_berserker') { coatColor = 0x5c4330; pantsColor = 0x2d231c; }
+  else if (type === 'viking_chieftain') { coatColor = 0x3b2c2a; pantsColor = 0x26201c; }
   else if (type === 'boss_scandinavia') { coatColor = 0x293342; pantsColor = 0x26201c; }
   else if (type === 'german_rifleman' || type === 'german_mg') { coatColor = 0x565e55; pantsColor = 0x474d46; }
   else if (type === 'german_officer' || type === 'boss_normandy') { coatColor = 0x3c433c; pantsColor = 0x303630; }
+  else if (type === 'kgb_agent') { coatColor = 0x4d4a44; pantsColor = 0x2e2d2b; }
+  else if (type === 'soviet_militia') { coatColor = 0x4f5546; pantsColor = 0x3e4238; }
+  else if (type === 'boss_soviet') { coatColor = 0x2c3630; pantsColor = 0x242c28; }
+  else if (type === 'pla_rifleman' || type === 'pla_mg') { coatColor = 0x8a8255; pantsColor = 0x777049; }
+  else if (type === 'red_guard') { coatColor = 0x5c6b47; pantsColor = 0x454f38; }
+  else if (type === 'boss_tibet') { coatColor = 0x6b6642; pantsColor = 0x545034; }
 
   const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.68 });
   const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.78 });
@@ -575,17 +675,18 @@ function buildEnemyMesh(type) {
     tip.rotation.x = Math.PI / 2;
     tip.position.set(0, -0.26, 0.45 + spearLen * 0.5 + 0.1);
     armR.add(spear, tip);
-  } else if (type === 'viking_warrior' || type === 'viking_archer' || type === 'viking_berserker' || type === 'boss_scandinavia') {
-    // Historical Vikings — Strictly NO Horned Helmets!
+  } else if (type === 'viking_warrior' || type === 'viking_archer' || type === 'viking_berserker' || type === 'viking_chieftain' || type === 'boss_scandinavia') {
+    const isChieftain = type === 'viking_chieftain';
     const furMat = new THREE.MeshStandardMaterial({ color: type === 'viking_berserker' ? 0x4a3525 : 0x3b332d, roughness: 0.95 });
-    const beardCol = type === 'viking_berserker' ? 0x7c3b1e : 0x4d3a28;
+    const beardCol = type === 'viking_berserker' ? 0x7c3b1e : isChieftain ? 0x2e2116 : 0x4d3a28;
     const beardMat = new THREE.MeshStandardMaterial({ color: beardCol, roughness: 0.92 });
     const helmMat = isBoss ? goldMat : steelMat;
+    const hasHorns = isChieftain || isBoss || (type !== 'viking_berserker' && Math.random() < 0.32);
 
     // Fur shoulder mantle & beard
     const furMantle = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.26, 0.4), furMat);
     furMantle.position.set(0, 1.48, -0.02);
-    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.95, 0.1), isBoss ? redMat : furMat);
+    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.95, 0.1), (isBoss || isChieftain) ? redMat : furMat);
     cloak.position.set(0, 1.0, -0.22);
     root.add(furMantle, cloak);
 
@@ -595,27 +696,46 @@ function buildEnemyMesh(type) {
     head.add(beard);
 
     if (type === 'viking_berserker') {
-      // Bareheaded wild fur-hooded Berserker (zero horns!)
       const wolfHood = new THREE.Mesh(new THREE.SphereGeometry(0.245, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.62), furMat);
       wolfHood.position.set(0, 0.08, -0.03);
       head.add(wolfHood);
     } else {
-      // Historical Iron Spangenhelm / Gjermundbu Spectacle Helmet (smooth domed iron, NO horns!)
       const spangen = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), helmMat);
       spangen.position.y = 0.08;
-      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.235, 0.022, 6, 16), helmMat);
+      // Gilt band around helmet rim for horned/chieftain helmets
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.238, 0.028, 6, 16), hasHorns ? goldMat : helmMat);
       rim.rotation.x = Math.PI / 2;
       rim.position.y = 0.08;
       const nasal = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.15, 0.03), helmMat);
       nasal.position.set(0, 0.01, 0.22);
       head.add(spangen, rim, nasal);
+
+      if (hasHorns) {
+        // Two curved ivory ox horns with dark tips & gilt base rings
+        const hornMat = new THREE.MeshStandardMaterial({ color: 0xebe0c6, roughness: 0.58 });
+        const tipMat = new THREE.MeshStandardMaterial({ color: 0x2e261f, roughness: 0.6 });
+        for (const s of [-1, 1]) {
+          const hornGrp = new THREE.Group();
+          const baseRing = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 6, 10), goldMat);
+          baseRing.rotation.y = Math.PI / 2;
+          const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.052, 0.24, 8), hornMat);
+          lower.rotation.z = -s * 1.15;
+          lower.position.set(s * 0.11, 0.04, 0);
+          const upper = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.24, 8), tipMat);
+          upper.rotation.z = -s * 0.35;
+          upper.position.set(s * 0.25, 0.18, 0.02);
+          hornGrp.add(baseRing, lower, upper);
+          hornGrp.position.set(s * 0.22, 0.16, 0.02);
+          head.add(hornGrp);
+        }
+      }
     }
 
-    // Round painted Viking wooden shield (except berserker who dual-wields axes!)
+    // Round painted Viking wooden shield (except berserker & archer)
     if (type !== 'viking_berserker' && type !== 'viking_archer') {
-      const shTex = createVikingShieldTexture(isBoss ? 3 : 0);
+      const shTex = createVikingShieldTexture(isBoss ? 3 : isChieftain ? 2 : 0);
       const shMat = new THREE.MeshStandardMaterial({ map: shTex, roughness: 0.72 });
-      const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 18), [darkLeather, shMat, darkLeather]);
+      const shield = new THREE.Mesh(new THREE.CylinderGeometry(isChieftain ? 0.5 : 0.45, isChieftain ? 0.5 : 0.45, 0.06, 18), [darkLeather, shMat, darkLeather]);
       shield.rotation.x = Math.PI / 2;
       shield.position.set(-0.08, -0.18, 0.24);
       armL.add(shield);
@@ -627,6 +747,13 @@ function buildEnemyMesh(type) {
       bow.rotation.z = -Math.PI * 0.45;
       bow.position.set(0, -0.18, 0.28);
       armL.add(bow);
+    } else if (isChieftain && Math.random() < 0.5) {
+      // Heavy Norse broadsword
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.09, 1.05), steelMat);
+      blade.position.set(0, -0.26, 0.56);
+      const guard = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.05, 0.05), goldMat);
+      guard.position.set(0, -0.26, 0.08);
+      armR.add(blade, guard);
     } else {
       const addAxe = (targetArm) => {
         const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.92, 8), darkLeather);
@@ -690,6 +817,116 @@ function buildEnemyMesh(type) {
         armR.add(rifle);
       }
     }
+  } else if (type === 'kgb_agent' || type === 'soviet_militia' || type === 'boss_soviet') {
+    const gunMetal = new THREE.MeshStandardMaterial({ color: 0x26292d, metalness: 0.8, roughness: 0.32 });
+    const furMat = new THREE.MeshStandardMaterial({ color: 0x3b3532, roughness: 0.94 });
+    const blueBand = new THREE.MeshStandardMaterial({ color: 0x1d4b8c, roughness: 0.65 });
+
+    // Long coat skirt & belt
+    const coatSkirt = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.68, 0.34), coatMat);
+    coatSkirt.position.set(0, 0.6, 0);
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.09, 0.36), darkLeather);
+    belt.position.set(0, 0.94, 0);
+    root.add(coatSkirt, belt);
+
+    if (type === 'kgb_agent') {
+      // Belted trench coat, dark fedora hat, pistol
+      const fedoraBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.03, 14), darkLeather);
+      fedoraBrim.position.y = 0.14;
+      const fedoraCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 0.16, 12), darkLeather);
+      fedoraCrown.position.y = 0.23;
+      head.add(fedoraBrim, fedoraCrown);
+      const pistol = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.08, 0.32), gunMetal);
+      pistol.position.set(0, -0.26, 0.22);
+      armR.add(pistol);
+    } else if (type === 'soviet_militia') {
+      // Fur ushanka hat with red star, greatcoat, burst SMG
+      const ushanka = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.25, 0.2, 12), furMat);
+      ushanka.position.y = 0.19;
+      const star = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 6), redMat);
+      star.position.set(0, 0.2, 0.24);
+      head.add(ushanka, star);
+      const smg = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.03, 0.72, 8), gunMetal);
+      smg.rotation.x = Math.PI / 2;
+      smg.position.set(0, -0.26, 0.34);
+      const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.05, 10), gunMetal);
+      drum.rotation.x = Math.PI / 2;
+      drum.position.set(0, -0.35, 0.26);
+      armR.add(smg, drum);
+    } else {
+      // Boss Colonel Voronin: peaked officer cap with royal blue KGB band & TWO pistols!
+      const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.14, 14), coatMat);
+      capCrown.position.y = 0.2;
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.226, 0.226, 0.06, 14), blueBand);
+      band.position.y = 0.14;
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.03, 0.22), darkLeather);
+      visor.position.set(0, 0.11, 0.18);
+      head.add(capCrown, band, visor);
+      const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.09, 0.36), gunMetal);
+      p1.position.set(0, -0.26, 0.24);
+      armR.add(p1);
+      armL.rotation.x = -1.1;
+      const p2 = p1.clone();
+      armL.add(p2);
+    }
+  } else if (type === 'pla_rifleman' || type === 'pla_mg' || type === 'red_guard' || type === 'boss_tibet') {
+    const gunMetal = new THREE.MeshStandardMaterial({ color: 0x26292d, metalness: 0.78, roughness: 0.35 });
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.09, 0.34), darkLeather);
+    belt.position.set(0, 0.92, 0);
+    root.add(belt);
+
+    if (type === 'red_guard') {
+      // Red Guard: olive tunic, bright red armband on left sleeve, soft cap, wooden club
+      const armBand = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.14, 8), redMat);
+      armBand.position.set(0, 0.06, 0);
+      armL.add(armBand);
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.23, 0.12, 12), coatMat);
+      cap.position.y = 0.17;
+      const bill = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.025, 0.18), coatMat);
+      bill.position.set(0, 0.12, 0.17);
+      const star = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), redMat);
+      star.position.set(0, 0.17, 0.22);
+      head.add(cap, bill, star);
+      // Heavy wooden club
+      const club = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.03, 0.85, 8), darkLeather);
+      club.rotation.x = Math.PI / 2;
+      club.position.set(0, -0.26, 0.38);
+      armR.add(club);
+    } else if (type === 'boss_tibet') {
+      // Commander Zhao: peaked cap with red star, belted tunic, heavy sidearm/carbine
+      const capCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.22, 0.15, 14), coatMat);
+      capCrown.position.y = 0.19;
+      const visor = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.03, 0.22), darkLeather);
+      visor.position.set(0, 0.11, 0.18);
+      const star = new THREE.Mesh(new THREE.SphereGeometry(0.035, 6, 6), redMat);
+      star.position.set(0, 0.19, 0.24);
+      head.add(capCrown, visor, star);
+      const carbine = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.095, 0.7), gunMetal);
+      carbine.position.set(0, -0.26, 0.35);
+      armR.add(carbine);
+    } else {
+      // Khaki PLA uniform, soft cap with red star, rifle or burst MG
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.23, 0.12, 12), coatMat);
+      cap.position.y = 0.17;
+      const bill = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.025, 0.18), coatMat);
+      bill.position.set(0, 0.12, 0.17);
+      const star = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), redMat);
+      star.position.set(0, 0.17, 0.22);
+      head.add(cap, bill, star);
+      if (type === 'pla_mg') {
+        const mg = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.042, 1.08, 8), gunMetal);
+        mg.rotation.x = Math.PI / 2;
+        mg.position.set(0, -0.24, 0.48);
+        const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.05, 12), gunMetal);
+        pan.position.set(0, -0.17, 0.36);
+        armR.add(mg, pan);
+      } else {
+        const rifle = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.028, 1.05, 8), darkLeather);
+        rifle.rotation.x = Math.PI / 2;
+        rifle.position.set(0, -0.26, 0.42);
+        armR.add(rifle);
+      }
+    }
   }
 
   // Muzzle flash beacon on weapon tip
@@ -723,7 +960,7 @@ function buildEnemyMesh(type) {
 }
 
 export class Enemy {
-  constructor(type, position, difficultyMult = 1.0) {
+  constructor(type, position, difficultyMult = 1.0, options = {}) {
     const spec = ENEMY_SPECS[type];
     this.type = type;
     this.name = spec.name;
@@ -745,19 +982,32 @@ export class Enemy {
 
     this.alive = true;
     this.alert = false;
+    this.hideUntilClose = !!options.hideUntilClose;
+    this.ambushDist = options.ambushDist || 12.5;
+    if (this.hideUntilClose) {
+      this.mesh.visible = false;
+    }
+
     this.fireCooldown = 0.6 + Math.random() * 0.9;
     this.strafeDir = Math.random() > 0.5 ? 1 : -1;
     this.strafeTimer = 1.2 + Math.random() * 2.0;
     this.hurtFlash = 0;
     this.muzzleFlash = 0;
     this.deathTimer = 0;
+    this.fallChecked = false;
+    this.slumpDeath = false;
     this.walkPhase = Math.random() * Math.PI * 2;
     this.radius = this.style === 'dog' ? 0.36 : this.isBoss ? 0.68 : 0.46;
     this.headHeight = this.style === 'dog' ? 0.72 : this.isBoss ? 2.15 : 1.72;
+
+    // A* route-finding state
+    this.path = null;
+    this.pathIdx = 0;
+    this.pathTimer = Math.random() * 0.5;
   }
 
   getHitMeshes() {
-    if (!this.alive) return [];
+    if (!this.alive || !this.mesh.visible) return [];
     const list = [];
     this.mesh.traverse((o) => {
       if (o.isMesh && o !== this.parts.hpBg && o !== this.parts.hpFill && o !== this.parts.muzzle) {
@@ -771,6 +1021,8 @@ export class Enemy {
   takeDamage(amount, isHeadshot = false) {
     if (!this.alive) return false;
     this.alert = true;
+    this.hideUntilClose = false;
+    this.mesh.visible = true;
     this.hp -= amount;
     this.hurtFlash = 0.16;
 
@@ -792,14 +1044,58 @@ export class Enemy {
 
   update(dt, playerPos, collision, callbacks, detectMult = 1.0) {
     if (!this.alive) {
-      // Dramatic collapse animation
+      // Pick a wall-free fall direction on the first death frame, or slump cleanly in place
+      if (!this.fallChecked) {
+        this.fallChecked = true;
+        const origin = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + 0.85, this.mesh.position.z);
+        const candidates = [
+          this.mesh.rotation.y + Math.PI,
+          this.mesh.rotation.y,
+          this.mesh.rotation.y + Math.PI * 0.5,
+          this.mesh.rotation.y - Math.PI * 0.5
+        ];
+        let freeYaw = null;
+        for (const yaw of candidates) {
+          const dir = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+          if (!collision.raycast(origin, dir, 1.55)) {
+            freeYaw = yaw;
+            break;
+          }
+        }
+        if (freeYaw !== null) {
+          this.mesh.rotation.y = freeYaw;
+          this.slumpDeath = false;
+        } else {
+          this.slumpDeath = true;
+        }
+      }
+
       this.deathTimer = Math.min(1, this.deathTimer + dt * 2.8);
-      this.mesh.rotation.x = -this.deathTimer * (Math.PI * 0.48);
-      this.mesh.position.y = Math.max(
-        collision.getFloorHeight(this.mesh.position.x, this.mesh.position.z, this.mesh.position.y) + 0.18,
-        this.mesh.position.y - dt * 1.4
-      );
+      const floorY = collision.getFloorHeight(this.mesh.position.x, this.mesh.position.z, this.mesh.position.y);
+      if (this.slumpDeath) {
+        // Slump down cleanly without clipping into tight walls/corners
+        const s = Math.max(0.28, 1 - this.deathTimer * 0.72);
+        this.mesh.scale.y = s * (ENEMY_SPECS[this.type].scale || 1);
+        this.mesh.position.y = floorY;
+      } else {
+        this.mesh.rotation.x = -this.deathTimer * (Math.PI * 0.48);
+        this.mesh.position.y = Math.max(floorY + 0.18, this.mesh.position.y - dt * 1.4);
+      }
       return;
+    }
+
+    const toPlayer = new THREE.Vector3().subVectors(playerPos, this.mesh.position);
+    const horizDist = Math.hypot(toPlayer.x, toPlayer.z);
+
+    // Hidden ambush enemy (e.g., Boot Hill crypt outlaw) emerges when player approaches
+    if (this.hideUntilClose) {
+      if (horizDist <= this.ambushDist) {
+        this.hideUntilClose = false;
+        this.mesh.visible = true;
+        this.alert = true;
+      } else {
+        return;
+      }
     }
 
     // Billboard mini HP bar toward player
@@ -820,9 +1116,6 @@ export class Enemy {
       this.parts.muzzle.material.opacity = Math.max(0, this.muzzleFlash * 8);
     }
 
-    const toPlayer = new THREE.Vector3().subVectors(playerPos, this.mesh.position);
-    const horizDist = Math.hypot(toPlayer.x, toPlayer.z);
-
     // Wake up when player gets close or enters sight (scaled by hero stealth multiplier!)
     const eyeY = this.style === 'dog' ? 0.7 : 1.55;
     const eyePos = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + eyeY, this.mesh.position.z);
@@ -838,54 +1131,85 @@ export class Enemy {
           callbacks.onDogBark(this);
         }
       } else {
-        // Gentle idle sway
         const baseTorsoY = this.style === 'dog' ? 0.50 : 1.16;
         this.parts.torso.position.y = baseTorsoY + Math.sin(performance.now() * 0.002 + this.walkPhase) * 0.02;
         return;
       }
     }
 
-    // Face the player smoothly
-    const targetYaw = Math.atan2(toPlayer.x, toPlayer.z);
-    let diffYaw = targetYaw - this.mesh.rotation.y;
-    while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
-    while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
-    this.mesh.rotation.y += diffYaw * Math.min(1, dt * 8);
-
-    // Movement logic based on archetype
+    // Movement logic with real A* route-finding around walls, through doors, and up stairs
     this.strafeTimer -= dt;
     if (this.strafeTimer <= 0) {
       this.strafeTimer = 1.1 + Math.random() * 1.6;
       this.strafeDir *= -1;
     }
 
-    const forward = new THREE.Vector3(Math.sin(targetYaw), 0, Math.cos(targetYaw));
-    const right = new THREE.Vector3(Math.cos(targetYaw), 0, -Math.sin(targetYaw));
-    const move = new THREE.Vector3();
-
     const isMelee = this.style === 'melee' || this.style === 'dog';
     const isTurret = this.style === 'turret';
     const isHybrid = this.style === 'hybrid' || this.style === 'boss_hybrid';
-    const desiredMin = this.style === 'dog' ? 1.55 : isMelee ? 2.1 : isHybrid ? 7.0 : 12.5;
-    const desiredMax = this.style === 'dog' ? 2.0 : isMelee ? 2.6 : isHybrid ? 15.0 : 25.0;
+    const desiredMin = this.style === 'dog' ? 1.55 : isMelee ? 2.0 : isHybrid ? 7.0 : 12.5;
+    const desiredMax = this.style === 'dog' ? 2.0 : isMelee ? 2.5 : isHybrid ? 15.0 : 25.0;
 
-    if (!isTurret) {
-      if (!canSee || horizDist > desiredMax) {
-        move.add(forward);
-      } else if (horizDist < desiredMin && !isMelee) {
-        move.addScaledVector(forward, -0.55);
-      }
+    const move = new THREE.Vector3();
+    let lookTargetX = playerPos.x;
+    let lookTargetZ = playerPos.z;
 
-      if (horizDist < desiredMax + 6 && this.style !== 'dog') {
-        move.addScaledVector(right, this.strafeDir * (this.style === 'skirmisher' ? 1.15 : 0.65));
+    if (!isTurret && this.speed > 0) {
+      const needsRoute = !canSee || (isMelee && horizDist > 4.0) || horizDist > desiredMax;
+      if (needsRoute && collision.nav) {
+        this.pathTimer -= dt;
+        if (this.pathTimer <= 0 || !this.path || this.pathIdx >= this.path.length) {
+          this.pathTimer = 0.55 + Math.random() * 0.3;
+          this.path = collision.findPath(this.mesh.position, playerPos, 1400);
+          this.pathIdx = 0;
+        }
+        if (this.path && this.pathIdx < this.path.length) {
+          while (this.pathIdx < this.path.length) {
+            const wp = this.path[this.pathIdx];
+            if (Math.hypot(wp.x - this.mesh.position.x, wp.z - this.mesh.position.z) < 1.05) {
+              this.pathIdx++;
+            } else {
+              break;
+            }
+          }
+          if (this.pathIdx < this.path.length) {
+            const wp = this.path[this.pathIdx];
+            move.set(wp.x - this.mesh.position.x, 0, wp.z - this.mesh.position.z);
+            if (!canSee) {
+              lookTargetX = wp.x;
+              lookTargetZ = wp.z;
+            }
+          }
+        } else {
+          // Fallback steering if outside nav budget
+          move.set(toPlayer.x, 0, toPlayer.z);
+        }
+      } else {
+        const directYaw = Math.atan2(toPlayer.x, toPlayer.z);
+        const forward = new THREE.Vector3(Math.sin(directYaw), 0, Math.cos(directYaw));
+        const right = new THREE.Vector3(Math.cos(directYaw), 0, -Math.sin(directYaw));
+        if (!canSee || horizDist > desiredMax) {
+          move.add(forward);
+        } else if (horizDist < desiredMin && !isMelee) {
+          move.addScaledVector(forward, -0.55);
+        }
+        if (horizDist < desiredMax + 6 && this.style !== 'dog') {
+          move.addScaledVector(right, this.strafeDir * (this.style === 'skirmisher' ? 1.15 : 0.65));
+        }
       }
     }
 
-    if (move.lengthSq() > 0.01 && this.speed > 0) {
+    // Face either the player (when visible) or the next route waypoint
+    const targetYaw = Math.atan2(lookTargetX - this.mesh.position.x, lookTargetZ - this.mesh.position.z);
+    let diffYaw = targetYaw - this.mesh.rotation.y;
+    while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
+    while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
+    this.mesh.rotation.y += diffYaw * Math.min(1, dt * 8);
+
+    if (move.lengthSq() > 0.001 && this.speed > 0) {
       move.normalize().multiplyScalar(this.speed * dt);
-      this.mesh.position.x += move.x;
-      this.mesh.position.z += move.z;
-      collision.resolveHorizontal(this.mesh.position, this.radius, this.mesh.position.y);
+      // Sub-stepped movement prevents fast runners from skipping thin walls or bars
+      collision.moveHorizontal(this.mesh.position, move.x, move.z, this.radius, this.mesh.position.y);
       const fy = collision.getFloorHeight(this.mesh.position.x, this.mesh.position.z, this.mesh.position.y);
       this.mesh.position.y += (fy - this.mesh.position.y) * Math.min(1, dt * 14);
 
@@ -901,12 +1225,12 @@ export class Enemy {
       }
     }
 
-    // Attack logic
+    // Attack logic (melee strictly requires unobstructed line of sight!)
     this.fireCooldown -= dt;
     if (this.fireCooldown <= 0) {
       const biteRange = this.style === 'dog' ? 2.45 : 3.5;
       if (isMelee || (isHybrid && horizDist < 3.6)) {
-        if (horizDist < biteRange) {
+        if (horizDist < biteRange && collision.hasLineOfSight(eyePos, playerEye)) {
           this.fireCooldown = this.fireRate;
           if (this.style === 'dog') {
             this.parts.head.rotation.x = 0.35;

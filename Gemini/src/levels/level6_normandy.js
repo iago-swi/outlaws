@@ -7,6 +7,14 @@ import {
   createBalkenkreuzTexture
 } from '../engine/textures.js';
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
+import {
+  buildHollowRoom,
+  addSolidBox,
+  addAltar,
+  addPewRow,
+  addDesk,
+  addBunk
+} from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
 
 export const LEVEL6_META = {
@@ -17,15 +25,15 @@ export const LEVEL6_META = {
   title: 'NORMANDY',
   subtitle: 'Before First Light',
   heroName: 'LYUDMILA PAVLICHENKO',
-  objective: 'Cross the Village & Silence the Coastal Gun Battery Before Dawn',
+  objective: 'Cross the Village, Manor & Church and Silence the Cliff Battery',
   quote: '"The armada waits on the dark Channel horizon. Cross the bocage lanes and occupied village, and silence the cliffside battery before first light."',
   historicalNote: 'Historical note: these three real resistance figures did not meet in Normandy in June 1944; they appear together here as legends.',
   musicTheme: 'normandy',
   enemyIcon: '✚',
   currency: '★ ',
-  spawnPos: new THREE.Vector3(0, 0, 48),
+  spawnPos: new THREE.Vector3(0, 0, 56),
   spawnYaw: 0,
-  cameraPreview: { center: new THREE.Vector3(0, 6, -6), radius: 44, height: 15, speed: 0.11 }
+  cameraPreview: { center: new THREE.Vector3(0, 6, -8), radius: 48, height: 16, speed: 0.11 }
 };
 
 export function buildLevel6(scene, collision, particles) {
@@ -33,94 +41,75 @@ export function buildLevel6(scene, collision, particles) {
   const animated = [];
   const pickups = [];
 
-  collision.bounds = { minX: -48, maxX: 48, minZ: -52, maxZ: 52 };
+  collision.bounds = { minX: -76, maxX: 76, minZ: -74, maxZ: 72 };
 
-  // 1. Pre-Dawn Twilight Sky & Playable Moonlight + Fill Lighting (bright & readable!)
+  // 1. Pre-Dawn Twilight Sky & Crisp Moonlight
   const dawnDir = new THREE.Vector3(0.32, 0.24, -0.92).normalize();
   const sky = createSkyDome({
-    topColor: 0x101836,
-    midColor: 0x4b3a66,
-    horizonColor: 0xd99b88,
-    sunColor: 0xffd7b5,
-    sunDirection: dawnDir,
-    cloudTint: 0x997ca6,
-    cloudDensity: 0.42
+    topColor: 0x101836, midColor: 0x4b3a66, horizonColor: 0xd99b88,
+    sunColor: 0xffd7b5, sunDirection: dawnDir, cloudTint: 0x997ca6, cloudDensity: 0.42
   });
   scene.add(sky.mesh);
   animated.push((t) => { sky.uniforms.uTime.value = t; });
 
-  scene.fog = new THREE.FogExp2(0x3a3752, 0.0062);
+  scene.fog = new THREE.FogExp2(0x3a3752, 0.0052);
+  scene.add(new THREE.HemisphereLight(0xa3bce6, 0x3b4536, 1.15));
 
-  // Generous cool silver-blue moonlight + hemisphere + warm horizon fill so gameplay is crisp & clearly lit!
-  const hemi = new THREE.HemisphereLight(0xa3bce6, 0x3b4536, 1.15);
-  scene.add(hemi);
-
-  const moonLight = new THREE.DirectionalLight(0xcce0ff, 2.25);
+  const moonLight = new THREE.DirectionalLight(0xcce0ff, 2.2);
   moonLight.position.set(-48, 72, 62);
   moonLight.castShadow = true;
   moonLight.shadow.mapSize.set(2048, 2048);
-  moonLight.shadow.camera.left = -72;
-  moonLight.shadow.camera.right = 72;
-  moonLight.shadow.camera.top = 72;
-  moonLight.shadow.camera.bottom = -72;
+  moonLight.shadow.camera.left = -88;
+  moonLight.shadow.camera.right = 88;
+  moonLight.shadow.camera.top = 88;
+  moonLight.shadow.camera.bottom = -88;
   moonLight.shadow.near = 10;
-  moonLight.shadow.far = 230;
+  moonLight.shadow.far = 260;
   moonLight.shadow.bias = -0.0005;
   scene.add(moonLight);
 
-  const dawnFill = new THREE.DirectionalLight(0xffbfa3, 0.65);
-  dawnFill.position.copy(dawnDir).multiplyScalar(100);
+  const dawnFill = new THREE.DirectionalLight(0xffbfa3, 0.6);
+  dawnFill.position.copy(dawnDir).multiplyScalar(110);
   scene.add(dawnFill);
 
-  // 2. English Channel Sea Beyond the Northern Cliff & Invasion Fleet on the Horizon!
-  const channel = createWaterMesh(460, 260, {
-    deepColor: 0x0d2138,
-    shallowColor: 0x224766,
-    foamColor: 0xaec6de,
-    sunColor: 0xffcfb5,
-    sunDir: dawnDir,
-    opacity: 0.94,
-    waveScale: 0.16
+  // 2. English Channel & Distant Allied Invasion Fleet
+  const channel = createWaterMesh(540, 280, {
+    deepColor: 0x0d2138, shallowColor: 0x224766, foamColor: 0xaec6de,
+    sunColor: 0xffcfb5, sunDir: dawnDir, opacity: 0.94, waveScale: 0.16
   });
-  channel.mesh.position.set(0, -4.5, -182);
+  channel.mesh.position.set(0, -4.5, -210);
   scene.add(channel.mesh);
   animated.push((t) => { channel.uniforms.uTime.value = t; });
 
-  // Distant Allied Invasion Fleet silhouettes stretching across the Channel horizon
   const shipMat = new THREE.MeshBasicMaterial({ color: 0x161b29 });
   const shipLights = new THREE.MeshBasicMaterial({ color: 0xffe4a3 });
-  for (let i = 0; i < 16; i++) {
-    const sx = -150 + i * 20 + ((i * 13) % 9);
-    const sz = -170 - (i % 4) * 26;
-    const isLarge = i % 3 === 0;
-    const hull = new THREE.Mesh(new THREE.BoxGeometry(isLarge ? 14 : 7.5, isLarge ? 3.2 : 1.8, 3.6), shipMat);
+  for (let i = 0; i < 18; i++) {
+    const sx = -170 + i * 20;
+    const sz = -195 - (i % 4) * 26;
+    const big = i % 3 === 0;
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(big ? 14 : 7.5, big ? 3.2 : 1.8, 3.6), shipMat);
     hull.position.set(sx, -3.2, sz);
-    const bridge = new THREE.Mesh(new THREE.BoxGeometry(isLarge ? 4.2 : 2.2, isLarge ? 4.5 : 2.2, 2.4), shipMat);
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(big ? 4.2 : 2.2, big ? 4.5 : 2.2, 2.4), shipMat);
     bridge.position.set(sx, -0.5, sz);
-    const signal = new THREE.Mesh(new THREE.SphereGeometry(0.32, 6, 6), shipLights);
-    signal.position.set(sx, isLarge ? 2.1 : 0.8, sz);
-    scene.add(hull, bridge, signal);
+    const sig = new THREE.Mesh(new THREE.SphereGeometry(0.32, 6, 6), shipLights);
+    sig.position.set(sx, big ? 2.1 : 0.8, sz);
+    scene.add(hull, bridge, sig);
   }
 
-  // Sweeping Pre-Dawn Searchlight Beams from behind the Cliff Bunkers!
+  // Sweeping Pre-Dawn Searchlights & AA Flak Bursts
   const beamMat = new THREE.MeshBasicMaterial({
-    color: 0xd9ecff,
-    transparent: true,
-    opacity: 0.16,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide
+    color: 0xd9ecff, transparent: true, opacity: 0.15,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
   });
-  const searchlights = [
-    { x: -24, z: -46, phase: 0, speed: 0.45, range: 0.48 },
-    { x: 0,   z: -48, phase: 2.1, speed: 0.36, range: 0.42 },
-    { x: 25,  z: -45, phase: 4.0, speed: 0.52, range: 0.5 }
-  ];
-  for (const sl of searchlights) {
+  for (const sl of [
+    { x: -28, z: -64, phase: 0, speed: 0.45, range: 0.48 },
+    { x: 0,   z: -66, phase: 2.1, speed: 0.36, range: 0.42 },
+    { x: 28,  z: -64, phase: 4.0, speed: 0.52, range: 0.5 }
+  ]) {
     const pivot = new THREE.Group();
     pivot.position.set(sl.x, 4.5, sl.z);
-    const cone = new THREE.Mesh(new THREE.ConeGeometry(9.5, 115, 14, 1, true), beamMat);
-    cone.position.y = 57.5;
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(9.5, 125, 14, 1, true), beamMat);
+    cone.position.y = 62;
     cone.rotation.x = Math.PI;
     pivot.add(cone);
     scene.add(pivot);
@@ -129,335 +118,247 @@ export function buildLevel6(scene, collision, particles) {
       pivot.rotation.x = -0.22 + Math.cos(t * sl.speed * 0.7 + sl.phase) * 0.14;
     });
   }
-
-  // Animated High-Altitude Anti-Aircraft Flak Bursts over the Channel Sky!
-  const flakSpots = [];
-  for (let i = 0; i < 6; i++) {
-    const flash = new THREE.Mesh(
-      new THREE.SphereGeometry(1.9, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0xffb347, transparent: true, opacity: 0 })
+  const flakSpots = [[-36, 44, -82, 0.4], [12, 52, -96, 1.7], [42, 42, -78, 3.1], [-12, 48, -110, 4.5]];
+  for (const [fx, fy, fz, ph] of flakSpots) {
+    const puff = new THREE.Mesh(
+      new THREE.SphereGeometry(2.6, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffc670, transparent: true, opacity: 0 })
     );
-    flash.position.set(-55 + i * 22, 34 + (i % 3) * 10, -110 - (i % 2) * 25);
-    scene.add(flash);
-    flakSpots.push({ mesh: flash, offset: i * 1.35, period: 3.8 + (i % 3) * 1.1 });
+    puff.position.set(fx, fy, fz);
+    scene.add(puff);
+    animated.push((t) => {
+      const cyc = (t * 0.65 + ph) % 3.0;
+      puff.material.opacity = cyc < 0.25 ? (1 - cyc / 0.25) * 0.85 : 0;
+      puff.scale.setScalar(1 + cyc * 0.6);
+    });
   }
-  animated.push((t) => {
-    for (const f of flakSpots) {
-      const cyc = (t + f.offset) % f.period;
-      if (cyc < 0.28) {
-        const p = 1 - cyc / 0.28;
-        f.mesh.material.opacity = p * 0.95;
-        f.mesh.scale.setScalar(0.6 + (1 - p) * 2.2);
-      } else {
-        f.mesh.material.opacity = 0;
-      }
-    }
-  });
 
-  // 3. Norman Countryside & Village Ground + Cobblestone Road
-  const meadowTex = getGroundTexture('alpine_meadow', 22, 22);
+  // 3. Norman Bocage Ground & Cobble Village Road
+  const grassTex = getGroundTexture('alpine_meadow', 32, 32);
   const ground = new THREE.Mesh(
-    new THREE.BoxGeometry(116, 8, 120),
-    new THREE.MeshStandardMaterial({
-      map: meadowTex.map,
-      color: 0x7b9468,
-      bumpMap: meadowTex.bumpMap,
-      bumpScale: 0.2,
-      roughness: 0.94
-    })
+    new THREE.PlaneGeometry(360, 260),
+    new THREE.MeshStandardMaterial({ map: grassTex.map, color: 0x627359, roughness: 0.94 })
   );
-  ground.position.set(0, -4, 2);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(0, 0, 50);
   ground.receiveShadow = true;
   scene.add(ground);
 
   const cobbleTex = getGroundTexture('cobble', 3, 28);
-  const mainLane = new THREE.Mesh(
-    new THREE.PlaneGeometry(7.2, 98),
-    new THREE.MeshStandardMaterial({ map: cobbleTex.map, color: 0xadb0ad, bumpMap: cobbleTex.bumpMap, bumpScale: 0.22, roughness: 0.88 })
+  const road = new THREE.Mesh(
+    new THREE.PlaneGeometry(7.2, 128),
+    new THREE.MeshStandardMaterial({ map: cobbleTex.map, color: 0x8a8c88, roughness: 0.88 })
   );
-  mainLane.rotation.x = -Math.PI / 2;
-  mainLane.position.set(0, 0.04, 2);
-  mainLane.receiveShadow = true;
-  scene.add(mainLane);
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(0, 0.04, 4);
+  road.receiveShadow = true;
+  scene.add(road);
 
   // Shared Materials
   const stoneTex = getStoneTexture('castle', 2, 2);
-  const concreteTex = getConcreteTexture(2, 2);
+  const concTex = getConcreteTexture(2, 2);
   const woodTex = getWoodPlanks('weathered', 2, 2);
-  const barCrossTex = createBalkenkreuzTexture('#535950');
-
-  const matNormanStone = new THREE.MeshStandardMaterial({ map: stoneTex.map, color: 0xc9c2b2, bumpMap: stoneTex.bumpMap, bumpScale: 0.22, roughness: 0.88 });
-  const matSlateRoof = new THREE.MeshStandardMaterial({ color: 0x3b424d, roughness: 0.78 });
-  const matConcrete = new THREE.MeshStandardMaterial({ map: concreteTex.map, bumpMap: concreteTex.bumpMap, bumpScale: 0.24, roughness: 0.92 });
+  const matStone = new THREE.MeshStandardMaterial({ map: stoneTex.map, color: 0xb0aa9c, roughness: 0.9 });
+  const matConc = new THREE.MeshStandardMaterial({ map: concTex.map, roughness: 0.88 });
+  const matSlate = new THREE.MeshStandardMaterial({ color: 0x3b424d, roughness: 0.82 });
   const matWood = new THREE.MeshStandardMaterial({ map: woodTex.map, roughness: 0.86 });
-  const matDarkWood = new THREE.MeshStandardMaterial({ color: 0x36281e, roughness: 0.88 });
-  const matHedge = new THREE.MeshStandardMaterial({ color: 0x2f4d28, roughness: 0.94 });
-  const matHedgeTop = new THREE.MeshStandardMaterial({ color: 0x3d6132, roughness: 0.94 });
-  const matSandbag = new THREE.MeshStandardMaterial({ color: 0x9c8b6b, roughness: 0.95 });
-  const matMilGrey = new THREE.MeshStandardMaterial({ color: 0x4f554e, roughness: 0.72, metalness: 0.25 });
-  const matMilDark = new THREE.MeshStandardMaterial({ color: 0x2c302c, roughness: 0.65, metalness: 0.45 });
-  const matBarCross = new THREE.MeshStandardMaterial({ map: barCrossTex, roughness: 0.72, side: THREE.DoubleSide });
-  const matWindowDim = new THREE.MeshStandardMaterial({ color: 0xffd58a, emissive: 0xff9d3b, emissiveIntensity: 0.65 });
-  const matRedStripe = new THREE.MeshStandardMaterial({ color: 0xb82c26, roughness: 0.7 });
-  const matWhiteStripe = new THREE.MeshStandardMaterial({ color: 0xebe6da, roughness: 0.75 });
+  const matDarkWood = new THREE.MeshStandardMaterial({ color: 0x33241a, roughness: 0.86 });
+  const matHedge = new THREE.MeshStandardMaterial({ color: 0x2a4526, roughness: 0.95 });
+  const matSandbag = new THREE.MeshStandardMaterial({ color: 0x998c6e, roughness: 0.94 });
+  const matMilGrey = new THREE.MeshStandardMaterial({ color: 0x525951, roughness: 0.65, metalness: 0.35 });
+  const matSteel = new THREE.MeshStandardMaterial({ color: 0x2c3034, metalness: 0.72, roughness: 0.38 });
+  const matCross = new THREE.MeshStandardMaterial({ map: createBalkenkreuzTexture('#525951'), roughness: 0.65 });
+  const matCanvas = new THREE.MeshStandardMaterial({ color: 0x626656, roughness: 0.9 });
 
-  // ---- SOUTH BOCAGE HEDGEROWS & SUNKEN LANE ----
-  function addHedgerow(x, z, w, d, h = 2.4) {
-    const g = new THREE.Group();
-    g.position.set(x, 0, z);
-    const base = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matHedge);
-    base.position.y = h * 0.5;
-    base.castShadow = true;
-    base.receiveShadow = true;
-    g.add(base);
-    const puffs = Math.max(2, Math.floor(Math.max(w, d) / 3.2));
-    for (let i = 0; i < puffs; i++) {
-      const t = (i + 0.5) / puffs - 0.5;
-      const p = new THREE.Mesh(new THREE.DodecahedronGeometry(1.35, 0), matHedgeTop);
-      p.position.set(w > d ? t * w : 0, h + 0.2, d >= w ? t * d : 0);
-      p.scale.set(1.2, 0.75, 1.2);
-      g.add(p);
-    }
-    scene.add(g);
-    collision.addBox(x, h * 0.5, z, w, h + 0.6, d, 'wood');
+  // ---- BOCAGE HEDGEROWS LINING THE SUNKEN LANE (South Approach — solid!) ----
+  for (const [hx, hz, hw, hd] of [
+    [-10, 44, 10, 2.2], [10, 44, 10, 2.2], [-22, 36, 2.4, 16], [22, 36, 2.4, 16],
+    [-12, 30, 12, 2.2], [12, 30, 12, 2.2]
+  ]) addSolidBox(scene, collision, hx, 1.35, hz, hw, 2.7, hd, matHedge, 'wood');
+
+  // ---- 1. ENTERABLE STONE NORMAN VILLAGE HOUSES (Ground floor hollow + upper stone story!) ----
+  function buildNormanHouse(cx, cz, w, d, doorSide) {
+    const opts = {
+      cx, cz, w, d, h: 3.6, floorY: 0.16,
+      wallMat: matStone, floorMat: matWood, roofMat: matSlate, roofStyle: 'none',
+      interiorLight: { color: 0xffc688, intensity: 1.4, distance: 12 }
+    };
+    opts[doorSide] = [
+      { type: 'door', offset: 0, width: 2.3, height: 2.8 },
+      { type: 'window', offset: 3.2, width: 1.5 }
+    ];
+    const opp = doorSide === 'east' ? 'west' : doorSide === 'west' ? 'east' : 'north';
+    opts[opp] = [{ type: 'window', offset: 0, width: 1.6 }];
+    const room = buildHollowRoom(scene, collision, opts);
+
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(w, 3.0, d), matStone);
+    upper.position.set(cx, room.roofY + 1.5, cz);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(w, d) * 0.82, 2.8, 4), matSlate);
+    roof.rotation.y = Math.PI / 4;
+    roof.position.set(cx, room.roofY + 4.4, cz);
+    scene.add(upper, roof);
+    collision.addBox(cx, room.roofY + 1.5, cz, w, 3.0, d, 'stone');
+    addDesk(scene, collision, cx + (doorSide === 'east' ? -2.4 : 2.4), room.floorY, cz, 1.5, 0.85, matDarkWood, 1);
+    return room;
   }
 
-  addHedgerow(-7.5, 36, 2.6, 18, 2.3);
-  addHedgerow(7.5, 36, 2.6, 18, 2.3);
-  addHedgerow(-22, 42, 26, 2.8, 2.5);
-  addHedgerow(22, 42, 26, 2.8, 2.5);
-  addHedgerow(-30, 22, 14, 2.6, 2.4);
-  addHedgerow(30, 22, 14, 2.6, 2.4);
+  buildNormanHouse(-19, 16, 10, 10, 'east');
+  buildNormanHouse(19, 16, 10, 10, 'west');
+  buildNormanHouse(-19, -4, 10, 10, 'east');
 
-  // ---- NORMAN STONE FARMHOUSE & VILLAGE HOUSES ----
-  function buildNormanHouse(x, z, w, h, d, rotY = 0) {
-    const g = new THREE.Group();
-    g.position.set(x, 0, z);
-    g.rotation.y = rotY;
-
-    const walls = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), matNormanStone);
-    walls.position.y = h * 0.5;
-    walls.castShadow = true;
-    walls.receiveShadow = true;
-    g.add(walls);
-
-    // Pitched Normandy slate roof
-    const roofH = 2.8;
-    const roofShape = new THREE.Shape();
-    roofShape.moveTo(-(w * 0.55), 0);
-    roofShape.lineTo(w * 0.55, 0);
-    roofShape.lineTo(0, roofH);
-    roofShape.closePath();
-    const rGeo = new THREE.ExtrudeGeometry(roofShape, { depth: d + 0.8, bevelEnabled: false });
-    rGeo.translate(0, 0, -(d + 0.8) * 0.5);
-    const roof = new THREE.Mesh(rGeo, matSlateRoof);
-    roof.position.y = h - 0.05;
-    roof.castShadow = true;
-    g.add(roof);
-
-    // Shuttered windows & wooden door
-    const door = new THREE.Mesh(new THREE.BoxGeometry(1.6, 2.5, 0.2), matDarkWood);
-    door.position.set(0, 1.25, d * 0.5 + 0.04);
-    g.add(door);
-    for (const wx of [-w * 0.3, w * 0.3]) {
-      const win = new THREE.Mesh(new THREE.BoxGeometry(1.15, 1.35, 0.18), matWindowDim);
-      win.position.set(wx, h * 0.62, d * 0.5 + 0.04);
-      g.add(win);
-    }
-
-    scene.add(g);
-    const cos = Math.abs(Math.cos(rotY));
-    collision.addBox(x, h * 0.5, z, cos > 0.5 ? w : d, h + 3, cos > 0.5 ? d : w, 'stone');
-  }
-
-  // Countryside Norman Farm (Southwest)
-  buildNormanHouse(-19, 32, 11, 4.8, 8.5, Math.PI / 2);
-  // Village Stone Houses
-  buildNormanHouse(19, 14, 10.5, 5.6, 8.5, -Math.PI / 2);
-  buildNormanHouse(-20, -2, 11, 5.8, 9.0, Math.PI / 2);
-  buildNormanHouse(21, -8, 10, 5.2, 8.5, -Math.PI / 2);
-
-  // ---- NORMAN STONE PARISH CHURCH WITH BELL TOWER & SPIRE (West Village Square) ----
-  const church = new THREE.Group();
-  church.position.set(-20, 0, 14);
-  church.rotation.y = Math.PI / 2;
-  const nave = new THREE.Mesh(new THREE.BoxGeometry(9.5, 6.8, 14.5), matNormanStone);
-  nave.position.y = 3.4;
-  nave.castShadow = true;
-  nave.receiveShadow = true;
-  const belfry = new THREE.Mesh(new THREE.BoxGeometry(4.8, 13.5, 4.8), matNormanStone);
-  belfry.position.set(0, 6.75, 5.4);
-  belfry.castShadow = true;
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(3.2, 8.2, 4), matSlateRoof);
+  // ---- 2. ENTERABLE NORMAN PARISH CHURCH (Pews, Altar & Tall Stone Bell Tower!) ----
+  const church = buildHollowRoom(scene, collision, {
+    cx: 21, cz: -12, w: 11.5, d: 16, h: 5.0, floorY: 0.2,
+    wallMat: matStone, floorMat: matStone, roofMat: matSlate, roofStyle: 'gable',
+    west: [
+      { type: 'door', offset: 0, width: 2.4, height: 3.1 },
+      { type: 'window', offset: -4.5, width: 1.5 },
+      { type: 'window', offset: 4.5, width: 1.5 }
+    ],
+    south: [{ type: 'door', offset: 0, width: 2.3, height: 3.0 }],
+    interiorLight: { color: 0xffd299, intensity: 1.7, distance: 16 }
+  });
+  const steeple = new THREE.Mesh(new THREE.BoxGeometry(3.4, 6.5, 3.4), matStone);
+  steeple.position.set(21, church.roofY + 3.4, -17.5);
+  const spire = new THREE.Mesh(new THREE.ConeGeometry(2.6, 5.5, 4), matSlate);
   spire.rotation.y = Math.PI / 4;
-  spire.position.set(0, 17.5, 5.4);
-  spire.castShadow = true;
-  const churchArch = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.6, 0.25), matDarkWood);
-  churchArch.position.set(0, 1.8, 7.9);
-  church.add(nave, belfry, spire, churchArch);
-  scene.add(church);
-  collision.addBox(-20, 4.0, 14, 15.0, 14.0, 10.0, 'stone');
+  spire.position.set(21, church.roofY + 9.2, -17.5);
+  scene.add(steeple, spire);
+  addAltar(scene, collision, 21, church.floorY, -18.2, 2.8, 1.0, matStone, 0x8f2222);
+  addPewRow(scene, collision, 23.2, church.floorY, -13.5, 3.2, matDarkWood);
+  addPewRow(scene, collision, 23.2, church.floorY, -10.5, 3.2, matDarkWood);
+  addPewRow(scene, collision, 23.2, church.floorY, -7.5, 3.2, matDarkWood);
 
-  // Warm Village Street Lamps along the cobble square
-  for (const [lx, lz] of [[-5.2, 18], [5.2, 6], [-5.2, -10], [5.2, -22]]) {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 4.4, 8), matMilDark);
-    post.position.set(lx, 2.2, lz);
-    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), matWindowDim);
-    bulb.position.set(lx, 4.5, lz);
-    const pt = new THREE.PointLight(0xffb866, 7.5, 19, 1.5);
-    pt.position.set(lx, 4.3, lz);
-    scene.add(post, bulb, pt);
+  // ---- 3. ENTERABLE CONCRETE COMMAND BUNKER ON CLIFF ABOVE THE SEA ----
+  const bunker = buildHollowRoom(scene, collision, {
+    cx: 0, cz: -46, w: 16, d: 12, h: 4.2, floorY: 0.2,
+    wallMat: matConc, floorMat: matConc, roofMat: matConc, roofStyle: 'flat',
+    south: [
+      { type: 'window', offset: -5.2, width: 2.4, sill: 1.15, top: 2.25 },
+      { type: 'door', offset: 0, width: 2.8, height: 3.0 },
+      { type: 'window', offset: 5.2, width: 2.4, sill: 1.15, top: 2.25 }
+    ],
+    west: [{ type: 'door', offset: 0, width: 2.2, height: 2.8 }],
+    east: [{ type: 'door', offset: 0, width: 2.2, height: 2.8 }],
+    interiorLight: { color: 0xffd288, intensity: 2.0, distance: 18 }
+  });
+  // Heavy coastal artillery gun barrel pointing north over the Channel
+  const cannon = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.38, 9.5, 10), matSteel);
+  cannon.rotation.x = Math.PI / 2 - 0.12;
+  cannon.position.set(0, 3.4, -55);
+  scene.add(cannon);
+  // Bunker interior: tactical map table, military radio desk, soldiers' bunks!
+  addSolidBox(scene, collision, 0, bunker.floorY + 0.48, -46, 2.6, 0.96, 1.5, matDarkWood, 'wood');
+  const mapSheet = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.15), new THREE.MeshStandardMaterial({ color: 0xe6dec8, roughness: 0.85 }));
+  mapSheet.rotation.x = -Math.PI / 2;
+  mapSheet.position.set(0, bunker.floorY + 0.98, -46);
+  scene.add(mapSheet);
+  addDesk(scene, collision, -5.6, bunker.floorY, -49.5, 1.8, 0.85, matSteel, 1);
+  const radio = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.45), matSteel);
+  radio.position.set(-5.6, bunker.floorY + 1.12, -49.5);
+  scene.add(radio);
+  addBunk(scene, collision, 5.6, bunker.floorY, -49.5, false, matSteel, 0x4b5246);
+
+  // ---- 4. OUTLYING WALLED MANOR (West Countryside!) ----
+  addSolidBox(scene, collision, -50, 1.4, -28, 28, 2.8, 0.6, matStone, 'stone');
+  addSolidBox(scene, collision, -50, 1.4, 2, 28, 2.8, 0.6, matStone, 'stone');
+  addSolidBox(scene, collision, -64, 1.4, -13, 0.6, 2.8, 30, matStone, 'stone');
+  addSolidBox(scene, collision, -36, 1.4, -22, 0.6, 2.8, 12, matStone, 'stone');
+  addSolidBox(scene, collision, -36, 1.4, -4, 0.6, 2.8, 12, matStone, 'stone');
+  // Open 6m gate on east manor wall (z = -16..-10)
+  const manor = buildHollowRoom(scene, collision, {
+    cx: -52, cz: -13, w: 12, d: 14, h: 4.2, floorY: 0.18,
+    wallMat: matStone, floorMat: matWood, roofMat: matSlate, roofStyle: 'gable',
+    east: [
+      { type: 'window', offset: -4.0, width: 1.8 },
+      { type: 'door', offset: 0, width: 2.5, height: 3.0 },
+      { type: 'window', offset: 4.0, width: 1.8 }
+    ],
+    interiorLight: { color: 0xffc688, intensity: 1.7, distance: 15 }
+  });
+  addDesk(scene, collision, -55.2, manor.floorY, -13, 1.8, 0.9, matDarkWood, 1);
+  addBunk(scene, collision, -55.0, manor.floorY, -18.0, false, matDarkWood, 0x6b3a3a);
+
+  // ---- 5. OUTLYING NORMAN WINDMILL (East Ridge — Enterable base + rotating sails!) ----
+  const mill = buildHollowRoom(scene, collision, {
+    cx: 50, cz: 24, w: 9.0, d: 9.0, h: 4.0, floorY: 0.2,
+    wallMat: matStone, floorMat: matWood, roofMat: matSlate, roofStyle: 'none',
+    west: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    south: [{ type: 'window', offset: 0, width: 1.5 }],
+    interiorLight: { color: 0xffbe72, intensity: 1.4, distance: 12 }
+  });
+  const millUpper = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 4.4, 7.5, 10), matStone);
+  millUpper.position.set(50, mill.roofY + 3.75, 24);
+  const millCap = new THREE.Mesh(new THREE.ConeGeometry(3.6, 2.8, 10), matSlate);
+  millCap.position.set(50, mill.roofY + 8.9, 24);
+  scene.add(millUpper, millCap);
+  // Slowly rotating wooden windmill sails!
+  const sailHub = new THREE.Group();
+  sailHub.position.set(46.2, mill.roofY + 6.8, 24);
+  for (let i = 0; i < 4; i++) {
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.14, 5.2, 0.9), matWood);
+    blade.position.set(0, Math.cos((i * Math.PI) / 2) * 2.6, Math.sin((i * Math.PI) / 2) * 2.6);
+    blade.rotation.x = (i * Math.PI) / 2;
+    sailHub.add(blade);
   }
+  scene.add(sailHub);
+  animated.push((t) => { sailHub.rotation.x = t * 0.42; });
 
-  // ---- SCENERY VEHICLES (Plain Military Bar Cross ONLY — Zero Forbidden Symbols) ----
-  // 1. Parked Military Cargo Truck (East side of village)
-  const truck = new THREE.Group();
-  truck.position.set(10.2, 0, 22);
-  truck.rotation.y = -0.22;
-  const cab = new THREE.Mesh(new THREE.BoxGeometry(2.3, 2.1, 2.4), matMilGrey);
-  cab.position.set(0, 1.55, 2.1);
-  cab.castShadow = true;
-  const canopy = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.3, 4.8), matSandbag);
-  canopy.position.set(0, 1.9, -1.6);
-  canopy.castShadow = true;
-  const bed = new THREE.Mesh(new THREE.BoxGeometry(2.55, 0.65, 5.0), matMilGrey);
-  bed.position.set(0, 0.85, -1.6);
-  for (const [wx, wz] of [[-1.2, 2.2], [1.2, 2.2], [-1.2, -2.6], [1.2, -2.6]]) {
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.56, 0.36, 12), matMilDark);
-    wheel.rotation.z = Math.PI / 2;
-    wheel.position.set(wx, 0.56, wz);
-    truck.add(wheel);
-  }
-  const truckCross = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.85), matBarCross);
-  truckCross.position.set(-1.18, 1.45, 2.1);
-  truckCross.rotation.y = -Math.PI / 2;
-  truck.add(cab, canopy, bed, truckCross);
-  scene.add(truck);
-  collision.addBox(10.2, 1.5, 22, 3.2, 3.0, 7.6, 'stone');
-
-  // 2. Parked Armored Tank in Village Square (West-Center cover!)
-  const tank = new THREE.Group();
-  tank.position.set(-9.5, 0, 2);
-  tank.rotation.y = 0.34;
-  const hull = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.35, 6.0), matMilGrey);
-  hull.position.y = 1.05;
-  hull.castShadow = true;
-  const trackL = new THREE.Mesh(new THREE.BoxGeometry(0.68, 1.05, 6.2), matMilDark);
-  trackL.position.set(-1.55, 0.55, 0);
-  const trackR = trackL.clone();
-  trackR.position.x = 1.55;
-  const turret = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.0, 2.5), matMilGrey);
-  turret.position.set(0, 2.15, -0.2);
-  turret.castShadow = true;
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 4.2, 10), matMilDark);
+  // ---- PARKED MILITARY VEHICLES (Plain Bar Cross Only — ALL SOLID!) ----
+  // Parked Tank near checkpoint
+  const tankGrp = new THREE.Group();
+  tankGrp.position.set(-10, 0, -24);
+  tankGrp.rotation.y = 0.28;
+  const hull = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.35, 5.8), matMilGrey);
+  hull.position.y = 0.95;
+  const turret = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.95, 2.4), matCross);
+  turret.position.set(0, 2.05, 0.2);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 3.6, 8), matSteel);
   barrel.rotation.x = Math.PI / 2;
-  barrel.position.set(0, 2.15, 2.7);
-  const tankCrossL = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.85), matBarCross);
-  tankCrossL.position.set(1.13, 2.15, -0.2);
-  tankCrossL.rotation.y = Math.PI / 2;
-  const tankCrossR = tankCrossL.clone();
-  tankCrossR.position.x = -1.13;
-  tankCrossR.rotation.y = -Math.PI / 2;
-  tank.add(hull, trackL, trackR, turret, barrel, tankCrossL, tankCrossR);
-  scene.add(tank);
-  collision.addBox(-9.5, 1.4, 2, 4.4, 2.8, 6.6, 'stone');
+  barrel.position.set(0, 2.05, 2.6);
+  tankGrp.add(hull, turret, barrel);
+  scene.add(tankGrp);
+  collision.addBox(-10, 1.3, -24, 3.8, 2.6, 6.2, 'solid');
 
-  // ---- GUARDED CHECKPOINT & SANDBAGGED MACHINE-GUN POSITION (Mid-North) ----
-  // Guard booth + striped barrier arm
-  const booth = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.9, 2.2), matWood);
-  booth.position.set(6.5, 1.45, -14);
-  booth.castShadow = true;
-  const boothRoof = new THREE.Mesh(new THREE.ConeGeometry(1.9, 1.1, 4), matSlateRoof);
-  boothRoof.rotation.y = Math.PI / 4;
-  boothRoof.position.set(6.5, 3.45, -14);
-  scene.add(booth, boothRoof);
-  collision.addBox(6.5, 1.5, -14, 2.4, 3.0, 2.4, 'wood');
+  // Parked Military Supply Truck
+  const truckGrp = new THREE.Group();
+  truckGrp.position.set(11, 0, 28);
+  truckGrp.rotation.y = -0.2;
+  const cab = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.1, 2.1), matMilGrey);
+  cab.position.set(0, 1.45, 2.2);
+  const bed = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.3, 4.4), matCanvas);
+  bed.position.set(0, 1.7, -1.0);
+  truckGrp.add(cab, bed);
+  scene.add(truckGrp);
+  collision.addBox(11, 1.4, 28, 3.0, 2.8, 6.8, 'solid');
 
-  // Raised red-and-white striped checkpoint pole
-  for (let i = 0; i < 6; i++) {
-    const seg = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.18, 0.18), i % 2 === 0 ? matRedStripe : matWhiteStripe);
-    seg.position.set(4.5 - i * 1.1, 2.5 + i * 0.26, -14);
-    seg.rotation.z = -0.24;
-    scene.add(seg);
+  // Sandbag MG Emplacements (solid!)
+  for (const [sx, sz] of [[-7, -30], [7, -30], [0, -14]]) {
+    addSolidBox(scene, collision, sx, 0.58, sz, 3.8, 1.16, 1.1, matSandbag, 'stone');
   }
 
-  // Sandbagged Machine-Gun Nest overlooking the checkpoint & road!
-  function addSandbagNest(x, z, w = 5.4) {
-    const g = new THREE.Group();
-    g.position.set(x, 0, z);
-    for (let row = 0; row < 3; row++) {
-      const bags = Math.floor(w / 0.85);
-      for (let i = 0; i < bags; i++) {
-        const bag = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.44, 0.72), matSandbag);
-        bag.position.set(-w * 0.5 + 0.45 + i * 0.85 + (row % 2) * 0.2, 0.22 + row * 0.42, 0);
-        bag.castShadow = true;
-        bag.receiveShadow = true;
-        g.add(bag);
-      }
-    }
-    scene.add(g);
-    collision.addBox(x, 0.65, z, w, 1.3, 1.0, 'stone');
+  // Checkpoint barrier & trees (solid!)
+  addSolidBox(scene, collision, -4.5, 1.2, -14, 1.8, 2.4, 1.8, matWood, 'wood');
+  for (const [tx, tz] of [[-32, 30], [34, 36], [-30, 8], [38, 4], [-32, -38], [38, -32], [58, -10]]) {
+    const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.44, 4.0, 7), matDarkWood);
+    tr.position.set(tx, 2.0, tz);
+    const cr = new THREE.Mesh(new THREE.IcosahedronGeometry(2.5, 1), matHedge);
+    cr.position.set(tx, 4.8, tz);
+    scene.add(tr, cr);
+    collision.addBox(tx, 2.2, tz, 1.2, 4.4, 1.2, 'wood');
   }
-  addSandbagNest(-2.5, -16, 5.2);
-  addSandbagNest(8.5, -4, 4.4);
-  addSandbagNest(-8.5, -26, 4.8);
-  addSandbagNest(8.5, -26, 4.8);
 
-  // ---- GERMAN COASTAL CONCRETE GUN BATTERY BUNKERS ON THE CLIFF (North Climax!) ----
-  const bunkerGrp = new THREE.Group();
-  bunkerGrp.position.set(0, 0, -40);
-
-  // Main Reinforced-Concrete Casemate Bunker
-  const mainBunker = new THREE.Mesh(new THREE.BoxGeometry(20, 6.2, 12), matConcrete);
-  mainBunker.position.y = 3.1;
-  mainBunker.castShadow = true;
-  mainBunker.receiveShadow = true;
-  const overhang = new THREE.Mesh(new THREE.BoxGeometry(22.4, 1.4, 14), matConcrete);
-  overhang.position.y = 6.5;
-  overhang.castShadow = true;
-  // Dark embrasure firing slit
-  const slit = new THREE.Mesh(new THREE.BoxGeometry(11.5, 1.6, 0.6), matMilDark);
-  slit.position.set(0, 3.6, 5.9);
-  // Heavy Coastal Artillery Gun Barrels protruding from Casemate!
-  for (const gx of [-3.6, 3.6]) {
-    const gun = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.34, 7.2, 12), matMilDark);
-    gun.rotation.x = Math.PI / 2 - 0.08;
-    gun.position.set(gx, 3.6, 8.2);
-    gun.castShadow = true;
-    bunkerGrp.add(gun);
-  }
-  // Flanking Concrete Pillboxes
-  for (const fx of [-16, 16]) {
-    const pill = new THREE.Mesh(new THREE.BoxGeometry(8.5, 4.6, 8.5), matConcrete);
-    pill.position.set(fx, 2.3, 1.5);
-    pill.castShadow = true;
-    const roofP = new THREE.Mesh(new THREE.BoxGeometry(9.4, 1.0, 9.4), matConcrete);
-    roofP.position.set(fx, 4.9, 1.5);
-    bunkerGrp.add(pill, roofP);
-  }
-  // Plain Military Bar-Cross Flag on Bunker Roof (Zero forbidden symbols)
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 6.5, 8), matMilDark);
-  pole.position.set(0, 10.2, 0);
-  const flag = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.8), matBarCross);
-  flag.position.set(1.4, 12.2, 0);
-  bunkerGrp.add(mainBunker, overhang, slit, pole, flag);
-  animated.push((t) => { flag.rotation.y = Math.sin(t * 3.1) * 0.22; });
-
-  scene.add(bunkerGrp);
-  collision.addBox(0, 3.5, -40, 21, 7.5, 12.5, 'stone');
-  collision.addBox(-16, 2.5, -38.5, 9, 5.5, 9, 'stone');
-  collision.addBox(16, 2.5, -38.5, 9, 5.5, 9, 'stone');
-
-  // ---- AMBIENT PRE-DAWN SEA MIST & ASH PARTICLES ----
   particles.initAmbient('alpine', collision.bounds);
 
   // ---- PICKUPS ----
   const pickupDefs = [
-    { type: 'health', pos: new THREE.Vector3(-10, 0.8, 30), label: 'FIELD BANDAGE (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(9, 0.8, 14),   label: 'AMMUNITION CASE' },
-    { type: 'health', pos: new THREE.Vector3(-11, 0.8, 8),  label: 'RESISTANCE MEDKIT (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(10, 0.8, -14), label: 'CHECKPOINT AMMO CRATE' },
-    { type: 'health', pos: new THREE.Vector3(-9, 0.8, -22), label: 'FIELD RATIONS (+35 HP)' }
+    { type: 'health', pos: new THREE.Vector3(-19, 0.9, 16),   label: 'RESISTANCE MEDKIT (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(21, 0.9, -12),   label: 'CHURCH FIRST AID (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-52, 0.9, -13),  label: 'MANOR BANDAGES (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(50, 0.9, 24),    label: 'WINDMILL RATIONS (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(0, 0.9, -43),    label: 'BUNKER MEDKIT (+35 HP)' },
+    { type: 'ammo',   pos: new THREE.Vector3(19, 0.9, 16),    label: 'ALLIED AMMO DROP' },
+    { type: 'ammo',   pos: new THREE.Vector3(-19, 0.9, -4),   label: 'RESISTANCE AMMO CACHE' }
   ];
   for (const pd of pickupDefs) {
     const mesh = createPickupMesh(pd.type);
@@ -466,20 +367,54 @@ export function buildLevel6(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- ENEMY ROSTER (German Riflemen, Officers, Sandbag MG Gunner, 2 Guard Dogs & Boss Major Vogel) ----
+  // ---- 31 ENEMIES (Riflemen, Officers, Sandbag MG Gunners, Guard Dogs, Boss Major Vogel) ----
   const enemySpawns = [
-    { type: 'german_rifleman', pos: new THREE.Vector3(-4, 0, 24) },
-    { type: 'guard_dog',       pos: new THREE.Vector3(3.5, 0, 20) },
-    { type: 'german_officer',  pos: new THREE.Vector3(9, 0, 12) },
-    { type: 'german_rifleman', pos: new THREE.Vector3(-9, 0, 10) },
-    { type: 'german_rifleman', pos: new THREE.Vector3(6, 0, -1) },
-    { type: 'guard_dog',       pos: new THREE.Vector3(-6, 0, -6) },
-    { type: 'german_mg',       pos: new THREE.Vector3(-2.5, 0, -17.5) },
-    { type: 'german_officer',  pos: new THREE.Vector3(8, 0, -18) },
-    { type: 'german_rifleman', pos: new THREE.Vector3(-8, 0, -28) },
-    { type: 'german_rifleman', pos: new THREE.Vector3(8, 0, -28) },
-    { type: 'boss_normandy',   pos: new THREE.Vector3(0, 0, -30), isBossWave: true }
+    // Sunken lane & village south
+    { type: 'german_rifleman', pos: new THREE.Vector3(-5, 0, 38) },
+    { type: 'guard_dog',       pos: new THREE.Vector3(4, 0, 36) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(6, 0, 26) },
+    { type: 'german_officer',  pos: new THREE.Vector3(-6, 0, 22) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(-18, 0.16, 16) }, // House 1
+    { type: 'german_rifleman', pos: new THREE.Vector3(18, 0.16, 16) },  // House 2
+    // Windmill East Ridge
+    { type: 'german_rifleman', pos: new THREE.Vector3(34, 0, 22) },
+    { type: 'guard_dog',       pos: new THREE.Vector3(41, 0, 24) },
+    { type: 'german_officer',  pos: new THREE.Vector3(50, 0.2, 24) },   // Inside Windmill
+    // Village Center & Church
+    { type: 'german_rifleman', pos: new THREE.Vector3(0, 0, 10) },
+    { type: 'guard_dog',       pos: new THREE.Vector3(-8, 0, 4) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(-18, 0.16, -4) }, // House 3
+    { type: 'german_officer',  pos: new THREE.Vector3(10, 0, -4) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(20, 0.2, -12) },  // Inside Church
+    { type: 'german_officer',  pos: new THREE.Vector3(20, 0.2, -16) },  // Inside Church
+    // Walled Manor West Countryside
+    { type: 'german_rifleman', pos: new THREE.Vector3(-30, 0, -12) },
+    { type: 'guard_dog',       pos: new THREE.Vector3(-42, 0, -13) },
+    { type: 'german_officer',  pos: new THREE.Vector3(-51, 0.18, -13) }, // Inside Manor
+    { type: 'german_rifleman', pos: new THREE.Vector3(-52, 0.18, -9) },  // Inside Manor
+    // Checkpoint & Sandbag MG Positions
+    { type: 'german_mg',       pos: new THREE.Vector3(0, 0, -15.5) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(-11, 0, -18) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(11, 0, -22) },
+    { type: 'guard_dog',       pos: new THREE.Vector3(4, 0, -24) },
+    // Battery Approach & Command Bunker
+    { type: 'german_mg',       pos: new THREE.Vector3(-7, 0, -31.5) },
+    { type: 'german_mg',       pos: new THREE.Vector3(7, 0, -31.5) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(-16, 0, -36) },
+    { type: 'german_officer',  pos: new THREE.Vector3(16, 0, -36) },
+    { type: 'german_rifleman', pos: new THREE.Vector3(-4, 0.2, -45) },  // Inside Bunker
+    { type: 'german_officer',  pos: new THREE.Vector3(4, 0.2, -45) },   // Inside Bunker
+    { type: 'guard_dog',       pos: new THREE.Vector3(-8, 0, -38) },
+    // Boss Major Vogel
+    { type: 'boss_normandy',   pos: new THREE.Vector3(0, 0, -36), isBossWave: true }
   ];
 
-  return { enemySpawns, pickups, animated, disposables };
+  const enterableBuildings = [
+    { name: 'Parish Church', inside: new THREE.Vector3(20.5, 0.2, -12), outside: new THREE.Vector3(13, 0, -12) },
+    { name: 'Command Bunker', inside: new THREE.Vector3(0, 0.2, -44), outside: new THREE.Vector3(0, 0, -37.5) },
+    { name: 'Walled Manor', inside: new THREE.Vector3(-52, 0.18, -13), outside: new THREE.Vector3(-43, 0, -13) },
+    { name: 'Norman Windmill', inside: new THREE.Vector3(50, 0.2, 24), outside: new THREE.Vector3(43, 0, 24) }
+  ];
+
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
 }
