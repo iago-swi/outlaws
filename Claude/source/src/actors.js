@@ -107,6 +107,9 @@ export function makeHumanoid(M, sp) {
     if (f === 'longhair') T.push(gSph(0.136, S.hair, [0, HY - 0.01, -0.05], [1.05, 1.25, 0.9]), gBox(0.2, 0.36, 0.07, S.hair, [0, HY - 0.27, -0.125], [0.12, 0, 0]),
       gBox(0.045, 0.3, 0.11, S.hair, [0.122, HY - 0.13, -0.01]), gBox(0.045, 0.3, 0.11, S.hair, [-0.122, HY - 0.13, -0.01]));
     if (f === 'eyepatch') T.push(gBox(0.062, 0.046, 0.02, 0x0a0a0a, [-0.046, HY + 0.028, 0.124]), gBox(0.272, 0.016, 0.272, 0x0a0a0a, [0, HY + 0.05, 0], [0, 0, 0.22]));
+    if (f === 'glasses') T.push(xf(new THREE.TorusGeometry(0.03, 0.006, 4, 10), [0.046, HY + 0.028, 0.127], [0, 0, 0], 1, 0x15151a), xf(new THREE.TorusGeometry(0.03, 0.006, 4, 10), [-0.046, HY + 0.028, 0.127], [0, 0, 0], 1, 0x15151a),
+      gBox(0.035, 0.008, 0.008, 0x15151a, [0, HY + 0.032, 0.129]), gBox(0.008, 0.008, 0.12, 0x15151a, [0.078, HY + 0.03, 0.07]), gBox(0.008, 0.008, 0.12, 0x15151a, [-0.078, HY + 0.03, 0.07]));
+    if (f === 'baldtop') T.push(gSph(0.126, S.skin, [0, HY + 0.055, 0.012], [0.93, 0.9, 0.95]));
     if (f === 'neckerchief') T.push(gCyl(0.072, 0.075, 0.045, S.accent ?? 0xa81c1c, [0, 0.615, 0]), gCone(0.095, 0.15, S.accent ?? 0xa81c1c, [0, 0.54, 0.095], [Math.PI, 0, 0], [1, 1, 0.45]));
   }
   const HT = HY + 0.105;                     // top of the head
@@ -162,6 +165,34 @@ export function makeHumanoid(M, sp) {
       TM.push(gSph(0.142, STEEL, [0, HT - 0.035, 0], [1, 0.95, 1.05]), gCone(0.1, 0.12, STEEL, [0, HT + 0.1, 0], [0, 0, 0], 1, 10), gBox(0.03, 0.14, 0.02, STEEL, [0, HY + 0.0, 0.135]),
         gCyl(0.146, 0.146, 0.035, DARKSTEEL, [0, HY + 0.06, 0], [0, 0, 0], [1, 1, 1.05], 12));
       break;
+    case 'horned': { // chieftain's helmet: iron bowl, gilt band, two ox horns
+      const bone = 0xe8dcc0;
+      TM.push(gSph(0.146, STEEL, [0, HT - 0.035, 0], [1, 0.98, 1.05]), gBox(0.03, 0.14, 0.02, STEEL, [0, HY + 0.0, 0.137]),
+        gCyl(0.15, 0.15, 0.04, S.hatBand ?? DARKSTEEL, [0, HY + 0.06, 0], [0, 0, 0], [1, 1, 1.05], 12), gCyl(0.02, 0.02, 0.03, S.hatBand ?? DARKSTEEL, [0, HT + 0.1, 0]));
+      for (const s of [-1, 1]) T.push(gCyl(0.036, 0.05, 0.13, bone, [s * 0.17, HT + 0.0, 0], [0, 0, -s * 1.15], 1, 7), gCyl(0.024, 0.036, 0.12, bone, [s * 0.25, HT + 0.075, 0], [0, 0, -s * 0.55], 1, 7),
+        gCone(0.024, 0.13, bone, [s * 0.285, HT + 0.185, 0], [0, 0, -s * 0.08], 1, 7));
+      break;
+    }
+    case 'fedora':
+      T.push(gCyl(0.21, 0.21, 0.018, S.hatC ?? 0x2a2a2e, [0, HT - 0.02, 0.01], [0.07, 0, 0], [1, 1, 1.08], 16), gCyl(0.112, 0.128, 0.12, S.hatC ?? 0x2a2a2e, [0, HT + 0.04, 0], [0.07, 0, 0], [1, 1, 1.1], 12),
+        gCyl(0.13, 0.13, 0.028, S.hatBand ?? 0x0c0c0c, [0, HT - 0.0, 0], [0.07, 0, 0], [1, 1, 1.1], 12));
+      break;
+    case 'ushanka': // fur hat with the flaps tied up
+      T.push(gCyl(0.15, 0.156, 0.13, S.hatC ?? 0x5a5a5a, [0, HT - 0.0, 0], [0, 0, 0], [1, 1, 1.06], 12), gBox(0.325, 0.085, 0.2, S.hatC ?? 0x5a5a5a, [0, HT - 0.02, -0.01]),
+        gBox(0.17, 0.085, 0.03, S.hatC ?? 0x5a5a5a, [0, HT - 0.0, 0.155]));
+      if (S.hatStar) T.push(gBox(0.03, 0.03, 0.012, S.hatStar, [0, HT + 0.005, 0.172]));
+      break;
+    case 'mao':     // soft field cap with a short visor
+      T.push(gCyl(0.146, 0.14, 0.085, S.hatC ?? 0x8a8a4a, [0, HT + 0.0, 0], [0, 0, 0], [1, 1, 1.05], 12), gBox(0.16, 0.012, 0.085, S.hatC ?? 0x8a8a4a, [0, HT - 0.035, 0.15], [0.25, 0, 0]),
+        gBox(0.028, 0.028, 0.012, S.hatStar ?? 0xc81c1c, [0, HT + 0.005, 0.15]));
+      break;
+    case 'furhat':  // Khampa fox-fur hat
+      T.push(gSph(0.172, S.hatC ?? 0x8a5a2a, [0, HT - 0.03, -0.01], [1.1, 0.62, 1.1]), gCone(0.1, 0.1, S.hatBand ?? 0xb01c1c, [0, HT + 0.07, 0], [0, 0, 0], 1, 10));
+      break;
+    case 'crown':   // Tibetan royal turban
+      T.push(gCyl(0.152, 0.146, 0.09, 0xf0ece0, [0, HT - 0.01, 0], [0, 0, 0], [1, 1, 1.05], 12), gCyl(0.095, 0.135, 0.15, S.hatC ?? 0xb01c1c, [0, HT + 0.1, 0], [0, 0, 0], 1, 10),
+        gCyl(0.155, 0.155, 0.025, 0xd9b23a, [0, HT - 0.05, 0], [0, 0, 0], [1, 1, 1.05], 12), gSph(0.03, 0xd9b23a, [0, HT + 0.19, 0]));
+      break;
     case 'stahl':   // steel helmet with a flared rim
       T.push(gSph(0.15, S.hatC ?? 0x4a5248, [0, HT - 0.045, -0.005], [1.02, 0.84, 1.1]), gCyl(0.165, 0.175, 0.05, S.hatC ?? 0x4a5248, [0, HY + 0.035, -0.02], [0.08, 0, 0], [1, 1, 1.1], 14));
       break;
@@ -213,6 +244,15 @@ export function makeHumanoid(M, sp) {
       gBox(0.09, 0.3, 0.05, S.hatC ?? 0xc9963a, [-0.12, 0.44, 0.125], [0, 0, -0.55]));
     if (e === 'fur') T.push(gBox(0.52, 0.95, 0.05, S.fur ?? 0x5a4632, [0, 0.03, -0.175], [0.1, 0, 0]), gCyl(0.25, 0.27, 0.13, S.fur2 ?? 0x8a7458, [0, 0.52, -0.02], [0, 0, 0], [1, 1, 0.8], 9));
     if (e === 'braids') T.push(gCyl(0.022, 0.016, 0.26, S.hair, [0.07, HY - 0.2, 0.09], [0.1, 0, 0], 1, 5), gCyl(0.022, 0.016, 0.26, S.hair, [-0.07, HY - 0.2, 0.09], [0.1, 0, 0], 1, 5));
+    if (e === 'robe') T.push(gCyl(0.185, 0.3, 0.8, S.robe ?? S.pants, [0, -0.39, 0], [0, 0, 0], [1, 1, 0.64], 10), gBox(0.52, 0.1, 0.32, S.sash ?? S.robe ?? S.pants, [0, 0.34, 0], [0, 0, 0.78]),
+      gCyl(0.2, 0.19, 0.12, S.robe ?? S.pants, [0, 0.06, 0], [0, 0, 0], [1, 1, 0.68], 10));
+    if (e === 'chuba') T.push(gCyl(0.22, 0.31, 0.72, S.coat ?? 0x5a3a26, [0, -0.3, -0.01], [0, 0, 0], [1, 1, 0.64], 10), gCyl(0.222, 0.222, 0.56, S.coat ?? 0x5a3a26, [0, 0.29, -0.012], [0, 0, 0], [1.04, 1, 0.68]),
+      gCyl(0.313, 0.318, 0.05, S.fur2 ?? 0xb89a70, [0, -0.64, -0.01], [0, 0, 0], [1, 1, 0.64], 10), gCyl(0.1, 0.19, 0.08, S.fur2 ?? 0xb89a70, [0, 0.57, -0.01], [0, 0, 0], [1, 1, 0.8], 9),
+      gCyl(0.228, 0.228, 0.08, S.accent ?? 0xb8862a, [0, 0.05, -0.01], [0, 0, 0], [1.04, 1, 0.68], 10), gBox(0.06, 0.5, 0.02, S.fur2 ?? 0xb89a70, [0.04, 0.33, 0.148], [0, 0, 0.3]));
+    if (e === 'belted') T.push(gCyl(0.224, 0.224, 0.05, S.belt2 ?? 0x14120f, [0, 0.07, -0.012], [0, 0, 0], [1.04, 1, 0.67], 10), gBox(0.05, 0.05, 0.02, 0xb8a050, [0, 0.07, 0.143]),
+      gBox(0.09, 0.14, 0.02, S.coat ?? 0x15120f, [0.07, 0.5, 0.135], [0, 0, 0.5]), gBox(0.09, 0.14, 0.02, S.coat ?? 0x15120f, [-0.07, 0.5, 0.135], [0, 0, -0.5]));
+    if (e === 'scarf') T.push(gCyl(0.085, 0.09, 0.07, S.scarf ?? 0xf0ece0, [0, 0.6, 0], [0, 0, 0], [1, 1, 0.9], 9), gBox(0.07, 0.42, 0.025, S.scarf ?? 0xf0ece0, [0.06, 0.38, 0.14]));
+    if (e === 'tabs') T.push(gBox(0.05, 0.03, 0.02, 0xc81c1c, [0.06, 0.575, 0.105]), gBox(0.05, 0.03, 0.02, 0xc81c1c, [-0.06, 0.575, 0.105]));
     if (e === 'scabbard') T.push(gBox(0.03, 0.05, 0.8, 0x15151a, [-0.19, 0.02, -0.12], [0.5, 0, 0]));
   }
   // limbs (pivot = shoulder / hip, limb hangs down -Y)
@@ -221,6 +261,7 @@ export function makeHumanoid(M, sp) {
     if (S.wideSleeve) A.push(gBox(0.11, 0.3, 0.2, S.sleeve, [0, -0.36, -0.03]));
     if (S.cuff) A.push(gCyl(0.07, 0.066, 0.1, S.cuff, [0, -0.5, 0]));
   }
+  if (S.armband) AL.push(gCyl(0.07, 0.07, 0.08, S.armband, [0, -0.16, 0]));
   for (const L of [LL, LR]) {
     L.push(gCap(S.legR, 0.72, S.pants, [0, -0.41, 0]), gBox(0.13, 0.13, 0.28, S.boots, [0, -0.855, 0.045]));
     if (S.bootTop) L.push(gCyl(0.1, 0.09, 0.3, S.boots, [0, -0.66, 0]));
@@ -311,14 +352,49 @@ export function lookFor(type, r) {
       extras: ['cuirass', 'kilt', 'cape'], armor: 0xd9b23a, cape: 0x7a0c0c, kilt: 0x7a0c0c, aspis: 0xd9b23a, lambda: 0x7a0c0c, weapon: 'spear', scale: 1.17 };
     // ---- rival Vikings ----
     case 'viking': return { skin: pick(SKINS), hair: pick([0xb8893a, 0x8a5a2a, 0x5a3a1c, 0xc8a050]), shirt: pick([0x5a6a4a, 0x6a4a3a, 0x4a5a6a, 0x7a6a4a]), pants: pick([0x4a4034, 0x3a3a40]), boots: 0x3a2818, bootTop: true,
-      hat: r() < 0.7 ? 'nasal' : null, face: ['beard', 'braids'], extras: r() < 0.5 ? ['fur'] : ['smock'], aspis: pick([0x8a1c1c, 0x1c4a7a, 0x2a5a2a, 0xc8a030]), aspis2: pick([0xe8e0d0, 0x1a1a1a, 0xc8a030]),
+      hat: r() < 0.62 ? 'nasal' : r() < 0.25 ? 'horned' : null, face: ['beard', 'braids'], extras: r() < 0.5 ? ['fur'] : ['smock'], aspis: pick([0x8a1c1c, 0x1c4a7a, 0x2a5a2a, 0xc8a030]), aspis2: pick([0xe8e0d0, 0x1a1a1a, 0xc8a030]),
       aspisBoss: 0x9a9fa6, weapon: r() < 0.5 ? 'axe' : 'sword' };
     case 'berserker': return { skin: 0xc68e63, hair: pick([0x8a3a1c, 0x5a3a1c, 0xb8893a]), shirt: 0xc68e63, sleeve: 0xc68e63, pants: 0x4a3a2a, boots: 0x3a2818, hat: null, face: ['longhair', 'longbeard'],
       extras: ['fur'], fur: 0x3a3028, fur2: 0x6a5a48, weapon: 'axe', scale: 1.06 };
     case 'bowman': return { skin: pick(SKINS), hair: pick([0xb8893a, 0x5a3a1c]), shirt: pick([0x5a4a3a, 0x4a5a4a]), pants: 0x3a3a40, boots: 0x3a2818, bootTop: true, hat: 'cowl', hatC: pick([0x4a4a3a, 0x5a3a2a]),
       face: ['beard'], extras: ['smock', 'quiver'], weapon: 'bow' };
-    case 'northBoss': return { skin: 0xd0a07a, hair: 0x9a9a92, shirt: 0x8a8f96, pants: 0x3a3a44, boots: 0x2a1c12, bootTop: true, hat: 'nasal', face: ['longbeard', 'braids'], extras: ['fur', 'smock'], fur: 0xe8e4dc, fur2: 0xf4f0e8,
+    case 'northBoss': return { skin: 0xd0a07a, hair: 0x9a9a92, shirt: 0x8a8f96, pants: 0x3a3a44, boots: 0x2a1c12, bootTop: true, hat: 'horned', hatBand: 0xd9b23a, face: ['longbeard', 'braids'], extras: ['fur', 'smock'], fur: 0xe8e4dc, fur2: 0xf4f0e8,
       glove: 0x4a3a2a, weapon: 'daneaxe', scale: 1.2 };
+    case 'chieftain': return { skin: pick(SKINS), hair: pick([0xb8893a, 0x8a3a1c, 0x9a9a92]), shirt: 0x8a8f96, pants: pick([0x4a2a2a, 0x2a3a4a]), boots: 0x2a1c12, bootTop: true, hat: 'horned', hatBand: 0xb8893a,
+      face: ['longbeard', 'braids'], extras: ['fur', 'smock'], fur: pick([0x2a2420, 0x6a5038, 0x8a8a86]), fur2: 0xb8a888, aspis: pick([0x8a1c1c, 0x1a1a1a, 0x1c4a7a]), aspis2: 0xc8a030, aspisBoss: 0xc9a050,
+      glove: 0x4a3a2a, weapon: r() < 0.5 ? 'sword' : 'axe', scale: 1.12, armR: 0.07, legR: 0.095 };
+    // ---- Moscow 1974: the Committee and its helpers ----
+    case 'agent': return { skin: pick(SKINS), hair: pick([0x3a2a1a, 0x1a1410, 0x8a7a5a]), shirt: 0xd8d4c8, pants: pick([0x2a2a30, 0x3a3a3e, 0x2e2a26]), boots: 0x0c0c0c, hat: 'fedora', hatC: pick([0x2a2a2e, 0x3a3630, 0x4a4a4e]),
+      extras: ['coat', 'belted'], coat: pick([0x2c2c32, 0x4a463c, 0x5a5a5e, 0x3a342c]), glove: 0x14120f, weapon: 'revolver' };
+    case 'militia': return { skin: pick(SKINS), hair: 0x5a3a1c, shirt: 0x4a5560, pants: 0x3a4450, boots: 0x0c0c0c, bootTop: true, hat: 'ushanka', hatC: 0x5a6068, hatStar: 0xc81c1c,
+      extras: ['coat', 'belted'], coat: 0x4a5560, belt2: 0x5a3a1c, glove: 0x2a1c12, weapon: 'smg' };
+    case 'russiaBoss': return { skin: 0xd8b090, hair: 0x8a8a84, shirt: 0x5a6054, pants: 0x2a3050, boots: 0x0a0a0a, bootTop: true, hat: 'peaked', hatC: 0x5a6054, hatBand: 0x1c3a9a,
+      extras: ['coat', 'belted'], coat: 0x50564c, belt2: 0x4a2c14, glove: 0x14120f, face: ['moustache'], weapon: 'revolver', weapon2: 'revolver', scale: 1.14 };
+    // ---- Tibet 1959 ----
+    case 'pla': return { skin: pick([0xd8b088, 0xc89a70, 0xe0b890]), hair: 0x0c0c0c, shirt: 0x8a8a4e, pants: 0x82824a, boots: 0x2a2416, belt: 0x4a2c14, hat: 'mao', hatC: 0x8a8a4e, extras: ['tabs', 'bandolier'], weapon: 'rifle' };
+    case 'plaGunner': return { skin: pick([0xd8b088, 0xc89a70]), hair: 0x0c0c0c, shirt: 0x8a8a4e, pants: 0x82824a, boots: 0x2a2416, belt: 0x4a2c14, hat: 'ushanka', hatC: 0x8a8454, hatStar: 0xc81c1c, extras: ['tabs'], weapon: 'smg' };
+    case 'redguard': return { skin: pick([0xd8b088, 0xc89a70, 0xe0b890]), hair: 0x0c0c0c, shirt: pick([0x5a6a3e, 0x4a5a6a, 0x66704a]), pants: pick([0x4a5a36, 0x3a4658]), boots: 0x14120f, belt: 0x4a2c14, hat: 'mao',
+      hatC: pick([0x5a6a3e, 0x4a5a6a]), armband: 0xc81c1c, weapon: 'club' };
+    case 'tibetBoss': return { skin: 0xd0a880, hair: 0x0c0c0c, shirt: 0x7e7e46, pants: 0x74743e, boots: 0x0a0a0a, bootTop: true, hat: 'peaked', hatC: 0x7e7e46, hatBand: 0xb01c1c, extras: ['coat', 'belted', 'tabs'], coat: 0x7a7a44,
+      belt2: 0x4a2c14, glove: 0x2a1c12, weapon: 'revolver', scale: 1.14 };
+    // ---- heroes and friends of chapters VII and VIII ----
+    case 'solzhenitsyn': return { skin: 0xd8ac8a, hair: 0x4a3420, shirt: 0x4e4e46, pants: 0x3a3a38, boots: 0x2a2620, bootTop: true, hat: 'ushanka', hatC: 0x3e3a34, face: ['beard'], extras: ['coat'], coat: 0x4e4e46,
+      belt: 0x2a1c12, weapon: 'smg', scale: 1.04 };
+    case 'sakharov': return { skin: 0xe0b89a, hair: 0xb8b4aa, shirt: 0xe8e4d8, sleeve: 0x4a4a54, pants: 0x3e3e48, boots: 0x14120f, hat: null, face: ['baldtop', 'glasses', 'neckerchief'], accent: 0x3a2228,
+      extras: ['coat'], coat: 0x4a4a54, weapon: 'revolver' };
+    case 'nureyev': return { skin: 0xe0b694, hair: 0x2a1c12, shirt: 0x1c1c22, pants: 0x16161a, boots: 0x0c0c0c, hat: null, face: [], extras: ['coat', 'scarf'], coat: 0x1c1c22, scarf: 0xf0ece0,
+      weapon: 'revolver', scale: 0.99, legR: 0.09 };
+    case 'gompo': return { skin: 0xc0875c, hair: 0x0c0c0c, shirt: 0x5a3422, pants: 0x3a2a20, boots: 0x4a2c14, bootTop: true, hat: 'furhat', hatC: 0x9a6a34, face: ['moustache', 'braids'],
+      extras: ['chuba', 'bandolier'], coat: 0x5a3422, fur2: 0xc8a878, accent: 0xb01c1c, weapon: 'rifle', scale: 1.05 };
+    case 'pachen': return { skin: 0xc89468, hair: null, shirt: 0x7a1c22, sleeve: 0x7a1c22, pants: 0x7a1c22, boots: 0x4a2c14, hat: null, face: [], extras: ['robe'], robe: 0x7a1c22, sash: 0xd9a020, belt: 0xd9a020,
+      weapon: 'revolver', scale: 0.96 };
+    case 'songtsen': return { skin: 0xc89468, hair: 0x0c0c0c, shirt: 0xa01c1c, pants: 0x6a1414, boots: 0xd9b23a, bootTop: true, hat: 'crown', face: ['moustache', 'longhair'],
+      extras: ['chuba', 'quiver', 'scabbard'], coat: 0xa01c1c, fur2: 0xd9b23a, accent: 0xd9b23a, weapon: 'bow', scale: 1.04 };
+    case 'dalai': return { skin: 0xd0a078, hair: 0x14100c, shirt: 0xe0a82a, sleeve: 0xe0a82a, pants: 0x7a1c22, boots: 0x4a2c14, hat: null, face: ['glasses'], extras: ['robe'], robe: 0x7a1c22, sash: 0x7a1c22, belt: 0x7a1c22, scale: 0.98 };
+    case 'monk': return { skin: pick([0xc89468, 0xb8845c, 0xd0a078]), hair: null, shirt: 0x7a1c22, sleeve: pick([0x7a1c22, 0xd9a020]), pants: 0x7a1c22, boots: 0x4a2c14, hat: null, extras: ['robe'], robe: pick([0x7a1c22, 0x8a2428]),
+      sash: pick([0x7a1c22, 0xd9a020]), belt: 0x7a1c22 };
+    case 'khampa': return { skin: pick([0xc0875c, 0xb07a52]), hair: 0x0c0c0c, shirt: 0x4a3020, pants: 0x3a2a20, boots: 0x4a2c14, bootTop: true, hat: r() < 0.6 ? 'furhat' : null, hatC: pick([0x9a6a34, 0x6a4a2a]),
+      face: r() < 0.5 ? ['moustache', 'braids'] : ['braids'], extras: ['chuba'], coat: pick([0x5a3422, 0x3a3a48, 0x4a2a2a]), fur2: 0xc8a878, accent: pick([0xb01c1c, 0xd9a020]), weapon: 'rifle' };
     // ---- heroes of Greece and the North ----
     case 'ulysses': return { skin: 0xc8946c, hair: 0x3a2414, shirt: 0x2a4a7a, sleeve: 0xc8946c, pants: 0xc8946c, boots: 0x6a4a2a, belt: 0x8a6424, hat: 'pilos', hatC: 0xe0d4b0, face: ['beard'],
       extras: ['smock', 'cape'], cape: 0x6a2a2a, weapon: 'javelin' };
@@ -379,6 +455,14 @@ export const TYPES = {
   berserker: { hp: 70, speed: 6.2, melee: true, reach: 2.2, dmg: 20, windup: 0.3, recover: 0.5, zigzag: true, sight: 36 },
   bowman: { hp: 60, speed: 3.0, ranged: true, range: 55, rMin: 12, rMax: 30, dmg: 15, cool: [2.1, 3.3], windup: 0.8, spread: 0.022, proj: 'arrow', pspeed: 44, sight: 50, twoHand: true },
   northBoss: { hp: 480, speed: 4.4, melee: true, reach: 3.0, dmg: 32, windup: 0.5, recover: 0.6, sight: 50, boss: true },
+  chieftain: { hp: 200, speed: 4.3, melee: true, reach: 2.7, dmg: 28, windup: 0.45, recover: 0.65, sight: 44 },
+  agent: { hp: 65, speed: 3.8, ranged: true, range: 42, rMin: 7, rMax: 18, dmg: 9, cool: [0.8, 1.6], windup: 0.4, spread: 0.04, proj: 'bullet', pspeed: 80, sight: 46 },
+  militia: { hp: 85, speed: 3.1, ranged: true, range: 65, rMin: 10, rMax: 36, dmg: 8, cool: [2.1, 3.1], windup: 0.7, spread: 0.055, proj: 'bullet', pspeed: 95, sight: 58, burst: 4, twoHand: true },
+  russiaBoss: { hp: 480, speed: 4.0, ranged: true, range: 50, rMin: 8, rMax: 20, dmg: 10, cool: [1.2, 1.9], windup: 0.45, spread: 0.04, proj: 'bullet', pspeed: 85, sight: 60, burst: 3, boss: true },
+  pla: { hp: 70, speed: 3.4, ranged: true, range: 60, rMin: 12, rMax: 32, dmg: 11, cool: [1.5, 2.7], windup: 0.6, spread: 0.028, proj: 'bullet', pspeed: 90, sight: 54, twoHand: true },
+  plaGunner: { hp: 80, speed: 3.0, ranged: true, range: 70, rMin: 10, rMax: 40, dmg: 8, cool: [2.2, 3.2], windup: 0.7, spread: 0.055, proj: 'bullet', pspeed: 95, sight: 62, burst: 5, twoHand: true },
+  redguard: { hp: 60, speed: 5.8, melee: true, reach: 2.2, dmg: 15, windup: 0.32, recover: 0.55, zigzag: true, sight: 36 },
+  tibetBoss: { hp: 480, speed: 4.0, ranged: true, range: 55, rMin: 8, rMax: 22, dmg: 10, cool: [1.2, 1.9], windup: 0.45, spread: 0.04, proj: 'bullet', pspeed: 85, sight: 62, burst: 3, boss: true },
   crossbowman: { hp: 70, speed: 2.8, ranged: true, range: 60, rMin: 14, rMax: 32, dmg: 18, cool: [2.7, 3.7], windup: 0.9, spread: 0.018, proj: 'bolt', pspeed: 52, sight: 55, twoHand: true },
   knight: { hp: 190, speed: 3.3, melee: true, reach: 2.4, dmg: 28, windup: 0.5, recover: 0.8, sight: 40 },
   swissBoss: { hp: 440, speed: 4.4, melee: true, reach: 2.7, dmg: 30, windup: 0.42, recover: 0.55, sight: 50, boss: true },
@@ -393,7 +477,7 @@ export class Enemy {
     const r = game.rand;
     this.rig = this.cfg.dog ? makeDog(game.M) : makeHumanoid(game.M, lookFor(type, r));
     this.scale = this.rig.scale;
-    this.pos = new THREE.Vector3(x, game.world.groundAt(x, z, o.y ?? 2), z);
+    this.pos = new THREE.Vector3(x, game.world.groundAt(x, z, o.up !== undefined ? game.world.height(x, z) + o.up : o.y ?? 2), z);   // o.up: floor of a building on a slope
     this.home = this.pos.clone();
     this.yaw = o.yaw ?? r() * TAU;
     this.hp = this.cfg.hp; this.state = o.ambush ? 'hidden' : 'idle';
@@ -404,7 +488,7 @@ export class Enemy {
     this.strafe = r.sign(); this.strafeT = 1 + r() * 2; this.los = false; this.seeT = r() * 0.3;
     this.walk = r() * 6; this.moving = 0; this.flinch = 0; this.flash = 0; this.stuck = 0; this.detour = 0; this.detourDir = 1;
     this.wanderT = 2 + r() * 4; this.wander = null; this.throwT = 2 + r() * 2; this.deathT = 0; this.react = 0;
-    this.armPose = 0; this.name = o.name;
+    this.armPose = 0; this.name = o.name; this.path = null; this.pathI = 0; this.pathT = r() * 0.6; this.slump = false;
     game.gfx.root.add(this.rig.group);
     this.rig.group.visible = this.state !== 'hidden';
     this.sync();
@@ -422,6 +506,26 @@ export class Enemy {
     this.state = 'combat'; this.react = delay + 0.35 + this.game.rand() * 0.5;
     if (delay === 0) { if (this.cfg.dog) this.game.sound.bark(); else this.game.sound.shout(); }
     for (const e of this.game.enemies) if (e !== this && e.state === 'idle' && e.pos.distanceToSquared(this.pos) < 11 * 11) e.alert(0.3 + this.game.rand() * 0.6);
+  }
+
+  /** True if every navigation cell on the straight line to (x, z) is walkable. */
+  straightFree(x, z) {
+    const nav = this.game.nav, dx = x - this.pos.x, dz = z - this.pos.z, d = Math.hypot(dx, dz), n = Math.max(1, Math.ceil(d / (nav.cell * 0.7)));
+    for (let i = 1; i <= n; i++) { const k = nav.idx(this.pos.x + dx * i / n, this.pos.z + dz * i / n); if (k < 0 || !nav.free[k]) return false; }
+    return true;
+  }
+  /** Unit direction of the next step toward the player: straight if the way is open, otherwise along a route. */
+  toward(dx, dz, dist, dt) {
+    const G = this.game, P = G.player, nav = G.nav;
+    if (!nav) return [dx / dist, dz / dist];
+    this.pathT -= dt;
+    if (this.los && dist < 16 && this.straightFree(P.pos.x, P.pos.z)) { this.path = null; return [dx / dist, dz / dist]; }
+    if (!this.path || this.pathT <= 0) { this.pathT = 0.7 + G.rand() * 0.6; this.path = nav.path(this.pos.x, this.pos.z, P.pos.x, P.pos.z, 30000, this.pos.y, P.pos.y); this.pathI = 0; }
+    const path = this.path;
+    if (!path) return [dx / dist, dz / dist];
+    while (this.pathI < path.length - 1 && Math.hypot(path[this.pathI][0] - this.pos.x, path[this.pathI][1] - this.pos.z) < 0.75) this.pathI++;
+    const n = path[this.pathI], ex = n[0] - this.pos.x, ez = n[1] - this.pos.z, el = Math.hypot(ex, ez) || 1;
+    return [ex / el, ez / el];
   }
 
   /** Ray vs. the body's hit spheres. Returns {t, head} or null. */
@@ -451,6 +555,9 @@ export class Enemy {
       this.state = 'dead'; this.deathT = 0;
       this.yaw = Math.atan2(fromX - this.pos.x, fromZ - this.pos.z);   // face the shot, fall away from it
       this.fallDir = this.game.rand() < 0.25 ? 1 : -1;
+      const W = this.game.world, fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), y = this.pos.y + 0.7;
+      const room = (s) => W.clear(this.pos.x, y, this.pos.z, this.pos.x + fx * s * 1.9, y, this.pos.z + fz * s * 1.9);
+      if (!room(this.fallDir)) { if (room(-this.fallDir)) this.fallDir = -this.fallDir; else this.slump = true; }   // against a wall: fall the other way, or sink down
       return true;
     }
     return false;
@@ -465,8 +572,9 @@ export class Enemy {
       this.deathT += dt;
       const t = Math.min(1, this.deathT / 0.55), e = t * t;
       if (this.cfg.dog) rig.group.rotation.z = e * 1.45;                    // a dog rolls onto its side
+      else if (this.slump) { rig.group.rotation.x = this.fallDir * e * 0.5; rig.legL.rotation.x = rig.legR.rotation.x = -e * 1.3; }
       else rig.group.rotation.x = this.fallDir * e * 1.5 + (t >= 1 ? 0 : Math.sin(t * 9) * 0.03);
-      rig.group.position.y = this.pos.y + e * 0.14 * this.scale;
+      rig.group.position.y = this.pos.y + (this.slump ? -e * 0.55 : e * 0.14) * this.scale;
       rig.armL.rotation.x = damp(rig.armL.rotation.x, -0.6, 6, dt); rig.armR.rotation.x = damp(rig.armR.rotation.x, 0.5, 6, dt);
       rig.armL.rotation.z = damp(rig.armL.rotation.z, 0.9, 6, dt); rig.armR.rotation.z = damp(rig.armR.rotation.z, -0.7, 6, dt);
       rig.legL.rotation.x = damp(rig.legL.rotation.x, 0.25, 6, dt); rig.legR.rotation.x = damp(rig.legR.rotation.x, -0.2, 6, dt);
@@ -517,7 +625,9 @@ export class Enemy {
         if (!this.static && this.aim <= 0) {
           let fwd = 0;
           if (!this.los || dist > cfg.rMax) fwd = 1; else if (dist < cfg.rMin) fwd = -0.8;
-          mvx = tx * fwd + px * this.strafe * 0.8; mvz = tz * fwd + pz * this.strafe * 0.8;
+          const go = fwd > 0 ? this.toward(dx, dz, dist, dt) : [tx, tz];
+          const side = fwd > 0 && this.path ? 0 : this.strafe * 0.8;            // no side-stepping while following a route
+          mvx = go[0] * fwd + px * side; mvz = go[1] * fwd + pz * side;
           speed = cfg.speed * (fwd > 0 && !this.los ? 1.25 : 1);
         }
         if (this.react <= 0) {
@@ -539,7 +649,7 @@ export class Enemy {
           this.strike -= dt;
           if (this.strike <= 0) {
             if (cfg.dog) G.sound.bark(); else G.sound.slash();
-            if (dist < cfg.reach + 0.5 && Math.abs(P.pos.y - this.pos.y) < 2) G.hurtPlayer(cfg.dmg, this.pos, true);
+            if (dist < cfg.reach + 0.5 && Math.abs(P.pos.y - this.pos.y) < 2 && G.world.clear(this.pos.x, this.pos.y + (cfg.dog ? 0.6 : 1.2), this.pos.z, P.pos.x, P.pos.y + 1.1, P.pos.z)) G.hurtPlayer(cfg.dmg, this.pos, true);   // no blows through walls
             this.recover = cfg.recover;
           }
         } else if (this.recover > 0) this.recover -= dt;
@@ -547,7 +657,8 @@ export class Enemy {
         else {
           let zig = 0;
           if (cfg.zigzag && dist > 5) zig = Math.sin(G.time * 3.1 + this.id * 1.7) * 0.9;
-          mvx = tx + px * zig; mvz = tz + pz * zig; speed = cfg.speed * (dist > 4 ? 1 : 0.75);
+          const go = this.toward(dx, dz, dist, dt); if (this.path) zig = 0;
+          mvx = go[0] + px * zig; mvz = go[1] + pz * zig; speed = cfg.speed * (dist > 4 ? 1 : 0.75);
           if (cfg.throws && this.los && dist > 7 && dist < 26 && this.react <= 0) {
             this.throwT -= dt;
             if (this.throwT <= 0) { this.throwT = (cfg.boss ? 1.6 : 2.6) + r() * 2; this.throwStar(dx, dy, dz, dist); }
@@ -561,12 +672,20 @@ export class Enemy {
       const ml = Math.hypot(mvx, mvz) || 1; mvx /= ml; mvz /= ml;
       if (this.detour > 0) { this.detour -= dt; const ox = mvx; mvx = -mvz * this.detourDir * 0.9 + ox * 0.3; mvz = ox * this.detourDir * 0.9 + mvz * 0.3; }
       const bx = this.pos.x, bz = this.pos.z;
-      const nx = bx + mvx * speed * dt, nz = bz + mvz * speed * dt;
-      if (G.world.walkable(bx, bz, nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
+      const steps = Math.max(1, Math.ceil(speed * dt / 0.25));               // small steps: nothing is ever skipped over
+      for (let q = 0; q < steps; q++) {
+        const sx = this.pos.x, sz = this.pos.z, nx = sx + mvx * speed * dt / steps, nz = sz + mvz * speed * dt / steps;
+        if (G.world.walkable(sx, sz, nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
+        G.world.collide(this.pos, 0.38, 1.7);
+      }
       for (const e of G.enemies) {            // keep some distance from each other
         if (e === this || !e.alive || e.state === 'hidden') continue;
         const ex = this.pos.x - e.pos.x, ez = this.pos.z - e.pos.z, d2 = ex * ex + ez * ez;
         if (d2 < 1.2 && d2 > 1e-5) { const d = Math.sqrt(d2), k = (1.1 - d) / d * 0.5; this.pos.x += ex * k; this.pos.z += ez * k; }
+      }
+      {                                       // ...and never stand inside the player
+        const ex = this.pos.x - P.pos.x, ez = this.pos.z - P.pos.z, d2 = ex * ex + ez * ez, rr = cfg.dog ? 0.7 : 0.8;
+        if (d2 < rr * rr && d2 > 1e-6 && Math.abs(P.pos.y - this.pos.y) < 1.6) { const d = Math.sqrt(d2); this.pos.x = P.pos.x + ex / d * rr; this.pos.z = P.pos.z + ez / d * rr; }
       }
       G.world.collide(this.pos, 0.38, 1.7);
       const moved = Math.hypot(this.pos.x - bx, this.pos.z - bz);

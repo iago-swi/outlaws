@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { drawTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
-import { instanced, fence, barrel, crate, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge } from '../props.js';
+import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const swiss = {
@@ -66,11 +66,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     base = base * (1 - lake) - 8 * lake;
     base -= (1 - smooth(1.5, 5.5, dPoly(STREAM, x, z))) * 1.4 * (1 - lake);
     const r = Math.hypot(x * 0.95, z < 0 ? z * 0.4 : z * 0.92);
-    const m = smooth(104, 330, r);
-    return base + m * (36 + ridged(x * 0.0042 + 3, z * 0.0042 + 7, 5, 4) * 340) + smooth(88, 150, r) * 16 * fbm(x * 0.02 + 7, z * 0.02, 3, 9);
+    const m = smooth(124, 340, r);
+    return base + m * (36 + ridged(x * 0.0042 + 3, z * 0.0042 + 7, 5, 4) * 340) + smooth(108, 168, r) * 16 * fbm(x * 0.02 + 7, z * 0.02, 3, 9);
   });
   world.height = (x, z) => hf.h(x, z);
-  world.bounds = { r: 118, x: 6, z: 2 };
+  world.bounds = { r: 137, x: 6, z: 2 };
   world.maxSlope = 0.95; world.waterY = -0.9;
   const forest = (x, z) => fbm(x * 0.011 + 31, z * 0.011, 3, 5);
   const cG1 = new THREE.Color(0x587f36), cG2 = new THREE.Color(0x7c9c48), cF = new THREE.Color(0x36522a), cRock = new THREE.Color(0x85827c), cRock2 = new THREE.Color(0xa39d92),
@@ -136,8 +136,17 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const frame = (x, z, ry) => { const c = Math.cos(ry), s = Math.sin(ry); return (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c]; };
   const LOG = 0x9a6a40, LOG2 = 0x8a6240;
   const chalet = (x, z, ry, w = 8.5, d = 7.5) => {
-    const P = frame(x, z, ry), y = world.height(x, z) + 0.9, rh = 2.3, rw = w + 3.2;
-    B.box(M.stone, w, 3.2, d, x, y - 2.3, z, { ry, c: 0xc4bdae, solid: true });
+    const P = frame(x, z, ry), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, y = yf + 1.7, rh = 2.3, rw = w + 3.2;
+    // ground floor of stone: one room with a door under the balcony
+    room(B, M, x, yf, z, { w: w + 0.3, d: d + 0.3, h: 2.6, t: 0.4, ry, mat: M.stone, c: 0xc4bdae, base: 2.6, doors: [{ side: 's', at: 0, w: 1.7, h: 2.1 }],
+      wins: [{ side: 'e', at: 0, w: 1.1, y: 1.15, h: 0.85 }, { side: 'w', at: -1.3, w: 1.1, y: 1.15, h: 0.85 }, { side: 'n', at: 0, w: 1.1, y: 1.15, h: 0.85 }], floor: { mat: M.woodH, c: 0x6a4a30 }, ceil: { mat: M.woodH, c: 0x5a3c26 } });
+    steps(B, M, ...P(0, d / 2 + 0.15), ry, yf + 0.06, 6, { w: 2.0, c: 0xb0a898 });
+    { const f = yf + 0.06;
+      const [tx, tz] = P(-w * 0.2, -d * 0.1); B.box(M.woodH, 1.5, 0.74, 0.8, tx, f, tz, { ry, c: 0x7a5232, solid: true });
+      for (const k of [-1, 1]) { const [bx, bz] = P(-w * 0.2, -d * 0.1 + k * 0.75); B.box(M.woodH, 1.4, 0.42, 0.28, bx, f, bz, { ry, c: 0x6a4428 }); }
+      const [cx, cz] = P(-w * 0.2 + 0.3, -d * 0.1); B.cyl(M.flat, 0.2, 0.2, 0.12, cx, f + 0.74, cz, { c: 0xe8b838, seg: 12 });
+      const [ox, oz] = P(w * 0.32, 0); B.box(M.stone, 0.95, 1.3, 0.95, ox, f, oz, { ry, c: 0xb0a898, solid: true }); B.box(M.stone, 0.7, 1.3, 0.7, ox, f + 1.3, oz, { ry, c: 0xb0a898 });
+      const [ex, ez] = P(w / 2 - 0.95, -d / 2 + 1.35); B.box(M.woodH, 0.95, 0.5, 1.9, ex, f, ez, { ry, c: 0x5a4030, solid: true }); B.box(M.cloth, 0.9, 0.1, 1.55, ex, f + 0.5, ez, { ry, c: 0xb01c1c }); }
     B.box(M.woodH, w + 0.3, 2.9, d + 0.3, x, y + 0.9, z, { ry, c: LOG, solid: true });
     for (const s of [-1, 1]) { const [gx, gz] = P(0, s * (d / 2 + 0.05)); B.geo(M.woodH, prismGeo(w + 0.3, rh - 0.3, 0.25, 2), [gx, y + 3.8, gz], [0, ry, 0], 1, LOG); }
     B.geo(M.shingle, prismGeo(rw, rh, d + 3, 3), [x, y + 3.8, z], [0, ry, 0], 1, 0x7c7468);
@@ -155,9 +164,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
       B.box(M.flat, 1.0, 1.1, 0.06, wx, y + 1.55, wz, { ry, c: 0xf0ece0 }); B.box(M.flat, 0.78, 0.86, 0.08, wx, y + 1.67, wz, { ry, c: 0x1a232c });
       for (const s of [-1, 1]) { const [sx, sz] = P(lx + s * 0.72, d / 2 + 0.18); B.box(M.woodH, 0.4, 1.1, 0.05, sx, y + 1.55, sz, { ry, c: 0x35582f }); }
     }
-    { const [dx, dz] = P(0, d / 2 + 0.02); B.box(M.woodH, 1.2, 2.0, 0.1, dx, y - 1.0, dz, { ry, c: LOG2 }); }
+    { const [dx, dz] = P(-1.0, d / 2 + 0.75); B.box(M.woodH, 0.1, 2.0, 1.1, dx, yf, dz, { ry, c: LOG2 }); }   // door, standing open
     { const [cx, cz] = P(w * 0.32, 0); B.box(M.stone, 0.8, 1.6, 0.8, cx, y + 4.6, cz, { ry, c: 0xb0a898 }); }
-    { const [sx, sz] = P(-w / 2 - 0.55, 0.5); B.box(M.wood, 0.9, 1.3, 2.4, sx, y - 0.95, sz, { ry, c: 0xc8a878 }); }   // firewood
+    { const [sx, sz] = P(-w / 2 - 0.55, 0.5); B.box(M.wood, 0.9, 1.9, 2.0, sx, yf - 0.9, sz, { ry, c: 0xc8a878 }); }   // firewood
   };
   const stadel = (x, z, ry) => {                                 // hay barn on staddle stones
     const P = frame(x, z, ry), y = world.height(x, z);
@@ -168,16 +177,37 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const [dx, dz] = P(0, 2.33); B.box(M.woodH, 1.1, 1.7, 0.08, dx, y + 0.9, dz, { ry, c: 0x2a1c12 });
   };
   chalet(-45, 51, 0.9); stadel(-37, 69, 0.3); chalet(-8, 39, -0.35, 9, 7.5); chalet(11, 29, 0.95, 8, 7); stadel(2, 47, 1.2); stadel(18, 41, -0.4);
+  chalet(-86, 22, 1.2, 7.5, 6.5); stadel(-78, 35, 0.5);                                     // the alp above the village
   // chapel
   {
-    const x = -44, z = 14, ry = 0.5, P = frame(x, z, ry), y = world.height(x, z) - 0.2;
-    B.box(M.plaster, 5, 4.4, 8, x, y - 0.8, z, { ry, c: 0xf2efe6, solid: true });
+    const x = -44, z = 14, ry = 0.5, P = frame(x, z, ry), w = 5, d = 8, y = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05;
+    room(B, M, x, y, z, { w, d, h: 3.6, t: 0.35, ry, mat: M.plaster, c: 0xf2efe6, base: 2.6, doors: [{ side: 's', at: 0, w: 1.7, h: 2.3 }],
+      wins: [{ side: 'e', at: 0, w: 0.6, y: 1.2, h: 1.4 }, { side: 'w', at: 0, w: 0.6, y: 1.2, h: 1.4 }], floor: { mat: M.stone, c: 0xb8b0a0 }, ceil: { mat: M.woodH, c: 0x5c463a } });
+    steps(B, M, ...P(0, d / 2), ry, y + 0.06, 6, { w: 2.0, c: 0xb0a898 });
+    { const f = y + 0.06;
+      const [ax, az] = P(0, -3.1); B.box(M.stone, 1.4, 1.0, 0.7, ax, f, az, { ry, c: 0xd8d0c0, solid: true }); B.box(M.cloth, 1.5, 0.04, 0.8, ax, f + 1.0, az, { ry, c: 0xf0ece0 });
+      const [kx, kz] = P(0, -3.55); B.box(M.wood, 0.08, 1.1, 0.08, kx, f + 1.5, kz, { c: 0x3a2618 }); B.box(M.wood, 0.5, 0.08, 0.08, kx, f + 2.2, kz, { ry, c: 0x3a2618 });
+      for (const sx of [-1, 1]) { const [qx, qz] = P(sx * 0.5, -3.1); B.cyl(M.flat, 0.03, 0.03, 0.25, qx, f + 1.02, qz, { c: 0xe8e0c8, seg: 5 }); B.geo(M.glow, new THREE.SphereGeometry(0.04, 5, 4), [qx, f + 1.33, qz], [0, 0, 0], [1, 1.6, 1], 0xffb040);
+        for (const lz of [-0.7, 0.8]) { const [px, pz] = P(sx * 1.45, lz); B.box(M.woodH, 1.2, 0.45, 0.4, px, f, pz, { ry, c: 0x5a3c26, solid: true }); } } }
     B.geo(M.shingle, prismGeo(6, 3.6, 9, 3), [x, y + 3.6, z], [0, ry, 0], 1, 0x5c463a);
     const [tx, tz] = P(0, 3); B.box(M.plaster, 1.5, 2.2, 1.5, tx, y + 6.2, tz, { ry, c: 0xf2efe6 });
     B.geo(M.shingle, new THREE.ConeGeometry(1.35, 2.8, 4), [tx, y + 9.8, tz], [0, ry + Math.PI / 4, 0], 1, 0x5c463a);
     B.box(M.flat, 0.1, 1.0, 0.1, tx, y + 11.2, tz, { c: 0x2a2a2a }); B.box(M.flat, 0.55, 0.1, 0.1, tx, y + 11.75, tz, { ry, c: 0x2a2a2a });
-    const [dx, dz] = P(0, 4.03); B.box(M.woodH, 1.3, 2.3, 0.1, dx, y + 0.4, dz, { ry, c: 0x3a2618 });
-    for (const s of [-1, 1]) { const [wx, wz] = P(s * 2.53, 0); B.box(M.flat, 0.08, 1.4, 0.6, wx, y + 1.6, wz, { ry, c: 0x1c2a3a }); }
+    { const [dx, dz] = P(-1.0, 4.6); B.box(M.woodH, 0.1, 2.3, 1.2, dx, y, dz, { ry, c: 0x3a2618 }); }
+  }
+  // Habsburg watchtower on the eastern meadow
+  {
+    const x = 74, z = 34, ry = 0, P = frame(x, z, ry), w = 6, d = 6, y = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05;
+    room(B, M, x, y, z, { w, d, h: 3.4, t: 0.6, ry, mat: M.stone, c: 0xb8b0a2, base: 3, doors: [{ side: 'w', at: 0, w: 1.7, h: 2.3 }],
+      wins: [{ side: 'n', at: 0, w: 0.5, y: 1.2, h: 1.2 }, { side: 's', at: 0, w: 0.5, y: 1.2, h: 1.2 }, { side: 'e', at: 0, w: 0.5, y: 1.2, h: 1.2 }], floor: { mat: M.stone, c: 0x8a8478 }, ceil: { mat: M.woodH, c: 0x4a3626 } });
+    steps(B, M, x - w / 2, z, -Math.PI / 2, y + 0.06, 6, { w: 2.0, c: 0xa8a294 });
+    B.box(M.stone, w, 5.2, d, x, y + 3.6, z, { c: 0xb8b0a2, solid: true });
+    B.box(M.woodH, w + 1.6, 0.25, d + 1.6, x, y + 8.8, z, { c: 0x5a4028 }); B.box(M.woodH, w + 1.5, 1.5, d + 1.5, x, y + 9.05, z, { c: 0x6a4c30 });
+    B.geo(M.shingle, new THREE.ConeGeometry(6.2, 3.6, 4), [x, y + 12.35, z], [0, Math.PI / 4, 0], 1, 0x5c463a);
+    for (const s of [-1, 1]) B.box(M.flat, 0.5, 1.0, 0.1, x + s * 1.6, y + 6.2, z + d / 2 + 0.03, { c: 0x0c1014 });
+    B.box(M.cloth, 1.5, 0.5, 0.05, x, y + 7.3, z + d / 2 + 0.06, { c: 0xb01c1c }); B.box(M.cloth, 1.5, 0.5, 0.05, x, y + 6.8, z + d / 2 + 0.06, { c: 0xf0ece0 }); B.box(M.cloth, 1.5, 0.5, 0.05, x, y + 6.3, z + d / 2 + 0.06, { c: 0xb01c1c });
+    barrel(B, M, x + 1.6, y + 0.06, z - 1.6); crate(B, M, x + 1.5, y + 0.06, z + 1.5, 0.8, 0.3);
+    B.box(M.woodH, 1.6, 1.4, 0.14, x - 1.2, y + 0.9, z - 2.3, { c: 0x4a3626 }); for (let i = 0; i < 4; i++) B.box(M.metal, 0.03, 1.9, 0.03, x - 1.8 + i * 0.4, y + 0.06, z - 2.2, { rx: 0.12, c: 0xc8ccd0 });
   }
   // paddock with cows, fountain trough, hay
   fence(B, M, -22, 40, -22, 52, { c: 0x8a7458 }); fence(B, M, -22, 52, -8, 54, { c: 0x8a7458 }); fence(B, M, -8, 54, -4, 46, { c: 0x8a7458 }); fence(B, M, -22, 40, -14, 39, { c: 0x8a7458 });
@@ -265,21 +295,21 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
 
   // ---- forest, meadow, boulders ----------------------------------------------------------------
-  const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4 || dPoly(STREAM, x, z) < 5 || (x > 26 && x < 72 && z < -12 && z > -56) || (Math.hypot(x + 10, z - 44) < 34) || Math.hypot(x + 44, z - 14) < 8 || Math.hypot(x - fallX, z - fallZ) < 14 || Math.hypot(x + 34, z - 58) < 17;
+  const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4 || dPoly(STREAM, x, z) < 5 || (x > 26 && x < 72 && z < -12 && z > -56) || (Math.hypot(x + 10, z - 44) < 34) || Math.hypot(x + 44, z - 14) < 8 || Math.hypot(x - fallX, z - fallZ) < 14 || Math.hypot(x + 34, z - 58) < 17 || Math.hypot(x + 84, z - 27) < 16 || Math.hypot(x - 74, z - 34) < 13;
   const pines = [];
   for (let i = 0; i < 60000 && pines.length < 2100; i++) {
     const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), d = Math.hypot(x - 6, z - 2);
     if (h < 1.5 || h > 128) continue;
-    if (d < 112) { if (nearBuilt(x, z) || fbm(x * 0.035 + 50, z * 0.035, 2, 3) < 0.6) continue; } else if (forest(x, z) < 0.47 && R() < 0.85) continue;
+    if (d < 131) { if (nearBuilt(x, z) || fbm(x * 0.035 + 50, z * 0.035, 2, 3) < 0.6) continue; } else if (forest(x, z) < 0.47 && R() < 0.85) continue;
     if (world.height(x + 2, z) - h > 3.2 || h - world.height(x - 2, z) > 3.2) continue;
     const s = 0.75 + R() * 0.9;
     pines.push({ x, y: h - 0.3, z, ry: R() * 6.28, s: [s, s * (0.9 + R() * 0.35), s], c: R.pick([0xffffff, 0xd8e8d0, 0xb8d0b0, 0xe8e0c0]) });
-    if (d < 122) world.addCyl(x, z, 0.4 * s, h - 2, h + 9);
+    if (d < 142) world.addCyl(x, z, 0.4 * s, h - 2, h + 9);
   }
   root.add(instanced(pineGeo(), windify(M.rock.clone(), shared, 0.16, 9, 1.1), pines));
   const tufts = [], flowers = [], rocks = [];
   for (let i = 0; i < 120000 && tufts.length < 42000; i++) {
-    const a = R() * 6.283, r = Math.sqrt(R()) * 112, x = 6 + Math.cos(a) * r, z = 2 + Math.sin(a) * r, h = world.height(x, z);
+    const a = R() * 6.283, r = Math.sqrt(R()) * 131, x = 6 + Math.cos(a) * r, z = 2 + Math.sin(a) * r, h = world.height(x, z);
     if (h < 0.7 || dPoly(PATH, x, z) < 1.3 || dPoly(STREAM, x, z) < 2.6) continue;
     tufts.push({ x, y: h, z, ry: R() * 6.28, s: [0.35 + R() * 0.4, 0.2 + R() * 0.4, 0.35 + R() * 0.4], c: R.pick([0x86a84e, 0x74983e, 0x94b058, 0x688c3a]) });
     if (i % 5 === 0) flowers.push({ x: x + 0.3, y: h, z: z + 0.2, ry: R() * 6, s: 0.7 + R() * 0.7, c: R.pick([0xffffff, 0xffe04a, 0xffffff, 0x6a8cf0, 0xf07aa8, 0xffe04a]) });
@@ -291,7 +321,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const x = (R() - 0.5) * 330, z = (R() - 0.5) * 330, h = world.height(x, z); if (h < 0.5 || nearBuilt(x, z)) continue;
     const s = 0.4 + R() * R() * 3;
     rocks.push({ x, y: h + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: R.pick([0x8a8882, 0x9a968e, 0x7a7a76]) });
-    if (s > 1 && Math.hypot(x - 6, z - 2) < 120) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
+    if (s > 1 && Math.hypot(x - 6, z - 2) < 140) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
   }
   root.add(instanced(rockGeo(4, 1), M.rock, rocks));
 
@@ -305,6 +335,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     ['halberdier', -39, 18, { patrol: true }], ['halberdier', 21, 0, {}], ['crossbowman', 29.5, -10, {}], ['knight', 32, -15, {}],
     ['halberdier', 42, -23, {}], ['crossbowman', 37.5, -29, {}], ['halberdier', 48, -29.5, { patrol: true }], ['crossbowman', 56, -26, {}],
     ['knight', 46, -40, {}], ['halberdier', 58, -42, {}], ['crossbowman', 67, -47, { y: 30, static: true, yaw: -2.2 }], ['swissBoss', 60, -48, { yaw: -2.4, patrol: false }],
+    ['halberdier', -8, 39, { up: 1.8, patrol: false }], ['halberdier', -79, 27, {}], ['crossbowman', -91, 31, {}],
+    ['crossbowman', 74, 34, { up: 1.8, patrol: false }], ['halberdier', 67, 37, {}], ['halberdier', 79, 29, { patrol: true }],
   ];
   const cheese = merge([gCyl(0.2, 0.2, 0.12, 0xe8b838, [0, 0, 0], [0, 0, 0], 1, 12), gCyl(0.205, 0.205, 0.03, 0xb88a20, [0, 0.06, 0], [0, 0, 0], 1, 12), gCyl(0.205, 0.205, 0.03, 0xb88a20, [0, -0.06, 0], [0, 0, 0], 1, 12)]);
   cheese.rotateX(1.1);
@@ -320,7 +352,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: -32, z: 60, yaw: -0.71 },
     vista: { c: [0, 6, 20], r: 60, h: 14, a: 2.2, speed: 0.03 },
-    enemies, pickups: [[-9.5, 32.5], [19, 4], [38.5, -19.5], [53, -39.5], [-41, 20]],
+    enemies, pickups: [[-9.5, 32.5], [19, 4], [38.5, -19.5], [53, -39.5], [-41, 20], [13.1, 28.65, 0, 1.8], [-44.96, 12.24, 0, 1.8], [75.6, 35.6, 0, 1.8]],
     dust: [0.45, 0.42, 0.3], water: [[fallX, fallZ, 60], [25, -5.5, 16]],
     makePickup: () => new THREE.Mesh(cheese, M.flat),
     update(dt, t, g) {

@@ -229,7 +229,7 @@ export class World {
       const dx = x - b.x, dz = z - b.z;
       if (dx * dx + dz * dz > b.r * b.r) continue;
       const lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c;
-      if (Math.abs(lx) <= b.hw && Math.abs(lz) <= b.hd) g = b.y1;
+      if (Math.abs(lx) <= b.hw + 1e-6 && Math.abs(lz) <= b.hd + 1e-6) g = b.y1;
     }
     return g;
   }
@@ -374,3 +374,100 @@ export class World {
   }
 }
 const _ro = { x: 0, y: 0, z: 0 }, _rd = { x: 0, y: 0, z: 0 };
+
+// ---------------------------------------------------------------------------
+
+/**
+ * Navigation grid: the walkable area sampled in small cells, with A* route
+ * finding. Built once per level from the same collision model the player uses,
+ * so enemies walk around walls and through doors instead of pushing at them.
+ */
+export class Nav {
+  constructor(world, cell = 0.7) {
+    const B = world.bounds, b = B.r ? { x0: (B.x || 0) - B.r, x1: (B.x || 0) + B.r, z0: (B.z || 0) - B.r, z1: (B.z || 0) + B.r } : B;
+    this.w = world; this.cell = cell; this.x0 = b.x0 + 0.0137; this.z0 = b.z0 + 0.0171;   // off the round numbers that level geometry likes
+    this.nx = Math.ceil((b.x1 - b.x0) / cell); this.nz = Math.ceil((b.z1 - b.z0) / cell);
+    const n = this.nx * this.nz;
+    this.free = new Uint8Array(n); this.hgt = new Float32Array(n); this.onT = new Uint8Array(n); this.links = new Map();
+    this.g = new Float32Array(n); this.from = new Int32Array(n); this.mark = new Uint32Array(n); this.stamp = 0;
+    const p = { x: 0, y: 0, z: 0 };
+    for (let j = 0; j < this.nz; j++) for (let i = 0; i < this.nx; i++) {
+      const x = this.x0 + (i + 0.5) * cell, z = this.z0 + (j + 0.5) * cell, k = j * this.nx + i;
+      const gy = world.height(x, z);
+      if (gy < world.waterY) { this.hgt[k] = gy; continue; }
+      // find the lowest surface here on which a body fits: the ground, or a floor / step / plinth above it
+      let y = world.groundAt(x, z, gy + 0.05), fits = false;
+      for (let tries = 0; tries < 6; tries++) {
+        for (let q = 0; q < 8; q++) { const up = world.groundAt(x, z, y); if (up > y + 0.01) y = up; else break; }   // a walker is lifted onto anything within step height
+        p.x = x; p.y = y; p.z = z; world.collide(p, 0.25, 1.7);
+        if (Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03) { fits = true; break; }
+        let y2 = y; for (let s = 0.5; s <= 4.5 && y2 <= y + 0.01; s += 0.5) y2 = world.groundAt(x, z, y + s);
+        if (y2 <= y + 0.01 || y2 - gy > 2.4) break;         // nothing higher, or a roof: not a place to walk
+        y = y2;
+      }
+      this.hgt[k] = y; this.onT[k] = y - gy < 0.03 ? 1 : 0; if (fits) this.free[k] = 1;
+    }
+  }
+  idx(x, z) { const i = Math.floor((x - this.x0) / this.cell), j = Math.floor((z - this.z0) / this.cell); return i < 0 || j < 0 || i >= this.nx || j >= this.nz ? -1 : j * this.nx + i; }
+  /** Nearest walkable cell to a point (searches a few rings outward). */
+  near(x, z, y) {
+    const fit = (k) => this.free[k] && (y === undefined || Math.abs(this.hgt[k] - y) < 0.9);      // same storey as the walker, not the crate beside him
+    const k = this.idx(x, z); if (k >= 0 && fit(k)) return k;
+    const ci = Math.floor((x - this.x0) / this.cell), cj = Math.floor((z - this.z0) / this.cell);
+    for (let r = 1; r <= 5; r++) for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) {
+      if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue;
+      const i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= this.nx || j >= this.nz) continue;
+      if (fit(j * this.nx + i)) return j * this.nx + i;
+    }
+    return y === undefined ? -1 : this.near(x, z);
+  }
+  /** Can a body walk from cell a to its neighbour b? Slopes of open ground, and steps of at most half a metre. */
+  ok(a, b) {
+    if (!this.free[b]) return false;
+    const ha = this.hgt[a], hb = this.hgt[b], d = Math.abs(ha - hb);
+    if (d <= 0.52) return true;
+    if (this.onT[a] && this.onT[b]) return d <= 0.5 + this.cell * 1.42 * this.w.maxSlope;
+    if (d > 1.3) return false;
+    const lo = Math.min(a, b), df = Math.max(a, b) - lo, key = lo * 4 + (df === 1 ? 0 : df === this.nx - 1 ? 1 : df === this.nx ? 2 : 3);
+    let v = this.links.get(key);
+    if (v === undefined) {                    // a flight of stairs? walk it in three short strides and see whether each one is a step, not a wall
+      const nx = this.nx, c = this.cell, xa = this.x0 + ((a % nx) + 0.5) * c, za = this.z0 + (((a / nx) | 0) + 0.5) * c, xb = this.x0 + ((b % nx) + 0.5) * c, zb = this.z0 + (((b / nx) | 0) + 0.5) * c;
+      const y1 = this.w.groundAt(xa + (xb - xa) / 3, za + (zb - za) / 3, ha), y2 = this.w.groundAt(xa + (xb - xa) * 2 / 3, za + (zb - za) * 2 / 3, y1);
+      v = Math.abs(y1 - ha) <= 0.52 && Math.abs(y2 - y1) <= 0.52 && Math.abs(hb - y2) <= 0.52; this.links.set(key, v);
+    }
+    return v;
+  }
+  /** Route from a to b as a list of [x, z] points, or null. A* with a binary heap. */
+  path(ax, az, bx, bz, limit = 30000, ay, by) {
+    const s = this.near(ax, az, ay), t = this.near(bx, bz, by); if (s < 0 || t < 0) return null;
+    if (s === t) return [[bx, bz]];
+    const nx = this.nx, g = this.g, from = this.from, mark = this.mark, st = (this.stamp += 2), closed = st + 1;
+    const ti = t % nx, tj = (t / nx) | 0;
+    const hs = (k) => { const dx = Math.abs((k % nx) - ti), dz = Math.abs(((k / nx) | 0) - tj); return (dx + dz - 0.586 * Math.min(dx, dz)) * 1.1; };
+    const hk = [], hf = [];
+    const push = (k, f) => { let i = hk.length; hk.push(k); hf.push(f); while (i > 0) { const pa = (i - 1) >> 1; if (hf[pa] <= f) break; hk[i] = hk[pa]; hf[i] = hf[pa]; i = pa; } hk[i] = k; hf[i] = f; };
+    const pop = () => { const k = hk[0], lk = hk.pop(), lf = hf.pop(), n = hk.length; if (n) { let i = 0; for (;;) { let c = 2 * i + 1; if (c >= n) break; if (c + 1 < n && hf[c + 1] < hf[c]) c++; if (hf[c] >= lf) break; hk[i] = hk[c]; hf[i] = hf[c]; i = c; } hk[i] = lk; hf[i] = lf; } return k; };
+    g[s] = 0; from[s] = -1; mark[s] = st; push(s, hs(s));
+    let found = false, steps = 0;
+    while (hk.length && steps++ < limit) {
+      const c = pop();
+      if (mark[c] === closed) continue;
+      if (c === t) { found = true; break; }
+      mark[c] = closed;
+      const ci = c % nx, cj = (c / nx) | 0;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+        if (!di && !dj) continue;
+        const i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= nx || j >= this.nz) continue;
+        const k = j * nx + i; if (mark[k] === closed || !this.ok(c, k)) continue;
+        if (di && dj && (!this.free[cj * nx + i] || !this.free[j * nx + ci])) continue;      // no cutting corners
+        const ng = g[c] + (di && dj ? 1.414 : 1);
+        if (mark[k] === st && ng >= g[k]) continue;
+        g[k] = ng; from[k] = c; mark[k] = st; push(k, ng + hs(k));
+      }
+    }
+    if (!found) return null;
+    const out = []; for (let k = t; k >= 0 && k !== s; k = from[k]) out.push([this.x0 + ((k % nx) + 0.5) * this.cell, this.z0 + (((k / nx) | 0) + 0.5) * this.cell]);
+    out.reverse(); out.push([bx, bz]);
+    return out;
+  }
+}

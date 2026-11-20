@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { makeHumanoid } from '../actors.js';
-import { instanced, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, room, steps, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const greece = {
@@ -42,6 +42,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const hf = new Heightfield(1000, 320, (x, z) => {
     const d = Math.hypot(x, z / 1.25);
     let land = 1 - smooth(74, 104, d);
+    land = Math.max(land, 1 - smooth(16, 34, Math.hypot(x - 92, z - 58)));                // the fishermen's cape in the south-east
     land *= 1 - (1 - smooth(14, 32, Math.hypot(x + 98, z - 16))) * 0.92;                 // harbour bay in the west
     const calm = 1 - (1 - smooth(2, 9, dPoly(PATH, x, z))) * 0.85;
     let h = -7.5 + land * 12 + (fbm(x * 0.03, z * 0.03, 4, 3) - 0.5) * 3.4 * land * land * calm;
@@ -54,7 +55,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     return h;
   });
   world.height = (x, z) => hf.h(x, z);
-  world.bounds = { x0: -104, x1: 104, z0: -92, z1: 116 };
+  world.bounds = { x0: -104, x1: 128, z0: -92, z1: 116 };
   world.maxSlope = 0.95; world.waterY = -0.9;
   const cSand = new THREE.Color(0xeedcae), cDry = new THREE.Color(0xd2bc7c), cGreen = new THREE.Color(0xa3a45e), cRock = new THREE.Color(0xd8cfb8), cPath = new THREE.Color(0xd9c79c),
     cShallow = new THREE.Color(0x46b8b4), cDeep = new THREE.Color(0x0d587a), tmp = new THREE.Color();
@@ -78,13 +79,18 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     world.addCyl(x, z, r + 0.04, y - 1, y + h);
   };
   const house = (x, z, ry, w = 7, d = 6, h = 3.1) => {
-    const P = frame(x, z, ry), y = world.height(x, z) - 0.3;
-    B.box(M.plaster, w, h + 0.3, d, x, y, z, { ry, c: 0xf2ede0, solid: true });
-    B.geo(M.kawara, prismGeo(w + 1.2, 1.35, d + 1.2, 1.6), [x, y + h + 0.3, z], [0, ry, 0], 1, TERRA);
-    const [dx, dz] = P(-w * 0.2, d / 2 + 0.03); B.box(M.woodH, 1.1, 2.1, 0.1, dx, y + 0.3, dz, { ry, c: 0x2c5a8a });
-    const [wx, wz] = P(w * 0.24, d / 2 + 0.03); B.box(M.flat, 0.8, 0.8, 0.08, wx, y + 1.7, wz, { ry, c: 0x1a2630 }); B.box(M.woodH, 1.0, 0.1, 0.14, wx, y + 1.6, wz, { ry, c: 0x2c5a8a });
-    const [bx, bz] = P(w * 0.38, d / 2 + 0.7);
-    B.cyl(M.flat, 0.24, 0.13, 0.62, bx, y + 0.3, bz, { c: TERRA, seg: 9 }); B.cyl(M.flat, 0.1, 0.14, 0.2, bx, y + 0.92, bz, { c: TERRA, seg: 9 });
+    const P = frame(x, z, ry), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h, t: 0.3, ry, mat: M.plaster, c: 0xf2ede0, base: 2.6, doors: [{ side: 's', at: -w * 0.2, w: 1.6, h: 2.1 }],
+      wins: [{ side: 's', at: w * 0.24, w: 0.9, y: 1.15, h: 0.85 }, { side: 'n', at: 0, w: 0.9, y: 1.15, h: 0.85 }], floor: { mat: M.cobble, c: 0xe0d6c0 }, ceil: { mat: M.woodH, c: 0x8a6a48 } });
+    steps(B, M, ...P(-w * 0.2, d / 2), ry, f, 6, { w: 1.9, c: 0xe6dfcc });
+    B.geo(M.kawara, prismGeo(w + 1.2, 1.35, d + 1.2, 1.6), [x, yf + h, z], [0, ry, 0], 1, TERRA);
+    const [dx, dz] = P(-w * 0.2 - 0.85, d / 2 + 0.55); B.box(M.woodH, 0.1, 2.1, 1.1, dx, yf, dz, { ry, c: 0x2c5a8a });      // blue door, open
+    const [wx, wz] = P(w * 0.24, d / 2 + 0.03); B.box(M.woodH, 1.0, 0.1, 0.14, wx, yf + 1.06, wz, { ry, c: 0x2c5a8a });
+    const [bx, bz] = P(w * 0.38, d / 2 + 0.7), by = world.height(bx, bz);
+    B.cyl(M.flat, 0.24, 0.13, 0.62, bx, by, bz, { c: TERRA, seg: 9 }); B.cyl(M.flat, 0.1, 0.14, 0.2, bx, by + 0.62, bz, { c: TERRA, seg: 9 });
+    const [tx, tz] = P(w * 0.2, -d * 0.14); B.box(M.woodH, 1.2, 0.7, 0.7, tx, f, tz, { ry, c: 0x7a5a3a, solid: true }); B.cyl(M.flat, 0.16, 0.08, 0.14, tx, f + 0.7, tz, { c: TERRA, seg: 9 });
+    const [ex, ez] = P(-w / 2 + 0.85, -d / 2 + 1.3); B.box(M.woodH, 0.9, 0.45, 1.8, ex, f, ez, { ry, c: 0x6a4a2e, solid: true }); B.box(M.cloth, 0.86, 0.08, 1.5, ex, f + 0.45, ez, { ry, c: 0x2c5a8a });
+    for (const k of [0, 1]) { const [qx, qz] = P(w / 2 - 0.6 - k * 0.55, -d / 2 + 0.6); B.cyl(M.flat, 0.24, 0.13, 0.62, qx, f, qz, { c: TERRA, seg: 9 }); B.cyl(M.flat, 0.1, 0.14, 0.2, qx, f + 0.62, qz, { c: TERRA, seg: 9 }); world.addCyl(qx, qz, 0.24, f, f + 0.8); }
   };
   const statue = (x, z, ry, s = 1.5) => {
     const y = world.height(x, z), c = 0xe2dccc;
@@ -100,8 +106,10 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const y = y0 + 1.2;
     for (let i = 0; i < 6; i++) for (const s of [-1, 1]) column(x - w / 2 + i * (w / 5), y, z + s * l / 2, ch);
     for (let i = 1; i < 10; i++) for (const s of [-1, 1]) column(x + s * w / 2, y, z - l / 2 + i * (l / 10), ch);
-    B.box(M.plaster, w - 4.6, ch + 0.2, l - 9, x, y, z - 1.2, { c: 0xf0eadc, solid: true });               // cella
-    B.box(M.metal, 2.0, 4.2, 0.12, x, y, z - 1.2 + (l - 9) / 2 + 0.03, { c: 0x9a7030 });                   // bronze doors
+    room(B, M, x, y, z - 1.2, { w: w - 4.6, d: l - 9, h: ch + 0.2, t: 0.5, mat: M.plaster, c: 0xf0eadc, base: 0.05, doors: [{ side: 's', at: 0, w: 2.4, h: 4.2 }],
+      floor: { mat: M.cobble, c: 0xe8e0d0 }, ceil: { mat: M.plaster, c: 0xe2dccc } });                                              // cella, open to the faithful
+    for (const s of [-1, 1]) B.box(M.metal, 0.12, 4.2, 1.2, x + s * 1.3, y, z - 1.2 + (l - 9) / 2 + 0.62, { c: 0x9a7030 });       // bronze doors, thrown open
+    for (const s of [-1, 1]) { B.cyl(M.metal, 0.3, 0.16, 0.9, x + s * 2.6, y + 0.06, z - 6.2, { c: 0xb8893a, seg: 8 }); B.geo(M.glow, new THREE.ConeGeometry(0.2, 0.5, 6), [x + s * 2.6, y + 1.2, z - 6.2], [0, 0, 0], 1, 0xff7a20); world.addCyl(x + s * 2.6, z - 6.2, 0.3, y, y + 1); }
     const ey = y + ch + 0.42;
     for (const s of [-1, 1]) { B.box(M.plaster, w + 1.4, 1.0, 1.3, x, ey, z + s * l / 2, { c: MARBLE }); B.box(M.plaster, 1.3, 1.0, l + 1.4, x + s * w / 2, ey, z, { c: MARBLE }); }
     for (let i = 0; i < 13; i++) for (const s of [-1, 1]) B.box(M.flat, 0.5, 0.42, 0.06, x - 6 + i, ey + 0.5, z + s * (l / 2 + 0.66), { c: i % 2 ? BLUE : 0xb83a2a });
@@ -115,7 +123,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.plaster, 3.4, 1.1, 1.6, 0, HILL.top - 0.1, -36.5, { c: MARBLE, solid: true }); B.box(M.plaster, 3.8, 0.18, 2.0, 0, HILL.top + 1.0, -36.5, { c: MARBLE });
   }
   const fires = [brazier(B, M, -5.5, HILL.top, -34, 1.2), brazier(B, M, 5.5, HILL.top, -34, 1.2), brazier(B, M, -6, world.height(-6, -11), -11), brazier(B, M, 6, world.height(6, -11), -11)];
-  statue(-11, -33, 0.4, 1.6); statue(11, -33, -0.4, 1.6);
+  statue(-11, -33, 0.4, 1.6); statue(11, -33, -0.4, 1.6); statue(0, -64.5, 0, 2.5);                      // the god of the house, inside the cella
   // stairway (the terrain underneath is a ramp)
   for (let i = 0; i < 30; i++) { const z = -13 - i * 0.6; B.box(M.plaster, 9.6, 0.5, 0.66, 0, world.height(0, z - 0.3) - 0.42, z - 0.3, { c: i % 2 ? 0xe6dfcc : 0xdcd4c0, solid: true }); }
   for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const z = -13 - i * 3.6; B.box(M.plaster, 0.9, 1.6, 3.7, s * 5.3, world.height(s * 5.3, z - 1.8) - 0.5, z - 1.8, { c: MARBLE, solid: true }); }
@@ -141,10 +149,29 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const x = 74, z = -8, y = world.height(x, z) - 0.3;
     B.cyl(M.plaster, 5.4, 5.6, 0.9, x, y, z, { c: MARBLE, seg: 24, solid: true });
     for (let i = 0; i < 10; i++) column(x + Math.cos(i * 0.628) * 4.3, y + 0.9, z + Math.sin(i * 0.628) * 4.3, 4.2, 0.36);
-    B.cyl(M.plaster, 2.2, 2.2, 4.6, x, y + 0.9, z, { c: 0xf0eadc, seg: 16 });
+    B.cyl(M.plaster, 2.2, 2.2, 4.6, x, y + 0.9, z, { c: 0xf0eadc, seg: 16, solid: true });
     B.cyl(M.plaster, 5.0, 5.0, 0.7, x, y + 5.55, z, { c: MARBLE, seg: 24 });
     B.geo(M.kawara, new THREE.ConeGeometry(5.5, 2.4, 24), [x, y + 7.45, z], [0, 0, 0], 1, TERRA);
     B.geo(M.metal, new THREE.SphereGeometry(0.3, 8, 6), [x, y + 8.8, z], [0, 0, 0], 1, 0xd9b23a);
+  }
+
+  // ---- the fishermen's cape: two houses and a beacon tower -------------------------------
+  {
+    house(88, 51, -1.2, 7, 6); house(97, 61, 2.4, 6, 5.5);
+    const x = 101, z = 50, w = 5.4, d = 5.4, P = frame(x, z, 0), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05;
+    room(B, M, x, yf, z, { w, d, h: 3.2, t: 0.5, mat: M.plaster, c: MARBLE, base: 3, doors: [{ side: 'w', at: 0, w: 1.7, h: 2.2 }], wins: [{ side: 's', at: 0, w: 0.6, y: 1.2, h: 1.0 }, { side: 'e', at: 0, w: 0.6, y: 1.2, h: 1.0 }],
+      floor: { mat: M.cobble, c: 0xe0d6c0 }, ceil: { mat: M.woodH, c: 0x8a6a48 } });
+    steps(B, M, x - w / 2, z, -Math.PI / 2, yf + 0.06, 6, { w: 2.0, c: 0xe6dfcc });
+    B.cyl(M.plaster, 1.9, 2.6, 6.4, x, yf + 3.4, z, { c: MARBLE, seg: 12 }); world.addBox(x, z, w, d, 0, yf + 3.3, yf + 10);
+    B.cyl(M.plaster, 2.4, 2.0, 0.4, x, yf + 9.8, z, { c: MARBLE, seg: 12 }); B.cyl(M.metal, 0.9, 0.5, 0.5, x, yf + 10.2, z, { c: 0xb8893a, seg: 10 });
+    B.geo(M.glow, new THREE.ConeGeometry(0.7, 1.6, 7), [x, yf + 11.4, z], [0, 0, 0], 1, 0xff7a20);
+    for (const [ax, az] of [[x + 1.6, z - 1.6], [x + 1.5, z + 1.5], [x - 0.2, z + 1.8]]) { B.cyl(M.flat, 0.26, 0.14, 0.7, ax, yf + 0.06, az, { c: TERRA, seg: 9 }); B.cyl(M.flat, 0.1, 0.16, 0.22, ax, yf + 0.76, az, { c: TERRA, seg: 9 }); world.addCyl(ax, az, 0.26, yf, yf + 0.9); }
+    for (const [nx, nz, ry] of [[92, 62, 0.4], [85, 58, 1.3]]) {                                           // nets drying on poles
+      const y = world.height(nx, nz), c = Math.cos(ry), s = Math.sin(ry);
+      for (const k of [-1, 1]) B.box(M.wood, 0.1, 2.3, 0.1, nx + k * 1.6 * c, y - 0.2, nz - k * 1.6 * s, { c: 0x6a4a30 });
+      B.box(M.cloth, 3.2, 1.3, 0.03, nx, y + 0.75, nz, { ry, c: 0x8a9a8a }); B.box(M.wood, 3.4, 0.07, 0.07, nx, y + 2.05, nz, { ry, c: 0x6a4a30 }); world.addBox(nx, nz, 3.3, 0.25, ry, y - 1, y + 2.1);
+    }
+    for (const [bx, bz, ry] of [[104, 62, 0.7], [99, 68, 1.9]]) { const y = Math.max(0.2, world.height(bx, bz)); B.geo(M.flat, new THREE.SphereGeometry(1, 10, 6), [bx, y + 0.25, bz], [0, ry, 0], [0.75, 0.55, 2.4], 0x3a5a7a); B.box(M.woodH, 1.0, 0.08, 3.6, bx, y + 0.5, bz, { ry, c: 0x8a6a48 }); world.addBox(bx, bz, 1.5, 4.6, ry, y - 1, y + 0.9); }
   }
 
   // ---- ships ---------------------------------------------------------------------------------
@@ -166,7 +193,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283 + 0.3, r = 520 + (i % 3) * 90; B.geo(M.flat, new THREE.SphereGeometry(1, 14, 8), [Math.cos(a) * r, -6, Math.sin(a) * r], [0, i, 0], [150 + (i % 4) * 60, 34 + (i * 37) % 40, 110 + (i % 3) * 50], 0x9db2c4); }
 
   // ---- vegetation -------------------------------------------------------------------------------
-  const built = (x, z) => dPoly(PATH, x, z) < 3.6 || (Math.abs(x) < 9 && z < 34 && z > 14) || (x > 18 && x < 30 && z > -2 && z < 26) || Math.hypot(x - HILL.x, z - HILL.z) < 36 || Math.hypot(x - 74, z + 8) < 8
+  const built = (x, z) => dPoly(PATH, x, z) < 3.6 || (Math.abs(x) < 9 && z < 34 && z > 14) || (x > 18 && x < 30 && z > -2 && z < 26) || Math.hypot(x - HILL.x, z - HILL.z) < 36 || Math.hypot(x - 74, z + 8) < 8 || Math.hypot(x - 93, z - 56) < 15
     || [[-17, 39], [-23, 23], [-15, 9], [17, 38], [-34, 36], [34, 44]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 6.5);
   const olives = [], cypress = [], rocks = [], tufts = [], poppies = [], bushes = [];
   for (let i = 0; i < 4000 && olives.length < 60; i++) { const x = (R() - 0.5) * 190, z = -85 + R() * 195, h = world.height(x, z); if (h < 2.6 || h > 9 || built(x, z) || fbm(x * 0.04, z * 0.04, 2, 4) < 0.5) continue; const s = 0.8 + R() * 0.6; olives.push({ x, y: h - 0.15, z, ry: R() * 6.28, s }); world.addCyl(x, z, 0.35 * s, h - 2, h + 5); }
@@ -199,6 +226,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     ['peltast', 68, -3, {}], ['hoplite', 62, -11, {}],
     ['hoplite', -5, -7, {}], ['hoplite', 5, -7, {}],
     ['peltast', -12, -30, {}], ['peltast', 12, -30, {}], ['hoplite', -7, -39, {}], ['hoplite', 7, -39, {}], ['greeceBoss', 0, -42, { yaw: 0, patrol: false }],
+    ['hoplite', -2.4, -58, { up: 1.8, patrol: false, yaw: 0 }], ['hoplite', 17, 38, { up: 1.8, patrol: false }],
+    ['hoplite', 91, 57, {}], ['peltast', 95, 53, {}], ['hoplite', 100.4, 50.6, { up: 1.8, patrol: false }],
   ];
   const jar = merge([gCyl(0.16, 0.08, 0.3, 0xd9b23a, [0, 0, 0], [0, 0, 0], 1, 9), gCyl(0.06, 0.1, 0.12, 0xd9b23a, [0, 0.2, 0], [0, 0, 0], 1, 9), gCyl(0.09, 0.09, 0.03, 0xf0ece0, [0, 0.27, 0], [0, 0, 0], 1, 9)]);
   let ft = 0;
@@ -213,7 +242,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0, z: 99, yaw: 0 },
     vista: { c: [0, 6, 30], r: 60, h: 14, a: 1.5, speed: 0.03 },
-    enemies, pickups: [[-3, 62], [11, 27], [-52, 14], [66, -5], [0, -33.5]],
+    enemies, pickups: [[-3, 62], [11, 27], [-52, 14], [66, -5], [0, -33.5], [2.6, -61, 0, 1.8], [101.8, 51.4, 0, 1.8], [-22.5, 23.5, 0, 1.8]],
     dust: [0.78, 0.7, 0.52], water: [[0, 112, 30], [-70, 16, 34], [84, -8, 24]],
     makePickup: () => new THREE.Mesh(jar, M.flat),
     update(dt, t, g) {

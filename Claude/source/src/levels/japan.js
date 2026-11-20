@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Heightfield, curvedRoofGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
-import { instanced, tuftGeo, blobTreeGeo, gBox, gCyl, gCone, gSph, xf, merge, paint } from '../props.js';
+import { instanced, room, tuftGeo, blobTreeGeo, gBox, gCyl, gCone, gSph, xf, merge, paint } from '../props.js';
 import { fbm, smooth, clamp } from '../util.js';
 
 export const japan = {
@@ -31,18 +31,18 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     let h = (fbm(x * 0.03 + 9, z * 0.03, 4, 21) - 0.5) * 2.2;
     const onPath = 1 - smooth(2, 7, Math.abs(x - pathX(z)));
     h *= 1 - onPath * 0.85;
-    const flat = (1 - smooth(30, 44, Math.abs(x))) * (1 - smooth(8, 16, Math.abs(z - 8) - 30));
+    const flat = (1 - smooth(58, 68, Math.abs(x))) * (1 - smooth(8, 16, Math.abs(z - 8) - 30));
     h *= 1 - flat * 0.8;
     const pd = Math.hypot(x - POND.x, z - POND.z);
     h -= (1 - smooth(POND.r - 4, POND.r + 1.5, pd)) * 1.5;
     // shrine terrace: +3 m, reached by a ramp (the stairs) in the middle
     const stair = Math.abs(x) < 4.2 ? smooth(-23.5, -32.5, z) : smooth(-27.6, -29.2, z);
     h = h * (1 - stair) + 3 * stair;
-    const out = Math.max(smooth(46, 110, Math.abs(x)), smooth(76, 140, Math.abs(z)));
+    const out = Math.max(smooth(64, 124, Math.abs(x)), smooth(76, 140, Math.abs(z)));
     return h + out * (fbm(x * 0.012, z * 0.012 + 4, 4, 3) * 36 + 4);
   });
   world.height = (x, z) => hf.h(x, z);
-  world.bounds = { x0: -47, x1: 47, z0: -76, z1: 79 };
+  world.bounds = { x0: -63, x1: 63, z0: -76, z1: 79 };
   world.maxSlope = 1.0; world.waterY = -1.05;
   const cMoss = new THREE.Color(0x4a5c30), cDirt = new THREE.Color(0x6a5a44), cDark = new THREE.Color(0x35432a), cGravel = new THREE.Color(0xb0a898), tmp = new THREE.Color();
   root.add(hf.mesh(M.ground, (x, z) => {
@@ -86,12 +86,22 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const y = o.y ?? world.height(x, z);
     const c = Math.cos(ry), s = Math.sin(ry), P = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
     B.box(M.woodH, w + 1.6, base, d + 1.6, x, y, z, { ry, c: 0x5a4030, solid: true });                      // veranda platform
-    B.box(M.plaster, w, h, d, x, y + base, z, { ry, c: wallC, solid: true });
+    const n = Math.max(2, Math.floor(w / 2.1)), bw = w / n, mid = Math.floor(n / 2), lxm = -w / 2 + (mid + 0.5) * bw, fy = y + base + 0.06;
+    room(B, M, x, y + base, z, { w, d, h, t: 0.2, ry, mat: M.plaster, c: wallC, base: 0.04, ceil: false, floor: { mat: M.thatch, c: 0xb8aa70 },
+      doors: [{ side: 's', at: lxm, w: bw - 0.25, h: 2.1 }, { side: 'n', at: lxm, w: bw - 0.25, h: 2.1 }] });
+    for (const sz of [-1, 1]) { const [px, pz] = P(lxm, sz * (d / 2 + 1.2)); B.box(M.stone, 1.5, 0.75, 0.7, px, y - 0.5, pz, { ry, c: 0x8c8a80, solid: true }); }   // stepping stones
+    if (o.bare !== true) {
+      const [tx, tz] = P(-w * 0.26, d * 0.1); B.box(M.woodH, 1.1, 0.3, 0.7, tx, fy, tz, { ry, c: 0x3a2618, solid: true });
+      for (const k of [-1, 1]) { const [cx, cz] = P(-w * 0.26, d * 0.1 + k * 0.75); B.box(M.cloth, 0.5, 0.07, 0.5, cx, fy, cz, { ry, c: k > 0 ? 0x6a2a3a : 0x2a3a5a }); }
+      for (let k = 0; k < 3; k++) { const [bx, bz] = P(w * 0.27 + (k - 1) * 0.62, -d * 0.2 + (k % 2) * 0.2); B.box(M.shoji, 0.7, 1.55, 0.04, bx, fy, bz, { ry: ry + (k % 2 ? -0.5 : 0.5) }); }
+      { const [bx, bz] = P(w * 0.27, -d * 0.2 + 0.1); world.addBox(bx, bz, 2.0, 0.34, ry, fy, fy + 1.55); }
+      const [ax, az] = P(w / 2 - 0.6, d / 2 - 0.6); B.box(M.wood, 0.3, 0.12, 0.3, ax, fy, az, { ry, c: DARK }); B.box(M.glow, 0.24, 0.4, 0.24, ax, fy + 0.12, az, { ry, c: 0xffa040 });
+    }
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) { const [px, pz] = P(sx * w / 2, sz * d / 2); B.box(M.wood, 0.24, h, 0.24, px, y + base, pz, { ry, c: DARK }); }
     for (const sz of [-1, 1]) { const [bx, bz] = P(0, sz * (d / 2 + 0.02)); B.box(M.woodH, w + 0.2, 0.2, 0.12, bx, y + base + h - 0.2, bz, { ry, c: DARK }); B.box(M.woodH, w + 0.2, 0.16, 0.12, bx, y + base, bz, { ry, c: DARK }); }
     for (const sx of [-1, 1]) { const [bx, bz] = P(sx * (w / 2 + 0.02), 0); B.box(M.woodH, 0.12, 0.2, d + 0.2, bx, y + base + h - 0.2, bz, { ry, c: DARK }); }
-    const n = Math.max(2, Math.floor(w / 2.1));
-    for (let i = 0; i < n; i++) {                                                                       // shoji screens, front + back
+    for (let i = 0; i < n; i++) {                                                                       // shoji screens, front + back (the middle bay stands open)
+      if (i === mid) continue;
       const lx = -w / 2 + (i + 0.5) * (w / n);
       for (const sz of [-1, 1]) { const [sx_, sz_] = P(lx, sz * (d / 2 + 0.04)); B.box(M.shoji, w / n - 0.3, 1.9, 0.06, sx_, y + base + 0.12, sz_, { ry }); }
     }
@@ -167,16 +177,28 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const x = 0, z = -56, y = 3;
     B.box(M.stone, 16, 1.0, 12.5, x, y, z, { c: 0x9a988e, solid: true });
     for (let i = 0; i < 3; i++) B.box(M.stone, 6, 0.33, 0.6, x, y + i * 0.33, z + 6.25 + (2 - i) * 0.6 + 0.3, { c: 0x9c9a90, solid: true });
-    B.box(M.plaster, 11.5, 3.6, 8, x, y + 1, z - 0.6, { c: 0xece4d0, solid: true });
+    room(B, M, x, y + 1, z - 0.6, { w: 11.5, d: 8, h: 3.6, t: 0.3, mat: M.plaster, c: 0xece4d0, base: 0.04, doors: [{ side: 's', at: 0, w: 2.3, h: 2.7 }], floor: { mat: M.woodH, c: 0x6a4a30 }, ceil: { mat: M.woodH, c: 0x4a2a22 } });
+    {                                             // inside: altar with the sacred mirror, drums, offerings
+      const fy = y + 1.06, zb = z - 0.6 - 3.2;
+      B.box(M.woodH, 3.6, 0.9, 1.0, x, fy, zb, { c: 0x7a1c16, solid: true }); B.box(M.woodH, 2.2, 0.5, 0.7, x, fy + 0.9, zb, { c: 0x8a2018 });
+      B.cyl(M.metal, 0.46, 0.46, 0.05, x, fy + 1.55, zb + 0.1, { rx: Math.PI / 2, c: 0xe0c060, seg: 18 }); B.box(M.wood, 0.9, 0.12, 0.3, x, fy + 1.4, zb + 0.1, { c: 0x2a1a12 });
+      for (const sx of [-1, 1]) {
+        B.cyl(M.wood, 0.5, 0.5, 0.7, x + sx * 3.9, fy + 0.5, zb + 0.4, { rz: Math.PI / 2, c: 0x8a3a22, seg: 12 }); B.box(M.wood, 0.9, 0.5, 0.7, x + sx * 3.9, fy, zb + 0.4, { c: 0x2a1a12, solid: true });
+        B.cyl(M.flat, 0.04, 0.04, 0.3, x + sx * 1.3, fy + 0.9, zb + 0.2, { c: 0xe8e0c8, seg: 5 }); B.geo(M.glow, new THREE.SphereGeometry(0.05, 5, 4), [x + sx * 1.3, fy + 1.26, zb + 0.2], [0, 0, 0], [1, 1.7, 1], 0xffb040);
+        B.box(M.shoji, 0.05, 1.7, 2.2, x + sx * 5.4, fy, z + 0.4, {});
+      }
+      for (let i = 0; i < 6; i++) for (const sz of [-1, 1]) world.addCyl(x - 6.4 + i * 2.56, z - 0.6 + sz * 4.9, 0.24, y, y + 4.7);
+      for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) world.addCyl(x + sx * 6.4, z - 3.2 + i * 2.5, 0.24, y, y + 4.7);
+    }
     for (let i = 0; i < 6; i++) for (const sz of [-1, 1]) B.cyl(M.flat, 0.2, 0.22, 3.7, x - 6.4 + i * 2.56, y + 1, z - 0.6 + sz * 4.9, { c: RED, seg: 10 });
     for (const sx of [-1, 1]) for (let i = 0; i < 3; i++) B.cyl(M.flat, 0.2, 0.22, 3.7, x + sx * 6.4, y + 1, z - 3.2 + i * 2.5, { c: RED, seg: 10 });
-    for (let i = 0; i < 5; i++) B.box(M.shoji, 2.0, 2.6, 0.08, x - 4.6 + i * 2.3, y + 1.1, z + 3.46, {});
+    for (let i = 0; i < 5; i++) if (i !== 2) B.box(M.shoji, 2.0, 2.6, 0.08, x - 4.6 + i * 2.3, y + 1.1, z + 3.46, {});
     B.box(M.woodH, 14.4, 0.3, 11.4, x, y + 4.6, z - 0.6, { c: RED });
     B.geo(M.kawara, curvedRoofGeo(18.5, 15.5, 4.4, { up: 1.25, tile: 1.6, ridge: 0.5, curve: 2.1 }), [x, y + 4.9, z - 0.6], [0, 0, 0], 1, 0x4a5a60);
     B.box(M.flat, 10.4, 0.4, 0.5, x, y + 9.25, z - 0.6, { c: 0x23292c });
     for (const sx of [-1, 1]) B.geo(M.metal, new THREE.ConeGeometry(0.22, 0.9, 6), [x + sx * 5.0, y + 9.9, z - 0.6], [0, 0, sx * -0.5], 1, 0xd9b23a);
     // offering box, rope with paper streamers
-    B.box(M.woodH, 2.2, 0.8, 0.9, x, y + 1, z + 5.2, { c: 0x4a3222, solid: true });
+    B.box(M.woodH, 2.2, 0.8, 0.9, x - 2.56, y + 1, z + 5.3, { c: 0x4a3222, solid: true });
     B.cyl(M.flat, 0.09, 0.09, 6.2, x, y + 4.15, z + 4.5, { rz: Math.PI / 2, c: 0xd8c890, seg: 6 });
     for (let i = 0; i < 5; i++) B.box(M.cloth, 0.22, 0.5, 0.01, x - 2.4 + i * 1.2, y + 3.55, z + 4.5, { c: 0xffffff });
     lamp(x - 3, y + 2.6, z + 5.5, 24, 16); lamp(x + 3, y + 2.6, z + 5.5, 24, 16);
@@ -202,8 +224,28 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   B.cyl(M.flat, 0.9, 0.9, 0.16, 20, 4.4, -44, { c: 0xd8c890, seg: 10 });
   for (let i = 0; i < 6; i++) B.box(M.cloth, 0.2, 0.45, 0.01, 20 + Math.cos(i * 1.05) * 0.93, 3.9, -44 + Math.sin(i * 1.05) * 0.93, { ry: -i * 1.05 + Math.PI / 2, c: 0xffffff });
 
+  // ---- D: the dojo compound east of the hamlet, a hermitage in the western bamboo ---------------
+  {
+    house(50, -6, 13, 8, { ry: Math.PI / 2, roofC: 0x4a5a60, h: 3.0, roofH: 3.0, bare: true });
+    const y0 = world.height(50, -6) + 0.56;
+    for (const [lx, lz] of [[52.6, -10], [52.6, -6], [52.6, -2]]) { B.box(M.woodH, 0.5, 1.5, 1.9, lx, y0, lz, { c: 0x3a2618, solid: true }); for (let k = 0; k < 4; k++) B.box(M.metal, 0.05, 1.2, 0.05, lx - 0.3, y0 + 0.25, lz - 0.6 + k * 0.4, { rx: 0.1, c: 0xc8ccd0 }); }
+    for (const [lx, lz] of [[48, -9.5], [48.4, -2.5]]) { B.cyl(M.thatch, 0.26, 0.3, 1.1, lx, y0 + 0.3, lz, { c: 0xc8b070, seg: 8 }); B.cyl(M.wood, 0.06, 0.06, 1.9, lx, y0, lz, { c: DARK, seg: 6 }); B.geo(M.thatch, new THREE.SphereGeometry(0.2, 8, 6), [lx, y0 + 1.6, lz], [0, 0, 0], 1, 0xc8b070); world.addCyl(lx, lz, 0.3, y0, y0 + 1.8); }
+    const wall = (ax, az, bx, bz) => { const L = Math.hypot(bx - ax, bz - az), ry = Math.atan2(-(bz - az), bx - ax), mx = (ax + bx) / 2, mz = (az + bz) / 2, y = Math.min(world.height(ax, az), world.height(bx, bz), world.height(mx, mz)) - 0.6;
+      B.box(M.plaster, L, 2.7, 0.45, mx, y, mz, { ry, c: 0xe4dcc8, solid: true }); B.box(M.stone, L + 0.1, 0.9, 0.55, mx, y, mz, { ry, c: 0x8c8a80 }); B.box(M.kawara, L + 0.3, 0.16, 0.95, mx, y + 2.7, mz, { ry, c: 0x56646a }); };
+    wall(38.5, 11.5, 60, 11.5); wall(38.5, -22.5, 60, -22.5); wall(60, -22.5, 60, 11.5); wall(38.5, -22.5, 38.5, -9.5); wall(38.5, -2.5, 38.5, 11.5);
+    torii(38.5, -6, Math.PI / 2, 1.1); lantern(36.6, -9.2, true, 1.0); lantern(36.6, -2.8, true, 1.0);
+    for (const [px, pz] of [[42.5, 3], [44.5, 6], [42.5, 8.5], [56, 6.5]]) { const y = world.height(px, pz); B.cyl(M.wood, 0.11, 0.13, 1.7, px, y - 0.2, pz, { c: 0x6a4a30, seg: 7, solid: true }); B.cyl(M.thatch, 0.16, 0.16, 0.5, px, y + 0.95, pz, { c: 0xc8b070, seg: 8 }); }
+    for (const [px, pz] of [[57, -18.5], [53.5, -19.5]]) { const y = world.height(px, pz); B.cyl(M.thatch, 0.7, 0.7, 0.16, px, y + 0.7, pz, { rx: Math.PI / 2 - 0.15, c: 0xd8c890, seg: 16 }); B.cyl(M.flat, 0.24, 0.24, 0.18, px, y + 1.3, pz, { rx: Math.PI / 2 - 0.15, c: 0xb01c1c, seg: 12 }); B.box(M.wood, 0.1, 1.5, 0.1, px, y - 0.1, pz + 0.3, { rx: 0.3, c: DARK }); world.addCyl(px, pz, 0.6, y - 1, y + 2.2); }
+    for (const [px, pz, s] of [[45, -17, 1.4], [42, -14.5, 1.0], [56, 2.5, 1.2]]) { const y = world.height(px, pz); B.geo(M.rock, rockGeo(4, 1), [px, y + s * 0.3, pz], [0, px, 0], [s, s * 0.8, s], 0x7c7e78); world.addCyl(px, pz, s * 0.8, y - 1, y + s * 0.9); }
+    house(-50, 24, 6, 5, { ry: 0.3, roof: M.thatch, roofC: 0x9a8454, roofH: 2.8, up: 0.2, over: 1.1, h: 2.5 });
+    lantern(-44.5, 21.5, true, 1.0); torii(-41, 24.5, Math.PI / 2 + 0.2, 0.8);
+    for (const [px, pz, s] of [[-55, 19, 1.5], [-46, 30, 1.1], [-53.5, 30.5, 0.9]]) { const y = world.height(px, pz); B.geo(M.rock, rockGeo(6, 1), [px, y + s * 0.3, pz], [0, pz, 0], [s, s * 0.8, s], 0x70746c); world.addCyl(px, pz, s * 0.8, y - 1, y + s * 0.9); }
+  }
+
   // ---- vegetation ------------------------------------------------------------------------------
   const clearing = (x, z) => {
+    if (x > 34 && x < 62 && z > -25 && z < 14) return true;                                            // dojo compound
+    if (x < -36 && x > -59 && z > 16 && z < 33) return true;                                           // hermitage
     if (Math.abs(x - pathX(z)) < 2.7) return true;
     if (z < -29 && Math.abs(x) < 33 && z > -72) return true;                                           // shrine precinct
     if (z > -29 && z < 9 && Math.abs(x) < 36) return true;                                             // hamlet
@@ -220,7 +262,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const y = world.height(x, z) - 0.2, s = 0.75 + R() * 0.6, lean = (R() - 0.5) * 0.12;
     stalks.push({ x, y, z, ry: R() * 6.28, rz: lean, rx: (R() - 0.5) * 0.1, s: [0.8 + R() * 0.7, s, 0.8 + R() * 0.7], c: R.pick([0xb8d48a, 0x9cc070, 0xc8d898, 0x8ab060]) });
     tops.push({ x, y, z, ry: R() * 6.28, rz: lean, s, c: R.pick([0xffffff, 0xe0f0c0, 0xc8e0a0]) });
-    if (Math.abs(x) < 49 && z > -78 && z < 81) world.addCyl(x, z, 0.13, y - 1, y + 12);
+    if (Math.abs(x) < 65 && z > -78 && z < 81) world.addCyl(x, z, 0.13, y - 1, y + 12);
   }
   const stalkGeo = new THREE.CylinderGeometry(0.06, 0.085, 13, 6, 1, true); stalkGeo.translate(0, 6.5, 0); paint(stalkGeo, 0xffffff);
   { const uv = stalkGeo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setY(i, uv.getY(i) * 14); }
@@ -241,7 +283,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   root.add(instanced(rockGeo(5, 1), M.rock, rocks));
   const tufts = [], bushes = [];
   for (let i = 0; i < 9000; i++) {
-    const x = (R() - 0.5) * 96, z = -76 + R() * 156;
+    const x = (R() - 0.5) * 126, z = -76 + R() * 156;
     if (Math.abs(x - pathX(z)) < 1.5 || (z < -30 && Math.abs(x) < 33) || Math.hypot(x - POND.x, z - POND.z) < POND.r || (Math.abs(x + 27) < 8 && Math.abs(z - 22) < 6.5)) continue;
     tufts.push({ x, y: world.height(x, z), z, ry: R() * 6.28, s: [0.4 + R() * 0.5, 0.25 + R() * 0.5, 0.4 + R() * 0.5], c: R.pick([0x7a9a4a, 0x5a8038, 0x8aa858, 0x4a6a30]) });
   }
@@ -264,6 +306,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     ['ronin', -14, -4, {}], ['ronin', 14, -9, { patrol: true }], ['ninja', -8, -16, { ambush: 15 }], ['ninja', 9, -19, { ambush: 15 }],
     ['archer', -3, -33.5, { y: 4, static: true, yaw: 0 }], ['archer', 3, -33.5, { y: 4, static: true, yaw: 0 }],
     ['ronin', -9, -42, {}], ['ronin', 9, -42, {}], ['japanBoss', 0, -47.5, { yaw: 0, patrol: false }],
+    ['ronin', 43, -4, {}], ['ronin', 50.5, -7, { patrol: false, yaw: -1.57 }], ['ninja', 55, 5, { ambush: 12 }], ['archer', 46, 7, {}],
+    ['ninja', -50, 24, { ambush: 9 }], ['ronin', -45, 27, {}], ['ninja', -3.6, -57.6, { y: 4.3, ambush: 9 }], ['ronin', 23, -10.5, { patrol: false }],
   ];
   const cake = merge([gSph(0.14, 0xf6f2e8, [0, 0, 0], [1, 0.8, 1]), gBox(0.18, 0.1, 0.03, 0x1c2a1c, [0, -0.04, 0.12]), gCyl(0.2, 0.2, 0.02, 0x8a6a3a, [0, -0.12, 0], [0, 0, 0], 1, 8)]);
   let mt = 0;
@@ -278,7 +322,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0.3, z: 76.5, yaw: 0 },
     vista: { c: [0, 3, 30], r: 30, h: 8, a: 1.2, speed: 0.03 },
-    enemies, pickups: [[-2.5, 41], [18, 24, 2], [-23, -1.5, 2], [0, -30.5, 4], [14, -52, 4]],
+    enemies, pickups: [[-2.5, 41], [18, 24, 2], [-23, -1.5, 2], [0, -30.5, 4], [14, -52, 4], [3.8, -58.6, 4.3], [50, -11, 1.5], [-51, 25, 1.5]],
     dust: [0.42, 0.4, 0.34], water: [[POND.x, POND.z, 26]], heroLight: 70,
     makePickup: () => new THREE.Mesh(cake, M.flat),
     update(dt, t, g) {

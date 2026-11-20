@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
-import { instanced, pineGeo, ship, brazier, barrel, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, room, steps, pineGeo, ship, brazier, barrel, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const north = {
@@ -43,13 +43,13 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const sea = smooth(56, 86, z);
     base = base * (1 - sea) - 7.5 * sea;
     const r = Math.hypot(x * 0.95, z > 0 ? z * 0.34 : z * 0.9);
-    const m = smooth(98, 320, r);
-    let h = base + m * (34 + ridged(x * 0.0044 + 11, z * 0.0044 + 2, 5, 9) * 330) + smooth(86, 150, r) * 15 * fbm(x * 0.02 + 3, z * 0.02, 3, 4);
+    const m = smooth(116, 332, r);
+    let h = base + m * (34 + ridged(x * 0.0044 + 11, z * 0.0044 + 2, 5, 9) * 330) + smooth(104, 164, r) * 15 * fbm(x * 0.02 + 3, z * 0.02, 3, 4);
     for (const [ix, iz, rr, ht] of SKERRIES) h = Math.max(h, -7.5 + (ht + 7.5) * (1 - smooth(rr * 0.25, rr, Math.hypot(x - ix, z - iz))));
     return h;
   });
   world.height = (x, z) => hf.h(x, z);
-  world.bounds = { x0: -96, x1: 96, z0: -84, z1: 70 };
+  world.bounds = { x0: -114, x1: 114, z0: -96, z1: 70 };
   world.maxSlope = 0.95; world.waterY = -0.8;
   const cSnow = new THREE.Color(SNOW), cSnow2 = new THREE.Color(0xcfdcec), cRock = new THREE.Color(0x4a505a), cRock2 = new THREE.Color(0x6a707a), cShore = new THREE.Color(0x565c66),
     cPath = new THREE.Color(0xb9c4d2), cBed = new THREE.Color(0x0c1c2c), tmp = new THREE.Color(), tmp2 = new THREE.Color();
@@ -76,14 +76,21 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const frame = (x, z, ry) => { const c = Math.cos(ry), s = Math.sin(ry); return (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c]; };
   /** Timber longhouse with a steep snow-laden roof; long axis = local Z, door on the +X side. */
   const longhouse = (x, z, ry, l = 15, w = 6.2, o = {}) => {
-    const P = frame(x, z, ry), y = world.height(x, z) - 0.3, wall = o.wall ?? 2.1, rh = o.roof ?? 3.4;
-    B.box(M.woodH, w, wall + 0.3, l, x, y, z, { ry, c: TIMBER, solid: true });
+    const d = l, P = frame(x, z, ry), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, y = yf - 0.3, wall = o.wall ?? 2.1, rh = o.roof ?? 3.4, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d: l, h: wall, t: 0.32, ry, mat: M.woodH, c: TIMBER, base: 2.6, doors: o.doors ?? [{ side: 'e', at: -l * 0.18, w: 1.7, h: 1.95 }],
+      floor: { mat: M.ground, c: 0x6a5a48 }, ceil: { mat: M.woodH, c: DARKT } });
+    if (!o.doors) steps(B, M, ...P(w / 2, -l * 0.18), ry + Math.PI / 2, f, 6, { w: 2, c: 0x7a808a });
+    { const [hx, hz] = P(0, l * 0.1); B.box(M.stone, 0.9, 0.3, 2.6, hx, f, hz, { ry, c: 0x5a5f68, solid: true }); B.geo(M.glow, new THREE.ConeGeometry(0.28, 0.7, 6), [hx, f + 0.65, hz], [0, 0, 0], 1, 0xff7a20);
+      if (!o.doors) {                                                    // the great hall is furnished separately
+      const [wx, wz] = P(-(w / 2 - 0.72), 0); B.box(M.woodH, 0.7, 0.42, l * 0.62, wx, f, wz, { ry, c: 0x5a4028, solid: true }); B.box(M.cloth, 0.66, 0.06, l * 0.3, wx, f + 0.42, wz, { ry, c: 0x8a7458 });
+      const [ex, ez] = P(w / 2 - 0.72, l * 0.23); B.box(M.woodH, 0.7, 0.42, l * 0.36, ex, f, ez, { ry, c: 0x5a4028, solid: true });
+      for (let i = 0; i < 3; i++) { const [sx, sz] = P(-(w / 2 - 0.36), -l * 0.3 + i * l * 0.3); B.geo(M.flat, new THREE.CylinderGeometry(0.36, 0.36, 0.05, 12), [sx, f + 1.35, sz], [0, ry, Math.PI / 2], 1, [0x8a1c1c, 0xc8a030, 0x1c4a7a][i]); } } }
     B.geo(M.shingle, prismGeo(w + 1.6, rh, l + 1.2, 3), [x, y + wall + 0.3, z], [0, ry, 0], 1, SNOW);
     for (const e of [-1, 1]) {
       const [gx, gz] = P(0, e * (l / 2 + 0.02)); B.geo(M.woodH, prismGeo(w, rh - 0.4, 0.3, 2), [gx, y + wall + 0.3, gz], [0, ry, 0], 1, DARKT);
       for (const k of [-1, 1]) { const [cx, cz] = P(k * 0.55, e * (l / 2 + 0.55)); B.box(M.wood, 0.16, 2.6, 0.16, cx, y + wall + rh - 0.9, cz, { ry, rz: k * -0.5, c: DARKT }); }   // crossed gable boards
     }
-    const [dx, dz] = P(w / 2 + 0.03, -l * 0.18); B.box(M.woodH, 0.1, 1.9, 1.2, dx, y + 0.3, dz, { ry, c: 0x2a1c12 });
+    if (!o.doors) { const [dx, dz] = P(w / 2 + 0.6, -l * 0.18 - 0.9); B.box(M.woodH, 1.1, 1.9, 0.1, dx, yf, dz, { ry, c: 0x2a1c12 }); }   // door, standing open
     for (const zz of [0.12, 0.34]) { const [wx, wz] = P(w / 2 + 0.03, l * zz); B.geo(M.window, new THREE.BoxGeometry(0.07, 0.5, 0.7), [wx, y + 1.55, wz], [0, ry, 0]); }
     for (let i = 0; i < 3; i++) { const [sx, sz] = P(w / 2 + 0.06, -l * 0.42 + i * 0.95); B.geo(M.flat, new THREE.CylinderGeometry(0.36, 0.36, 0.05, 12), [sx, y + 1.45, sz], [0, ry, Math.PI / 2], 1, R.pick([0x8a1c1c, 0x1c4a7a, 0xc8a030, 0x2a5a2a])); }
     const [fx, fz] = P(0, l * 0.1); smokes.push([fx, y + wall + rh + 0.4, fz]);
@@ -104,6 +111,25 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
 
   // village
   longhouse(-19, 30, 0.25); longhouse(18, 27, -0.3, 14); longhouse(-27, 9, 1.35, 12, 5.6); longhouse(27, 7, 1.75, 12, 5.6); longhouse(40, 38, 0.1, 10, 5.2);
+  longhouse(-78, 20, 0.5, 11, 5.4);                                                          // the outlying farm in the west
+  { const pen = (ax, az, bx, bz) => { const L = Math.hypot(bx - ax, bz - az), n = Math.round(L / 2), ry = Math.atan2(-(bz - az), bx - ax);
+      for (let i = 0; i <= n; i++) { const px = ax + (bx - ax) * i / n, pz = az + (bz - az) * i / n; B.box(M.wood, 0.16, 1.4, 0.16, px, world.height(px, pz) - 0.2, pz, { c: DARKT }); }
+      const my = world.height((ax + bx) / 2, (az + bz) / 2); for (const hh of [0.5, 0.95]) B.box(M.woodH, L, 0.1, 0.08, (ax + bx) / 2, my + hh, (az + bz) / 2, { ry, c: DARKT }); world.addBox((ax + bx) / 2, (az + bz) / 2, L, 0.25, ry, my - 2, my + 1.2); };
+    pen(-92, 26, -84, 34); pen(-84, 34, -72, 32); pen(-92, 26, -90, 16);
+    for (const [hx, hz] of [[-86, 28], [-82, 30]]) { const y = world.height(hx, hz); B.geo(M.thatch, new THREE.ConeGeometry(1.4, 2.2, 8), [hx, y + 1.0, hz], [0, 0, 0], 1, 0xd8d2b8); world.addCyl(hx, hz, 1.1, y - 1, y + 2); }
+    barrel(B, M, -73, world.height(-73, 24.5), 24.5); barrel(B, M, -72.2, world.height(-72.2, 25.3), 25.3); }
+  { // the hof: a small temple of the old gods in the eastern wood
+    const x = 76, z = -24, w = 7, d = 7, P = frame(x, z, 0), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h: 3.2, t: 0.34, mat: M.woodH, c: DARKT, base: 2.6, doors: [{ side: 'w', at: 0, w: 1.8, h: 2.3 }], floor: { mat: M.ground, c: 0x5a4c3e }, ceil: { mat: M.woodH, c: DARKT } });
+    steps(B, M, x - w / 2, z, -Math.PI / 2, f, 6, { w: 2.2, c: 0x7a808a });
+    B.geo(M.shingle, prismGeo(w + 1.6, 4.6, d + 1.4, 3), [x, yf + 3.2, z], [0, Math.PI / 2, 0], 1, SNOW);
+    for (const e of [-1, 1]) { B.geo(M.woodH, prismGeo(d, 4.0, 0.3, 2), [x + e * (w / 2 + 0.02), yf + 3.2, z], [0, Math.PI / 2, 0], 1, DARKT); B.box(M.flat, 0.25, 0.5, 0.9, x + e * (w / 2 + 0.5), yf + 7.6, z, { ry: Math.PI / 2, rx: 0.5 * e, c: 0xc9a030 }); }
+    B.cyl(M.wood, 0.34, 0.42, 2.5, x + 2.2, f, z, { c: 0x4a3626, seg: 8, solid: true }); B.geo(M.wood, new THREE.SphereGeometry(0.42, 8, 6), [x + 2.2, f + 2.6, z], [0, 0, 0], [1, 1.1, 1], 0x4a3626);
+    for (const s of [-1, 1]) B.box(M.glow, 0.05, 0.07, 0.12, x + 1.8, f + 2.68, z + s * 0.16, { c: 0x3ad8ff });
+    B.geo(M.metal, new THREE.TorusGeometry(0.3, 0.04, 6, 14), [x + 1.4, f + 1.0, z], [Math.PI / 2, 0, 0], 1, 0xd9b23a); B.box(M.stone, 0.9, 0.9, 0.9, x + 1.4, f, z, { c: 0x5a5f68, solid: true });
+    for (const s of [-1, 1]) { fires.push(brazier(B, M, x - w / 2 - 1.6, world.height(x - w / 2 - 1.6, z + s * 2.2), z + s * 2.2, 1.0).concat(1)); }
+    runestone(x - 8, z + 6, 1.1); runestone(x - 7, z - 7, 0.9);
+  }
   { // bonfire in the middle of the village
     const x = 0, z = 22, y = world.height(x, z);
     for (let i = 0; i < 7; i++) B.cyl(M.wood, 0.12, 0.14, 1.6, x, y + 0.1, z, { rz: 1.15, ry: i * 0.9, c: 0x2a1a10, seg: 5 });
@@ -124,10 +150,16 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   torch(0, world.height(0, 0) + 2.4, 0.6, 46, 18);
   // the jarl's great hall
   {
-    const x = 0, z = -56, h = longhouse(x, z, Math.PI / 2, 27, 9.5, { wall: 2.9, roof: 5.2 }), y = h.y;
+    const x = 0, z = -56, h = longhouse(x, z, Math.PI / 2, 27, 9.5, { wall: 2.9, roof: 5.2, doors: [{ side: 'w', at: 0, w: 3.2, h: 2.8 }] }), y = h.y;
     for (const e of [-1, 1]) { B.box(M.wood, 0.4, 5.5, 0.4, e * 2.2, y, z + 5.1, { c: DARKT }); B.box(M.flat, 0.3, 0.5, 0.8, e * 2.2, y + 5.5, z + 5.3, { rx: 0.4, c: 0xc9a030 }); }   // carved door posts
-    B.box(M.woodH, 3.2, 3.0, 0.14, x, y + 0.3, z + 4.82, { c: 0x2a1c12 }); B.box(M.woodH, 5.4, 0.4, 0.6, x, y + 3.4, z + 5.1, { c: DARKT });
+    for (const e of [-1, 1]) B.box(M.woodH, 0.14, 2.9, 1.5, x + e * 1.75, y + 0.3, z + 5.6, { c: 0x2a1c12 });                       // hall doors, open
+    B.box(M.woodH, 5.4, 0.4, 0.6, x, y + 3.4, z + 5.1, { c: DARKT });
+    for (const lx of [-8.1, -2.7, 2.7, 8.1]) for (const s of [-1, 1]) { B.cyl(M.wood, 0.2, 0.24, 2.9, x + lx, y + 0.3, z + s * 1.9, { c: DARKT, seg: 8 }); world.addCyl(x + lx, z + s * 1.9, 0.26, y, y + 3.2); }   // roof posts
+    B.box(M.woodH, 1.6, 0.5, 1.2, x - 11.6, y + 0.36, z, { c: 0x3a2a1c, solid: true }); B.box(M.woodH, 0.2, 2.2, 1.4, x - 12.3, y + 0.36, z, { c: DARKT }); B.box(M.cloth, 1.3, 0.1, 1.0, x - 11.6, y + 0.86, z, { c: 0xe8e4dc });   // the high seat
+    for (const s of [-1, 1]) B.box(M.woodH, 5.2, 0.72, 0.8, x + 7.4, y + 0.36, z + s * 3.2, { c: 0x5a4028, solid: true });
+    torch(x - 4, y + 2.6, z, 44, 20);
     for (let i = 0; i < 5; i++) B.box(M.stone, 6 - i * 0.2, 0.3, 0.7, x, y - 1.2 + i * 0.3, z + 8.3 - i * 0.7, { c: 0x7a808a, solid: true });
+    B.box(M.stone, 5.2, 3.3, 1.1, x, y - 3, z + 5.2, { c: 0x7a808a, solid: true });                                                   // landing in front of the door
     for (const e of [-1, 1]) { fires.push(brazier(B, M, e * 4.6, world.height(e * 4.6, z + 9), z + 9, 1.3).concat(1.2)); for (let i = 0; i < 4; i++) B.geo(M.flat, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 12), [e * (4.2 + i * 2.2), y + 1.9, z + 4.82], [Math.PI / 2, 0, 0], 1, [0x8a1c1c, 0xc8a030, 0x1c4a7a, 0xe8e0d0][i]); }
     torch(0, y + 3, z + 10, 70, 24);
   }
@@ -144,10 +176,10 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
 
   // ---- forest, rocks ---------------------------------------------------------------------------
   const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4.5 || (Math.abs(x) < 46 && z < 48 && z > -70 && (Math.abs(z + 3) < 2.5 || Math.hypot(x, z - 22) < 7 || Math.hypot(x, z + 56) < 20))
-    || [[-19, 30], [18, 27], [-27, 9], [27, 7], [40, 38]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 10) || Math.hypot(x - 56, z - 6) < 10 || z > 52;
+    || [[-19, 30], [18, 27], [-27, 9], [27, 7], [40, 38]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 10) || Math.hypot(x - 56, z - 6) < 10 || z > 52 || Math.hypot(x + 80, z - 24) < 15 || Math.hypot(x - 74, z + 24) < 11;
   const pines = [], rocks = [];
   for (let i = 0; i < 70000 && pines.length < 1900; i++) {
-    const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), inPlay = Math.abs(x) < 100 && z > -88 && z < 60;
+    const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), inPlay = Math.abs(x) < 118 && z > -100 && z < 60;
     if (h < 1.6 || h > 120) continue;
     if (inPlay) { if (nearBuilt(x, z) || fbm(x * 0.04 + 20, z * 0.04, 2, 3) < 0.56) continue; } else if (fbm(x * 0.011, z * 0.011 + 8, 3, 5) < 0.47 && R() < 0.85) continue;
     if (Math.abs(world.height(x + 2, z) - h) > 3.2) continue;
@@ -160,7 +192,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const x = (R() - 0.5) * 340, z = (R() - 0.5) * 340, h = world.height(x, z); if (h < -1.5 || nearBuilt(x, z)) continue;
     const s = 0.4 + R() * R() * 3;
     rocks.push({ x, y: h + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: R.pick([0x5a606a, 0x6a707a, 0xdfe8f2]) });
-    if (s > 1 && Math.abs(x) < 100 && z > -88 && z < 66) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
+    if (s > 1 && Math.abs(x) < 118 && z > -100 && z < 66) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
   }
   for (const [ix, iz, rr] of SKERRIES) for (let k = 0; k < 7; k++) { const a = R() * 6.28, x = ix + Math.cos(a) * rr * 0.7, z = iz + Math.sin(a) * rr * 0.7, s = 2 + R() * 6; rocks.push({ x, y: world.height(x, z) + s * 0.3, z, ry: R() * 6, s: [s, s * 1.5, s], c: 0x565c66 }); }
   root.add(instanced(rockGeo(4, 1), M.rock, rocks));
@@ -170,9 +202,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
 
   const enemies = [
     ['viking', -9, 44, {}], ['bowman', 15, 41, {}], ['viking', -21, 22, { patrol: true }], ['berserker', 6, 26, {}], ['bowman', 30, 17, {}], ['viking', -7, 11, {}],
-    ['viking', -40, 54, {}], ['berserker', -46, 48, {}], ['bowman', -33, 50, {}],
-    ['viking', -3, 1, {}], ['viking', 3.5, 1, {}], ['bowman', -10, -8, {}], ['bowman', 10, -8, {}],
-    ['berserker', -15, -22, {}], ['viking', 13, -24, { patrol: true }], ['bowman', 19, -36, {}], ['viking', -7, -40, {}], ['berserker', 7, -40, {}], ['northBoss', 0, -45, { yaw: 0, patrol: false }],
+    ['chieftain', -40, 54, {}], ['berserker', -46, 48, {}], ['bowman', -33, 50, {}],
+    ['chieftain', -3, 1, {}], ['viking', 3.5, 1, {}], ['bowman', -10, -8, {}], ['bowman', 10, -8, {}],
+    ['berserker', -15, -22, {}], ['viking', 13, -24, { patrol: true }], ['bowman', 19, -36, {}], ['chieftain', -7, -40, {}], ['berserker', 7, -40, {}], ['northBoss', 0, -45, { yaw: 0, patrol: false }],
+    ['viking', -8, -56, { up: 1.8, patrol: false, yaw: 0 }], ['viking', 8, -57, { up: 1.8, patrol: false, yaw: 0 }], ['berserker', 17.7, 23.3, { up: 1.8, patrol: false }],
+    ['viking', -72, 23, {}], ['bowman', -82, 12, {}], ['berserker', -77, 29, {}], ['chieftain', 70, -22, {}], ['viking', 75, -25.4, { up: 1.8, patrol: false }],
   ];
   const horn = merge([xf(new THREE.TorusGeometry(0.2, 0.05, 6, 10, Math.PI * 0.9), [0, 0, 0], [0, 0, 0.3], 1, 0xe8dcc0), gCyl(0.062, 0.062, 0.04, 0xc9a030, [0.2, 0.06, 0], [0, 0, 1.2], 1, 8)]);
   let ft = 0;
@@ -187,7 +221,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 2, z: 57.5, yaw: 0 },
     vista: { c: [0, 6, 20], r: 60, h: 14, a: 1.5, speed: 0.03 },
-    enemies, pickups: [[-13, 27], [12, 8], [-36, 52], [-12, -14], [14, -44]],
+    enemies, pickups: [[-13, 27], [12, 8], [-36, 52], [-12, -14], [14, -44], [10, -58, 0, 1.8], [77, -22, 0, 1.8], [-80.3, 18.4, 0, 1.8]],
     dust: [0.9, 0.94, 1.0], water: [[0, 68, 26], [-40, 66, 26]], heroLight: 46,
     makePickup: () => new THREE.Mesh(horn, M.flat),
     update(dt, t, g) {
