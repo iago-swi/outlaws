@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, ladder, den } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, ladder, den, beast } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
@@ -204,7 +204,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.woodH, 1.4, 1.2, 0.12, 23.2, F + 1.0, -15.5, { c: 0x4a2c1c }); for (let i = 0; i < 3; i++) B.cyl(M.metal, 0.018, 0.018, 1.0, 22.8 + i * 0.4, F + 1.05, -15.4, { c: 0x2a2a2e, seg: 5 });
     // livery stable: stalls, hay, a horse
     for (const sz of [-11.5, -14.5, -17.5]) B.box(M.wood, 3.2, 1.35, 0.14, -43.9, F, sz, { c: 0x6a4a30, solid: true });
-    B.geo(M.flat, horseGeo(0x3a2a1c, 0x14100c), [-43.6, F, -13], [0, 1.57, 0]); world.addCyl(-43.6, -13, 0.8, F, 2.2);
+    B.geo(M.flat, horseGeo(0x3a2a1c, 0x14100c), [-43.6, F, -13], [0, 1.57, 0]); beast(world, -43.6, -13, 1.57, 0.9, 2.8, F, 2.2, 0.25);
     for (const [hx, hz, hy] of [[-35.4, -18.6, 0], [-36.9, -18.6, 0], [-36.1, -18.6, 0.8], [-35.3, -10.2, 0]]) B.box(M.thatch, 1.5, 0.8, 0.9, hx, F + hy, hz, { c: 0xd8b860, solid: true });
     B.box(M.woodH, 0.5, 0.9, 1.6, -38.6, F, -18.8, { c: 0x5a3a24, solid: true }); B.box(M.cloth, 0.56, 0.2, 0.7, -38.6, F + 0.9, -18.8, { c: 0x6a3420 });
     // blacksmith: forge, anvil, tools
@@ -340,7 +340,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   {
     fence(B, M, -80, 4, -54, 4); fence(B, M, -80, 22, -54, 22); fence(B, M, -80, 4, -80, 22); fence(B, M, -54, 4, -54, 9.5); fence(B, M, -54, 13.5, -54, 22);
     const horses = [[-70, 12, 0.6, 0x6a4428], [-63, 17, 2.4, 0x2a1c14], [-74, 18, -1.2, 0xb8a080], [-60, 8, 3.6, 0x8a5a36]];
-    for (const [hx, hz, ry, c] of horses) { B.geo(M.flat, horseGeo(c, c === 0xb8a080 ? 0xe8e0d0 : 0x14100c), [hx, 0, hz], [0, ry, 0]); world.addCyl(hx, hz, 0.9, 0, 2); }
+    for (const [hx, hz, ry, c] of horses) { B.geo(M.flat, horseGeo(c, c === 0xb8a080 ? 0xe8e0d0 : 0x14100c), [hx, 0, hz], [0, ry, 0]); beast(world, hx, hz, ry, 0.9, 2.8, 0, 2, 0.25); }
     for (const [hx, hz, ry] of [[-77, 6, 0.2], [-76.4, 7.4, 1.2], [-77.2, 6.4, 0.4]]) B.box(M.thatch, 1.5, 0.8, 0.9, hx, hz === 6.4 ? 0.8 : 0, hz, { ry, c: 0xd8b860, solid: true });
     B.box(M.woodH, 2.6, 0.55, 0.8, -56, 0, 19, { c: 0x6a5038, solid: true }); B.box(M.glow, 2.3, 0.02, 0.5, -56, 0.54, 19, { c: 0x1a3a44 });
     // barn

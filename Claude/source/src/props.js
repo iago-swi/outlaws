@@ -27,6 +27,9 @@ export function instanced(geo, mat, items, o = {}) {
 }
 
 /** Post-and-rail fence from (x0,z0) to (x1,z1) on terrain. */
+/** The collider of a standing animal: a box as long and as wide as its body, turned the way it faces (not a cylinder, which stands out far beyond its flanks). */
+export function beast(W, x, z, ry, wide, long, y0, y1, fwd = 0.1) { W.addBox(x + Math.sin(ry) * fwd, z + Math.cos(ry) * fwd, wide, long, ry, y0, y1); }
+
 export function fence(B, M, x0, z0, x1, z1, o = {}) {
   const { h = 1.25, rails = 3, c = 0x8a6a4a, solid = true, gap = 2.3 } = o;
   const W = B.world, len = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(len / gap)), ry = Math.atan2(-(z1 - z0), x1 - x0);
@@ -40,9 +43,9 @@ export function fence(B, M, x0, z0, x1, z1, o = {}) {
         const ry_ = h * (0.3 + 0.6 * k / Math.max(1, rails - 1));
         B.box(M.woodH, seg + 0.1, 0.09, 0.05, (x + xb) / 2, (y + yb) / 2 + ry_, (z + zb) / 2, { ry, rz: tilt, c });
       }
+      if (solid) W.addBox((x + xb) / 2, (z + zb) / 2, seg + 0.1, 0.2, ry, Math.min(y, yb) - 1, (y + yb) / 2 + h * 0.95);      // one collider per bay, as high as its top rail: on a slope a single box for the whole line stood far above the rails
     }
   }
-  if (solid) W.addBox((x0 + x1) / 2, (z0 + z1) / 2, len, 0.2, ry, W.height((x0 + x1) / 2, (z0 + z1) / 2) - 1, W.height((x0 + x1) / 2, (z0 + z1) / 2) + h);
 }
 
 export function barrel(B, M, x, y, z, c = 0x8a623a) {
