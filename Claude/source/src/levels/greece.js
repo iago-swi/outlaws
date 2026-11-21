@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { makeHumanoid } from '../actors.js';
+import { drawTexture } from '../tex.js';
 import { instanced, room, steps, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
@@ -95,8 +96,37 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const statue = (x, z, ry, s = 1.5) => {
     const y = world.height(x, z), c = 0xe2dccc;
     B.box(M.plaster, 1.5, 1.3, 1.5, x, y - 0.2, z, { c: MARBLE, solid: true }); B.box(M.plaster, 1.8, 0.2, 1.8, x, y + 1.1, z, { c: MARBLE });
-    const f = makeHumanoid(M, { skin: c, hair: c, shirt: c, sleeve: c, pants: c, boots: c, belt: c, hat: 'corinthian', hatC: c, plume: c, extras: ['cuirass', 'kilt'], armor: c, kilt: c, kilt2: c, aspis: c, aspisBoss: c, weapon: 'spear', scale: s });
+    const f = makeHumanoid(M, { lip: c, skin: c, hair: c, shirt: c, sleeve: c, pants: c, boots: c, belt: c, hat: 'corinthian', hatC: c, plume: c, extras: ['cuirass', 'kilt'], armor: c, kilt: c, kilt2: c, aspis: c, aspisBoss: c, weapon: 'spear', scale: s });
     f.group.position.set(x, y + 1.3, z); f.group.rotation.y = ry; f.armR.rotation.x = -1.25; f.armR.rotation.z = 0.12; root.add(f.group);
+  };
+
+  const extraFoes = [], extraPicks = [], grove = [];
+  // mosaic floor: border, meander, a sun and four dolphins, cut into small stones
+  const mosaicTex = drawTexture(512, 512, (g, w, h) => {
+    g.fillStyle = '#e8dcc0'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#2a3a5a'; g.lineWidth = 12; g.strokeRect(14, 14, w - 28, h - 28); g.strokeStyle = '#a83a2a'; g.lineWidth = 6; g.strokeRect(40, 40, w - 80, h - 80);
+    g.strokeStyle = '#2a3a5a'; g.lineWidth = 6;
+    for (let i = 0; i < 12; i++) for (const y of [62, h - 92]) { const x = 62 + i * 33; g.beginPath(); g.moveTo(x, y + 30); g.lineTo(x, y); g.lineTo(x + 22, y); g.lineTo(x + 22, y + 20); g.lineTo(x + 10, y + 20); g.lineTo(x + 10, y + 10); g.stroke(); }
+    for (let i = 0; i < 10; i++) for (const x of [62, w - 92]) { const y = 102 + i * 31; g.beginPath(); g.moveTo(x + 30, y); g.lineTo(x, y); g.lineTo(x, y + 22); g.lineTo(x + 20, y + 22); g.lineTo(x + 20, y + 10); g.lineTo(x + 10, y + 10); g.stroke(); }
+    g.translate(w / 2, h / 2);
+    g.fillStyle = '#1c5a7a'; g.beginPath(); g.arc(0, 0, 130, 0, 6.283); g.fill();
+    g.fillStyle = '#e8dcc0'; g.beginPath(); g.arc(0, 0, 112, 0, 6.283); g.fill();
+    for (let i = 0; i < 16; i++) { g.rotate(6.283 / 16); g.fillStyle = i % 2 ? '#c8862a' : '#a83a2a'; g.beginPath(); g.moveTo(0, -30); g.lineTo(13, -100); g.lineTo(-13, -100); g.closePath(); g.fill(); }
+    g.fillStyle = '#d9b23a'; g.beginPath(); g.arc(0, 0, 32, 0, 6.283); g.fill();
+    for (let i = 0; i < 4; i++) { g.rotate(1.5708); g.fillStyle = '#1c5a7a'; g.beginPath(); g.ellipse(0, -165, 34, 13, 0.3, 0, 6.283); g.fill(); g.beginPath(); g.moveTo(-30, -160); g.lineTo(-50, -177); g.lineTo(-47, -150); g.closePath(); g.fill(); }
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.strokeStyle = 'rgba(60,50,40,0.3)'; g.lineWidth = 1;
+    for (let i = 0; i <= w; i += 8) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); }
+  });
+  mosaicTex.userData.own = true;
+  const mosaicMat = new THREE.MeshStandardMaterial({ map: mosaicTex, roughness: 0.55 });
+  const mosaic = (x, y, z, w, d, ry = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.05, d), mosaicMat); m.position.set(x, y, z); m.rotation.y = ry; m.receiveShadow = true; root.add(m); };
+  /** Athena: helmet with a crest, long robe, shield and spear, on a plinth. */
+  const athena = (x, z, ry, s, c, plinth = 1.5) => {
+    const y = world.height(x, z) - 0.2;
+    B.box(M.plaster, 1.25 * s, plinth, 1.25 * s, x, y, z, { c: MARBLE, solid: true }); B.box(M.plaster, 1.4 * s, 0.18, 1.4 * s, x, y + plinth - 0.18, z, { c: MARBLE });
+    const f = makeHumanoid(M, { lip: c, brow: c, skin: c, hair: c, shirt: c, sleeve: c, pants: c, boots: c, belt: c, hat: 'corinthian', hatC: c, plume: c, face: ['longhair'], extras: ['robe', 'cuirass'], robe: c, sash: c, armor: c, aspis: c, aspisBoss: c, weapon: 'spear', scale: s });
+    f.group.position.set(x, y + plinth, z); f.group.rotation.y = ry; f.armR.rotation.x = -1.25; f.armR.rotation.z = 0.12; root.add(f.group);
   };
 
   // ---- the temple on the hill ----------------------------------------------------------
@@ -123,13 +153,14 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.plaster, 3.4, 1.1, 1.6, 0, HILL.top - 0.1, -36.5, { c: MARBLE, solid: true }); B.box(M.plaster, 3.8, 0.18, 2.0, 0, HILL.top + 1.0, -36.5, { c: MARBLE });
   }
   const fires = [brazier(B, M, -5.5, HILL.top, -34, 1.2), brazier(B, M, 5.5, HILL.top, -34, 1.2), brazier(B, M, -6, world.height(-6, -11), -11), brazier(B, M, 6, world.height(6, -11), -11)];
-  statue(-11, -33, 0.4, 1.6); statue(11, -33, -0.4, 1.6); statue(0, -64.5, 0, 2.5);                      // the god of the house, inside the cella
+  statue(-11, -33, 0.4, 1.6); statue(11, -33, -0.4, 1.6); athena(0, -64.5, 0, 2.3, 0xd9b23a, 1.3); mosaic(0, HILL.top + 1.2, -56.6, 6.6, 6.6);
+  athena(15.5, -40, -0.5, 3.0, 0x6a8a6e, 2.2);                                              // Athena in bronze, watching the stair                      // the god of the house, inside the cella
   // stairway (the terrain underneath is a ramp)
   for (let i = 0; i < 30; i++) { const z = -13 - i * 0.6; B.box(M.plaster, 9.6, 0.5, 0.66, 0, world.height(0, z - 0.3) - 0.42, z - 0.3, { c: i % 2 ? 0xe6dfcc : 0xdcd4c0, solid: true }); }
   for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const z = -13 - i * 3.6; B.box(M.plaster, 0.9, 1.6, 3.7, s * 5.3, world.height(s * 5.3, z - 1.8) - 0.5, z - 1.8, { c: MARBLE, solid: true }); }
 
   // ---- village and agora ------------------------------------------------------------------
-  { const y = world.height(0, 24); B.box(M.cobble, 16, 0.14, 15, 0, y - 0.06, 24, { c: 0xf0e8d4 }); }
+  { const y = world.height(0, 24); B.box(M.cobble, 16, 0.14, 15, 0, y - 0.06, 24, { c: 0xf0e8d4 }); mosaic(0, y + 0.1, 24, 9, 9); }
   house(-17, 39, 0.3); house(-23, 23, 1.4, 8, 6); house(-15, 9, -0.2, 6, 6); house(17, 38, -0.4, 8, 6.5); house(-34, 36, 0.9, 6, 5.5); house(34, 44, 0.2, 6, 5.5);
   statue(0, 24, 0, 1.7);
   { // stoa on the east side of the agora, open toward the square
@@ -153,6 +184,47 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.cyl(M.plaster, 5.0, 5.0, 0.7, x, y + 5.55, z, { c: MARBLE, seg: 24 });
     B.geo(M.kawara, new THREE.ConeGeometry(5.5, 2.4, 24), [x, y + 7.45, z], [0, 0, 0], 1, TERRA);
     B.geo(M.metal, new THREE.SphereGeometry(0.3, 8, 6), [x, y + 8.8, z], [0, 0, 0], 1, 0xd9b23a);
+  }
+
+  // ---- a villa with a colonnaded court, a theatre, an olive grove --------------------------
+  {
+    const x = 50, z = 24, w = 14, d = 13, P = frame(x, z, 0), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h: 3.4, t: 0.35, mat: M.plaster, c: 0xf2ede0, base: 2.6, doors: [{ side: 'w', at: 0, w: 2.4, h: 2.6 }], wins: [{ side: 's', at: -3, w: 1.0, y: 1.2, h: 0.9 }, { side: 'n', at: -3, w: 1.0, y: 1.2, h: 0.9 }],
+      floor: { mat: M.cobble, c: 0xe0d6c0 }, ceil: false });
+    steps(B, M, x - w / 2, z, -Math.PI / 2, f, 6, { w: 2.8, c: 0xe6dfcc });
+    for (const [lx, lz] of [[-3, -2.7], [0.4, -2.7], [-3, 2.7], [0.4, 2.7]]) column(x + lx, f, z + lz, 3.0, 0.3);
+    B.box(M.plaster, 3.0, 0.4, 2.4, x - 1.3, f, z, { c: MARBLE, solid: true }); B.box(M.glow, 2.5, 0.02, 1.9, x - 1.3, f + 0.36, z, { c: 0x1a5a6a });      // the pool that catches the rain
+    mosaic(x - 1.3, f + 0.03, z, 6.4, 6.4);
+    for (const s of [-1, 1]) {                                                                  // roofs over the walks; the court is open to the sky
+      B.box(M.kawara, w, 0.16, 3.4, x, yf + 3.4, z + s * 4.8, { rx: s * 0.1, c: TERRA }); B.box(M.kawara, 3.2, 0.16, 6.4, x - 5.4, yf + 3.4, z, { c: TERRA });
+      room(B, M, x + 4.9, yf, z + s * 4.0, { w: 3.4, d: 4.0, h: 3.0, t: 0.25, mat: M.plaster, c: 0xe8e0d0, base: 0.05, doors: [{ side: 'w', at: 0, w: 1.6, h: 2.2 }], floor: { mat: M.cobble, c: 0xd8cebc }, ceil: { mat: M.woodH, c: 0x8a6a48 } });
+    }
+    B.box(M.kawara, 3.8, 0.16, 12.4, x + 4.9, yf + 3.4, z, { c: TERRA });
+    B.box(M.woodH, 0.8, 0.45, 1.9, x + 5.8, f, z - 4.2, { c: 0x6a4a2e, solid: true }); B.box(M.cloth, 0.76, 0.1, 1.6, x + 5.8, f + 0.45, z - 4.2, { c: 0x8a1c5a });
+    B.box(M.stone, 1.0, 0.7, 1.0, x + 5.6, f, z + 4.9, { c: 0xb8ae98, solid: true }); B.geo(M.glow, new THREE.ConeGeometry(0.16, 0.4, 6), [x + 5.6, f + 0.9, z + 4.9], [0, 0, 0], 1, 0xff7a20);
+    for (const [ax, az] of [[x - 6, z + 5.4], [x - 5.4, z + 5.6], [x - 6, z - 5.5]]) { B.cyl(M.flat, 0.26, 0.14, 0.7, ax, f, az, { c: TERRA, seg: 9 }); B.cyl(M.flat, 0.1, 0.16, 0.22, ax, f + 0.7, az, { c: TERRA, seg: 9 }); world.addCyl(ax, az, 0.26, f, f + 0.9); }
+    extraFoes.push(['hoplite', x - 4.6, z + 1.2, { up: 1.8, patrol: false, yaw: -1.57 }], ['peltast', x + 4.8, z + 3.6, { up: 1.8, patrol: false, yaw: -1.57 }]); extraPicks.push([x + 4.6, z - 3.4, 0, 1.8]);
+  }
+  { // theatre: five rows of marble seats round a mosaic floor, and a stage house with three doors
+    const cx = 42, cz = -24, yb = world.height(cx, cz);
+    for (let k = 0; k < 5; k++) { const r = 5.2 + k * 1.1, n = 8 + k, L = r * 2.8 / n + 0.06; for (let i = 0; i < n; i++) { const a = -1.4 + (i + 0.5) * 2.8 / n; B.box(M.plaster, 1.1, (k + 1) * 0.4 + 3, L, cx + Math.cos(a) * r, yb - 3, cz + Math.sin(a) * r, { ry: -a, c: (i + k) % 2 ? MARBLE : 0xe2dccc, solid: true }); } }
+    B.cyl(M.cobble, 4.6, 4.6, 0.1, cx, yb - 0.04, cz, { c: 0xe8e0d0, seg: 24 }); mosaic(cx, yb + 0.08, cz, 5.4, 5.4);
+    room(B, M, cx - 7.4, yb, cz, { w: 2.6, d: 10, h: 3.2, t: 0.3, mat: M.plaster, c: 0xf0eadc, base: 2.6, doors: [{ side: 'e', at: -3, w: 1.6, h: 2.3 }, { side: 'e', at: 0, w: 1.6, h: 2.3 }, { side: 'e', at: 3, w: 1.6, h: 2.3 }, { side: 'w', at: 0, w: 1.6, h: 2.3 }],
+      floor: { mat: M.cobble, c: 0xd8cebc }, ceil: { mat: M.plaster, c: MARBLE } });
+    B.box(M.plaster, 3.2, 0.3, 10.6, cx - 7.4, yb + 3.4, cz, { c: MARBLE });
+    for (const dz of [-4.4, -1.5, 1.5, 4.4]) column(cx - 5.7, yb, cz + dz, 2.9, 0.26);
+    extraFoes.push(['hoplite', cx + 1.4, cz + 0.6, {}], ['peltast', cx - 7.4, cz - 3.2, { up: 1.6, patrol: false }]); extraPicks.push([cx - 7.4, cz + 3.4, 0, 1.6]);
+  }
+  { // olive grove with its press
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 5; j++) {
+      const x = -46 + i * 4.3 + (R() - 0.5) * 1.4, z = -25 + j * 4.3 + (R() - 0.5) * 1.4, h = world.height(x, z); if (h < 2.6 || (i === 2 && j === 4)) continue;
+      const s = 0.85 + R() * 0.5; grove.push({ x, y: h - 0.15, z, ry: R() * 6.28, s }); world.addCyl(x, z, 0.35 * s, h - 2, h + 5);
+    }
+    const px = -37.4, pz = -7.2, py = world.height(px, pz);
+    B.cyl(M.stone, 1.3, 1.4, 0.6, px, py - 0.1, pz, { c: 0xd8cfb8, seg: 14, solid: true }); B.cyl(M.stone, 0.7, 0.7, 0.4, px + 0.3, py + 0.75, pz, { rx: Math.PI / 2, c: 0xb8ae98, seg: 14 });
+    B.cyl(M.wood, 0.07, 0.07, 3.2, px, py + 0.95, pz, { rz: Math.PI / 2, c: 0x6a4a30, seg: 6 }); B.cyl(M.wood, 0.1, 0.1, 1.5, px, py + 0.5, pz, { c: 0x6a4a30, seg: 6 });
+    for (const [ax, az] of [[px + 2, pz + 0.6], [px + 2.5, pz - 0.2], [px - 1.9, pz + 1.2]]) { const ay = world.height(ax, az); B.cyl(M.flat, 0.26, 0.14, 0.7, ax, ay, az, { c: TERRA, seg: 9 }); B.cyl(M.flat, 0.1, 0.16, 0.22, ax, ay + 0.7, az, { c: TERRA, seg: 9 }); world.addCyl(ax, az, 0.26, ay - 1, ay + 0.9); }
+    extraFoes.push(['peltast', -36, -13, {}]);
   }
 
   // ---- the fishermen's cape: two houses and a beacon tower -------------------------------
@@ -193,11 +265,12 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283 + 0.3, r = 520 + (i % 3) * 90; B.geo(M.flat, new THREE.SphereGeometry(1, 14, 8), [Math.cos(a) * r, -6, Math.sin(a) * r], [0, i, 0], [150 + (i % 4) * 60, 34 + (i * 37) % 40, 110 + (i % 3) * 50], 0x9db2c4); }
 
   // ---- vegetation -------------------------------------------------------------------------------
-  const built = (x, z) => dPoly(PATH, x, z) < 3.6 || (Math.abs(x) < 9 && z < 34 && z > 14) || (x > 18 && x < 30 && z > -2 && z < 26) || Math.hypot(x - HILL.x, z - HILL.z) < 36 || Math.hypot(x - 74, z + 8) < 8 || Math.hypot(x - 93, z - 56) < 15
+  const built = (x, z) => dPoly(PATH, x, z) < 3.6 || (Math.abs(x) < 9 && z < 34 && z > 14) || (x > 18 && x < 30 && z > -2 && z < 26) || Math.hypot(x - HILL.x, z - HILL.z) < 36 || Math.hypot(x - 74, z + 8) < 8 || Math.hypot(x - 93, z - 56) < 15 || Math.hypot(x - 50, z - 24) < 12 || Math.hypot(x - 41, z + 24) < 13 || Math.hypot(x + 37.4, z + 7.2) < 4
     || [[-17, 39], [-23, 23], [-15, 9], [17, 38], [-34, 36], [34, 44]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 6.5);
   const olives = [], cypress = [], rocks = [], tufts = [], poppies = [], bushes = [];
   for (let i = 0; i < 4000 && olives.length < 60; i++) { const x = (R() - 0.5) * 190, z = -85 + R() * 195, h = world.height(x, z); if (h < 2.6 || h > 9 || built(x, z) || fbm(x * 0.04, z * 0.04, 2, 4) < 0.5) continue; const s = 0.8 + R() * 0.6; olives.push({ x, y: h - 0.15, z, ry: R() * 6.28, s }); world.addCyl(x, z, 0.35 * s, h - 2, h + 5); }
   for (let i = 0; i < 4000 && cypress.length < 46; i++) { const x = (R() - 0.5) * 180, z = -85 + R() * 190, h = world.height(x, z); if (h < 2.8 || h > 9 || built(x, z)) continue; const s = 0.8 + R() * 0.7; cypress.push({ x, y: h - 0.2, z, ry: R() * 6.28, s: [s, s * (1 + R() * 0.4), s] }); world.addCyl(x, z, 0.4 * s, h - 2, h + 8); }
+  for (const o of grove) olives.push(o);
   root.add(instanced(blobTreeGeo({ leaf: [0x8f9f6a, 0xa8b47e, 0x7c8c5a], trunk: 0x5a4a3a, h: 3.4, spread: 2.5, blobs: 9, seed: 5 }), M.rock, olives));
   root.add(instanced(merge([gCyl(0.14, 0.2, 1.4, 0x4a3a2c, [0, 0.7, 0], [0, 0, 0], 1, 6), gCone(0.95, 8.6, 0x2f4d30, [0, 5.4, 0], [0, 0, 0], 1, 8), gCone(0.7, 4, 0x3a5a38, [0, 4.2, 0], [0, 1, 0], 1, 7)]), windify(M.rock.clone(), shared, 0.12, 9, 1.0), cypress));
   for (let i = 0; i < 300; i++) { const a = R() * 6.283, d = 80 + R() * 26, x = Math.cos(a) * d, z = Math.sin(a) * d * 1.25, h = world.height(x, z); if (h < -2.5 || h > 3) continue; const s = 0.4 + R() * R() * 2.6; rocks.push({ x, y: h + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: R.pick([0xd8cfb8, 0xc8bea6, 0xb8ae98]) }); if (s > 1 && h > -0.5) world.addCyl(x, z, s * 0.8, h - 2, h + s * 0.7); }
@@ -242,7 +315,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0, z: 99, yaw: 0 },
     vista: { c: [0, 6, 30], r: 60, h: 14, a: 1.5, speed: 0.03 },
-    enemies, pickups: [[-3, 62], [11, 27], [-52, 14], [66, -5], [0, -33.5], [2.6, -61, 0, 1.8], [101.8, 51.4, 0, 1.8], [-22.5, 23.5, 0, 1.8]],
+    enemies: enemies.concat(extraFoes), pickups: [[-3, 62], [11, 27], [-52, 14], [66, -5], [0, -33.5], [2.6, -61, 0, 1.8], [101.8, 51.4, 0, 1.8], [-22.5, 23.5, 0, 1.8]].concat(extraPicks),
     dust: [0.78, 0.7, 0.52], water: [[0, 112, 30], [-70, 16, 34], [84, -8, 24]],
     makePickup: () => new THREE.Mesh(jar, M.flat),
     update(dt, t, g) {

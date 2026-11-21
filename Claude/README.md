@@ -4,9 +4,10 @@ A first-person shooter in eight chapters, built with Claude (Anthropic) in the s
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
 a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
 and the Tibetan plateau in 1959, one hero faces many enemies alone, in a real-time 3D
-world you can walk through freely. Many buildings can be entered. Twenty-four heroes
-from history and legend are playable, three per chapter. In Duel mode two players
-fight each other online, as a hero or as one of twenty-five villains.
+world you can walk through freely. Most buildings can be entered, and the longships
+at Jarnvik can be boarded. Twenty-four heroes from history and legend are playable,
+three per chapter. In Duel mode two players fight each other online, as a hero or as
+one of twenty-eight villains.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -16,13 +17,13 @@ files.
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori |
 | :---: | :---: |
-| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour, looking west: the sheriff's office and the jail on the right, the telegraph office and the barber on the left, an outlaw in a sombrero on the boardwalk, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing, the samurai's bow drawn in the foreground"> |
+| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour: the bank with its lit windows and open door, then the sheriff's office, the jail and the saloon along the boardwalk, an outlaw and a tumbleweed in the street, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; a wandering flute monk (komusō) in black, a basket hat over his head, stands beside the path; the samurai's bow in the foreground"> |
 | **Chapter III · Uri** | **Chapter IV · Ithaca** |
-| <img src="screenshot-uri.jpg" width="400" alt="An alpine chalet with a stone ground floor and an open door, a Habsburg soldier standing inside, flower boxes on the balcony, a cow in the paddock, the lake and snow peaks behind, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="400" alt="A Greek island in bright sun: white houses with red tile roofs, a Spartan seen through the open window of one, a colonnade, cypresses and olive trees, the temple on its hill behind, a javelin and a bronze shield in the foreground"> |
+| <img src="screenshot-uri.jpg" width="400" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="400" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> |
 | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
-| <img src="screenshot-north.jpg" width="400" alt="A snowy Viking village at night under green northern lights: a bonfire, longhouses, the palisade gate and a Viking, a throwing axe and a round shield in the foreground"> | <img src="screenshot-normandy.jpg" width="400" alt="A Norman village square before dawn: stone houses, a truck, a tank and an officer around the fountain, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
+| <img src="screenshot-north.jpg" width="400" alt="A wooden jetty in a Norwegian fjord at night, falling snow: two Viking longships moored beside it, one with a black and red striped sail set, the other with its sail furled and a gilded dragon's head, gangplanks leading aboard; a throwing axe and a round shield in the foreground"> | <img src="screenshot-normandy.jpg" width="400" alt="A Norman village before dawn: the church in ruins after the bombing, its walls breached and roofless, charred beams inside, the stump of its tower on the right, stone houses and a sentry on the left, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
 | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** |
-| <img src="screenshot-russia.jpg" width="400" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth, panel blocks with lit windows and a tower behind, a militiaman, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="400" alt="A Tibetan village under snow peaks and a deep blue sky: whitewashed flat-roofed houses with dark red parapets, a white chorten, strings of prayer flags, the monastery on the ridge behind, Chinese soldiers, a rifle in the foreground"> |
+| <img src="screenshot-russia.jpg" width="400" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth that carries the hammer and sickle, red flags with the same emblem, panel blocks with lit windows and a tower behind, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="400" alt="Inside the assembly hall of a Tibetan monastery: red pillars with blue capitals, a gilded seated Buddha with a halo on a lotus throne, a row of butter lamps burning before it, a rifle in the foreground"> |
 
 | Duel · choose your fighter | Duel · face to face |
 | :---: | :---: |
@@ -50,30 +51,37 @@ show where the remaining enemies are; the last three come looking for you. Healt
 
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 23: cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | bow (yumi) and katana | 25: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 22: Habsburg halberdiers, crossbowmen, knights, the bailiff |
-| IV · Ithaca, Greece, the age of heroes | javelins and short sword | 25: Spartan hoplites, javelin throwers, their captain |
-| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 27: rival Vikings, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
-| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 31: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
-| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | 32: KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
-| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | 32: Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 28: cowboys, sombrero bandits, the gang boss Silas Crowe |
+| II · Kagemori, Japan, 1600 | bow (yumi) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 26: Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| IV · Ithaca, Greece, the age of heroes | javelins and short sword | 30: Spartan hoplites, javelin throwers, their captain |
+| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 34: rival Vikings, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
+| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 33: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
+| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | 37: KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
+| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | 35: Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
 
-### Buildings you can enter
+### Places you can go into, onto and behind
 
 Walls, furniture, iron bars and living bodies are solid for the player and for enemies,
-and some enemies wait indoors.
+and some enemies wait indoors, on deck or behind the waterfall.
 
-| Chapter | Open buildings |
+| Chapter | Open buildings and other places |
 | --- | --- |
-| I | saloon, jail with two barred cells, bank with its safe, barn, a homestead, the crypt on Boot Hill (the cemetery outside town) |
-| II | every house (walk-through, with open screens), the shrine hall, the dojo in its walled compound, a hermitage |
-| III | the chalets, the chapel, a Habsburg watchtower |
-| IV | every house, the temple's inner room, the beacon tower on the fishermen's cape |
-| V | every longhouse, the jarl's great hall, a small temple of the old gods |
-| VI | the ground floor of every house, the church, the command bunker, the manor, the windmill |
-| VII | the food shop, two garages, the Palace of Culture with its stage, the works, and the Committee building: lobby, cells and archive |
-| VIII | the village houses, the old fort, the monks' houses and the monastery's assembly hall |
+| I | saloon, jail with two barred cells, bank with its safe, barn, a homestead, the crypt on Boot Hill (the cemetery outside town); general store, sheriff's office with a cell, livery stable with a horse, blacksmith's forge, undertaker's, telegraph office |
+| II | every house (walk-through, with open screens), the shrine hall, the dojo in its walled compound, a hermitage; the ground floor of the pagoda, a storehouse, the bell tower; the arched bridge over the pond |
+| III | the chalets, the chapel, a Habsburg watchtower; the barns on their stone stilts, which hold hay, cheese or tools, and a drive-through hay barn; the ledge behind the waterfall |
+| IV | every house, the temple's inner room with a golden Athena, the beacon tower on the fishermen's cape; a villa with a colonnaded court and a pool, the theatre with its stage house, the olive grove with its press |
+| V | every longhouse, the jarl's great hall, a small temple of the old gods; a boat shed, an open smithy; four longships to board by gangplank: two at the jetty, your own on the beach and the jarl's great ship with a tent on deck |
+| VI | the ground floor of every house, the command bunker, the manor, the windmill; the church, now a roofless ruin after the bombing; a farm barn |
+| VII | the food shop, two garages, the Palace of Culture with its stage, the works, and the Committee building: lobby, cells and archive; a metro pavilion with turnstiles, the district library with its rows of shelves, a building site with a concrete slab to climb and the builders' hut |
+| VIII | the village houses, the old fort, the monks' houses and the monastery's assembly hall; the village temple, the chapel of the great prayer wheel, a nomad tent of black yak hair |
+
+Things to find on the way: mosaic floors and a bronze Athena in Ithaca; the hammer and
+sickle on the flags, the monument, the palace and the tower of Stalnogorsk; a gilded
+Buddha in each of the three temples of Che La; bomb craters in Sainte-Aubine. In Kagemori
+three flute monks (komusō), their heads hidden under basket hats, and four geisha under
+oil-paper umbrellas stand about the valley; like the Dalai Lama's caravan in chapter
+VIII they are bystanders and take no part in the fight.
 
 ### Choose your hero
 
@@ -125,7 +133,8 @@ Chapter VII is set in Stalnogorsk, an invented Soviet city. Its three heroes are
 people who stood against the Soviet state, and none of them ever fought it with a gun:
 Solzhenitsyn was expelled from the country in 1974, Sakharov was banished to Gorky in
 1980, and Nureyev had left in 1961. The mission, to bring a seized manuscript out of the
-Committee's tower, is fiction.
+Committee's tower, is fiction. The hammer and sickle hangs on the flags and public
+buildings, as it did in any Soviet city of that year.
 
 Chapter VIII follows a real event: the Dalai Lama's escape from Lhasa in March 1959. He
 stands with his caravan where the chapter starts, unarmed, and is never part of the
@@ -170,6 +179,9 @@ carries the same mark. Like a hero, a villain has their own look and one strengt
 | IV | Polyphemus | The Cyclops, son of Poseidon | Giant: starts with 180 health, but is a large target |
 | IV | Medusa | The Gorgon whose gaze turns men to stone | Deadly gaze: javelins fly faster and hit harder |
 | IV | Antinous | Leader of the suitors in Ulysses' hall | Usurper: moves 15% faster |
+| IV | Minotaur | The bull-headed monster of the Cretan labyrinth | Bull of Minos: throwing axes and sword; starts with 160 health |
+| IV | Xerxes | Great King of Persia, who invaded Greece in 480 BC | King of Kings: bow and sword; takes 20% less damage |
+| IV | Circe | The sorceress who turned Ulysses' men into swine | Enchantress: throws javelins much faster |
 | V | Erik Bloodaxe | King of Norway, slayer of his brothers | Bloodaxe: throws axes much faster |
 | V | Ivar the Boneless | Ragnar's son, leader of the Great Heathen Army | Cunning: takes 25% less damage |
 | V | Loki | Trickster god, father of the wolf Fenrir | Shape-shifter: moves 20% faster |
@@ -184,8 +196,9 @@ carries the same mark. Like a hero, a villain has their own look and one strengt
 | VIII | Langdarma | The king who persecuted the Dharma, 9th century | Horned king: bow and sword; starts with 140 health |
 | VIII | Jiang Qing | Madame Mao, leader of the Gang of Four | Red Guard: pistol; moves 20% faster |
 
-The villains can only be played in a duel. The dictators are there to be fought: they
-are shown without party symbols and with a plain description of who they were. Several
+The villains can only be played in a duel. Chapter IV has six of them, chapter VII four,
+the others three. The dictators are there to be fought: their figures carry no party
+symbols, and each has a plain description of who they were. Several
 villains, like several heroes, do not belong to their chapter's year.
 
 Things to know in a duel:
@@ -239,8 +252,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.60 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 6,890 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.64 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 7,480 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -260,11 +273,11 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
 | [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps and iron bars. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble and the longship you can board. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
 | [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
-| [villains.js](source/src/villains.js) | The twenty-five villains that can be played in a duel. |
+| [villains.js](source/src/villains.js) | The twenty-eight villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
 ### Rendering pipeline
@@ -309,8 +322,9 @@ row of dark boxes on the horizon.
 
 Water is a second shader. Three scrolling noise layers give a surface normal; the
 reflection is the sky gradient evaluated in the reflected direction plus a sharp sun
-glint, mixed with a deep colour by a Fresnel term. The waterfall is a curved ribbon
-with scrolling noise.
+glint, mixed with a deep colour by a Fresnel term. The waterfall is a ribbon with
+scrolling noise: it runs down the rock, leaps from an overhang and falls free, and it
+is half transparent, so the valley shows through it from the ledge behind.
 
 ### Procedural textures
 
@@ -322,7 +336,11 @@ stones catch the light. Noise used in textures wraps at the tile border.
 
 Shop signs and the flags (the bull of Uri, the Austrian colours) are drawn with the
 Canvas 2D API as well, as are the Cyrillic slogans of chapter VII and the Chinese board
-in the army camp of chapter VIII, which use the system's own fonts.
+in the army camp of chapter VIII, which use the system's own fonts. The hammer and
+sickle of chapter VII is one 256-pixel canvas drawing (two arcs for the blade, two
+strokes and a rotated rectangle for the handles and the hammer's head) used on every
+flag and facade, and the mosaic floors of chapter IV are painted the same way, tile by
+tile.
 
 The apartment blocks of chapter VII are plain boxes. One 256-pixel texture of eight by
 eight windows, a random quarter of them lit, is tiled over them in world units (one
@@ -352,9 +370,23 @@ noise; grass, rock, sand and snow are chosen per vertex from altitude and slope.
 the Greek island the sea bed is coloured from pale sand to deep blue and the water is
 half transparent, which gives turquoise shallows without a depth pass.
 
-Ships (Greek galleys with a bronze ram, Viking longships with a dragon prow and striped
-sail) come from one parameterised builder. Each chapter has its own small builders for
-houses, temples, longhouses, hedgerows, bunkers and vehicles.
+The Greek galleys with their bronze rams come from one parameterised builder and are
+solid shapes. The four longships of chapter V come from a second one and can be walked.
+Three formulas give the hull at any point along its length: the breadth, the height of
+the gunwale (rising to bow and stern) and the depth of the keel; the planking, the deck
+and the collision model are all generated from them. The collision model is plain
+boxes: one slice of deck per metre, a bulwark piece on each side of it, raised platforms
+at bow and stern. The gangplank looks like a sloping board, but under it is a flight of
+invisible steps no higher than 36 cm, so boarding needs no slope physics. Each ship has
+a mast with a set or furled sail, sea chests, shields along the rail, oars stowed on
+crutches, a steering oar, a dragon's head and tail, and on the jarl's ship a striped
+tent.
+
+Each chapter has its own small builders for houses, temples, longhouses, hedgerows,
+bunkers and vehicles. The seated Buddha of chapter VIII is one such builder, about fifty
+spheres, cylinders and boxes, placed at three sizes; the Athena of chapter IV is another.
+The crag of the waterfall in chapter III is laid rock by rock around an empty grotto,
+with a ledge and steps behind the water.
 
 Enterable buildings come from one `room` builder. It takes a footprint, a height and a
 list of door and window openings, and cuts each wall into solid pieces around them: full
@@ -363,7 +395,8 @@ collision boxes, so a bullet passes through a window and a body through a door, 
 nowhere else. On sloping ground the floor is set at the highest corner of the footprint
 and a flight of steps runs down from the door. Statues reuse the character builder: the
 twelve-metre monument of chapter VII is the ordinary figure in one colour, scaled seven
-times.
+times. The bombed church of chapter VI is the same room without a ceiling, with
+breaches for doors and loose wall fragments, beams and rubble added.
 
 Layouts are deterministic. Each chapter uses a seeded random generator, so the world is
 the same on every run.
@@ -376,7 +409,8 @@ rotated about the vertical axis, vertical cylinders, and the terrain height func
 - **Walking.** The player and enemies are vertical capsules. Each step pushes the
   capsule out of any box or cylinder it overlaps. A ledge up to 0.5 m high is climbed
   automatically, which makes boardwalks, stairs and the arched bridge walkable. Slopes
-  steeper than a per-level limit, and deep water, block movement. A move is cut into
+  steeper than a per-level limit, and deep water, block movement, unless a bridge, a
+  jetty or a deck within stepping reach carries the walker over the water. A move is cut into
   strides of at most 0.2 to 0.25 m, so a fast runner cannot skip over a thin wall.
 - **Bodies.** Living enemies and the player push each other apart, so nobody walks
   through anybody. A blade only lands if a ray between the two fighters is clear, so
@@ -391,10 +425,11 @@ rotated about the vertical axis, vertical cylinders, and the terrain height func
 When a chapter loads, a grid of 0.7 m cells is laid over the playable area: between
 40,000 and 154,000 cells. For each cell the game looks for the lowest surface on which a
 body fits (the ground, or a floor, step or plinth above it) by testing the same capsule
-the walkers use against the same colliders. Two neighbouring cells are linked if the
+the walkers use against the same colliders. Over deep water the search starts at the
+water's surface, so a bridge or a ship's deck becomes walkable and open water does not. Two neighbouring cells are linked if the
 height between them is a step of at most half a metre, or an open slope; a larger
 difference is walked in three short strides to tell a staircase from a wall. Building
-the grid takes about 0.3 to 1.5 s per chapter.
+the grid takes about 0.4 to 1.7 s per chapter.
 
 An enemy that can see the player and has a clear straight line simply walks it.
 Otherwise it asks for a route (A* over the grid, with a binary heap; 0.05 to 0.4 ms per
@@ -411,9 +446,11 @@ barrels. A description object selects skin, clothes, hat, beard, extras such as 
 poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-The same builder makes the twenty-four playable heroes, the twenty-five duel villains
-(the one-eyed Cyclops and Medusa with her snakes included), the human enemy types, the
-bystanders (among them the Dalai Lama, his monks and riders in chapter VIII) and the
+The same builder makes the twenty-four playable heroes, the twenty-eight duel villains
+(the one-eyed Cyclops, Medusa with her snakes and the bull-headed Minotaur included),
+the human enemy types, the bystanders (the Dalai Lama, his monks and riders in chapter
+VIII; the flute monks under their basket hats and the geisha with their umbrellas in
+chapter II) and the
 statues of chapters IV and VII. There are thirty-one enemy types in all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
 same parts to the enemy code (a body, and the front and back pairs of legs in place of
 the two legs), with two low hit spheres, a bark instead of a shout, and a roll onto the
@@ -565,17 +602,18 @@ once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 352 | 0.78 million | 8,400 | 347 | 53,500 |
-| II · Kagemori | 247 | 0.46 million | 11,900 | 1,648 | 40,000 |
-| III · Uri | 397 | 1.83 million | 52,700 | 425 | 153,700 |
-| IV · Ithaca | 397 | 0.78 million | 18,100 | 500 | 98,900 |
-| V · Jarnvik | 347 | 0.87 million | 2,100 | 361 | 77,600 |
-| VI · Sainte-Aubine | 340 | 0.82 million | 22,700 | 522 | 98,000 |
-| VII · Stalnogorsk | 373 | 0.18 million | 23 | 308 | 81,100 |
-| VIII · Che La | 387 | 0.83 million | 20,400 | 362 | 97,900 |
+| I · Dry Gulch | 418 | 0.81 million | 8,400 | 422 | 53,500 |
+| II · Kagemori | 324 | 0.50 million | 11,900 | 1,689 | 40,000 |
+| III · Uri | 415 | 1.84 million | 52,700 | 521 | 153,700 |
+| IV · Ithaca | 469 | 0.84 million | 18,200 | 649 | 98,900 |
+| V · Jarnvik | 402 | 0.93 million | 2,100 | 913 | 87,700 |
+| VI · Sainte-Aubine | 368 | 0.84 million | 22,700 | 590 | 98,000 |
+| VII · Stalnogorsk | 422 | 0.20 million | 23 | 400 | 81,100 |
+| VIII · Che La | 420 | 0.87 million | 20,400 | 415 | 97,900 |
 
 Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has the most
-colliders because every bamboo stalk near the path is solid. Chapter VII is the lightest
+colliders because every bamboo stalk near the path is solid; chapter V comes second
+since each of its four longships is about 130 collision boxes. Chapter VII is the lightest
 in triangles: a city of boxes with painted windows.
 
 ### Build from source
@@ -625,6 +663,17 @@ rifle shot. No chapter was played through to the end by hand, and not every new 
 was looked at. All eight chapters were loaded once more in the published build on GitHub
 Pages, without errors.
 
+The round that opened more buildings, added the longships, the waterfall ledge, the
+temples and the bystanders was checked in the same way: all eight chapters load without
+errors, every enemy has a route to the player (including the five posted on ships'
+decks and the one behind the waterfall), and a five-second alerted fight runs clean in
+each. A scripted walk crossed the pond bridge of chapter II in both directions; before
+this round a walker stuck on it, because the deep-water rule looked only at the pond bed
+and not at the deck. The same check found enemies standing on ceilings: on the first
+animation frame the clock could run backwards, which lifted them into the air. Both are
+fixed. The three new Greek villains were tried in single-player only (weapon and health
+as described), not in a duel between two browsers.
+
 Duel mode was tested between two tabs of one automated browser on one computer:
 connecting by invite link and by copy-paste codes, the choice of fighters, the start at
 opposite ends, a full three-round match to the end screen, the timed rule with
@@ -640,9 +689,14 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - No touch controls and no gamepad support.
 - Progress is not saved between sessions.
 - The twenty-four heroes' strengths are not balanced against each other.
-- Enemies cannot climb onto roofs or balconies, and the route grid does not know about
-  other enemies, so several can crowd one doorway.
-- A chapter takes up to about a second and a half longer to load than before, for the
+- Enemies cannot climb onto roofs or balconies, nor onto the concrete slab of the
+  building site in chapter VII, which is more than a storey up; they fire from below.
+  The route grid does not know about other enemies, so several can crowd one doorway.
+- The longships lie at fixed moorings and cannot be sailed. The bystanders do not move
+  or react.
+- With six villains and three heroes, the fighter selection of chapter IV uses smaller
+  cards than the other chapters.
+- A chapter takes up to about two seconds longer to load than a version without the
   route grid.
 - Wind moves plants but not their shadows.
 - Duel mode has no relay server and no chat; if one player switches

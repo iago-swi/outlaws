@@ -235,12 +235,15 @@ export class World {
   }
 
   /** Can a walker go from (x0,z0) toward (x1,z1) given slope and water? */
-  walkable(x0, z0, x1, z1) {
+  walkable(x0, z0, x1, z1, feetY) {
     const dx = x1 - x0, dz = z1 - z0, d = Math.hypot(dx, dz);
     if (d < 1e-6) return true;
     const px = x0 + (dx / d) * 0.6, pz = z0 + (dz / d) * 0.6;
     const h0 = this.height(x0, z0), h1 = this.height(px, pz);
-    if (h1 < this.waterY && h1 < h0) return false;
+    if (h1 < this.waterY) {
+      if (feetY !== undefined && this.groundAt(px, pz, feetY) >= this.waterY) return true;   // a bridge, a jetty or a deck carries the walker over deep water
+      if (h1 < h0) return false;
+    }
     return (h1 - h0) / 0.6 < this.maxSlope;
   }
 
@@ -393,19 +396,19 @@ export class Nav {
     const p = { x: 0, y: 0, z: 0 };
     for (let j = 0; j < this.nz; j++) for (let i = 0; i < this.nx; i++) {
       const x = this.x0 + (i + 0.5) * cell, z = this.z0 + (j + 0.5) * cell, k = j * this.nx + i;
-      const gy = world.height(x, z);
-      if (gy < world.waterY) { this.hgt[k] = gy; continue; }
+      const gy = world.height(x, z), wet = gy < world.waterY, g0 = wet ? world.waterY : gy;   // over deep water the search starts at the surface: a bridge or a deck may cross it
+      if (wet && world.groundAt(x, z, g0 + 4) < world.waterY) { this.hgt[k] = gy; continue; }   // open water
       // find the lowest surface here on which a body fits: the ground, or a floor / step / plinth above it
-      let y = world.groundAt(x, z, gy + 0.05), fits = false;
+      let y = Math.max(g0, world.groundAt(x, z, g0 + 0.05)), fits = false;
       for (let tries = 0; tries < 6; tries++) {
         for (let q = 0; q < 8; q++) { const up = world.groundAt(x, z, y); if (up > y + 0.01) y = up; else break; }   // a walker is lifted onto anything within step height
         p.x = x; p.y = y; p.z = z; world.collide(p, 0.25, 1.7);
-        if (Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03) { fits = true; break; }
+        if (!(wet && y < world.waterY + 0.02) && Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03) { fits = true; break; }   // the water surface itself is never a place to stand
         let y2 = y; for (let s = 0.5; s <= 4.5 && y2 <= y + 0.01; s += 0.5) y2 = world.groundAt(x, z, y + s);
-        if (y2 <= y + 0.01 || y2 - gy > 2.4) break;         // nothing higher, or a roof: not a place to walk
+        if (y2 <= y + 0.01 || y2 - g0 > (wet ? 3.6 : 2.4)) break;         // nothing higher, or a roof: not a place to walk
         y = y2;
       }
-      this.hgt[k] = y; this.onT[k] = y - gy < 0.03 ? 1 : 0; if (fits) this.free[k] = 1;
+      this.hgt[k] = y; this.onT[k] = !wet && y - gy < 0.03 ? 1 : 0; if (fits && !(wet && y < world.waterY + 0.02)) this.free[k] = 1;
     }
   }
   idx(x, z) { const i = Math.floor((x - this.x0) / this.cell), j = Math.floor((z - this.z0) / this.cell); return i < 0 || j < 0 || i >= this.nx || j >= this.nz ? -1 : j * this.nx + i; }

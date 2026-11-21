@@ -2,8 +2,9 @@
 import * as THREE from 'three';
 import { Heightfield, curvedRoofGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
-import { instanced, room, tuftGeo, blobTreeGeo, gBox, gCyl, gCone, gSph, xf, merge, paint } from '../props.js';
+import { instanced, room, steps, shelf, tuftGeo, blobTreeGeo, gBox, gCyl, gCone, gSph, xf, merge, paint } from '../props.js';
 import { fbm, smooth, clamp } from '../util.js';
+import { makeHumanoid, lookFor } from '../actors.js';
 
 export const japan = {
   id: 'japan', theme: 'theme-japan', chapter: 'Chapter II', title: 'Kagemori', kanji: '影森', place: 'Kagemori shrine · Japan · 1600',
@@ -209,15 +210,40 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const x = -22, z = -50; let y = 3, w = 6.2;
     B.box(M.stone, 8.2, 0.8, 8.2, x, y, z, { c: 0x9a988e, solid: true }); y += 0.8;
     for (let i = 0; i < 5; i++) {
-      B.box(M.plaster, w, 2.1, w, x, y, z, { c: 0xece4d0, solid: i === 0 });
+      if (i === 0) {                             // the ground floor of the pagoda can be entered
+        room(B, M, x, y, z, { w, d: w, h: 2.1, t: 0.3, mat: M.plaster, c: 0xece4d0, base: 0.05, doors: [{ side: 's', at: 0, w: 1.8, h: 1.95 }, { side: 'e', at: 0, w: 1.8, h: 1.95 }], floor: { mat: M.woodH, c: 0x5a4030 }, ceil: { mat: M.woodH, c: 0x3a2a20 } });
+        B.cyl(M.flat, 0.3, 0.3, 2.1, x, y, z, { c: RED, seg: 10, solid: true });
+        steps(B, M, x, z + 4.1, 0, y, 2, { w: 2.4, rise: 0.4, run: 0.5, c: 0x9c9a90 }); steps(B, M, x + 4.1, z, Math.PI / 2, y, 2, { w: 2.4, rise: 0.4, run: 0.5, c: 0x9c9a90 });
+        B.box(M.woodH, 1.2, 0.6, 0.5, x - 1.6, y + 0.06, z - 2.2, { c: 0x7a1c16, solid: true }); B.geo(M.metal, new THREE.SphereGeometry(0.22, 8, 6), [x - 1.6, y + 0.9, z - 2.2], [0, 0, 0], [1, 1.2, 1], 0xd9b23a);
+      } else B.box(M.plaster, w, 2.1, w, x, y, z, { c: 0xece4d0 });
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) B.box(M.flat, 0.22, 2.1, 0.22, x + sx * w / 2, y, z + sz * w / 2, { c: RED });
       B.box(M.flat, w + 0.15, 0.2, w + 0.15, x, y + 1.9, z, { c: RED });
-      for (const s of [-1, 1]) { B.box(M.shoji, w * 0.34, 1.3, 0.06, x, y + 0.35, z + s * (w / 2 + 0.03), {}); }
+      for (const s of [-1, 1]) { if (i === 0 && s === 1) continue; B.box(M.shoji, w * 0.34, 1.3, 0.06, x, y + 0.35, z + s * (w / 2 + 0.03), {}); }
       B.geo(M.kawara, curvedRoofGeo(w + 3.4, w + 3.4, 1.25, { up: 0.75, tile: 1.6, ridge: 0.02, curve: 1.9 }), [x, y + 2.1, z], [0, 0, 0], 1, 0x48585e);
       y += 2.95; w *= 0.84;
     }
     B.cyl(M.metal, 0.07, 0.1, 3.6, x, y - 0.4, z, { c: 0xd9b23a, seg: 6 });
     for (let i = 0; i < 6; i++) B.cyl(M.metal, 0.34 - i * 0.035, 0.34 - i * 0.035, 0.06, x, y + 0.5 + i * 0.38, z, { c: 0xd9b23a, seg: 10 });
+  }
+  const extraFoes = [], extraPicks = [];
+  { // the shrine's storehouse (kura), white with a heavy roof
+    const x = 27.5, z = -50, y = 3;
+    room(B, M, x, y, z, { w: 6, d: 5, h: 3.2, t: 0.4, mat: M.plaster, c: 0xf0ece0, base: 0.4, doors: [{ side: 'w', at: 0, w: 1.7, h: 2.2 }], floor: { mat: M.woodH, c: 0x5a4030 }, ceil: { mat: M.woodH, c: 0x3a2a20 } });
+    B.geo(M.kawara, curvedRoofGeo(8.2, 7.2, 2.3, { up: 0.5, tile: 1.6, ridge: 0.5 }), [x, y + 3.4, z], [0, 0, 0], 1, 0x48585e);
+    B.box(M.woodH, 0.14, 2.2, 1.6, x - 3.3, y, z - 1.7, { c: 0x2a2018 });                           // the heavy door, slid open
+    shelf(B, M, x + 2.3, y + 0.06, z, -Math.PI / 2, 3.6, 2.2, { goods: [0x8a1c1c, 0x1a1a1e, 0xd9b23a] }); shelf(B, M, x - 0.4, y + 0.06, z - 1.85, 0, 3, 2.0, { goods: [0xc8b070, 0x5a3a2a] });
+    for (const [bx, bz] of [[x - 1.6, z + 1.5], [x - 0.6, z + 1.6], [x - 1.1, z + 1.55]]) B.cyl(M.thatch, 0.3, 0.3, 0.7, bx, y + 0.36 + (bx === x - 1.1 ? 0.55 : 0), bz, { rz: Math.PI / 2, c: 0xc8b070, seg: 10 });
+    world.addBox(x - 1.1, z + 1.55, 1.9, 0.7, 0, y, y + 1.3);
+    extraFoes.push(['ronin', x - 0.6, z - 0.2, { y: 3.6, patrol: false, yaw: -1.57 }]); extraPicks.push([x + 0.6, z + 1.4, 3.6]);
+  }
+  { // bell tower: four posts, a great bronze bell
+    const x = -17, z = -66, y = 3;
+    B.box(M.stone, 4.6, 0.4, 4.6, x, y - 0.02, z, { c: 0x9a988e, solid: true });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { B.cyl(M.flat, 0.18, 0.22, 3.8, x + sx * 1.6, y + 0.38, z + sz * 1.6, { c: RED, seg: 10 }); world.addCyl(x + sx * 1.6, z + sz * 1.6, 0.26, y, y + 4.2); }
+    B.geo(M.kawara, curvedRoofGeo(6.4, 6.4, 2.0, { up: 0.7, tile: 1.6, ridge: 0.3 }), [x, y + 4.2, z], [0, 0, 0], 1, 0x48585e);
+    B.cyl(M.metal, 0.5, 0.62, 1.2, x, y + 2.2, z, { c: 0x4a6a5a, seg: 14 }); B.cyl(M.metal, 0.05, 0.05, 0.8, x, y + 3.4, z, { c: 0x2a2a2e, seg: 5 });
+    B.cyl(M.wood, 0.09, 0.09, 2.0, x + 1.3, y + 2.7, z, { rz: Math.PI / 2, c: 0x6a4a30, seg: 6 });
+    extraFoes.push(['ninja', x + 0.3, z + 2.6, { y: 3.6, ambush: 10 }], ['ninja', -20.4, -48, { y: 4.2, ambush: 8 }]);
   }
   // sacred tree with rope, basin
   B.cyl(M.wood, 0.7, 0.95, 6, 20, 3, -44, { c: 0x4a3828, solid: true, seg: 9 });
@@ -240,6 +266,19 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     house(-50, 24, 6, 5, { ry: 0.3, roof: M.thatch, roofC: 0x9a8454, roofH: 2.8, up: 0.2, over: 1.1, h: 2.5 });
     lantern(-44.5, 21.5, true, 1.0); torii(-41, 24.5, Math.PI / 2 + 0.2, 0.8);
     for (const [px, pz, s] of [[-55, 19, 1.5], [-46, 30, 1.1], [-53.5, 30.5, 0.9]]) { const y = world.height(px, pz); B.geo(M.rock, rockGeo(6, 1), [px, y + s * 0.3, pz], [0, pz, 0], [s, s * 0.8, s], 0x70746c); world.addCyl(px, pz, s * 0.8, y - 1, y + s * 0.9); }
+  }
+
+  { // people of the valley who take no part in the fight: wandering flute monks (komuso) and geisha under their umbrellas
+    let q = 0; const rq = () => (q = (q + 0.381) % 1);
+    const figure = (look, x, z, yaw, pose, over) => {
+      const f = makeHumanoid(M, { ...lookFor(look, rq), ...over }), y = world.height(x, z);
+      f.group.position.set(x, y, z); f.group.rotation.y = yaw; pose(f); root.add(f.group); world.addCyl(x, z, 0.4, y - 2, y + 1.9);
+    };
+    const flute = (f) => { f.armR.rotation.x = -0.98; f.armR.rotation.z = 0.45; f.armL.rotation.x = -1.1; f.armL.rotation.z = -0.5; };
+    const stroll = (f) => { f.armR.rotation.x = -0.71; f.armR.rotation.z = 0.17; f.armL.rotation.x = -0.32; f.armL.rotation.z = -0.12; f.legL.rotation.x = 0.1; f.legR.rotation.x = -0.1; };
+    figure('komuso', pathX(62.5) + 2.6, 62.5, -1.2, flute); figure('komuso', -45.6, 23.6, 1.5, flute); figure('komuso', -7.5, -37.5, 0.5, flute);
+    figure('geisha', 3.1, 42.8, 0.3, stroll); figure('geisha', 17.4, 29.2, -1.6, stroll); figure('geisha', 33.5, -4.6, -1.3, stroll);
+    figure('geisha', -18.2, 19.6, -1.5, stroll, { shirt: 0xf4f0ea, robe: 0xf4f0ea, sleeve: 0xf4f0ea, pants: 0xf4f0ea, hem: 0xc8321c, accent: 0xe8e0d0, cord: 0xc8321c, trim: 0xe8a8a0, hat: 'wataboshi', face: [], umbrella: 0xe6e0d0, umbrella2: 0x55504a });
   }
 
   // ---- vegetation ------------------------------------------------------------------------------
@@ -322,7 +361,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0.3, z: 76.5, yaw: 0 },
     vista: { c: [-1, 3, 22], r: 15, h: 9.5, a: 1.2, speed: 0.03 },   // circles above the pond, clear of the bamboo
-    enemies, pickups: [[-2.5, 41], [18, 24, 2], [-23, -1.5, 2], [0, -30.5, 4], [14, -52, 4], [3.8, -58.6, 4.3], [50, -11, 1.5], [-51, 25, 1.5]],
+    enemies: enemies.concat(extraFoes), pickups: [[-2.5, 41], [18, 24, 2], [-23, -1.5, 2], [0, -30.5, 4], [14, -52, 4], [3.8, -58.6, 4.3], [50, -11, 1.5], [-51, 25, 1.5]].concat(extraPicks),
     dust: [0.42, 0.4, 0.34], water: [[POND.x, POND.z, 26]], heroLight: 70,
     makePickup: () => new THREE.Mesh(cake, M.flat),
     update(dt, t, g) {

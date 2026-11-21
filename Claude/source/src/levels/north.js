@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
-import { instanced, room, steps, pineGeo, ship, brazier, barrel, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, room, steps, pineGeo, drakkar, crate, brazier, barrel, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const north = {
@@ -49,7 +49,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     return h;
   });
   world.height = (x, z) => hf.h(x, z);
-  world.bounds = { x0: -114, x1: 114, z0: -96, z1: 70 };
+  world.bounds = { x0: -114, x1: 114, z0: -96, z1: 92 };            // far enough out for the moored ships; open water stops a walker by itself
   world.maxSlope = 0.95; world.waterY = -0.8;
   const cSnow = new THREE.Color(SNOW), cSnow2 = new THREE.Color(0xcfdcec), cRock = new THREE.Color(0x4a505a), cRock2 = new THREE.Color(0x6a707a), cShore = new THREE.Color(0x565c66),
     cPath = new THREE.Color(0xb9c4d2), cBed = new THREE.Color(0x0c1c2c), tmp = new THREE.Color(), tmp2 = new THREE.Color();
@@ -163,6 +163,27 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const e of [-1, 1]) { fires.push(brazier(B, M, e * 4.6, world.height(e * 4.6, z + 9), z + 9, 1.3).concat(1.2)); for (let i = 0; i < 4; i++) B.geo(M.flat, new THREE.CylinderGeometry(0.42, 0.42, 0.06, 12), [e * (4.2 + i * 2.2), y + 1.9, z + 4.82], [Math.PI / 2, 0, 0], 1, [0x8a1c1c, 0xc8a030, 0x1c4a7a, 0xe8e0d0][i]); }
     torch(0, y + 3, z + 10, 70, 24);
   }
+  const extraFoes = [], extraPicks = [];
+  { // boat shed on the shore, a boat drawn up inside
+    const x = -20, z = 49, w = 6.4, d = 12, P = frame(x, z, 0), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h: 3.0, t: 0.32, mat: M.woodH, c: TIMBER, base: 2.6, doors: [{ side: 's', at: 0, w: 4.6, h: 2.8 }, { side: 'e', at: -3.4, w: 1.7, h: 2.0 }], floor: { mat: M.ground, c: 0x6a5a48 }, ceil: { mat: M.woodH, c: DARKT } });
+    B.geo(M.shingle, prismGeo(w + 1.6, 3.0, d + 1.2, 3), [x, yf + 3.0, z], [0, 0, 0], 1, SNOW);
+    steps(B, M, x, z + d / 2, 0, f, 7, { w: 4.4, c: 0x7a808a }); steps(B, M, x + w / 2, z - 3.4, Math.PI / 2, f, 6, { w: 2, c: 0x7a808a });
+    B.geo(M.flat, new THREE.SphereGeometry(1, 12, 6), [x - 0.4, f + 0.45, z - 0.6], [0, 0, 0], [1.05, 0.62, 3.9], 0x4a3626); B.box(M.woodH, 1.5, 0.08, 6.2, x - 0.4, f + 0.72, z - 0.6, { c: 0x7a5a3a }); world.addBox(x - 0.4, z - 0.6, 1.9, 7.4, 0, f, f + 1.0);
+    for (let i = 0; i < 4; i++) B.box(M.wood, 0.07, 2.6, 0.12, x + 2.75, f + 0.2, z + 1 + i * 0.5, { rz: 0.12, c: 0x8a6a44 });
+    barrel(B, M, x + 2.3, f, z - 5.1); barrel(B, M, x - 2.4, f, z + 4.4);
+    extraFoes.push(['viking', x + 1.9, z - 1.5, { up: 1.8, patrol: false }]); extraPicks.push([x + 2.1, z - 3.6, 0, 1.8]);
+  }
+  { // the smithy: an open shed with forge and anvil
+    const x = 31, z = 22, y = world.height(x, z);
+    B.box(M.woodH, 5.2, 2.6, 0.3, x, y - 0.3, z - 2.1, { c: TIMBER, solid: true }); B.box(M.woodH, 0.3, 2.6, 4.2, x + 2.5, y - 0.3, z, { c: TIMBER, solid: true });
+    for (const [a, b] of [[-2.4, 2.0], [2.4, 2.0], [-2.4, -2.0]]) { B.box(M.wood, 0.24, 2.6, 0.24, x + a, y - 0.3, z + b, { c: DARKT }); world.addCyl(x + a, z + b, 0.18, y - 1, y + 2.4); }
+    B.geo(M.shingle, prismGeo(6.2, 1.6, 5.4, 3), [x, y + 2.3, z], [0, 0, 0], 1, SNOW);
+    B.box(M.stone, 1.5, 0.9, 1.1, x + 1.4, y - 0.1, z - 1.2, { c: 0x5a5f68, solid: true }); B.geo(M.glow, new THREE.ConeGeometry(0.3, 0.6, 6), [x + 1.4, y + 1.05, z - 1.2], [0, 0, 0], 1, 0xff7a20); fires.push([x + 1.4, y + 1.1, z - 1.2, 0.8]);
+    B.cyl(M.wood, 0.3, 0.34, 0.55, x - 0.4, y - 0.05, z + 0.2, { c: DARKT, seg: 8 }); B.box(M.metal, 0.7, 0.24, 0.26, x - 0.4, y + 0.5, z + 0.2, { c: 0x3a3e44 }); world.addCyl(x - 0.4, z + 0.2, 0.4, y - 1, y + 0.8);
+    for (let i = 0; i < 4; i++) { B.box(M.wood, 0.05, 0.8, 0.05, x - 1.8 + i * 0.5, y + 0.9, z - 1.9, { c: 0x8a6a44 }); B.box(M.metal, 0.22, 0.2, 0.03, x - 1.8 + i * 0.5, y + 1.6, z - 1.9, { c: 0xc9ced6 }); }
+    extraFoes.push(['berserker', x - 0.6, z + 2.6, {}]);
+  }
   runestone(-9, -30, 1.2); runestone(9, -30, 1.2); runestone(-48, 30, 1.0); runestone(30, 50, 0.9);
   { // burial mound with standing stones
     const x = 56, z = 6, y = world.height(x, z); B.geo(M.ground, new THREE.SphereGeometry(7, 14, 8), [x, y - 3.2, z], [0, 0, 0], [1, 0.7, 1], SNOW); world.addCyl(x, z, 5.2, y - 3, y + 2);
@@ -170,13 +191,27 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
   // jetty and ships
   { const x = -40; B.box(M.woodH, 3, 0.25, 18, x, 0.55, 70, { c: 0x6a5238, solid: true }); for (let i = 0; i < 6; i++) for (const s of [-1, 1]) B.cyl(M.wood, 0.14, 0.14, 2.6, x + s * 1.4, -1.6, 62 + i * 3.2, { c: 0x4a3828, seg: 6 }); fires.push(brazier(B, M, x + 2.2, world.height(x + 2.2, 59), 59, 1).concat(1)); torch(x + 2.2, 2.6, 59, 34, 16); }
-  ship(B, M, -45.5, 0.2, 72, 0.05, { len: 19, viking: true, hull: 0x3a2a1c, sail: 0x8a1c1c, sail2: 0xe8e0d0, shields: [0x8a1c1c, 0xc8a030, 0x1c4a7a] });
-  ship(B, M, -34.5, 0.2, 74, -0.08, { len: 17, viking: true, hull: 0x3a2a1c, sail: 0x1a1a1a, sail2: 0x8a1c1c, shields: [0x1a1a1a, 0x8a1c1c] });
-  ship(B, M, 9, 0.35, 65, 0.3, { len: 17, viking: true, hull: 0x4a3626, sail: 0x1c4a8a, sail2: 0xe8e0d0, shields: [0x1c4a8a, 0xe8e0d0] });   // your own ship
+  { // four longships that can be boarded: two at the jetty, your own on the beach, the grey jarl's great ship in the east
+    const put = (sh, lx, lz, f) => { const [a, b] = sh.P(lx, lz); f(a, b); };
+    const west = drakkar(B, M, -45.5, 77.5, Math.PI, { furled: true, gang: [-41.3, 74] });
+    put(west, -0.9, 5.6, (a, b) => barrel(B, M, a, west.D, b)); put(west, 0.9, -3.6, (a, b) => crate(B, M, a, west.D, b, 0.8, 0.3));
+    extraFoes.push(['viking', ...west.P(0.7, -2.6), { y: 1.6, patrol: false }]); extraPicks.push([...west.P(0, 0.76 * west.H), 2.0]);
+    const east = drakkar(B, M, -34.5, 77.5, 0, { hull: 0x2e241c, strake: 0x1a1a1a, sail: 0x1a1a1a, sail2: 0x8a1c1c, shields: [0x1a1a1a, 0x8a1c1c], gang: [-38.7, 74] });
+    put(east, 0.8, 3.4, (a, b) => crate(B, M, a, east.D, b, 0.9, 0.2)); put(east, 0.8, 4.5, (a, b) => barrel(B, M, a, east.D, b));
+    extraFoes.push(['bowman', ...east.P(0, -8.6), { y: 2.2, patrol: false }]);
+    const own = drakkar(B, M, 10, 70, Math.PI / 2, { hull: 0x4a3626, strake: 0x1c4a8a, sail: 0x1c4a8a, sail2: 0xe8e0d0, shields: [0x1c4a8a, 0xe8e0d0], gang: [7, 63.4] });   // your own ship
+    put(own, -0.9, 4.2, (a, b) => barrel(B, M, a, own.D, b)); put(own, -0.9, 5.3, (a, b) => barrel(B, M, a, own.D, b)); put(own, 0.9, 5, (a, b) => crate(B, M, a, own.D, b, 0.8, 0.4));
+    const big = drakkar(B, M, 58, 70.6, -Math.PI / 2, { len: 27, beam: 5.4, hull: 0x2a1e16, strake: 0xc9a030, furled: true, sail2: 0x8a1c1c, shields: [0xc9a030, 0x8a1c1c, 0x1a1a1a], tent: [0x8a1c1c, 0xe8e0d0], gang: [61, 63.6] });
+    put(big, 0.9, -11, (a, b) => { B.box(M.woodH, 0.9, 0.6, 0.6, a, big.hi, b, { ry: -Math.PI / 2, c: 0x5a4028, solid: true }); B.box(M.metal, 0.92, 0.08, 0.62, a, big.hi + 0.56, b, { ry: -Math.PI / 2, c: 0xc9a030 }); });   // the jarl's chest
+    put(big, -1.0, -5.2, (a, b) => barrel(B, M, a, big.D, b)); put(big, 1.1, -6.2, (a, b) => crate(B, M, a, big.D, b, 0.9, 0.5));
+    extraFoes.push(['chieftain', ...big.P(-0.3, -10.4), { y: 2.2, patrol: false }], ['viking', ...big.P(0.3, 4.4), { y: 1.6, patrol: false }], ['berserker', ...big.P(-0.5, -4), { y: 1.6, patrol: false }]);
+    extraPicks.push([...big.P(-1.0, 5.6), 1.6]);
+    fires.push(brazier(B, M, 60, world.height(60, 61.5), 61.5, 1).concat(1)); torch(60, world.height(60, 61.5) + 2.2, 61.5, 30, 16);
+  }
 
   // ---- forest, rocks ---------------------------------------------------------------------------
   const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4.5 || (Math.abs(x) < 46 && z < 48 && z > -70 && (Math.abs(z + 3) < 2.5 || Math.hypot(x, z - 22) < 7 || Math.hypot(x, z + 56) < 20))
-    || [[-19, 30], [18, 27], [-27, 9], [27, 7], [40, 38]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 10) || Math.hypot(x - 56, z - 6) < 10 || z > 52 || Math.hypot(x + 80, z - 24) < 15 || Math.hypot(x - 74, z + 24) < 11;
+    || [[-19, 30], [18, 27], [-27, 9], [27, 7], [40, 38]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 10) || Math.hypot(x - 56, z - 6) < 10 || z > 52 || Math.hypot(x + 80, z - 24) < 15 || Math.hypot(x + 20, z - 49) < 10 || Math.hypot(x - 31, z - 22) < 6 || Math.hypot(x - 74, z + 24) < 11;
   const pines = [], rocks = [];
   for (let i = 0; i < 70000 && pines.length < 1900; i++) {
     const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), inPlay = Math.abs(x) < 118 && z > -100 && z < 60;
@@ -221,7 +256,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 2, z: 57.5, yaw: 0 },
     vista: { c: [0, 6, 20], r: 60, h: 14, a: 1.5, speed: 0.03 },
-    enemies, pickups: [[-13, 27], [12, 8], [-36, 52], [-12, -14], [14, -44], [10, -58, 0, 1.8], [77, -22, 0, 1.8], [-80.3, 18.4, 0, 1.8]],
+    enemies: enemies.concat(extraFoes), pickups: [[-13, 27], [12, 8], [-36, 52], [-12, -14], [14, -44], [10, -58, 0, 1.8], [77, -22, 0, 1.8], [-80.3, 18.4, 0, 1.8]].concat(extraPicks),
     dust: [0.9, 0.94, 1.0], water: [[0, 68, 26], [-40, 66, 26]], heroLight: 46,
     makePickup: () => new THREE.Mesh(horn, M.flat),
     update(dt, t, g) {

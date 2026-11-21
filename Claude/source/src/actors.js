@@ -91,11 +91,14 @@ export function makeHumanoid(M, sp) {
   T.push(gCyl(0.172, 0.172, 0.07, S.belt, [0, 0.02, 0], [0, 0, 0], [1, 1, 0.66]));
   T.push(gCyl(0.05, 0.06, 0.1, S.skin, [0, 0.6, 0]));
   const HY = 0.76;
-  if (S.hat !== 'hood' && S.hat !== 'helm') {
+  if (S.hat !== 'hood' && S.hat !== 'helm' && S.hat !== 'tengai' && S.hat !== 'bull') {
     T.push(gSph(0.125, S.skin, [0, HY, 0], [1, 1.12, 1.04]));
     T.push(gBox(0.03, 0.045, 0.04, S.skin, [0, HY - 0.01, 0.125]));
     T.push(gBox(0.026, 0.016, 0.012, 0x0c0c0c, [0.046, HY + 0.028, 0.119]), gBox(0.026, 0.016, 0.012, 0x0c0c0c, [-0.046, HY + 0.028, 0.119]));
     if (S.hair !== null) T.push(gSph(0.13, S.hair, [0, HY + 0.03, -0.035], [1.02, 1, 1.02]));
+    T.push(gBox(0.022, 0.055, 0.04, S.skin, [0.128, HY - 0.005, 0.0]), gBox(0.022, 0.055, 0.04, S.skin, [-0.128, HY - 0.005, 0.0]),        // ears
+      gBox(0.052, 0.009, 0.012, S.lip ?? 0x8a4a3c, [0, HY - 0.064, 0.12]));                                                               // mouth
+    if (S.hair !== null && S.hat !== 'corinthian') T.push(gBox(0.042, 0.011, 0.012, S.brow ?? S.hair, [0.046, HY + 0.05, 0.121], [0, 0, -0.08]), gBox(0.042, 0.011, 0.012, S.brow ?? S.hair, [-0.046, HY + 0.05, 0.121], [0, 0, 0.08]));
   }
   for (const f of S.face || []) {
     if (f === 'moustache') T.push(gBox(0.1, 0.022, 0.02, S.hair, [0, HY - 0.045, 0.125]), gBox(0.02, 0.05, 0.02, S.hair, [0.055, HY - 0.07, 0.118]), gBox(0.02, 0.05, 0.02, S.hair, [-0.055, HY - 0.07, 0.118]));
@@ -117,6 +120,18 @@ export function makeHumanoid(M, sp) {
     if (f === 'toothbrush') T.push(gBox(0.04, 0.03, 0.02, S.hair, [0, HY - 0.048, 0.127]), gBox(0.13, 0.05, 0.1, S.hair, [0.035, HY + 0.1, 0.07], [0, 0, -0.3]));
     if (f === 'brows') T.push(gBox(0.075, 0.03, 0.02, 0x14100c, [0.048, HY + 0.06, 0.121]), gBox(0.075, 0.03, 0.02, 0x14100c, [-0.048, HY + 0.06, 0.121]));
     if (f === 'horns') T.push(gCone(0.03, 0.13, 0x2a2018, [0.085, HY + 0.17, 0], [0, 0, -0.3]), gCone(0.03, 0.13, 0x2a2018, [-0.085, HY + 0.17, 0], [0, 0, 0.3]));
+    if (f === 'jaw') T.push(gSph(0.1, S.skin, [0, HY - 0.082, 0.028], [1.2, 0.8, 1.06]), gSph(0.045, S.skin, [0, HY - 0.118, 0.095], [1.3, 0.8, 1]));          // heavy jaw and jutting chin
+    if (f === 'tie') T.push(gBox(0.036, 0.27, 0.012, S.accent ?? 0x15120f, [0, 0.42, 0.152]), gBox(0.05, 0.04, 0.016, S.accent ?? 0x15120f, [0, 0.565, 0.146]), gBox(0.1, 0.06, 0.012, 0xe8e4d8, [0, 0.572, 0.14]));
+    if (f === 'chinbeard') T.push(gSph(0.1, S.hair, [0, HY - 0.095, 0.04], [1.1, 0.85, 0.95]), gBox(0.03, 0.12, 0.05, S.hair, [0.115, HY - 0.05, 0.03]), gBox(0.03, 0.12, 0.05, S.hair, [-0.115, HY - 0.05, 0.03]));   // beard without a moustache
+    if (f === 'bigmoustache') T.push(gBox(0.13, 0.036, 0.03, S.hair, [0, HY - 0.044, 0.128]), gBox(0.03, 0.05, 0.025, S.hair, [0.066, HY - 0.06, 0.122], [0, 0, 0.5]), gBox(0.03, 0.05, 0.025, S.hair, [-0.066, HY - 0.06, 0.122], [0, 0, -0.5]));
+    if (f === 'pipe') T.push(gCyl(0.008, 0.008, 0.1, 0x3a2414, [0.05, HY - 0.08, 0.165], [1.25, 0, 0.3], 1, 5), gCyl(0.02, 0.016, 0.04, 0x3a2414, [0.066, HY - 0.085, 0.21], [0, 0, 0], 1, 6));
+    if (f === 'mole') T.push(gSph(0.012, 0x4a3020, [0.018, HY - 0.092, 0.115]));
+    if (f === 'mop') T.push(gSph(0.142, S.hair, [0, HY + 0.062, -0.048], [1.08, 0.95, 1.08]), gBox(0.19, 0.03, 0.05, S.hair, [0.01, HY + 0.112, 0.082], [0, 0, -0.1]), gBox(0.05, 0.14, 0.14, S.hair, [0.125, HY + 0.0, -0.03]), gBox(0.05, 0.14, 0.14, S.hair, [-0.125, HY + 0.0, -0.03]));
+    if (f === 'shimada') T.push(gSph(0.14, S.hair, [0, HY + 0.045, -0.03], [1.12, 0.95, 1.08]),                            // a geisha's swept-up hair
+      gSph(0.085, S.hair, [0, HY + 0.2, -0.05], [1.25, 0.8, 1]), gSph(0.07, S.hair, [0, HY + 0.07, -0.16], [1.3, 0.9, 0.9]),         // top knot and back loop
+      gSph(0.06, S.hair, [0.13, HY + 0.02, -0.02], [0.7, 1.1, 1.2]), gSph(0.06, S.hair, [-0.13, HY + 0.02, -0.02], [0.7, 1.1, 1.2]),
+      gCyl(0.006, 0.006, 0.32, 0xd9b23a, [0, HY + 0.2, -0.05], [0, 0, Math.PI / 2], 1, 5),                                           // a long pin through the knot
+      gSph(0.03, S.cord ?? 0xc81c2c, [0.09, HY + 0.15, 0.06]), gSph(0.022, 0xf6c6d4, [0.115, HY + 0.115, 0.075]), gBox(0.012, 0.08, 0.012, 0xd9b23a, [0.122, HY + 0.05, 0.085]));
     if (f === 'neckerchief') T.push(gCyl(0.072, 0.075, 0.045, S.accent ?? 0xa81c1c, [0, 0.615, 0]), gCone(0.095, 0.15, S.accent ?? 0xa81c1c, [0, 0.54, 0.095], [Math.PI, 0, 0], [1, 1, 0.45]));
   }
   const HT = HY + 0.105;                     // top of the head
@@ -200,6 +215,9 @@ export function makeHumanoid(M, sp) {
       T.push(gCyl(0.152, 0.146, 0.09, 0xf0ece0, [0, HT - 0.01, 0], [0, 0, 0], [1, 1, 1.05], 12), gCyl(0.095, 0.135, 0.15, S.hatC ?? 0xb01c1c, [0, HT + 0.1, 0], [0, 0, 0], 1, 10),
         gCyl(0.155, 0.155, 0.025, 0xd9b23a, [0, HT - 0.05, 0], [0, 0, 0], [1, 1, 1.05], 12), gSph(0.03, 0xd9b23a, [0, HT + 0.19, 0]));
       break;
+    case 'fez':     // black fez with a tassel
+      T.push(gCyl(0.1, 0.128, 0.15, S.hatC ?? 0x15151a, [0, HT + 0.045, 0], [0, 0, 0], 1, 12), gBox(0.012, 0.11, 0.012, 0xd9b23a, [0.07, HT + 0.07, 0.07]), gCyl(0.02, 0.02, 0.012, 0xd9b23a, [0, HT + 0.125, 0], [0, 0, 0], 1, 6));
+      break;
     case 'stahl':   // steel helmet with a flared rim
       T.push(gSph(0.15, S.hatC ?? 0x4a5248, [0, HT - 0.045, -0.005], [1.02, 0.84, 1.1]), gCyl(0.165, 0.175, 0.05, S.hatC ?? 0x4a5248, [0, HY + 0.035, -0.02], [0.08, 0, 0], [1, 1, 1.1], 14));
       break;
@@ -216,6 +234,28 @@ export function makeHumanoid(M, sp) {
     case 'felt':   // medieval felt hat with a feather
       T.push(gCyl(0.19, 0.2, 0.02, S.hatC, [0, HT - 0.01, 0.02], [0.1, 0, 0], [1, 1, 1.25], 14), gCone(0.14, 0.2, S.hatC, [0, HT + 0.08, -0.01], [-0.25, 0, 0], 1, 12),
         gBox(0.012, 0.3, 0.05, S.plume ?? 0xffffff, [0.1, HT + 0.14, -0.06], [-0.5, 0, 0.2]));
+      break;
+    case 'bull': {  // the Minotaur's head
+      const c = S.hatC ?? 0x4a2c1a, bone = 0xe8dcc0;
+      T.push(gSph(0.16, c, [0, HY + 0.01, -0.01], [1.05, 1.1, 1.1]), gBox(0.17, 0.13, 0.2, c, [0, HY - 0.06, 0.16]), gBox(0.18, 0.06, 0.05, 0x2a1810, [0, HY - 0.085, 0.262]),
+        gBox(0.035, 0.025, 0.02, 0xd81c1c, [0.075, HY + 0.045, 0.148]), gBox(0.035, 0.025, 0.02, 0xd81c1c, [-0.075, HY + 0.045, 0.148]),
+        gBox(0.09, 0.05, 0.03, c, [0.2, HY + 0.05, -0.02], [0, 0, 0.3]), gBox(0.09, 0.05, 0.03, c, [-0.2, HY + 0.05, -0.02], [0, 0, -0.3]),
+        xf(new THREE.TorusGeometry(0.035, 0.008, 4, 10), [0, HY - 0.12, 0.262], [0, 0, 0], 1, 0xd9b23a), gSph(0.1, c, [0, HY - 0.1, -0.02], [1.5, 1, 1.2]));
+      for (const s of [-1, 1]) T.push(gCyl(0.03, 0.045, 0.14, bone, [s * 0.2, HT + 0.02, 0], [0, 0, -s * 1.2], 1, 7), gCone(0.03, 0.2, bone, [s * 0.29, HT + 0.13, 0], [0, 0, -s * 0.25], 1, 7));
+      break;
+    }
+    case 'tiara':   // tall Persian crown
+      T.push(gCyl(0.15, 0.135, 0.2, S.hatC ?? 0xd9b23a, [0, HT + 0.07, 0], [0, 0, 0], 1, 12), gCyl(0.14, 0.14, 0.04, 0x5a2a7a, [0, HT - 0.01, 0], [0, 0, 0], 1, 12), gCyl(0.156, 0.156, 0.025, 0xb01c1c, [0, HT + 0.165, 0], [0, 0, 0], 1, 12));
+      break;
+    case 'tengai': { // the komuso's basket of woven reed, worn over the whole head
+      const c = S.hatC ?? 0xcdb682, d = 0xa48c58, rr = (dy) => 0.165 + 0.025 * (dy + 0.16) / 0.36;
+      T.push(gCyl(0.19, 0.165, 0.36, c, [0, HY + 0.02, 0], [0, 0, 0], 1, 14), gCyl(0.193, 0.193, 0.02, d, [0, HY + 0.2, 0], [0, 0, 0], 1, 14));
+      for (const dy of [-0.14, -0.07, 0.11, 0.16]) T.push(gCyl(rr(dy) + 0.003, rr(dy) + 0.003, 0.012, d, [0, HY + dy, 0], [0, 0, 0], 1, 14));
+      T.push(gBox(0.2, 0.075, 0.02, 0x8a7446, [0, HY + 0.02, 0.172]));                 // the open weave he looks through
+      break;
+    }
+    case 'wataboshi': // white silk hood
+      T.push(gSph(0.168, S.hatC ?? 0xf4f0ea, [0, HY + 0.05, -0.07], [1.08, 1.1, 1.0]), gBox(0.3, 0.24, 0.05, S.hatC ?? 0xf4f0ea, [0, HY - 0.17, -0.15], [0.2, 0, 0]));
       break;
     case 'cowl':   // herdsman's hood
       T.push(gSph(0.142, S.hatC, [0, HY + 0.02, -0.03], [1.05, 1.1, 1.05]), gCone(0.25, 0.22, S.hatC, [0, HY - 0.2, 0], [0, 0, 0], [1, 1, 0.75], 12));
@@ -262,6 +302,21 @@ export function makeHumanoid(M, sp) {
     if (e === 'tabs') T.push(gBox(0.05, 0.03, 0.02, 0xc81c1c, [0.06, 0.575, 0.105]), gBox(0.05, 0.03, 0.02, 0xc81c1c, [-0.06, 0.575, 0.105]));
     if (e === 'medals') { for (let i = 0; i < 6; i++) T.push(gBox(0.034, 0.03, 0.012, [0xc81c1c, 0xd9b23a, 0x2a5ac8][i % 3], [0.05 + (i % 3) * 0.04, 0.45 - Math.floor(i / 3) * 0.04, 0.146])); T.push(gCyl(0.022, 0.022, 0.01, 0xd9b23a, [-0.09, 0.44, 0.146], [Math.PI / 2, 0, 0], 1, 5)); }
     if (e === 'chain') T.push(gBox(0.28, 0.024, 0.02, 0xd9b23a, [0, 0.5, 0.146]), gSph(0.03, 0xd9b23a, [0, 0.45, 0.15]));
+    if (e === 'belly') T.push(gSph(0.2, S.coat ?? S.shirt, [0, 0.17, 0.035], [1.03, 0.92, 0.53]));
+    if (e === 'epaulettes') T.push(gBox(0.15, 0.03, 0.13, 0xd9b23a, [0.265, 0.565, 0]), gBox(0.15, 0.03, 0.13, 0xd9b23a, [-0.265, 0.565, 0]));
+    if (e === 'sash') T.push(gBox(0.52, 0.075, 0.33, S.sash ?? 0xb01c1c, [0, 0.32, 0], [0, 0, 0.85]));
+    if (e === 'shakuhachi') T.push(gCyl(0.017, 0.021, 0.56, 0xb89a5a, [0, 0.45, 0.3], [-0.68, 0, 0], 1, 7), gCyl(0.024, 0.024, 0.025, 0x6a5430, [0, 0.256, 0.457], [-0.68, 0, 0], 1, 7),   // bamboo flute, held to the mouth
+      gBox(0.13, 0.09, 0.06, 0x3a2618, [0.02, 0.26, 0.15]), gBox(0.012, 0.3, 0.012, 0xe8e0d0, [0.07, 0.42, 0.13], [0, 0, 0.25]));                                                          // alms box on its cord
+    if (e === 'kosode') T.push(gCyl(0.19, 0.235, 0.86, S.robe ?? S.shirt, [0, -0.42, 0], [0, 0, 0], [1, 1, 0.62], 12), gCyl(0.238, 0.24, 0.07, S.hem ?? 0xb01c2c, [0, -0.83, 0], [0, 0, 0], [1, 1, 0.62], 12),   // narrow kimono to the ankles, coloured hem
+      gCyl(0.208, 0.2, 0.2, S.accent ?? 0xc9a84a, [0, 0.15, 0], [0, 0, 0], [1, 1, 0.66], 12), gBox(0.3, 0.26, 0.1, S.accent ?? 0xc9a84a, [0, 0.2, -0.17]),                                                   // wide obi, knotted behind
+      gCyl(0.211, 0.211, 0.025, S.cord ?? 0xb01c2c, [0, 0.15, 0], [0, 0, 0], [1, 1, 0.66], 12),
+      gBox(0.05, 0.42, 0.02, S.trim ?? 0xb01c2c, [0.045, 0.42, 0.128], [0, 0, 0.3]), gBox(0.05, 0.42, 0.02, S.trim ?? 0xb01c2c, [-0.045, 0.42, 0.128], [0, 0, -0.3]));
+    if (e === 'wagasa') { // oil-paper umbrella resting on the right shoulder
+      const r = [-0.541, 0, -0.039], d = [0.039, 0.857, -0.514], at = (k) => [-0.12 + d[0] * k, 1.2 + d[1] * k, -0.3 + d[2] * k], c1 = S.umbrella ?? 0xb01c2c;
+      T.push(gCyl(0.011, 0.011, 1.4, 0x8a6a3a, [-0.1475, 0.6, 0.06], r, 1, 6), gCone(0.64, 0.19, c1, at(-0.02), r, 1, 20), gCyl(0.354, 0.474, 0.036, S.umbrella2 ?? 0xf0e8d8, at(-0.043), r, 1, 20),
+        gCyl(0.03, 0.055, 0.07, 0x2a2018, at(0.1), r, 1, 8), gCyl(0.05, 0.05, 0.1, 0x2a2018, at(-0.16), r, 1, 8));
+      for (let i = 0; i < 10; i++) T.push(xf(gBox(1.27, 0.008, 0.012, 0x3a2a1c, [0, 0, 0], [0, i * Math.PI / 10, 0]), at(-0.121), r));   // the ribs, seen from below
+    }
     if (e === 'scabbard') T.push(gBox(0.03, 0.05, 0.8, 0x15151a, [-0.19, 0.02, -0.12], [0.5, 0, 0]));
   }
   // limbs (pivot = shoulder / hip, limb hangs down -Y)
@@ -329,6 +384,11 @@ export function lookFor(type, r) {
     case 'westBoss': return { skin: 0xc79a78, hair: 0x101010, shirt: 0x2a2a30, pants: 0x15151a, boots: 0x0a0a0a, hat: 'cowboy', hatC: 0x0c0c0e, hatBand: 0xb0b0b8, extras: ['coat', 'star'], coat: 0x14110f,
       face: ['moustache'], weapon: 'revolver', weapon2: 'revolver', scale: 1.14 };
     case 'ninja': return { skin: pick(SKINS), shirt: pick([0x14141c, 0x1a1a2a, 0x101418]), pants: 0x121218, boots: 0x0a0a0c, belt: 0x5a1414, hat: 'hood', weapon: 'katana', glove: 0x14141c, extras: ['scabbard'] };
+    case 'komuso': return { skin: pick(SKINS), hair: 0x0c0c0c, shirt: 0x17171c, sleeve: 0x17171c, pants: 0x17171c, boots: 0xf0ece0, hat: 'tengai', extras: ['robe', 'kimono', 'obi', 'shakuhachi'], robe: 0x17171c,
+      sash: pick([0xc9a84a, 0xb8943a]), trim: 0xf0ece0, accent: pick([0x2a3a6a, 0x4a2a5a]), wideSleeve: true };
+    case 'geisha': { const k = Math.floor(r() * 3), main = [0x8fb0d0, 0xd8a8b8, 0x6a4a8a][k];
+      return { skin: 0xf2e9e2, lip: 0xc81c2c, hair: 0x0c0c0e, shirt: main, robe: main, sleeve: main, pants: main, hem: [0x6a4a8a, 0xb01c2c, 0xd9b23a][k], accent: [0xc9a84a, 0x2a5a4a, 0xb01c2c][k], cord: [0xb01c2c, 0xd9b23a, 0xf0e8d8][k],
+        trim: 0xb01c2c, boots: 0xf0ece0, hat: null, face: ['shimada'], extras: ['kosode', 'wagasa'], umbrella: [0xb01c2c, 0xd8c9a0, 0x2a3a6a][k], umbrella2: [0xf0e8d8, 0x8a3a2a, 0xf0e8d8][k], wideSleeve: true, scale: 0.94 }; }
     case 'ronin': return { skin: pick(SKINS), hair: 0x0c0c0c, shirt: pick([0x4a5a6a, 0x6a4a3a, 0x3a4a3a, 0x5a3a4a]), pants: pick([0x2a2a32, 0x3a3228, 0x1e2a36]), boots: 0xd8cfb8, legR: 0.1,
       hat: r() < 0.55 ? 'kasa' : null, face: r() < 0.5 ? ['topknot', 'moustache'] : ['topknot'], extras: ['kimono', 'obi', 'hakama', 'scabbard'], wideSleeve: true, weapon: 'katana' };
     case 'archer': return { skin: pick(SKINS), hair: 0x0c0c0c, shirt: pick([0x5a4a3a, 0x3a4a5a]), pants: 0x2a2a30, boots: 0xd8cfb8, hat: 'kasa', hatC: 0xb09a5a, extras: ['kimono', 'obi', 'hakama', 'quiver'], wideSleeve: true, weapon: 'bow' };
@@ -387,11 +447,11 @@ export function lookFor(type, r) {
     case 'tibetBoss': return { skin: 0xd0a880, hair: 0x0c0c0c, shirt: 0x7e7e46, pants: 0x74743e, boots: 0x0a0a0a, bootTop: true, hat: 'peaked', hatC: 0x7e7e46, hatBand: 0xb01c1c, extras: ['coat', 'belted', 'tabs'], coat: 0x7a7a44,
       belt2: 0x4a2c14, glove: 0x2a1c12, weapon: 'revolver', scale: 1.14 };
     // ---- heroes and friends of chapters VII and VIII ----
-    case 'solzhenitsyn': return { skin: 0xd8ac8a, hair: 0x4a3420, shirt: 0x4e4e46, pants: 0x3a3a38, boots: 0x2a2620, bootTop: true, hat: 'ushanka', hatC: 0x3e3a34, face: ['beard'], extras: ['coat'], coat: 0x4e4e46,
+    case 'solzhenitsyn': return { skin: 0xd8ac8a, hair: 0x4a3420, shirt: 0x4e4e46, pants: 0x3a3a38, boots: 0x2a2620, bootTop: true, hat: null, face: ['baldtop', 'chinbeard'], extras: ['coat'], coat: 0x4e4e46,
       belt: 0x2a1c12, weapon: 'smg', scale: 1.04 };
-    case 'sakharov': return { skin: 0xe0b89a, hair: 0xb8b4aa, shirt: 0xe8e4d8, sleeve: 0x4a4a54, pants: 0x3e3e48, boots: 0x14120f, hat: null, face: ['baldtop', 'glasses', 'neckerchief'], accent: 0x3a2228,
+    case 'sakharov': return { skin: 0xe0b89a, hair: 0xb8b4aa, shirt: 0xe8e4d8, sleeve: 0x4a4a54, pants: 0x3e3e48, boots: 0x14120f, hat: null, face: ['baldtop', 'glasses', 'tie'], accent: 0x3a2228,
       extras: ['coat'], coat: 0x4a4a54, weapon: 'revolver' };
-    case 'nureyev': return { skin: 0xe0b694, hair: 0x2a1c12, shirt: 0x1c1c22, pants: 0x16161a, boots: 0x0c0c0c, hat: null, face: [], extras: ['coat', 'scarf'], coat: 0x1c1c22, scarf: 0xf0ece0,
+    case 'nureyev': return { skin: 0xe0b694, hair: 0x2a1c12, shirt: 0x1c1c22, pants: 0x16161a, boots: 0x0c0c0c, hat: null, face: ['mop'], extras: ['coat', 'scarf'], coat: 0x1c1c22, scarf: 0xf0ece0,
       weapon: 'revolver', scale: 0.99, legR: 0.09 };
     case 'gompo': return { skin: 0xc0875c, hair: 0x0c0c0c, shirt: 0x5a3422, pants: 0x3a2a20, boots: 0x4a2c14, bootTop: true, hat: 'furhat', hatC: 0x9a6a34, face: ['moustache', 'braids'],
       extras: ['chuba', 'bandolier'], coat: 0x5a3422, fur2: 0xc8a878, accent: 0xb01c1c, weapon: 'rifle', scale: 1.05 };
@@ -420,6 +480,12 @@ export function lookFor(type, r) {
     case 'charles': return { skin: 0xd8ac8a, hair: 0x14100c, shirt: 0x9a9fa6, pants: 0x8a8f96, boots: 0x4a4a52, hat: null, extras: ['cuirass', 'cape', 'chain'], armor: 0xaeb4bc, cape: 0x1c3a8a, glove: 0x8a8f96, weapon: 'halberd', scale: 1.05, armR: 0.07, legR: 0.095 };
     case 'leopold': return { skin: 0xd6a37c, shirt: 0x9a9fa6, pants: 0x8a8f96, boots: 0x6a6f76, hat: 'helm', plume: 0xf0ece0, extras: ['tabard', 'cape'], cape: 0xb01c1c, glove: 0x8a8f96, weapon: 'sword', shield: 0xb01c1c, scale: 1.08, armR: 0.07, legR: 0.095 };
     case 'cyclops': return { skin: 0xb89070, hair: 0x2a2018, shirt: 0xb89070, pants: 0xb89070, boots: 0xb89070, belt: 0x3a2414, hat: null, face: ['oneeye', 'beard'], extras: ['kilt'], kilt: 0x6a5038, kilt2: 0x3a2414, weapon: 'club', scale: 1.32, armR: 0.08, legR: 0.105 };
+    case 'minotaur': return { skin: 0x8a5a3a, hair: 0x2a1a10, shirt: 0x8a5a3a, sleeve: 0x8a5a3a, pants: 0x8a5a3a, boots: 0x1a1410, belt: 0x3a2414, hat: 'bull', hatC: 0x4a2c1a, extras: ['kilt'], kilt: 0x7a1c1c, kilt2: 0xd9b23a, weapon: 'axe',
+      scale: 1.25, armR: 0.08, legR: 0.105 };
+    case 'xerxes': return { skin: 0xb8845c, hair: 0x14100c, shirt: 0x5a2a7a, sleeve: 0x5a2a7a, pants: 0x5a2a7a, boots: 0xd9b23a, belt: 0xd9b23a, hat: 'tiara', face: ['longbeard'], extras: ['robe', 'chain', 'quiver'], robe: 0x5a2a7a, sash: 0xd9b23a,
+      wideSleeve: true, cuff: 0xd9b23a, weapon: 'bow', scale: 1.06 };
+    case 'circe': return { skin: 0xe0b48e, lip: 0xb83a4a, hair: 0x7a2a14, shirt: 0x4a2a6a, sleeve: 0xe0b48e, pants: 0xe0b48e, boots: 0x8a6424, belt: 0xd9b23a, hat: null, face: ['longhair', 'headband'], accent: 0xd9b23a, extras: ['robe', 'chain'],
+      robe: 0x4a2a6a, sash: 0x2a8a7a, weapon: 'javelin', scale: 0.97 };
     case 'medusa': return { skin: 0x8ab08a, hair: 0x2a5a2a, shirt: 0x2a4a3a, sleeve: 0x8ab08a, pants: 0x8ab08a, boots: 0x8a7a3a, belt: 0xd9b23a, hat: null, face: ['snakes'], extras: ['robe'], robe: 0x2a4a3a, sash: 0xd9b23a, weapon: 'javelin', scale: 0.98 };
     case 'antinous': return { skin: 0xd0a078, hair: 0x1a120c, shirt: 0x6a2a7a, sleeve: 0xd0a078, pants: 0xd0a078, boots: 0x8a6424, bootTop: true, belt: 0xd9b23a, hat: null, face: ['headband'], accent: 0xd9b23a, extras: ['smock', 'cape'], cape: 0x8a1c5a,
       weapon: 'javelin' };
@@ -427,19 +493,20 @@ export function lookFor(type, r) {
       weapon: 'axe', scale: 1.08 };
     case 'ivar': return { skin: 0xe6c8b0, hair: 0xd8c890, shirt: 0x3a4a5a, pants: 0x2a2a30, boots: 0x2a1c12, bootTop: true, hat: null, face: ['longhair', 'beard'], extras: ['fur'], fur: 0x1c1c22, fur2: 0x4a4a52, weapon: 'sword', scale: 0.98 };
     case 'loki': return { skin: 0xe0bca0, hair: 0xb0401c, shirt: 0x2a5a3a, pants: 0x1c2a22, boots: 0x2a1c12, bootTop: true, belt: 0xd9b23a, hat: null, face: ['longhair', 'headband'], accent: 0xd9b23a, extras: ['smock', 'cape'], cape: 0x1c4a2a, weapon: 'axe' };
-    case 'hitler': return { skin: 0xe0bca0, hair: 0x1a1410, shirt: 0x7a6a4a, pants: 0x1a1a1c, boots: 0x0a0a0a, bootTop: true, belt: 0x2a1c12, hat: null, face: ['toothbrush', 'neckerchief'], accent: 0x15120f, extras: ['coat', 'belted'], coat: 0x7a6a4a,
+    case 'hitler': return { skin: 0xe0bca0, hair: 0x1a1410, brow: 0x1a1410, shirt: 0x7a6a4a, pants: 0x1a1a1c, boots: 0x0a0a0a, bootTop: true, belt: 0x2a1c12, hat: null, face: ['toothbrush', 'tie'], accent: 0x15120f, extras: ['coat', 'belted'], coat: 0x7a6a4a,
       belt2: 0x2a1c12, weapon: 'revolver' };
-    case 'mussolini': return { skin: 0xd8ac8a, hair: null, shirt: 0x15151a, pants: 0x5a6050, boots: 0x0a0a0a, bootTop: true, belt: 0x0a0a0a, hat: 'beret', hatC: 0x15151a, extras: ['coat', 'belted'], coat: 0x5a6050, belt2: 0x0a0a0a, weapon: 'smg', scale: 1.02, armR: 0.07 };
-    case 'goring': return { skin: 0xe6c0a8, hair: 0x8a7a5a, shirt: 0xa8b4c0, pants: 0xa8b4c0, boots: 0x0a0a0a, bootTop: true, hat: 'peaked', hatC: 0xa8b4c0, hatBand: 0xf0ece0, extras: ['coat', 'belted', 'medals'], coat: 0xa8b4c0, belt2: 0x8a6424,
+    case 'mussolini': return { skin: 0xd4a684, hair: null, shirt: 0x15151a, pants: 0x565c4e, boots: 0x0a0a0a, bootTop: true, belt: 0x0a0a0a, hat: 'fez', hatC: 0x15151a, face: ['jaw'], brow: 0x2a2018, extras: ['coat', 'belly', 'belted', 'medals'], coat: 0x565c4e,
+      belt2: 0x0a0a0a, glove: 0x15151a, weapon: 'smg', scale: 1.03, armR: 0.078, legR: 0.105 };   // bald, heavy jaw, black fez, black shirt under a grey-green tunic
+    case 'goring': return { skin: 0xe6c0a8, hair: 0x8a7a5a, shirt: 0xa8b4c0, pants: 0xa8b4c0, boots: 0x0a0a0a, bootTop: true, hat: 'peaked', hatC: 0xa8b4c0, hatBand: 0xf0ece0, face: ['jaw'], extras: ['coat', 'belly', 'belted', 'medals', 'epaulettes'], coat: 0xa8b4c0, belt2: 0x8a6424,
       weapon: 'rifle', scale: 1.06, armR: 0.08, legR: 0.11 };
-    case 'stalin': return { skin: 0xd8ac8a, hair: 0x4a4a4a, shirt: 0xd8d4c4, pants: 0x2a3050, boots: 0x0a0a0a, bootTop: true, hat: 'peaked', hatC: 0xd8d4c4, hatBand: 0xb01c1c, face: ['moustache'], extras: ['coat', 'belted', 'medals'], coat: 0xd8d4c4,
+    case 'stalin': return { skin: 0xd8ac8a, hair: 0x4a4a4a, shirt: 0xd8d4c4, pants: 0x2a3050, boots: 0x0a0a0a, bootTop: true, hat: null, face: ['bigmoustache', 'pipe'], extras: ['coat', 'belted', 'epaulettes'], coat: 0xd8d4c4,
       belt2: 0x4a2c14, weapon: 'revolver' };
-    case 'andropov': return { skin: 0xe0bca0, hair: 0x9a9a94, shirt: 0xe8e4d8, sleeve: 0x2a2a32, pants: 0x2a2a32, boots: 0x14120f, hat: null, face: ['baldtop', 'glasses', 'neckerchief'], accent: 0x5a1c1c, extras: ['coat'], coat: 0x2a2a32, weapon: 'revolver' };
-    case 'beria': return { skin: 0xd8ac8a, hair: 0x3a3a3a, shirt: 0xe8e4d8, sleeve: 0x1c1c22, pants: 0x1c1c22, boots: 0x14120f, hat: 'fedora', hatC: 0x1c1c22, face: ['glasses', 'neckerchief'], accent: 0x15120f, extras: ['coat', 'belted'], coat: 0x1c1c22,
+    case 'andropov': return { skin: 0xe0bca0, hair: 0x9a9a94, shirt: 0xe8e4d8, sleeve: 0x2a2a32, pants: 0x2a2a32, boots: 0x14120f, hat: null, face: ['glasses', 'tie'], accent: 0x5a1c1c, extras: ['coat'], coat: 0x22222a, weapon: 'revolver' };
+    case 'beria': return { skin: 0xd8ac8a, hair: 0x3a3a3a, shirt: 0xe8e4d8, sleeve: 0x1c1c22, pants: 0x1c1c22, boots: 0x14120f, hat: 'fedora', hatC: 0x1c1c22, face: ['glasses', 'tie'], accent: 0x15120f, extras: ['coat', 'belted'], coat: 0x1c1c22,
       weapon: 'revolver' };
-    case 'brezhnev': return { skin: 0xd8ac8a, hair: 0x1a1410, shirt: 0xe8e4d8, sleeve: 0x2a3040, pants: 0x2a3040, boots: 0x14120f, hat: null, face: ['brows', 'neckerchief'], accent: 0x7a1c1c, extras: ['coat', 'medals'], coat: 0x2a3040, weapon: 'smg',
+    case 'brezhnev': return { skin: 0xd8ac8a, hair: 0x1a1410, shirt: 0xe8e4d8, sleeve: 0x2a3040, pants: 0x2a3040, boots: 0x14120f, hat: null, face: ['brows', 'jaw', 'tie'], accent: 0x7a1c1c, extras: ['coat', 'belly', 'medals'], coat: 0x2a3040, weapon: 'smg',
       scale: 1.03, armR: 0.07 };
-    case 'mao': return { skin: 0xd8b088, hair: 0x14100c, shirt: 0x6a7078, pants: 0x62686e, boots: 0x14120f, belt: 0x62686e, hat: null, face: ['baldtop'], extras: ['coat'], coat: 0x6a7078, weapon: 'rifle' };
+    case 'mao': return { skin: 0xd8b088, hair: 0x14100c, shirt: 0x6a7078, pants: 0x62686e, boots: 0x14120f, belt: 0x62686e, hat: null, face: ['baldtop', 'mole'], extras: ['coat', 'belly'], coat: 0x6a7078, weapon: 'rifle' };
     case 'langdarma': return { skin: 0xb8845c, hair: 0x0c0c0c, shirt: 0x1a1a22, pants: 0x15151a, boots: 0x4a2c14, bootTop: true, hat: null, face: ['horns', 'moustache', 'longhair'], extras: ['chuba', 'quiver', 'scabbard'], coat: 0x1a1a22, fur2: 0x7a1c22,
       accent: 0x7a1c22, weapon: 'bow', scale: 1.05 };
     case 'jiangqing': return { skin: 0xe0b890, hair: 0x0c0c0c, shirt: 0x5a6a3e, pants: 0x4a5a36, boots: 0x14120f, belt: 0x4a2c14, hat: 'mao', hatC: 0x5a6a3e, face: ['glasses'], weapon: 'revolver', scale: 0.96 };
@@ -458,7 +525,7 @@ export function lookFor(type, r) {
       extras: ['fur'], fur: 0x3a3028, fur2: 0x5a4a3a, weapon: 'axe', scale: 1.08 };
     // ---- the nine playable heroes ----
     case 'earp': return { skin: 0xd0a07a, hair: 0x2a1c12, shirt: 0xe8e4d8, sleeve: 0x16161a, pants: 0x18181c, boots: 0x0c0c0c, hat: 'cowboy', hatC: 0x121214, hatBand: 0x2e2e34,
-      extras: ['coat', 'star'], coat: 0x16161a, face: ['moustache'], weapon: 'revolver', cuff: 0xe8e4d8 };
+      extras: ['coat', 'star'], coat: 0x16161a, face: ['bigmoustache'], weapon: 'revolver', cuff: 0xe8e4d8 };
     case 'calamity': return { skin: 0xd8a882, hair: 0x6a3a1a, shirt: 0xa67848, pants: 0x74563a, boots: 0x3a2414, belt: 0x2a1c12, hat: 'cowboy', hatC: 0x6a4a2a, hatBand: 0x2a1c12,
       extras: ['bandolier'], face: ['longhair', 'neckerchief'], accent: 0xa81c1c, weapon: 'revolver', cuff: 0x8a623a, scale: 0.97 };
     case 'billy': return { skin: 0xdcb08c, hair: 0x6a4a28, shirt: 0xd9d2c0, pants: 0x4a4038, boots: 0x2a1c12, hat: 'cowboy', hatC: 0x3a3028, hatBand: 0x1a1410,
@@ -726,7 +793,7 @@ export class Enemy {
       const steps = Math.max(1, Math.ceil(speed * dt / 0.25));               // small steps: nothing is ever skipped over
       for (let q = 0; q < steps; q++) {
         const sx = this.pos.x, sz = this.pos.z, nx = sx + mvx * speed * dt / steps, nz = sz + mvz * speed * dt / steps;
-        if (G.world.walkable(sx, sz, nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
+        if (G.world.walkable(sx, sz, nx, nz, this.pos.y)) { this.pos.x = nx; this.pos.z = nz; }
         G.world.collide(this.pos, 0.38, 1.7);
       }
       for (const e of G.enemies) {            // keep some distance from each other
