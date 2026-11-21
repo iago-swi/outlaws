@@ -91,7 +91,7 @@ export class Player {
 
   spawn(x, z, yaw, weaponKind, sleeve) {
     const W = this.game.world;
-    this.pos.set(x, W.groundAt(x, z, 100), z); this.vel.set(0, 0, 0);
+    this.pos.set(x, W.groundAt(x, z, 100), z); this.vel.set(0, 0, 0); this.dry = null; this.wet = 0;
     this.yaw = yaw; this.pitch = 0; this.hp = this.maxHp; this.hurtT = 99; this.dead = false; this.deadT = 0; this.camY = this.pos.y + 1.65;
     this.mount = null; this.crouch = this.crouchWant = false; this.duck = 0; document.body.classList.remove('crouched');
     this.kick = this.kickV = 0; this.aim = 0;
@@ -189,6 +189,11 @@ export class Player {
       if (!this.onGround && this.vel.y < -6) { this.land = Math.min(0.25, -this.vel.y * 0.02); G.sound.step(false); }
       this.pos.y = ground; this.vel.y = 0; this.onGround = true;
     } else if (this.pos.y - ground > 0.12) this.onGround = false;
+    // Deep water: whoever ends up on the bed of a lake or the sea (off a jetty, over a parapet) is put back on the last dry spot he stood on.
+    if (W.waterY > -1e6) {
+      if (this.onGround && this.pos.y > W.waterY + 0.3) { this.dryT = (this.dryT || 0) + dt; if (this.dryT > 0.4) { this.dryT = 0; (this.dry || (this.dry = new THREE.Vector3())).copy(this.pos); } }
+      if (this.pos.y < W.waterY - 1.2 && this.dry) { this.wet = (this.wet || 0) + dt; if (this.wet > 0.9) { this.pos.copy(this.dry); this.vel.set(0, 0, 0); this.wet = 0; G.say('You drag yourself out of the water'); } } else this.wet = 0;
+    }
 
     // camera: head bob, landing dip, recoil
     const spd = Math.hypot(this.vel.x, this.vel.z);
@@ -314,7 +319,7 @@ class Weapon {
     g.add(this.hand);
     g.position.set(-0.2, -0.1, -0.62); g.rotation.set(0, -0.26, -0.16);
     this.root.add(g);
-    this.addKatana(M);
+    if (this.game.def && this.game.def.id === 'aztec') this.addMacuahuitl(M); else this.addKatana(M);
   }
   /** The katana on the right mouse button, held in both hands: shared by the bow and the throwing stars. */
   addKatana(M) {
@@ -591,16 +596,16 @@ class Weapon {
     }
   }
   updateThrown(dt, input, active, jav) {
-    const P = this.p, G = this.game, b = this.base;
+    const P = this.p, G = this.game, b = this.base, sh = this.shot || (jav ? [50, 85, 6] : [36, 80, 7]), pace = this.pace || 1;
     if (this.state === 'ready') { if (active && input.shoot && this.meleeT <= 0) { this.state = 'wind'; this.t = 0; } }
     else if (this.state === 'wind') {
-      this.t += dt / this.m.fire;
+      this.t += dt / this.m.fire / pace;
       if (this.t >= 0.16) {
         this.state = 'recover'; this.t = 0; this.kickV += 5; P.recoil(0.2);
-        G.playerShoot(this.kind, (jav ? 50 : 36) * (1 + (this.m.power - 1) * 0.7), (jav ? 85 : 80) * this.m.power, jav ? 6 : 7);
+        G.playerShoot(this.kind, sh[0] * (1 + (this.m.power - 1) * 0.7), sh[1] * this.m.power, sh[2]);
         G.sound.whiz();
       }
-    } else { this.t += dt / this.m.fire; if (this.t >= 0.55) this.state = 'ready'; }
+    } else { this.t += dt / this.m.fire / pace; if (this.t >= 0.55) this.state = 'ready'; }
     const wind = this.state === 'wind' ? ease(Math.min(1, this.t / 0.16)) : 0;
     const rec = this.state === 'recover' ? this.t / 0.55 : 1;
     this.missile.visible = this.state !== 'recover' || rec > 0.45;
@@ -611,6 +616,40 @@ class Weapon {
     g.position.set(b[0] - m * 0.2, b[1] - rise * 0.4 - m * 0.4 + wind * 0.05, b[2] + wind * 0.24 - fwd * 0.3 + this.kick * 0.02);
     g.rotation.set(b[3] + P.swayY - wind * (jav ? 0.12 : 0.7) + fwd * (jav ? 0.2 : 1.0) - m * 0.4, b[4] + P.swayX, P.swayX * 0.8);
     this.shield.position.set(-0.62 - P.swayX * 0.6, -0.6 - P.swayY * 0.4 - fwd * 0.03, -0.7);
+  }
+
+  // ---- chapter IX: poisoned darts from a dart-thrower, or stones hurled by hand; each with the obsidian-edged club ----
+  build_dart(M) { this.buildMexica(M, true); }
+  build_stone(M) { this.buildMexica(M, false); }
+  update_dart(dt, input, active) { this.updateThrown(dt, input, active, true); }
+  update_stone(dt, input, active) { this.updateThrown(dt, input, active, false); }
+  buildMexica(M, dart) {
+    this.thrown = true; this.canAim = false; this.aimFov = 72; this.cuff = this.cuffIn ?? 0xd9a820;
+    this.shot = dart ? [64, 45, 5] : [30, 120, 13];          // speed, damage, drop: a dart is fast and light (the poison does the rest), a stone slow and heavy
+    this.pace = dart ? 0.85 : 1.5;
+    const g = (this.gun = new THREE.Group()), X = Math.PI / 2;
+    this.base = dart ? [0.3, -0.15, -0.5, 0.05, 0.1] : [0.3, -0.24, -0.5, -0.35, 0.05];
+    g.add(mesh(dart ? [fist([0, 0, 0], [X, 0, Math.PI], 1.05), ...this.arm(this.sleeve, [0.06, -0.11, 0.2], [1.05, 0, 0.3], 0.34)]
+      : [fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.04, -0.2, 0.12], [0.5, 0, 0.2], 0.36)], M.flat));
+    this.missile = new THREE.Group();
+    if (dart) {
+      g.add(mesh([gBox(0.036, 0.02, 0.56, 0x6a4a2a, [0, -0.002, 0.1]), gBox(0.05, 0.05, 0.04, 0xd9a820, [0, 0.012, 0.37]), gBox(0.05, 0.022, 0.05, 0x2ac8c0, [0, 0.0, -0.12])], M.flat));   // the thrower: a carved board with a hook
+      this.missile.add(mesh([gCyl(0.008, 0.008, 1.3, 0x8a6a3a, [0, 0.03, -0.3], [X, 0, 0], 1, 5), gCone(0.02, 0.11, 0x15161a, [0, 0.03, -1.0], [-X, 0, 0], 1, 5), gSph(0.02, 0x4ad84a, [0, 0.03, -0.93]),
+        gBox(0.07, 0.004, 0.16, 0x1f9a5a, [0, 0.03, 0.3]), gBox(0.004, 0.07, 0.16, 0x2ac8c0, [0, 0.03, 0.3])], M.flat));                                                                      // the dart; the green on its point is the poison
+    } else this.missile.add(mesh([xf(new THREE.IcosahedronGeometry(0.11, 0), [0, 0.13, 0], [0.4, 0.2, 0], [1, 0.8, 1.1], 0x8a8478)], M.flat));
+    g.add(this.missile); this.root.add(g);
+    const c1 = dart ? 0x2ac8c0 : 0xb01c1c, c2 = dart ? 0x1f9a5a : 0xe8d8a0;                       // the round shield on the left arm, faced with feathers
+    const sh = mesh([gCyl(0.44, 0.44, 0.035, c1, [0, 0, 0], [X, 0, 0], 1, 22), gCyl(0.31, 0.31, 0.04, 0xd9a820, [0, 0, 0], [X, 0, 0], 1, 18), gCyl(0.2, 0.2, 0.045, c2, [0, 0, 0], [X, 0, 0], 1, 14),
+      ...[-2, -1, 0, 1, 2].map((i) => gBox(0.05, 0.3, 0.012, i % 2 ? c2 : 0xd9a820, [i * 0.11, -0.52, 0], [0, 0, i * 0.08]))], M.flat);
+    sh.scale.setScalar(0.72); sh.position.set(-0.62, -0.6, -0.7); sh.rotation.set(0.3, 0.7, 0.12); this.shield = sh; this.root.add(sh);
+    this.addMacuahuitl(M);
+  }
+  /** The club of the Mexica (right mouse button): a wooden blade set with obsidian along both edges. */
+  addMacuahuitl(M) {
+    const k = (this.melee = new THREE.Group()), parts = [gBox(0.036, 0.2, 0.04, 0x3a2414, [0, 0, 0]), gBox(0.04, 0.74, 0.09, 0x6a4a2a, [0, 0.47, 0]), fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.06, -0.22, 0.14], [0.6, 0, 0.3], 0.4)];
+    for (let i = 0; i < 6; i++) for (const e of [-1, 1]) parts.push(gBox(0.014, 0.1, 0.05, 0x101014, [0, 0.16 + i * 0.118, e * 0.062]));
+    k.add(mesh(parts, M.flat)); k.visible = false;
+    this.meleeDur = 0.45; this.meleeAt = 0.42; this.meleeRange = 3.1; this.meleeCone = 0.5; this.meleeDmg = 115; this.meleeStyle = 'cut';
   }
 
   // ---- shared -----------------------------------------------------------------

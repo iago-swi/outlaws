@@ -118,6 +118,18 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     pen(-92, 26, -84, 34); pen(-84, 34, -72, 32); pen(-92, 26, -90, 16);
     for (const [hx, hz] of [[-86, 28], [-82, 30]]) { const y = world.height(hx, hz); B.geo(M.thatch, new THREE.ConeGeometry(1.4, 2.2, 8), [hx, y + 1.0, hz], [0, 0, 0], 1, 0xd8d2b8); world.addCyl(hx, hz, 1.1, y - 1, y + 2); }
     barrel(B, M, -73, world.height(-73, 24.5), 24.5); barrel(B, M, -72.2, world.height(-72.2, 25.3), 25.3); }
+  // The bleached skull of a horned beast, as offered to the old gods. (x, y, z) = its middle, ry = the way it looks, k = size.
+  const skull = (x, y, z, ry, k = 1) => {
+    const BONE = 0xe6dcc4, DK = 0x1c1814, sn = Math.sin(ry), cs = Math.cos(ry), at = (lx, ly, lz) => [x + (lx * cs + lz * sn) * k, y + ly * k, z + (-lx * sn + lz * cs) * k];
+    B.geo(M.flat, new THREE.SphereGeometry(0.2, 8, 6), at(0, 0, 0), [0, ry, 0], [k, 0.85 * k, 1.2 * k], BONE);                                  // the brain case
+    B.geo(M.flat, new THREE.BoxGeometry(0.2, 0.15, 0.36), at(0, -0.06, 0.3), [0.18, ry, 0], k, BONE);                                            // the long muzzle,
+    B.geo(M.flat, new THREE.BoxGeometry(0.13, 0.1, 0.16), at(0, -0.12, 0.52), [0.25, ry, 0], k, 0xd8ccb0);                                       // narrowing to the nose
+    for (const e of [-1, 1]) {
+      B.geo(M.flat, new THREE.BoxGeometry(0.06, 0.08, 0.09), at(e * 0.105, 0.0, 0.14), [0, ry, 0], k, DK);                                       // eye sockets
+      B.geo(M.flat, new THREE.ConeGeometry(0.05, 0.3, 6), at(e * 0.3, 0.1, -0.02), [0, ry, -e * 1.25], k, 0xd8ccb0);                             // the horns go out,
+      B.geo(M.flat, new THREE.ConeGeometry(0.035, 0.26, 6), at(e * 0.5, 0.26, -0.02), [0, ry, -e * 0.35], k, 0xc8bc9c);                          // then up
+    }
+  };
   { // the hof: a small temple of the old gods in the eastern wood
     const x = 76, z = -24, w = 7, d = 7, P = frame(x, z, 0), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
     room(B, M, x, yf, z, { w, d, h: 3.2, t: 0.34, mat: M.woodH, c: DARKT, base: 2.6, doors: [{ side: 'w', at: 0, w: 1.8, h: 2.3 }], floor: { mat: M.ground, c: 0x5a4c3e }, ceil: { mat: M.woodH, c: DARKT } });
@@ -129,6 +141,12 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.geo(M.metal, new THREE.TorusGeometry(0.3, 0.04, 6, 14), [x + 1.4, f + 1.0, z], [Math.PI / 2, 0, 0], 1, 0xd9b23a); B.box(M.stone, 0.9, 0.9, 0.9, x + 1.4, f, z, { c: 0x5a5f68, solid: true });
     for (const s of [-1, 1]) { fires.push(brazier(B, M, x - w / 2 - 1.6, world.height(x - w / 2 - 1.6, z + s * 2.2), z + s * 2.2, 1.0).concat(1)); }
     runestone(x - 8, z + 6, 1.1); runestone(x - 7, z - 7, 0.9);
+    skull(x - w / 2 - 0.28, f + 2.75, z, -Math.PI / 2, 1.5);                                                                                     // over the door
+    for (const [dx, dz] of [[-3.2, 2.0], [-3.2, -2.0], [-6.2, 2.9], [-6.2, -2.9]]) {                                                             // on stakes beside the way in
+      const px = x - w / 2 + dx, pz = z + dz, py = world.height(px, pz);
+      B.cyl(M.wood, 0.045, 0.06, 1.9, px, py - 0.2, pz, { c: DARKT, seg: 6 }); skull(px, py + 1.78, pz, -Math.PI / 2 + dz * 0.12, 0.95); world.addCyl(px, pz, 0.12, py - 1, py + 1.9);
+    }
+    skull(x + 1.35, f + 1.08, z, -Math.PI / 2, 0.8);                                                                                             // an offering on the stone before the idol
   }
   { // bonfire in the middle of the village
     const x = 0, z = 22, y = world.height(x, z);
@@ -154,6 +172,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const e of [-1, 1]) { B.box(M.wood, 0.4, 5.5, 0.4, e * 2.2, y, z + 5.1, { c: DARKT }); B.box(M.flat, 0.3, 0.5, 0.8, e * 2.2, y + 5.5, z + 5.3, { rx: 0.4, c: 0xc9a030 }); }   // carved door posts
     for (const e of [-1, 1]) B.box(M.woodH, 0.14, 2.9, 1.5, x + e * 1.75, y + 0.3, z + 5.6, { c: 0x2a1c12 });                       // hall doors, open
     B.box(M.woodH, 5.4, 0.4, 0.6, x, y + 3.4, z + 5.1, { c: DARKT });
+    skull(x, y + 4.05, z + 5.5, 0, 1.9); for (const e of [-1, 1]) skull(x + e * 2.2, y + 2.5, z + 5.42, e * 0.25, 1.0);                          // horned skulls over the door and on its posts
     for (const lx of [-8.1, -2.7, 2.7, 8.1]) for (const s of [-1, 1]) { B.cyl(M.wood, 0.2, 0.24, 2.9, x + lx, y + 0.3, z + s * 1.9, { c: DARKT, seg: 8 }); world.addCyl(x + lx, z + s * 1.9, 0.26, y, y + 3.2); }   // roof posts
     B.box(M.woodH, 1.6, 0.5, 1.2, x - 11.6, y + 0.36, z, { c: 0x3a2a1c, solid: true }); B.box(M.woodH, 0.2, 2.2, 1.4, x - 12.3, y + 0.36, z, { c: DARKT }); B.box(M.cloth, 1.3, 0.1, 1.0, x - 11.6, y + 0.86, z, { c: 0xe8e4dc });   // the high seat
     for (const s of [-1, 1]) B.box(M.woodH, 5.2, 0.72, 0.8, x + 7.4, y + 0.36, z + s * 3.2, { c: 0x5a4028, solid: true });

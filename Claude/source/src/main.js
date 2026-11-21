@@ -23,8 +23,9 @@ import { russia } from './levels/russia.js';
 import { Duel, bindDuelUI, RULES } from './duel.js';
 import { VILLAINS } from './villains.js';
 import { tibet } from './levels/tibet.js';
+import { aztec } from './levels/aztec.js';
 
-const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet];
+const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet, aztec];
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
 
@@ -335,9 +336,10 @@ class Game {
     }
   }
 
-  hitEnemy(e, dmg, head, x, y, z, fromX, fromZ) {
+  hitEnemy(e, dmg, head, x, y, z, fromX, fromZ, quiet) {                     // quiet = poison at work: no hit marker, no sound, not counted as a shot that hit
     const wasBoss = e.cfg.boss, killed = e.damage(dmg, head, fromX, fromZ);
-    this.stats.hits++; if (head) this.stats.heads++;
+    if (quiet && !killed) return;
+    if (!quiet) this.stats.hits++; if (head) this.stats.heads++;
     const S = this.gfx.soft;
     for (let i = 0; i < 9; i++) S.spawn(x, y, z, (Math.random() - 0.5) * 2.4, Math.random() * 2, (Math.random() - 0.5) * 2.4, { life: 0.5 + Math.random() * 0.3, s0: 0.05, s1: 0.16, r: 0.32, g: 0.02, b: 0.02, a: 0.85, grav: 6, drag: 1 });
     this.ui.hit.classList.toggle('kill', killed); this.hitT = killed ? 0.4 : 0.18;

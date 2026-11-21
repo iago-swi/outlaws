@@ -1,16 +1,16 @@
 # Lone Hand — Claude version
 
-**Version 1.2.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 1.3.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
-A first-person shooter in eight chapters, built with Claude (Anthropic) in the spirit of
+A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
-a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
-and the Tibetan plateau in 1959, one hero faces many enemies alone, in a real-time 3D
+a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974,
+the Tibetan plateau in 1959 and the Aztec capital in 1520, one hero faces many enemies alone, in a real-time 3D
 world you can walk through freely. Most buildings can be entered, the longships at
 Jarnvik can be boarded, and every chapter has places to climb, by a ladder or by steps of rock, and to crawl
-into for an ambush. Twenty-four heroes from history and legend are playable, three per
+into for an ambush. Twenty-seven heroes from history and legend are playable, three per
 chapter. In Duel mode two players fight each other online, as a hero or as one of
-twenty-seven villains.
+thirty villains.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -18,21 +18,19 @@ files.
 
 **[Play it in your browser](https://iago-swi.github.io/outlaws/Claude/)**
 
-| Chapter I · Dry Gulch | Chapter II · Kagemori |
-| :---: | :---: |
-| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour, looking west: the doctor's and the telegraph office on the left, the sheriff's office, the jail and the saloon on the right, an outlaw on the boardwalk, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; in the foreground the samurai's hands, three throwing stars fanned in the right, the spare ones on the left palm"> |
-| **Chapter III · Uri** | **Chapter IV · Ithaca** |
-| <img src="screenshot-uri.jpg" width="400" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="400" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> |
-| **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
-| <img src="screenshot-north.jpg" width="400" alt="A wooden jetty in a Norwegian fjord at night, falling snow: two Viking longships moored beside it, one with a black and red striped sail set, the other with its sail furled and a gilded dragon's head, gangplanks leading aboard; a throwing axe and a round shield in the foreground; the weapon is named Throwing axes and flail"> | <img src="screenshot-normandy.jpg" width="400" alt="A Norman village before dawn: the church in ruins after the bombing, its walls breached and roofless, charred beams inside, the stump of its tower on the right, stone houses and a sentry on the left, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
-| **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** |
-| <img src="screenshot-russia.jpg" width="400" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth that carries the hammer and sickle, red flags with the same emblem, panel blocks with lit windows and a tower behind, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="400" alt="Inside the assembly hall of a Tibetan monastery: red pillars with blue capitals, a gilded seated Buddha with a halo on a lotus throne, a row of butter lamps burning before it, a rifle in the foreground"> |
+| Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
+| :---: | :---: | :---: |
+| <img src="screenshot.jpg" width="280" alt="The main street of Dry Gulch at golden hour, looking west: the doctor's and the telegraph office on the left, the sheriff's office, the jail and the saloon on the right, an outlaw on the boardwalk, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="280" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; in the foreground the samurai's hands, three throwing stars fanned in the right, the spare ones on the left palm"> | <img src="screenshot-uri.jpg" width="280" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> |
+| **Chapter IV · Ithaca** | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
+| <img src="screenshot-greece.jpg" width="280" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> | <img src="screenshot-north.jpg" width="280" alt="A wooden jetty in a Norwegian fjord at night, falling snow: two Viking longships moored beside it, one with a black and red striped sail set, the other with its sail furled and a gilded dragon's head, gangplanks leading aboard; a throwing axe and a round shield in the foreground; the weapon is named Throwing axes and flail"> | <img src="screenshot-normandy.jpg" width="280" alt="A Norman village before dawn: the church in ruins after the bombing, its walls breached and roofless, charred beams inside, the stump of its tower on the right, stone houses and a sentry on the left, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
+| **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** | **Chapter IX · Tenochtitlan** |
+| <img src="screenshot-russia.jpg" width="280" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth that carries the hammer and sickle, red flags with the same emblem, panel blocks with lit windows and a tower behind, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="280" alt="Inside the assembly hall of a Tibetan monastery: red pillars with blue capitals, a gilded seated Buddha with a halo on a lotus throne, a row of butter lamps burning before it, a rifle in the foreground"> | <img src="screenshot-aztec.jpg" width="280" alt="The causeway of Tenochtitlan at sunset: a stone road over the lake with a low parapet, a Spanish horseman and a swordsman ahead, gold dropped on the paving, jungle on the far shore and a snow-capped volcano smoking behind; the dart-thrower and a turquoise shield in the foreground"> |
 
 | Duel · choose your fighter | Duel · face to face |
 | :---: | :---: |
-| <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Dry Gulch: a row of three heroes marked with gold stars (Wyatt Earp, Calamity Jane, Billy the Kid) above a row of three villains marked with red skulls (Jesse James, Ike Clanton, Belle Starr), with Wyatt Earp standing in the desert"> | <img src="screenshot-duel.jpg" width="400" alt="A duel in the main street of Dry Gulch at golden hour: the other player, as Jesse James in a long coat, stands by the well; the score line reads You 0–0 Jesse James, round 1; the six-shooter is in the foreground"> |
+| <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Stalnogorsk: a row of three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above a row of four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), with Solzhenitsyn standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="400" alt="A duel on the main avenue of Stalnogorsk in falling snow: the other player, as Joseph Stalin in a white tunic, stands in the road in front of the statue and the tower; the score line reads You 0–0 Joseph Stalin, round 1; the submachine gun is in the foreground"> |
 
-![The title screen: the game's name over a Japanese garden at dusk, eight chapter cards in two rows, the Duel button, and the version number in the bottom right corner](screenshot-title.jpg)
+![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Duel button, and the version number in the bottom right corner](screenshot-title.jpg)
 
 ## Run it
 
@@ -62,6 +60,7 @@ show where the remaining enemies are; the last three come looking for you. Healt
 | VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 33: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
 | VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | 37: KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
 | VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | 35: Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
+| IX · Tenochtitlan, Mexico, 30 June 1520 | poisoned dart-thrower, stones or bow, and an obsidian-edged club | 36: Spanish swordsmen, crossbowmen, arquebusiers, horsemen, a cannon and its gunner, Captain Luján of the rear guard |
 
 ### Places you can go into, onto and behind
 
@@ -78,6 +77,7 @@ and some enemies wait indoors, on deck or behind the waterfall.
 | VI | the ground floor of every house, the command bunker, the manor, the windmill; the church, now a roofless ruin after the bombing; a farm barn |
 | VII | the food shop, two garages, the Palace of Culture with its stage, the works, and the Committee building: lobby, cells and archive; a metro pavilion with turnstiles, the district library with its rows of shelves, a building site with a concrete slab to climb and the builders' hut |
 | VIII | the village houses, the old fort, the monks' houses and the monastery's assembly hall; the village temple, the chapel of the great prayer wheel, a nomad tent of black yak hair |
+| IX | the two shrines on top of the Great Temple, each with an altar heaped with gold; the white houses of the garden quarter and of the far shore; a steam bath |
 
 Things to find on the way: mosaic floors and a bronze Athena in Ithaca; the hammer and
 sickle on the flags, the monument, the palace and the tower of Stalnogorsk; a gilded
@@ -107,6 +107,7 @@ the roof or the deck. A jump clears about 1.3 m.
 | VI | a hunter's stand among the hedgerows; a dugout; the ruined church |
 | VII | the roofs of the garages (a ladder, then along the whole row); a cellar hatch; the slab of the building site |
 | VIII | a lookout beside the road; a hermit's cell |
+| IX | the top of the Great Temple, 17 m up, reached by its stair, with two shrines for cover; a reed watchtower with a ladder; a steam bath to crawl into; the jungle round the precinct |
 
 Every watch platform, lookout, high seat and hunter's stand has a ladder too.
 Enemies can follow you up anything that has steps: the butte can be
@@ -156,6 +157,9 @@ remains guarded. The choice is kept for the next chapter and when you retry.
 | VIII | Gompo Tashi Andrugtsang | Khampa leader of the Chushi Gangdruk | Marksman: rifle, one shot fells a soldier |
 | VIII | Ani Pachen | The warrior nun who led her clan on horseback | Rider: pistol; moves 20% faster |
 | VIII | Songtsen Gampo | The king who founded the Tibetan empire | King of old: bow and sword; takes 20% less damage |
+| IX | Cuauhtémoc | The Descending Eagle, last ruler of the Mexica | Descending Eagle: poisoned darts that fly faster and hit harder |
+| IX | Tzilacatzin | Warrior of Tlatelolco, who felled Spaniards with stones | Stone thrower: hurls heavy stones; starts with 130 health |
+| IX | Nezahualcóyotl | The Fasting Coyote, poet-king of Texcoco | Fasting Coyote: bow and club; moves 15% faster |
 
 The heroes are drawn from history, myth and saga, not from any film, series or comic.
 Several do not belong to their chapter's year or place (Winkelried is of 1386, Tomoe
@@ -183,7 +187,7 @@ belong to the years after 1966 and are in the chapter by request, not by the cal
 ### Duel: two players online
 
 Click **Duel** on the title screen. Two players, each on their own computer, hunt each
-other in one of the eight chapters; the goal is to kill the other player.
+other in one of the nine chapters; the goal is to kill the other player.
 
 1. One player chooses the chapter, the rules and how many computer enemies stay in
    the world (none, or one to nine), then clicks *Create and get the invite link*.
@@ -232,6 +236,9 @@ carries the same mark. Like a hero, a villain has their own look and one strengt
 | VIII | Mao Zedong | Chairman of Communist China, 1949–1976 | Chairman: rifle; takes 20% less damage |
 | VIII | Langdarma | The king who persecuted the Dharma, 9th century | Horned king: bow and sword; starts with 140 health |
 | VIII | Jiang Qing | Madame Mao, leader of the Gang of Four | Red Guard: pistol; moves 20% faster |
+| IX | Hernán Cortés | Leader of the expedition that took Tenochtitlan | Conquistador: crossbow and halberd; takes 20% less damage |
+| IX | Pedro de Alvarado | Cortés's captain; the Mexica called him Tonatiuh, the Sun | Tonatiuh: crossbow and halberd; moves 15% faster |
+| IX | Nuño de Guzmán | A later conquistador, notorious even among his own for cruelty | Iron hand: crossbow and halberd; starts with 140 health |
 
 The villains can only be played in a duel. Chapter IV has five of them, chapter VII four,
 the others three. The dictators are there to be fought: their figures carry no party
@@ -264,8 +271,8 @@ has no relay server.
 | `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
 | `↑`, facing a ladder | Climb it (no extra key) |
 | `C` | Crouch on and off |
-| Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow |
-| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II and IV and with the bow of chapter VIII; the flail in chapter V |
+| Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow, throw a poisoned dart or a stone |
+| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II and IV and with the bow of chapter VIII; the flail in chapter V; the obsidian-edged club in chapter IX |
 | `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana, the swords and the flail) |
 | `R` | Reload the six-shooter and the guns of chapters VI to VIII |
 | `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
@@ -291,14 +298,14 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.68 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 7,900 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.71 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 8,360 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
 | Type | Rye, Pirata One, IM Fell English and Cinzel (SIL Open Font License), bundled through Fontsource. |
-| Storage | None. Progress is not saved; all eight chapters are open from the start. |
+| Storage | None. Progress is not saved; all nine chapters are open from the start. |
 | Requirements | A browser with WebGL 2 and half-float render targets. A dedicated graphics card is recommended. |
 
 ### Source layout
@@ -316,7 +323,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
 | [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
-| [villains.js](source/src/villains.js) | The twenty-seven villains that can be played in a duel. |
+| [villains.js](source/src/villains.js) | The thirty villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
 ### Rendering pipeline
@@ -492,7 +499,7 @@ poncho, a surcoat or the animal skins of the Vikings (tufts of fur over the shou
 a ragged pelt, a torn hem, sometimes the beast's head), and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-The same builder makes the twenty-four playable heroes, the twenty-seven duel villains
+The same builder makes the twenty-seven playable heroes, the thirty duel villains
 (the one-eyed Cyclops, Medusa with her snakes and the bull-headed Minotaur included),
 the human enemy types, the bystanders (the Dalai Lama, his monks and riders in chapter
 VIII; the flute monks under their basket hats and the geisha with their umbrellas in
@@ -598,6 +605,9 @@ and whether they aim or swing, in a small JSON message over a WebRTC data channe
 | --- | --- | --- | --- |
 | Six-shooter | Instant ray | 35 | 6 rounds, 0.33 s between shots, 1.45 s reload |
 | Throwing stars | Three eight-pointed stars at 52 m/s in a fan of ±2°, light gravity | 26 each | 0.1 s wind-up, 0.36 s to the next throw |
+| Poisoned dart (chapter IX) | Dart at 64 m/s, light gravity | 45, then 7 every half second for five seconds | 0.14 s wind-up, 0.47 s to the next |
+| Stone (chapter IX) | Stone at 30 m/s, heavy drop | 120 | 0.24 s wind-up, 0.83 s to the next |
+| Obsidian-edged club (chapter IX) | Arc of ±60°, 3.1 m reach | 115 | 0.45 s |
 | Bow (chapter VIII, duel villains) | Arrow at 82 m/s with gravity | 60 | 0.34 s draw, 0.5 s to nock the next arrow |
 | Katana | Arc, 3.3 m reach | 110 | 0.42 s |
 | Crossbow | Bolt at 118 m/s with gravity | 95 | 1.0 s reload |
@@ -638,7 +648,8 @@ tap shorter than one frame still fires.
   war horn. The Greek chapter is in a limping seven-beat measure (3+2+2); the Norse one
   is a slow war drum over a drone; chapter VI has a muffled snare march and a lone
   bugle; chapter VII is a slow minor waltz with a trembling balalaika; chapter VIII has
-  long horns, a singing bowl, small bells and a flute on five notes.
+  long horns, a singing bowl, small bells and a flute on five notes; chapter IX has the great
+  drum and a two-toned slit drum, rattles, a clay flute and now and then a conch.
 - **Ambience** is filtered wind plus bird calls, crickets, cicadas, cowbells, a far
   wolf, guns rumbling far out at sea, a crow and a distant tram bell, or prayer flags
   snapping in the wind, and water whose volume follows the distance to the pond, stream,
@@ -665,8 +676,10 @@ once for the shadow map.
 | VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 607 | 98,000 |
 | VII · Stalnogorsk | 433 | 0.20 million | 23 | 411 | 81,100 |
 | VIII · Che La | 422 | 0.87 million | 20,400 | 432 | 97,900 |
+| IX · Tenochtitlan | 512 | 2.29 million | 9,000 | 1,456 | 84,100 |
 
-Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has the most
+Chapter IX is the heaviest in triangles because of its jungle; chapter III has the most
+instances, with its 42,000 grass tufts. Chapter II has the most
 colliders because every bamboo stalk near the path is solid; chapter V comes second
 since each of its four longships is about 130 collision boxes. Chapter VII is the lightest
 in triangles: a city of boxes with painted windows.
@@ -700,7 +713,7 @@ npm run build
 `npm run build` writes the self-contained file to `source/dist/index.html`; copy it
 over `index.html` in this folder to publish it.
 
-Four address flags help while editing: `?level=2` jumps into a chapter (1 to 8),
+Four address flags help while editing: `?level=2` jumps into a chapter (1 to 9),
 `?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture, and `&peace` makes enemies passive. In the browser console,
 `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
 
@@ -757,6 +770,21 @@ top rail, and cows, yaks and horses have a box the size of their body instead of
 cylinder that stood out beyond their flanks. The check: 42 rays across each paddock fence
 at eye height (none blocked) and at waist height (all blocked).
 
+Chapter IX was built in three stages, each checked before the next. The place: a scripted
+player walked from the temple gate over all three canals to the far shore and back up the
+stair to a shrine on the Great Temple; the first stair was hollow underneath and its top
+lay just above the height the route grid searches, so it is now solid stone and 17 m high.
+The people: a single poisoned dart was followed for six seconds (100 health to 44 at once,
+then 7 less every half second until death); and a real fight was run with the player made
+unhurtable, in which bolts, bullets and cannonballs all flew and the chapter was won.
+That fight showed horsemen riding into the canals and standing on the lake bed. A stricter
+rule for stepping over deep water cured it but blocked a gangplank in chapter V, so the old
+rule stayed; instead the causeway has a low parapet, the crossings have side rails, and in
+every chapter anyone who ends up on the bed of a lake or the sea is put back on dry ground
+after about a second. The triangle count was measured at 3.4 million per frame and brought
+down to 2.3 million by drawing the far-shore trees more simply. Not tested: chapter IX in a
+duel between two browsers; and the new music was run without error but not listened to.
+
 Duel mode was tested between two tabs of one automated browser on one computer:
 connecting by invite link and by copy-paste codes, the choice of fighters, the start at
 opposite ends, a full three-round match to the end screen, the timed rule with
@@ -771,7 +799,8 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 
 - No touch controls and no gamepad support.
 - Progress is not saved between sessions.
-- The twenty-four heroes' strengths are not balanced against each other.
+- The twenty-seven heroes' strengths are not balanced against each other.
+- A horseman cannot be unhorsed: horse and rider are one enemy and fall together. The cannon of chapter IX does not move or turn; its gunner aims the shots.
 - Enemies cannot climb onto roofs or balconies, nor onto the concrete slab of the
   building site in chapter VII, which is more than a storey up; they fire from below.
   The route grid does not know about other enemies, so several can crowd one doorway.

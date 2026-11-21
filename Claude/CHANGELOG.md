@@ -16,6 +16,31 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.3.0] - 2026-11-21
+
+### Added
+
+- **Chapter IX, Tenochtitlan.** The evening of 30 June 1520: the Spaniards slip out of the
+  city over the western causeway, loaded with the gold of the temples, and you must stop
+  them before they reach the shore.
+  - The place: the Great Temple, climbable by its stair to two shrines heaped with gold; the
+    skull rack; jungle round the precinct and along the shores; the causeway over the lake,
+    cut by three canals; a volcano smoking on the horizon.
+  - Three heroes, each with their own weapon and the obsidian-edged club: Cuauhtémoc with a
+    **poisoned dart-thrower** (a dart wounds, then goes on hurting for five seconds),
+    Tzilacatzin with heavy stones, Nezahualcóyotl with the bow.
+  - Thirty-six enemies: swordsmen, crossbowmen, arquebusiers, **horsemen**, a **cannon** with
+    its gunner, and the captain of the rear guard.
+  - Three villains for Duel mode: Hernán Cortés, Pedro de Alvarado, Nuño de Guzmán.
+  - Its own music (drums, a clay flute, a conch) and evening sounds.
+- Horned animal skulls at the temple of the old gods and over the hall door in Jarnvik.
+- The title screen shows nine chapters, in three rows of three.
+
+### Changed
+
+- Anyone who ends up on the bed of a lake or the sea, the player or an enemy, in any chapter,
+  is put back on dry ground after a moment instead of staying stuck there.
+
 ## [1.2.0] - 2026-11-21
 
 ### Changed
@@ -121,6 +146,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.3.0
 [1.2.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.2.0
 [1.1.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.1.0
 [1.0.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.1
