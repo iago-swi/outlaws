@@ -52,7 +52,7 @@ show where the remaining enemies are; the last three come looking for you. Healt
 
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 29: cowboys, sombrero bandits, the gang boss Silas Crowe |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 31: cowboys, sombrero bandits, the gang boss Silas Crowe |
 | II · Kagemori, Japan, 1600 | bow (yumi) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
 | III · Uri, the Waldstätten, 1307 | crossbow and halberd | 27: Habsburg halberdiers, crossbowmen, knights, the bailiff |
 | IV · Ithaca, Greece, the age of heroes | javelins and short sword | 30: Spartan hoplites, javelin throwers, their captain |
@@ -68,7 +68,7 @@ and some enemies wait indoors, on deck or behind the waterfall.
 
 | Chapter | Open buildings and other places |
 | --- | --- |
-| I | saloon, jail with two barred cells, bank with its safe, barn, a homestead, the crypt on Boot Hill (the cemetery outside town); general store, sheriff's office with a cell, livery stable with a horse, blacksmith's forge, undertaker's, telegraph office |
+| I | saloon, jail with two barred cells, bank with its safe, barn, a homestead, the crypt on Boot Hill (the cemetery outside town); the church, with its nave, a choir gallery and a stair inside the tower up to the bell; general store, sheriff's office with a cell, livery stable with a horse, blacksmith's forge, undertaker's, telegraph office |
 | II | every house (walk-through, with open screens), the shrine hall, the dojo in its walled compound, a hermitage; the ground floor of the pagoda, a storehouse, the bell tower; the arched bridge over the pond |
 | III | the chalets, the chapel, a Habsburg watchtower; the barns on their stone stilts, which hold hay, cheese or tools, and a drive-through hay barn; the ledge behind the waterfall |
 | IV | every house, the temple's inner room with a golden Athena, the beacon tower on the fishermen's cape; a villa with a colonnaded court and a pool, the theatre with its stage house, the olive grove with its press |
@@ -94,7 +94,7 @@ A jump clears about 1.3 m, enough to get onto a crate and from crate to crate.
 
 | Chapter | Places for an ambush or a sniper |
 | --- | --- |
-| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, reached by jumping up the crates behind them; a root cellar with a crawl-in door; the low walls of a ruined adobe |
+| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, reached by jumping up the crates behind them; a root cellar with a crawl-in door; the low walls of a ruined adobe; the church tower: a stair to the choir gallery, then a square spiral of steps inside the tower to the belfry, 11 m up, with a parapet to crouch behind |
 | II | a watch platform in the dojo court; a tea hut whose door is a crawl-in hatch |
 | III | a rocky knoll west of the path with a zigzag stair, 9 m high; a hunter's high seat near the start |
 | IV | a lookout above the landing beach; an old cistern to crawl into |
@@ -106,7 +106,9 @@ A jump clears about 1.3 m, enough to get onto a crate and from crate to crate.
 Enemies can follow you up anything that has steps: the butte and the knoll can be
 stormed, and each is held by a marksman when you arrive. Enemies cannot jump, so roofs,
 platforms and high seats are safe from blades, though not from bullets, and they cannot
-get through a crawl-in door at all.
+get through a crawl-in door at all. The church tower is an exception among the stairs:
+it has two storeys above its ground floor, and the route grid knows one floor per spot,
+so enemies stay below and the bandit in the belfry holds his post.
 
 ### Choose your hero
 
@@ -640,7 +642,7 @@ once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 436 | 0.82 million | 8,400 | 502 | 53,500 |
+| I · Dry Gulch | 449 | 0.83 million | 8,400 | 587 | 53,500 |
 | II · Kagemori | 326 | 0.50 million | 11,900 | 1,705 | 40,000 |
 | III · Uri | 468 | 1.86 million | 52,700 | 575 | 153,700 |
 | IV · Ithaca | 473 | 0.84 million | 18,200 | 680 | 98,900 |
@@ -720,7 +722,8 @@ stair (too steep in the middle: steps of 55 cm where 50 is the limit; the stair 
 hillsides nobody can climb. The same player then crouched into a crawl-in cellar (and
 was stopped at the door when upright), jumped up the crates onto two roofs in chapter I,
 onto the garages of chapter VII and into the hides of chapters II and III, and walked up
-both zigzag stairs. Crouching was tried with the `C` key; the automated browser cannot
+both zigzag stairs, and later into the church of chapter I, up to its gallery and round
+the spiral stair to the belfry. Crouching was tried with the `C` key; the automated browser cannot
 press Caps Lock, which uses the same code. Crouching in a duel between two browsers was
 not tried.
 

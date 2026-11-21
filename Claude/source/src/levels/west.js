@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, room, bars, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, stepsUp, den } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, stepsUp, den } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
@@ -288,16 +288,45 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
 
   // ---- church + boot hill -----------------------------------------------------------
   {
-    const x = 62, z = -27;
-    B.box(M.wood, 8, 5.6, 13, x, 0, z, { c: 0xe8e2d2, solid: true });
+    const x = 62, z = -27, WH = 0xe8e2d2, DK = 0x5a4030, tz = -18.6, TOP = 11, GAL = 3.7, RISE = (TOP - GAL) / 20;
+    // The nave. You come in through the base of the tower; the windows are real openings.
+    room(B, M, x, 0, z, { w: 8, d: 13, h: 5.6, t: 0.3, mat: M.wood, c: WH, base: 0.4, doors: [{ side: 's', at: 0, w: 1.6, h: 2.5 }],
+      wins: [{ side: 's', at: 1.38, w: 1.05, y: GAL, h: 1.85 }, ...[-1, 1].flatMap((sd) => [-3.5, 0, 3.5].map((at) => ({ side: sd > 0 ? 'e' : 'w', at, w: 1.0, y: 1.8, h: 2.2 })))],
+      floor: { mat: M.woodH, c: 0x8a6a4a }, ceil: false });
     B.geo(M.shingle, prismGeo(8.8, 3.2, 13.6, 3), [x, 5.6, z], [0, 0, 0], 1, 0x5a4a44);
-    B.box(M.wood, 3.2, 11, 3.2, x, 0, z + 7.6, { c: 0xe8e2d2, solid: true });
-    for (const [sx, sz] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) B.box(M.wood, 0.3, 2.2, 0.3, x + sx * 1.35, 11, z + 7.6 + sz * 1.35, { c: 0xe8e2d2 });
-    B.geo(M.metal, new THREE.SphereGeometry(0.55, 10, 8), [x, 12.2, z + 7.6], [0, 0, 0], [1, 1.2, 1], 0xb8923a);
-    B.geo(M.shingle, new THREE.ConeGeometry(2.6, 4.2, 4), [x, 15.3, z + 7.6], [0, Math.PI / 4, 0], 1, 0x5a4a44);
-    B.box(M.flat, 0.12, 1.4, 0.12, x, 17.3, z + 7.6, { c: 0xf0f0f0 }); B.box(M.flat, 0.7, 0.12, 0.12, x, 18.1, z + 7.6, { c: 0xf0f0f0 });
-    B.box(M.woodH, 1.5, 2.6, 0.1, x, 0, z + 9.22, { c: 0x4a3020 });
-    for (const s of [-1, 1]) for (const zz of [-3.5, 0, 3.5]) B.geo(M.window, new THREE.BoxGeometry(0.07, 2.2, 1.0), [x + s * 4.02, 2.9, z + zz]);
+    for (const zz of [-25, -26.5, -28, -29.5, -31]) for (const [px, pw] of [[60.5, 1.2], [64.2, 2.6]]) {                 // pews, facing the altar
+      B.box(M.woodH, pw, 0.45, 0.5, px, 0.06, zz, { c: 0x6a4a30, solid: true }); B.box(M.woodH, pw, 0.9, 0.08, px, 0.06, zz + 0.29, { c: 0x6a4a30 });
+    }
+    B.box(M.woodH, 2.2, 0.95, 0.9, x, 0.06, -32.6, { c: DK, solid: true }); B.box(M.cloth, 2.3, 0.04, 1.0, x, 1.01, -32.6, { c: 0xf0ece0 });
+    B.box(M.woodH, 0.14, 1.7, 0.06, x, 2.3, -33.3, { c: DK }); B.box(M.woodH, 0.9, 0.14, 0.06, x, 3.3, -33.3, { c: DK });
+    for (const k of [-0.8, 0.8]) { B.cyl(M.metal, 0.03, 0.05, 0.3, x + k, 1.03, -32.6, { c: 0xb8923a, seg: 6 }); B.geo(M.glow, new THREE.SphereGeometry(0.05, 6, 5), [x + k, 1.42, -32.6], [0, 0, 0], [1, 1.8, 1], 0xffc060); }
+    // choir gallery over the entrance, and the stair up to it along the west wall
+    B.box(M.woodH, 7.4, 0.2, 2.65, x, GAL - 0.2, -22.125, { c: 0x7a5a3e, solid: true });
+    B.box(M.wood, 6.0, 0.9, 0.12, x + 0.65, GAL, -23.39, { c: WH, solid: true });
+    steps(B, M, 58.95, -23.45, Math.PI, GAL, 9, { w: 1.3, rise: GAL / 10, run: 0.55, mat: M.woodH, c: 0x7a5a3e });
+    B.box(M.woodH, 0.6, 1.1, 1.3, 65.3, GAL, -22.2, { c: DK, solid: true }); B.box(M.flat, 0.06, 0.5, 1.1, 64.98, GAL + 0.75, -22.2, { c: 0xe8e0d0 });   // harmonium
+    // The tower: a vestibule at the bottom, then a square spiral of wooden steps round the walls from the gallery up to the bell.
+    for (const sd of [-1, 1]) B.box(M.wood, 0.3, TOP + 0.4, 4.1, x + sd * 2.05, -0.4, tz + 0.15, { c: WH, solid: true });
+    for (const sd of [-1, 1]) B.box(M.wood, 1.4, TOP + 0.4, 0.3, x + sd * 1.5, -0.4, tz + 2.05, { c: WH, solid: true });
+    B.box(M.wood, 1.6, TOP - 2.5, 0.3, x, 2.5, tz + 2.05, { c: WH, solid: true });
+    B.box(M.wood, 4.4, TOP - 5.6, 0.3, x, 5.6, tz - 2.05, { c: WH, solid: true });
+    B.box(M.woodH, 3.8, 0.46, 3.8, x, -0.4, tz, { c: 0x8a6a4a, solid: true }); B.box(M.woodH, 3.8, 0.2, 3.8, x, GAL - 0.2, tz, { c: 0x7a5a3e, solid: true });
+    B.box(M.woodH, 0.08, 2.4, 0.8, x - 0.86, 0.06, tz + 2.62, { c: 0x4a3020 });                                              // the door, standing open
+    B.box(M.wood, 0.3, TOP - GAL, 0.3, x, GAL, tz, { c: DK });                                                                // newel post
+    { let n = 0; const slab = (lx, lz, w, d) => { n++; B.box(M.woodH, w, 0.2, d, x + lx, GAL + n * RISE - 0.2, tz + lz, { c: n % 2 ? 0x7a5a3e : 0x6a4a30, solid: true }); };
+      const R3 = 1.4 / 3;
+      for (const [ax, az, dx, dz, cx, cz] of [[1.3, -0.7, 0, 1, 1.3, 1.3], [0.7, 1.3, -1, 0, -1.3, 1.3], [-1.3, 0.7, 0, -1, -1.3, -1.3], [-0.7, -1.3, 1, 0, 1.3, -1.3], [1.3, -0.7, 0, 1, 1.3, 1.3]]) {
+        for (let j = 0; j < 3; j++) slab(ax + dx * (j + 0.5) * R3, az + dz * (j + 0.5) * R3, dx ? R3 + 0.03 : 1.2, dz ? R3 + 0.03 : 1.2);
+        slab(cx, cz, 1.23, 1.23);                                                                                             // the turn in the corner
+      } }
+    // the belfry: a floor round the stair well, a parapet to crouch behind, the bell
+    B.box(M.woodH, 2.6, 0.2, 2.6, x - 0.6, TOP - 0.2, tz + 0.6, { c: 0x7a5a3e, solid: true }); B.box(M.woodH, 1.2, 0.2, 1.2, x - 1.3, TOP - 0.2, tz - 1.3, { c: 0x7a5a3e, solid: true });
+    for (const sd of [-1, 1]) { B.box(M.wood, 0.3, 1.0, 4.4, x + sd * 2.05, TOP, tz, { c: WH, solid: true }); B.box(M.wood, 3.8, 1.0, 0.3, x, TOP, tz + sd * 2.05, { c: WH, solid: true }); }
+    for (const [sx, sz] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) B.box(M.wood, 0.3, 2.2, 0.3, x + sx * 2.05, TOP, tz + sz * 2.05, { c: WH });
+    B.geo(M.metal, new THREE.SphereGeometry(0.55, 10, 8), [x, TOP + 1.35, tz], [0, 0, 0], [1, 1.2, 1], 0xb8923a); B.box(M.wood, 0.1, 0.5, 0.1, x, TOP + 1.9, tz, { c: DK }); world.addCyl(x, tz, 0.5, TOP + 0.6, TOP + 2.2);
+    B.geo(M.shingle, new THREE.ConeGeometry(3.4, 4.6, 4), [x, TOP + 4.5, tz], [0, Math.PI / 4, 0], 1, 0x5a4a44);
+    B.box(M.flat, 0.12, 1.4, 0.12, x, TOP + 6.7, tz, { c: 0xf0f0f0 }); B.box(M.flat, 0.7, 0.12, 0.12, x, TOP + 7.5, tz, { c: 0xf0f0f0 });
+    extraFoes.push(['cowboy', x, -29.5, { y: 0.6, patrol: false, yaw: 0 }], ['bandit', x - 1.1, tz + 0.7, { y: TOP + 0.5, static: true, yaw: 2.2 }]); extraPicks.push([61, -22, GAL + 0.5]);
     for (let i = 0; i < 14; i++) {
       const gx = x + 9 + (i % 5) * 2.4 + (R() - 0.5), gz = z - 3 + Math.floor(i / 5) * 3.4 + (R() - 0.5);
       if (i % 3) { B.box(M.wood, 0.1, 1.2, 0.1, gx, 0, gz, { c: 0xd8d0c0, rz: (R() - 0.5) * 0.2 }); B.box(M.wood, 0.7, 0.1, 0.1, gx, 0.8, gz, { c: 0xd8d0c0 }); }
