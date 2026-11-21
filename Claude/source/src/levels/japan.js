@@ -15,7 +15,7 @@ export const japan = {
     { look: 'tomoe', name: 'Tomoe Gozen', who: 'Woman warrior of the Genpei War', trait: 'Swift hands', effect: 'throws her stars almost twice as fast', mods: { fire: 0.55 }, sleeve: 0xf0ece0, cuff: 0xa81c1c },
     { look: 'date', name: 'Date Masamune', who: 'The One-Eyed Dragon of Sendai', trait: 'Black armour', effect: 'takes 30% less damage', mods: { armor: 0.7 }, sleeve: 0x17171c, cuff: 0xd9b23a },
   ], weaponName: 'Shuriken & katana', alt: 'right mouse — katana',
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw stars &nbsp; <kbd>Right mouse</kbd> katana cut',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw stars &nbsp; <kbd>Right mouse</kbd> katana cut',
   foes: 'foes remain', foesNone: 'The shrine is silent', bossName: 'Kurogane, the Iron Ronin', bossDown: 'Kurogane has fallen', pickupText: 'Rice cake  +35',
   deadTitle: 'Honour lost', deadSub: 'The forest keeps your name.', clearTitle: 'The shrine is restored',
   build,
@@ -326,7 +326,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (Math.abs(x - pathX(z)) < 1.5 || (z < -30 && Math.abs(x) < 33) || Math.hypot(x - POND.x, z - POND.z) < POND.r || (Math.abs(x + 27) < 8 && Math.abs(z - 22) < 6.5)) continue;
     tufts.push({ x, y: world.height(x, z), z, ry: R() * 6.28, s: [0.4 + R() * 0.5, 0.25 + R() * 0.5, 0.4 + R() * 0.5], c: R.pick([0x7a9a4a, 0x5a8038, 0x8aa858, 0x4a6a30]) });
   }
-  root.add(instanced(tuftGeo(6, 0x7a8a5a, 0xffffff), windify(M.flat2.clone(), shared, 0.2, 1, 1.6), tufts, { cast: false }));
+  root.add(instanced(tuftGeo(6, 0x7a8a5a, 0xffffff), windify(M.flat2.clone(), shared, 0.2, 1, 1.6), tufts, { cast: false, thin: true }));
   for (let i = 0; i < 90; i++) { const x = (R() - 0.5) * 80, z = -70 + R() * 110; if (clearing(x, z) && !(Math.abs(x) > 28) && !(z > 9 && z < 38 && Math.abs(x) > 14)) continue; if (Math.hypot(x - POND.x, z - POND.z) < POND.r + 1) continue; const s = 0.6 + R() * 0.7; bushes.push({ x, y: world.height(x, z) + 0.2, z, ry: R() * 6, s: [s * 1.3, s * 0.8, s * 1.3], c: R.pick([0x35502c, 0x44663a, 0xb8506a, 0x2c4426]) }); }
   root.add(instanced(new THREE.IcosahedronGeometry(1, 1), M.rock, bushes));
   // distant hills and one great snow-capped mountain behind the shrine

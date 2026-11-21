@@ -28,6 +28,7 @@ import { aztec } from './levels/aztec.js';
 const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet, aztec];
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
+const GFX_KEY = 'lonehand-graphics', GFX_NAMES = { auto: 'Automatic', high: 'High', medium: 'Medium', low: 'Low' }, GFX_ORDER = ['high', 'medium', 'low'];
 
 class Game {
   constructor() {
@@ -43,6 +44,8 @@ class Game {
     this.shots = new Shots(this);
     this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0; this.practice = false; this.typed = '';
     this.foeWant = params.has('foes') ? +params.get('foes') || 0 : 0;   // how many enemies a chapter holds: 0 = all of them
+    { let w = params.get('gfx'); if (!w) try { w = localStorage.getItem(GFX_KEY); } catch (e) { /* no storage: the default */ } this.gfxWant = GFX_NAMES[w] ? w : 'auto'; }
+    this.gfx.setQuality(this.gfxWant === 'auto' ? 'high' : this.gfxWant);
     this.time = 0; this.noise = 0; this.state = 'boot'; this.index = 0; this.timeScale = 1; this.slow = 0;
     this.flashLight = new THREE.PointLight(0xffb060, 0, 16, 2);
     this.gfx.scene.add(this.flashLight);
@@ -69,6 +72,9 @@ class Game {
     const cardOf = (e) => { const c = e.target.closest('.hero'); return c ? +c.dataset.hero : -1; };
     $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k); });
     $('#ver').textContent = 'v' + __APP_VERSION__;                // from package.json, at build time
+    $('#gfxsel').addEventListener('change', (e) => { this.setGraphics(e.target.value); e.target.blur(); });
+    if (params.has('fps')) { this.fpsEl = document.createElement('div'); this.fpsEl.id = 'fps'; document.body.appendChild(this.fpsEl); }
+    this.gfxLabel();
     $('#foesel').addEventListener('change', (e) => { this.foeWant = +e.target.value; e.target.blur(); if (this.state === 'intro' && !(this.duel && this.duel.active)) this.spawnEnemies(); });
     $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && !(this.duel && this.duel.myPick >= 0)) { this.applyHero(k); this.begin(); } });
     bindDuelUI(this);
@@ -83,6 +89,10 @@ class Game {
     addEventListener('keydown', (e) => {
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;             // typing a duel code is not playing
       if (e.code === 'KeyM') { this.muted = !this.muted; this.sound.setMuted(this.muted); }
+      if (e.code === 'KeyG' && (this.state === 'play' || this.state === 'pause')) {         // G steps through the graphics levels without leaving the chapter
+        const all = ['auto', ...GFX_ORDER]; this.setGraphics(all[(all.indexOf(this.gfxWant) + 1) % all.length]);
+        if (this.state === 'play') this.say('Graphics: ' + GFX_NAMES[this.gfxWant]);
+      }
       // easter egg: typing PAX ("peace") switches practice mode on and off
       if (e.key && e.key.length === 1) {
         this.typed = (this.typed + e.key.toLowerCase()).slice(-12);
@@ -99,6 +109,37 @@ class Game {
       }
       if ((e.code === 'Escape' || e.code === 'KeyP') && this.state === 'play' && !this.input.locked) { this.pausedByP = e.code === 'KeyP'; this.setState('pause'); }
     });
+  }
+
+  /** The player's choice of graphics: 'auto' (start high, step down while the frame rate is poor) or a fixed level. */
+  setGraphics(want) {
+    this.gfxWant = GFX_NAMES[want] ? want : 'auto';
+    try { localStorage.setItem(GFX_KEY, this.gfxWant); } catch (e) { /* no storage: the choice lasts for this visit */ }
+    this.gfx.setQuality(this.gfxWant === 'auto' ? 'high' : this.gfxWant);
+    this.autoPrev = null; this.autoLock = false; this.perfT = 0; this.perfN = 0; this.skipPerf = true;
+    this.gfxLabel();
+  }
+  gfxLabel() {
+    const sel = $('#gfxsel'), now = GFX_NAMES[this.gfx.quality];
+    sel.value = this.gfxWant; sel.options[0].textContent = this.gfxWant === 'auto' ? 'Automatic (now ' + now + ')' : 'Automatic';
+    $('#gfxnow').textContent = 'Graphics: ' + (this.gfxWant === 'auto' ? 'Automatic, now ' + now : now);
+  }
+  /**
+   * Automatic graphics, called with the mean frame time of the last 80 frames. Below about 42 frames a second it
+   * steps one level down. If a step brought nothing (a display or a processor that sets the pace, not the picture),
+   * it is taken back and the game stops trying. On the lowest level it then lowers the resolution a little further.
+   */
+  autoGraphics(avg) {
+    const G = this.gfx;
+    if (this.autoLock) return;
+    if (this.autoPrev) {
+      const { avg: before, from } = this.autoPrev; this.autoPrev = null;
+      if (avg > before * 0.93) { G.setQuality(from); this.autoLock = true; this.skipPerf = true; this.gfxLabel(); return; }
+    }
+    if (avg <= 0.024) return;
+    const i = GFX_ORDER.indexOf(G.quality);
+    if (i < GFX_ORDER.length - 1) { this.autoPrev = { avg, from: G.quality }; G.setQuality(GFX_ORDER[i + 1]); this.skipPerf = true; this.gfxLabel(); }
+    else if (avg > 0.034 && G.pixelRatio > 0.4) { G.pixelRatio = Math.max(0.4, G.pixelRatio - 0.1); G.resize(); }
   }
 
   /** Practice mode: enemies still fight, but nothing they do can hurt you. */
@@ -132,7 +173,7 @@ class Game {
     B.build(this.gfx.root);
     if (backdrop) this.nav = null;                         // the title screen only shows the world; nobody has to find a way
     else { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
-    this.gfx.setEnvironment(L.env);
+    this.gfx.setEnvironment(L.env); this.gfx.applyDetail();
     this.spawnEnemies();
     for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[3] !== undefined ? this.world.height(p[0], p[1]) + p[3] : p[2]);
     this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon);
@@ -147,6 +188,7 @@ class Game {
     this.gfx.camera.fov = 72; this.gfx.camera.updateProjectionMatrix();
     this.gfx.fade = 0; this.gfx.fadeTarget = 1; this.gfx.damage = 0;
     this.perfT = 0; this.perfN = 0; this.skipPerf = true;        // ignore the loading hitch when measuring speed
+    this.autoPrev = null; this.autoLock = false;                 // a new place: automatic graphics may judge again (it keeps the level it reached)
   }
 
   /** The chapter's enemies as chosen on the hero screen: all of them, or that many spread evenly over the map. The boss always stays. */
@@ -499,8 +541,12 @@ class Game {
     if (raw < 0.5) { this.perfT = (this.perfT || 0) + raw; this.perfN = (this.perfN || 0) + 1; }
     if (this.perfN >= 80) {
       const avg = this.perfT / this.perfN; this.perfT = 0; this.perfN = 0;
-      if (avg > 0.034 && this.gfx.pixelRatio > 0.75 && !this.skipPerf) { this.gfx.pixelRatio = Math.max(0.75, this.gfx.pixelRatio - 0.25); this.gfx.resize(); }
-      this.skipPerf = false;
+      const skip = this.skipPerf; this.skipPerf = false;
+      if (!skip && this.gfxWant === 'auto') this.autoGraphics(avg);
+    }
+    if (this.fpsEl && raw < 0.5) {
+      this.fpsT = (this.fpsT || 0) + raw; this.fpsN = (this.fpsN || 0) + 1;
+      if (this.fpsT >= 0.5) { const c = this.canvas; this.fpsEl.textContent = Math.round(this.fpsN / this.fpsT) + ' fps · ' + GFX_NAMES[this.gfx.quality] + (this.gfxWant === 'auto' ? ' (auto)' : '') + ' · ' + c.width + '×' + c.height; this.fpsT = 0; this.fpsN = 0; }
     }
     const dt = real * this.timeScale, L = this.level, P = this.player;
     this.time += dt;

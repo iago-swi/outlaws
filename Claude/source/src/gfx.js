@@ -280,12 +280,25 @@ export function windify(mat, shared, amp = 0.3, hRef = 10, freq = 1.2) {
 
 // ---------------------------------------------------------------------------
 
+/**
+ * The picture at three prices. Measured at 3840 x 2160 on an integrated graphics chip, the resolution is nearly
+ * the whole cost of a frame: three quarters of it doubles the frame rate, half of it almost quadruples it.
+ * Anti-aliasing costs about a quarter, bloom a tenth, and the size of the shadow map nothing measurable.
+ * `scale` multiplies the resolution, `detail` thins the grass and the far trees, `range` shortens the shadows.
+ */
+export const QUALITY = {
+  high: { scale: 1, shadow: 4096, range: 1, msaa: 4, bloom: true, detail: 1 },
+  medium: { scale: 0.75, shadow: 2048, range: 1, msaa: 2, bloom: true, detail: 1 },
+  low: { scale: 0.5, shadow: 1024, range: 0.6, msaa: 2, bloom: false, detail: 0.5 },
+};
+
 export class Gfx {
   constructor(canvas) {
     const r = (this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' }));
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFShadowMap;
     r.toneMapping = THREE.NoToneMapping;       // tone mapping is done in our final pass
+    this.quality = 'high'; this.q = QUALITY.high;
     this.pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
     r.setPixelRatio(this.pixelRatio);
 
@@ -327,7 +340,7 @@ export class Gfx {
     this.hemi = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
     this.scene.add(this.hemi);
     this.scene.fog = new THREE.FogExp2(0xffffff, 0.004);
-    this.shadowRange = 80;
+    this.shadowRange = 80; this.shadowBase = 80;
 
     this.soft = new Particles(this.shared, 1400, false);
     this.glow = new Particles(this.shared, 700, true);
@@ -357,6 +370,32 @@ export class Gfx {
     this.fx.uAspect.value = w / h;
   }
 
+  /** The square of ground around the camera that receives shadows: the chapter's range, shortened on low quality. */
+  fitShadow() {
+    const r = (this.shadowRange = this.shadowBase * this.q.range), c = this.sun.shadow.camera;
+    c.left = -r; c.right = r; c.top = r; c.bottom = -r;
+    c.near = 1; c.far = 500; c.updateProjectionMatrix();
+  }
+
+  /** Switch the picture to 'high', 'medium' or 'low'. Safe to call at any moment, also in the middle of a chapter. */
+  setQuality(name) {
+    const q = (this.q = QUALITY[name] || QUALITY.high), dpr = window.devicePixelRatio || 1;
+    this.quality = QUALITY[name] ? name : 'high';
+    this.pixelRatio = Math.min(dpr, 1.5) * q.scale;
+    const sh = this.sun.shadow;
+    if (sh.mapSize.x !== q.shadow) { sh.mapSize.set(q.shadow, q.shadow); if (sh.map) { sh.map.dispose(); sh.map = null; } }   // the renderer makes a new map of the new size
+    this.fitShadow();
+    for (const rt of [this.composer.renderTarget1, this.composer.renderTarget2]) if (rt.samples !== q.msaa) { rt.samples = q.msaa; rt.dispose(); }
+    this.bloom.enabled = q.bloom;
+    this.applyDetail();
+    this.resize();
+  }
+
+  /** Grass, flowers and far trees are drawn in shuffled order, so drawing only the first part of each list thins them evenly. */
+  applyDetail() {
+    this.root.traverse((o) => { if (o.isInstancedMesh && o.userData.thin) o.count = Math.max(1, Math.ceil(o.userData.full * this.q.detail)); });
+  }
+
   /** Apply a level's mood: sun, sky, fog, clouds, grading. */
   setEnvironment(e) {
     const S = this.shared, sk = this.sky.material.uniforms;
@@ -375,10 +414,8 @@ export class Gfx {
     this.hemi.color.set(e.hemiSky); this.hemi.groundColor.set(e.hemiGround); this.hemi.intensity = e.hemiIntensity;
     // the lamp that lights the scene may differ from the sun drawn in the sky (moonlight at dawn)
     this.lightDir = (this.lightDir || new THREE.Vector3()).set(...(e.lightDir || e.sunDir)).normalize();
-    this.shadowRange = e.shadowRange ?? 80;
-    const c = this.sun.shadow.camera;
-    c.left = -this.shadowRange; c.right = this.shadowRange; c.top = this.shadowRange; c.bottom = -this.shadowRange;
-    c.near = 1; c.far = 500; c.updateProjectionMatrix();
+    this.shadowBase = e.shadowRange ?? 80;
+    this.fitShadow();
     this.bloom.strength = e.bloom ?? 0.4; this.bloom.radius = e.bloomRadius ?? 0.6; this.bloom.threshold = e.bloomThreshold ?? 1.0;
     this.fx.uExposure.value = e.exposure ?? 1; this.fx.uSat.value = e.saturation ?? 1.05;
     this.fx.uContrast.value = e.contrast ?? 1.05; this.fx.uVig.value = e.vignette ?? 0.4;

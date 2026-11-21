@@ -1,6 +1,6 @@
 # Lone Hand — Claude version
 
-**Version 1.3.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 1.4.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -30,7 +30,7 @@ files.
 | :---: | :---: |
 | <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Stalnogorsk: a row of three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above a row of four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), with Solzhenitsyn standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="400" alt="A duel on the main avenue of Stalnogorsk in falling snow: the other player, as Joseph Stalin in a white tunic, stands in the road in front of the statue and the tower; the score line reads You 0–0 Joseph Stalin, round 1; the submachine gun is in the foreground"> |
 
-![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Duel button, and the version number in the bottom right corner](screenshot-title.jpg)
+![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Duel button, the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
 
 ## Run it
 
@@ -129,7 +129,7 @@ them (the default), or any number from 10 to 30, as far as the chapter has that 
 The boss always stays; the others are chosen evenly through the chapter, so the whole map
 remains guarded. The choice is kept for the next chapter and when you retry.
 
-![The hero selection for Dry Gulch: the keys shown as arrows, the Enemies list set to All (31), and cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
+![The hero selection for Dry Gulch: the keys W A S D, Shift, Space and C, the Enemies list set to All (31), and cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
 
 | Chapter | Hero | Who | Strength |
 | --- | --- | --- | --- |
@@ -191,7 +191,8 @@ other in one of the nine chapters; the goal is to kill the other player.
 
 1. One player chooses the chapter, the rules and how many computer enemies stay in
    the world (none, or one to nine), then clicks *Create and get the invite link*.
-2. They send the link, or its five-letter code, to the other player, who opens it.
+2. They send the link, or its code of five characters, to the other player, who opens
+   the link or types the code.
 3. Both choose a fighter. The duel starts when both have chosen.
 4. After a duel the two players stay connected. A click on the end screen leads back to
    the Duel screen, where the host picks the next chapter and rules and starts again.
@@ -254,22 +255,23 @@ Things to know in a duel:
   nine; they attack whichever player is nearer, and being killed by one counts for your opponent.
 - A duel cannot be paused, and practice mode is switched off.
 
-**Connecting.** The two browsers talk to each other directly. The invite link uses a
-free public service (PeerJS) only to introduce them; nothing of the game passes through
-it. Each player can see the other's network address, as in any direct connection. If the
-invite link fails, open *Connect with copy-paste codes* on the Duel screen: one player
-makes a code, the other pastes it and sends a reply code back, and no outside service is
-involved. On some company or mobile networks neither way gets through, because the game
-has no relay server.
+**Connecting.** The two browsers talk to each other directly. A free public service
+(PeerJS) only introduces them under the code; nothing of the game passes through it. Each
+player can see the other's network address, as in any direct connection. The code is shown
+in plain upright letters and never contains characters that are easily taken for one
+another (no 0, O or Q; no 1 or I; no 2 or Z; no 5 or S; no 8 or B; no G; neither U nor V);
+it may be typed in small letters or with spaces. On some company or mobile networks the
+connection does not get through, because the game has no relay server; try from another
+network.
 
 ### Controls
 
 | Key | Action |
 | --- | --- |
-| `↑` `↓` `←` `→` | Move: forward, back, sidestep left and right. `W` `A` `S` `D` do the same. The mouse turns the view |
+| `W` `A` `S` `D` | Move: forward, sidestep left, back, sidestep right. The arrow keys do the same. The mouse turns the view |
 | `Shift` | Run |
 | `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
-| `↑`, facing a ladder | Climb it (no extra key) |
+| `W`, facing a ladder | Climb it (no extra key) |
 | `C` | Crouch on and off |
 | Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow, throw a poisoned dart or a stone |
 | Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II and IV and with the bow of chapter VIII; the flail in chapter V; the obsidian-edged club in chapter IX |
@@ -277,6 +279,16 @@ has no relay server.
 | `R` | Reload the six-shooter and the guns of chapters VI to VIII |
 | `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
 | `M` | Sound on/off |
+| `G` | Graphics: steps through Automatic, High, Medium and Low (also while paused) |
+
+**If the game runs slowly.** The *Graphics* list at the bottom left of the title screen
+offers four choices, and `G` steps through them during a chapter. *High* is the full
+picture. *Medium* draws three quarters of the resolution. *Low* draws half of it, with
+fewer grass tufts and far trees, shorter shadows and no glow. *Automatic*, the default,
+starts on High and steps down by itself while the game runs below about 42 frames a
+second. The choice is remembered. To see the numbers on your machine, add `?fps` to the
+address: a small counter shows the frames per second, the level in use and the size of the
+picture.
 
 The hero selection is shown over a short shot that circles the chosen figure; when the
 chapter begins the view drops into first person. The hero's name stays in the top-left
@@ -299,7 +311,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | | |
 | --- | --- |
 | Delivery | One `index.html` of 1.71 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 8,360 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
+| Source | About 8,400 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -313,7 +325,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | File | Responsibility |
 | --- | --- |
 | [main.js](source/src/main.js) | Game loop, level loading, hero selection, combat rules, win and death, practice mode, HUD, menu screens, opening camera. |
-| [gfx.js](source/src/gfx.js) | Renderer, sky dome (clouds, stars, northern lights), sun and shadows, bloom, final screen pass, particles, water and wind shaders. |
+| [gfx.js](source/src/gfx.js) | Renderer, sky dome (clouds, stars, northern lights), sun and shadows, bloom, the three levels of picture quality, final screen pass, particles, water and wind shaders. |
 | [tex.js](source/src/tex.js) | Procedural textures and the shared material library. |
 | [build.js](source/src/build.js) | Geometry helpers, the mesh-merging `Builder`, terrain height field, collision, ray casting, and the navigation grid with its route search. |
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
@@ -322,7 +334,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its leaning ladder and summit cross, ladders, raised hides and crawl-in dens. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
-| [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
+| [net.js](source/src/net.js) | The connection between the two browsers: the introduction through PeerJS under a short code, then a direct channel. |
 | [villains.js](source/src/villains.js) | The thirty villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
@@ -593,11 +605,12 @@ and whether they aim or swing, in a small JSON message over a WebRTC data channe
   both sides.
 - **Spawn points.** The two ends of the map are the chapter's own start and the place
   where its boss stands.
-- **The handshake.** A WebRTC connection needs a first exchange of addresses. With the
-  invite link, the PeerJS broker carries it under a random five-letter code. With the
-  copy-paste codes, the players carry it themselves: the code is the connection offer,
-  base64-encoded. There is no relay (TURN) server, so two players behind strict network
-  address translation cannot connect.
+- **The handshake.** A WebRTC connection needs a first exchange of addresses. The PeerJS
+  broker carries it under a random code of five characters, drawn from 22 letters and
+  digits that cannot be taken for one another. There is no relay (TURN) server, so two
+  players behind strict network address translation cannot connect. An earlier backup,
+  in which the players pasted the connection offer to each other by hand, was removed in
+  version 1.4.0: the code had proved reliable.
 
 ### Weapons
 
@@ -657,9 +670,51 @@ tap shorter than one frame still fires.
 
 ### Performance
 
-The render resolution follows the device pixel ratio up to 1.5. The game averages the
-frame time over 80 frames; if the average is above 34 ms it lowers the pixel ratio by
-0.25, down to 0.75.
+The picture has three levels of quality, chosen in the *Graphics* list or with `G`:
+
+| Level | Resolution | Anti-aliasing | Shadow map | Shadow range | Bloom | Grass and far trees |
+| --- | --- | --- | --- | --- | --- | --- |
+| High | device pixel ratio, at most 1.5 | 4 samples | 4096 × 4096 | the chapter's (70 to 95 m) | on | all |
+| Medium | three quarters of High | 2 samples | 2048 × 2048 | the same | on | all |
+| Low | half of High | 2 samples | 1024 × 1024 | 60% of it | off | half |
+
+A level can be changed at any moment: the shadow map and the render targets are made anew,
+and the thinned scenery is simply drawn as the first half of a list that was shuffled when
+the chapter was built, so nothing has to be rebuilt.
+
+*Automatic* averages the frame time over 80 frames. Above 24 ms (below about 42 frames a
+second) it steps one level down, then measures again. If the step did not shorten the
+frame by at least 7%, the picture is not what limits the machine (a display locked to 30
+frames, or a slow processor): the step is taken back and Automatic stops trying until the
+next chapter. On Low, while a frame still takes more than 34 ms, the resolution is lowered
+further in small steps, down to 0.4.
+
+The levels were set by measurement, not by guess. At 3840 × 2160 on an integrated
+graphics chip (Intel Arc 140V), each setting was changed alone and the frame rate read:
+
+| Changed alone, from High | Chapter I | Chapter IX |
+| --- | --- | --- |
+| High, nothing changed | 29 | 17 |
+| Resolution × 0.75 | 57 | 32 |
+| Resolution × 0.5 | 115 | 61 |
+| No anti-aliasing | 38 | 22 |
+| 2 samples instead of 4 | 31 | 19 |
+| No bloom | 32 | 19 |
+| Shadow map 1024 × 1024 | 27 | 17 |
+| No shadows at all | 28 | 20 |
+
+The resolution is nearly the whole cost; the size of the shadow map costs nothing that
+can be measured. The first version of Medium, which only halved the anti-aliasing and the
+shadow map, gained two frames and was thrown away. The levels as built, same screen:
+
+| | High | Medium | Low |
+| --- | --- | --- | --- |
+| Chapter I | 32 | 61 | 111 |
+| Chapter III | 26 | 43 | 96 |
+| Chapter IX | 19 | 30 | 78 |
+
+At 1280 × 720 the same machine runs every level at 90 to 120 frames a second, so there the
+setting makes no visible difference.
 
 Measured at 1280 × 720, standing at the start of each chapter with every enemy alive.
 A frame includes the shadow pass and the post-processing passes. Enemies count for much
@@ -713,8 +768,8 @@ npm run build
 `npm run build` writes the self-contained file to `source/dist/index.html`; copy it
 over `index.html` in this folder to publish it.
 
-Four address flags help while editing: `?level=2` jumps into a chapter (1 to 9),
-`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture, and `&peace` makes enemies passive. In the browser console,
+Some address flags help while editing: `?level=2` jumps into a chapter (1 to 9),
+`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture, `&peace` makes enemies passive, `&gfx=low` (or `medium`, `high`, `auto`) sets the graphics level and `&fps` shows the frame counter. In the browser console,
 `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
 
 ### Testing and known limits
@@ -785,8 +840,16 @@ after about a second. The triangle count was measured at 3.4 million per frame a
 down to 2.3 million by drawing the far-shore trees more simply. Not tested: chapter IX in a
 duel between two browsers; and the new music was run without error but not listened to.
 
+The Graphics setting of version 1.4.0 was tested in an automated browser: all nine
+chapters were loaded on each level without an error; the level was switched in the middle
+of a chapter in both directions; the automatic stepping was driven with made-up frame times
+(a slow machine goes down to Low and then lowers the resolution; a step without gain is
+taken back and locked); the `G` key and the remembered choice were checked; and the frame
+rates in the tables above were read over two to three seconds each. Not tested: a really
+slow computer. The numbers come from one laptop made slow by a very large picture.
+
 Duel mode was tested between two tabs of one automated browser on one computer:
-connecting by invite link and by copy-paste codes, the choice of fighters, the start at
+connecting by invite link and by typed code (in small letters, with spaces), the choice of fighters, the start at
 opposite ends, a full three-round match to the end screen, the timed rule with
 respawning, a player leaving, three duels in a row over one connection, and the shared
 computer enemies (they attack both players,

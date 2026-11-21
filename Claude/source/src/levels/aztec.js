@@ -14,7 +14,7 @@ export const aztec = {
     { look: 'tzilacatzin', name: 'Tzilacatzin', who: 'Warrior of Tlatelolco, who felled Spaniards with stones', trait: 'Stone thrower', effect: 'hurls heavy stones; starts with 130 health', weapon: 'stone', weaponName: 'Stones & obsidian club', mods: { hp: 130 }, sleeve: 0x2a8a4a, cuff: 0xd9a820 },
     { look: 'nezahualcoyotl', name: 'Nezahualcóyotl', who: 'The Fasting Coyote, poet-king of Texcoco', trait: 'Fasting Coyote', effect: 'bow and club; moves 15% faster', weapon: 'bow', weaponName: 'Bow & obsidian club', mods: { speed: 1.15 }, sleeve: 0xb07a50, cuff: 0x2ac8c0 },
   ],
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw or shoot &nbsp; <kbd>Right mouse</kbd> swing the club',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw or shoot &nbsp; <kbd>Right mouse</kbd> swing the club',
   foes: 'invaders remain', foesNone: 'The causeway is clear', bossName: 'Captain Luján of the rear guard', bossDown: 'The captain has fallen', pickupText: 'Cacao  +35',
   deadTitle: 'Mictlan', deadSub: 'The water of the lake closes over you.', clearTitle: 'The city is free tonight',
   build,
@@ -210,7 +210,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (fbm(x * 0.012, z * 0.012 + 4, 3, 5) < 0.3 && R() < 0.7) continue;
     const s = 1.3 + R() * 1.4; far.push({ x, y: h - 0.3, z, ry: R() * 6.28, s: [s, s * (0.9 + R() * 0.4), s], c: R.pick([0xffffff, 0xd8e8d0, 0xb8d0b0, 0xe8f0c8]) });
   }
-  root.add(instanced(farTreeGeo(), M.rock, far, { cast: false }));
+  root.add(instanced(farTreeGeo(), M.rock, far, { cast: false, thin: true }));
   for (let i = 0; i < 40000 && palms.length < 520; i++) {
     const x = (R() - 0.5) * 520, z = (R() - 0.5) * 620, h = world.height(x, z), play = inPlay(x, z);
     if (h < 0.75 || h > 18 || (play && open(x, z))) continue;
@@ -223,15 +223,15 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (h < 0.7 || h > 16 || open(x, z)) continue;
     const s = 0.5 + R() * 0.6; bushes.push({ x, y: h - 0.05, z, ry: R() * 6.28, s: [s, s * (0.7 + R() * 0.5), s], c: R.pick([0xffffff, 0xc8e0c0, 0xe8f0d0]) });
   }
-  root.add(instanced(bushGeo(), windify(M.rock.clone(), shared, 0.25, 1.5, 1.8), bushes, { cast: false }));
+  root.add(instanced(bushGeo(), windify(M.rock.clone(), shared, 0.25, 1.5, 1.8), bushes, { cast: false, thin: true }));
   for (let i = 0; i < 60000 && reeds.length < 2600; i++) {
     const x = (R() - 0.5) * 200, z = (R() - 0.5) * 300, h = world.height(x, z);
     if (h < -0.7 || h > 0.9 || (Math.abs(x) < CW + 0.8 && z < 36)) continue;
     const s = 1.5 + R() * 1.6; reeds.push({ x, y: Math.max(h, -0.08) - 0.05, z, ry: R() * 6.28, s: [s * 0.8, s, s * 0.8], c: R.pick([0xb8c890, 0x98b070, 0xd0c890, 0x88a868]) });
   }
-  root.add(instanced(tuftGeo(7, 0x4a6a3a, 0xffffff), windify(M.flat2.clone(), shared, 0.3, 1, 2.2), reeds, { cast: false }));
+  root.add(instanced(tuftGeo(7, 0x4a6a3a, 0xffffff), windify(M.flat2.clone(), shared, 0.3, 1, 2.2), reeds, { cast: false, thin: true }));
   for (const [cx, cz, w, d] of CHIN) for (let i = 0; i < 46; i++) { const x = cx + (R() - 0.5) * (w - 3.4), z = cz + (R() - 0.5) * (d - 3.4), s = 1.9 + R() * 0.7; cacti.push({ x, y: world.height(x, z) - 0.05, z, ry: R() * 6, s: [s * 0.55, s, s * 0.55], c: R.pick([0xd8e890, 0xb8d070]) }); }
-  root.add(instanced(tuftGeo(5, 0x3a6a2a, 0xffffff), windify(M.flat2.clone(), shared, 0.24, 1, 1.8), cacti, { cast: false }));     // maize on the garden plots
+  root.add(instanced(tuftGeo(5, 0x3a6a2a, 0xffffff), windify(M.flat2.clone(), shared, 0.24, 1, 1.8), cacti, { cast: false, thin: true }));     // maize on the garden plots
   const nopal = [];
   for (let i = 0; i < 4000 && nopal.length < 60; i++) { const x = (R() - 0.5) * 130, z = -96 - R() * 22, h = world.height(x, z); if (h < 1 || open(x, z)) continue; const s = 0.7 + R() * 0.7; nopal.push({ x, y: h, z, ry: R() * 6, s: [s, s, s], c: 0xffffff }); }
   root.add(instanced(cactusGeo(), M.rock, nopal));

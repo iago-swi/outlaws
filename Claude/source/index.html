@@ -136,6 +136,9 @@
   #intro.duelpick { padding-bottom:5vh; } #intro.duelpick .keys { display:none; }
   #intro.duelpick h2 { font-size:clamp(34px,min(5vw,7.5vh),76px); } #intro.duelpick .story { max-width:760px; font-size:clamp(14px,2.2vh,17px); margin-top:.8vh; } #intro.duelpick .pick { margin-top:1.4vh; }
   #ver { position:absolute; right:2.2vw; bottom:2.4vh; font-size:13px; letter-spacing:.22em; color:var(--dim); opacity:.8; }
+  #gfxl { position:absolute; left:2.2vw; bottom:2.4vh; display:flex; align-items:center; gap:10px; font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:var(--dim); }
+  #gfxl select { font:inherit; font-size:14px; letter-spacing:.04em; text-transform:none; color:var(--ink); background:rgba(0,0,0,.45); border:1px solid rgba(244,234,212,.35); padding:3px 7px; cursor:pointer; } #gfxl select option { background:#1a1410; }
+  #fps { position:fixed; left:10px; top:8px; z-index:50; font:12px/1.2 ui-monospace,Consolas,monospace; color:#e8f0d8; background:rgba(0,0,0,.55); padding:3px 7px; pointer-events:none; }
   #duelbtn { margin-top:2.4vh; cursor:pointer; padding:9px 26px; font-size:15px; letter-spacing:.3em; text-transform:uppercase; color:var(--ink); border:1px solid rgba(244,234,212,.4); background:rgba(14,10,8,.5); backdrop-filter:blur(7px); transition:border-color .25s, background .25s; }
   #duelbtn:hover { border-color:var(--danger); background:rgba(60,14,8,.7); }
   #duel .big { font-size:clamp(40px,min(6vw,9vh),90px); }
@@ -143,19 +146,19 @@
   #duel .dcol { width:min(40vw,400px); padding:14px 18px 16px; background:rgba(14,10,8,.72); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); }
   #duel h3 { font-family:var(--display); font-weight:normal; font-size:24px; margin:0 0 10px; color:var(--accent); }
   #duel label { display:flex; justify-content:space-between; align-items:center; gap:12px; margin:7px 0; font-size:16px; color:var(--dim); }
-  #duel select, #duel input, #duel textarea, #duel button { font:inherit; font-size:15px; color:var(--ink); background:rgba(0,0,0,.45); border:1px solid rgba(244,234,212,.35); padding:5px 8px; }
+  #duel select, #duel input, #duel button { font:inherit; font-size:15px; color:var(--ink); background:rgba(0,0,0,.45); border:1px solid rgba(244,234,212,.35); padding:5px 8px; }
   #duel select { min-width:210px; } #duel select option { background:#1a1410; }
   #duel button { cursor:pointer; margin-top:8px; padding:7px 14px; } #duel button:hover { border-color:var(--accent); }
-  #duel textarea { width:100%; height:44px; margin-top:6px; font-family:Consolas, monospace; font-size:11px; resize:none; }
   #dlinkbox { margin-top:10px; font-size:14px; color:var(--dim); } #dlink { width:100%; margin-top:4px; }
-  #dcodeout { font-family:var(--display); font-size:30px; letter-spacing:.2em; color:var(--ink); }
-  #dcodein { width:130px; text-transform:uppercase; letter-spacing:.2em; text-align:center; }
-  #dmanual { margin-top:1.6vh; width:min(84vw,836px); text-align:left; font-size:14px; color:var(--dim); background:rgba(14,10,8,.72); border:1px solid rgba(244,234,212,.2); padding:8px 16px; }
-  #dmanual summary { cursor:pointer; color:var(--ink); } #dmanual .dpanel { margin-top:8px; } #dmanual .dcol { width:50%; background:none; border:0; padding:0; backdrop-filter:none; }
+  /* codes and links are read aloud and typed: plain upright letters and digits, never the display type */
+  #dcodeout { font-family:Consolas, 'Cascadia Mono', 'DejaVu Sans Mono', Menlo, monospace; font-weight:bold; font-size:30px; letter-spacing:.24em; margin-left:.3em; color:var(--ink); user-select:text; -webkit-user-select:text; }
+  #duel #dcodein { width:150px; font-family:Consolas, 'Cascadia Mono', 'DejaVu Sans Mono', Menlo, monospace; font-weight:bold; font-size:20px; text-transform:uppercase; letter-spacing:.2em; text-align:center; }
+  #duel #dlink { font-family:Consolas, 'Cascadia Mono', 'DejaVu Sans Mono', Menlo, monospace; font-size:13px; }
+  select { font-family:'Segoe UI', system-ui, -apple-system, Roboto, sans-serif !important; }   /* lists hold numbers: the text type draws old-style figures, where a 5 or a 9 is easily misread */
   #dstatus { min-height:22px; margin-top:1.4vh; font-style:italic; font-size:17px; color:var(--accent); }
   #dback { margin-top:1.2vh; cursor:pointer; }
   #dagain, #dguestnote { display:none; } #dguestnote { margin:12px 0 0; font-size:15px; color:var(--dim); line-height:1.4; }
-  #duel.linked #djoincol, #duel.linked #dmanual, #duel.linked #dcreate { display:none; }
+  #duel.linked #djoincol, #duel.linked #dcreate { display:none; }
   #duel.linked.host #dagain { display:inline-block; } #duel.linked.guest #dguestnote { display:block; }
   #duel.linked.guest select { pointer-events:none; opacity:.55; }
   .hero { cursor:pointer; width:min(21vw,250px); padding:14px 16px 14px; background:rgba(14,10,8,.55); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(6px); transition:transform .2s, border-color .2s, background .2s; }
@@ -198,6 +201,7 @@
 <div id="title" class="layer screen">
   <div class="veil"></div>
   <div id="ver"></div>
+  <label id="gfxl">Graphics <select id="gfxsel"><option value="auto">Automatic</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
   <div class="kicker">Nine frontiers &nbsp;·&nbsp; Twenty-seven legends</div>
   <h1>LONE HAND</h1>
   <div class="sub">From Dry Gulch to Tenochtitlan — one hero, alone against many.</div>
@@ -233,18 +237,11 @@
     </div>
     <div class="dcol" id="djoincol">
       <h3>Join a duel</h3>
-      <label>Code from your opponent <input id="dcodein" maxlength="5" autocomplete="off"></label>
+      <label>Code from your opponent <input id="dcodein" maxlength="12" autocomplete="off" spellcheck="false"></label>
       <button id="djoinbtn">Join</button>
       <p style="margin:14px 0 0;font-size:14px;color:var(--dim);line-height:1.4">Or simply open the invite link your opponent sent you.<br>The two computers talk to each other directly; each player can see the other's network address.</p>
     </div>
   </div>
-  <details id="dmanual">
-    <summary>Invite link not working? Connect with copy-paste codes instead</summary>
-    <div class="dpanel">
-      <div class="dcol"><b>If you create the duel</b> (settings as chosen above)<br><button id="mhost">1. Make my code</button><textarea id="moffer" readonly placeholder="Your code appears here. Click it to copy, and send it to your opponent."></textarea><textarea id="manswerin" placeholder="2. Paste your opponent's reply here"></textarea><button id="mconnect">3. Connect</button></div>
-      <div class="dcol"><b>If you join</b><br><textarea id="mofferin" placeholder="1. Paste the code you received here"></textarea><button id="mreply">2. Make my reply</button><textarea id="manswer" readonly placeholder="Your reply appears here. Click it to copy, and send it back."></textarea></div>
-    </div>
-  </details>
   <div id="dstatus"></div>
   <div class="foot" id="dback">Back to the chapters</div>
 </div>
@@ -260,7 +257,7 @@
   <div id="heroes"></div>
 </div>
 
-<div id="pause" class="layer screen mid"><div class="veil"></div><div class="big">Paused</div><div class="go">Click to resume</div><div class="sub" style="font-size:16px;margin-top:2vh">M — sound on/off &nbsp;·&nbsp; Q — back to the chapters</div></div>
+<div id="pause" class="layer screen mid"><div class="veil"></div><div class="big">Paused</div><div class="go">Click to resume</div><div class="sub" style="font-size:16px;margin-top:2vh">M — sound on/off &nbsp;·&nbsp; G — graphics &nbsp;·&nbsp; Q — back to the chapters</div><div class="sub" id="gfxnow" style="font-size:14px;margin-top:1vh;opacity:.75"></div></div>
 <div id="dead" class="layer screen mid"><div class="veil"></div><div class="big"></div><div class="sub"></div><div class="go">Click to try again</div></div>
 <div id="clear" class="layer screen mid"><div class="veil"></div><div class="kicker"></div><div class="big"></div><div class="stats"></div><div class="go"></div></div>
 <div id="scope"></div>

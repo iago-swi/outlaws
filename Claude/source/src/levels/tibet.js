@@ -16,7 +16,7 @@ export const tibet = {
     { look: 'pachen', name: 'Ani Pachen', who: 'The warrior nun who led her clan on horseback', trait: 'Rider', effect: 'pistol; moves 20% faster', weapon: 'revolver', weaponName: 'Pistol & knife', mods: { speed: 1.2 }, sleeve: 0x7a1c22, cuff: 0xd9a020 },
     { look: 'songtsen', name: 'Songtsen Gampo', who: 'The king who founded the Tibetan empire', trait: 'King of old', effect: 'bow and sword; takes 20% less damage', weapon: 'bow', weaponName: 'Bow & sword', alt: 'right mouse — sword', mods: { armor: 0.8 }, sleeve: 0xa01c1c, cuff: 0xd9b23a },
   ],
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
   foes: 'soldiers remain', foesNone: 'The pass is open', bossName: 'Commander Zhao', bossDown: 'The column has lost its commander', pickupText: 'Butter tea  +35',
   deadTitle: 'Snow closes the road', deadSub: 'The caravan waits for a scout who does not return.', clearTitle: 'The pass is open',
   build,
@@ -294,7 +294,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
   root.add(instanced(rockGeo(5, 1), M.rock, rocks));
   root.add(instanced(new THREE.IcosahedronGeometry(1, 1), M.rock, shrubs));
-  root.add(instanced(tuftGeo(5, 0xa8904a, 0xffffff), windify(M.flat2.clone(), shared, 0.26, 1, 2.4), tufts, { cast: false }));
+  root.add(instanced(tuftGeo(5, 0xa8904a, 0xffffff), windify(M.flat2.clone(), shared, 0.26, 1, 2.4), tufts, { cast: false, thin: true }));
   root.add(makeAmbient(shared, { count: 320, box: 40, boxY: 14, size: 0.04, colorA: 0xffffff, colorB: 0xfff4d8, alpha: 0.55, fall: -0.02, wind: [0.9, 0, 0.3], flutter: 0.9 }));
   const eagle = new THREE.Mesh(merge([gBox(2.8, 0.03, 0.55, 0x2a2018, [0, 0, 0]), gBox(0.3, 0.06, 1.0, 0x2a2018, [0, 0, 0.1]), gBox(0.5, 0.03, 0.3, 0x2a2018, [0, 0, 0.6])]), M.flat); root.add(eagle);
 

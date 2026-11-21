@@ -16,7 +16,7 @@ export const greece = {
     { look: 'achilles', name: 'Achilles', who: 'Greatest warrior of the Trojan War', trait: 'Nearly invulnerable', effect: 'takes 35% less damage', mods: { armor: 0.65 }, sleeve: 0xd8a882, cuff: 0xd9b23a },
     { look: 'heracles', name: 'Heracles', who: 'Strongest of heroes, of the twelve labours', trait: 'Strength of ten', effect: 'starts with 170 health', mods: { hp: 170 }, sleeve: 0xc0875c, cuff: 0xc9963a },
   ],
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw a javelin &nbsp; <kbd>Right mouse</kbd> sword cut',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw a javelin &nbsp; <kbd>Right mouse</kbd> sword cut',
   foes: 'Spartans remain', foesNone: 'The island is yours again', bossName: 'Lykos, captain of Sparta', bossDown: 'The Spartan captain has fallen', pickupText: 'Ambrosia  +35',
   deadTitle: 'To the shades', deadSub: 'The ferryman takes his coin.', clearTitle: 'Ithaca is home again',
   build,
@@ -283,8 +283,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (i % 9 === 0) poppies.push({ x: x + 0.3, y: h, z: z + 0.2, ry: R() * 6, s: 0.7 + R() * 0.6, c: R.pick([0xe0301c, 0xe0301c, 0xf0d040, 0xffffff]) });
     if (i % 120 === 0 && !built(x, z)) { const s = 0.5 + R() * 0.6; bushes.push({ x, y: h + 0.2, z, ry: R() * 6, s: [s * 1.3, s * 0.8, s * 1.3], c: R.pick([0x5a7040, 0x6a7c4a, 0x4c6238]) }); }
   }
-  root.add(instanced(tuftGeo(5, 0xa89a5a, 0xffffff), windify(M.flat2.clone(), shared, 0.22, 1, 2.0), tufts, { cast: false }));
-  root.add(instanced(merge([gBox(0.012, 0.3, 0.012, 0x4a6a2a, [0, 0.15, 0]), xf(new THREE.IcosahedronGeometry(0.06, 0), [0, 0.32, 0], [0, 0, 0], [1, 0.6, 1], 0xffffff)]), windify(M.flat.clone(), shared, 0.2, 0.4, 2.0), poppies, { cast: false }));
+  root.add(instanced(tuftGeo(5, 0xa89a5a, 0xffffff), windify(M.flat2.clone(), shared, 0.22, 1, 2.0), tufts, { cast: false, thin: true }));
+  root.add(instanced(merge([gBox(0.012, 0.3, 0.012, 0x4a6a2a, [0, 0.15, 0]), xf(new THREE.IcosahedronGeometry(0.06, 0), [0, 0.32, 0], [0, 0, 0], [1, 0.6, 1], 0xffffff)]), windify(M.flat.clone(), shared, 0.2, 0.4, 2.0), poppies, { cast: false, thin: true }));
   root.add(instanced(new THREE.IcosahedronGeometry(1, 1), M.rock, bushes));
 
   // ---- atmosphere ---------------------------------------------------------------------------------
