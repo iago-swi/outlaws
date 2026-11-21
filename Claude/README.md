@@ -1,5 +1,7 @@
 # Lone Hand — Claude version
 
+**Version 1.0.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+
 A first-person shooter in eight chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
 a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
@@ -30,7 +32,7 @@ files.
 | :---: | :---: |
 | <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Dry Gulch: a row of three heroes marked with gold stars (Wyatt Earp, Calamity Jane, Billy the Kid) above a row of three villains marked with red skulls (Jesse James, Ike Clanton, Belle Starr), with Wyatt Earp standing in the desert"> | <img src="screenshot-duel.jpg" width="400" alt="A duel in the main street of Dry Gulch at golden hour: the other player, as Jesse James in a long coat, stands by the well; the score line reads You 0–0 Jesse James, round 1; the six-shooter is in the foreground"> |
 
-![The title screen: the game's name over a Japanese garden at dusk, eight chapter cards in two rows and the Duel button](screenshot-title.jpg)
+![The title screen: the game's name over a Japanese garden at dusk, eight chapter cards in two rows, the Duel button, and the version number in the bottom right corner](screenshot-title.jpg)
 
 ## Run it
 
@@ -665,6 +667,15 @@ Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has th
 colliders because every bamboo stalk near the path is solid; chapter V comes second
 since each of its four longships is about 130 collision boxes. Chapter VII is the lightest
 in triangles: a city of boxes with painted windows.
+
+### Versions
+
+The game carries a version number, `MAJOR.MINOR.PATCH`: a fix raises the last part, something
+new to play raises the middle one, a rebuilt game the first. The number lives in one place,
+`package.json`; the build writes it onto the title screen. Every published version has an
+entry in [CHANGELOG.md](CHANGELOG.md), a Git tag `lone-hand-vX.Y.Z`, and a
+[release on GitHub](https://github.com/iago-swi/outlaws/releases) that carries the notes and
+the game as one HTML file. The Gemini version in this repository keeps its own numbering.
 
 ### Build from source
 

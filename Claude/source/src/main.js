@@ -67,6 +67,7 @@ class Game {
     // hero cards: pointing at one previews that hero in the opening shot, clicking starts the chapter
     const cardOf = (e) => { const c = e.target.closest('.hero'); return c ? +c.dataset.hero : -1; };
     $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k); });
+    $('#ver').textContent = 'v' + __APP_VERSION__;                // from package.json, at build time
     $('#foesel').addEventListener('change', (e) => { this.foeWant = +e.target.value; e.target.blur(); if (this.state === 'intro' && !(this.duel && this.duel.active)) this.spawnEnemies(); });
     $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && !(this.duel && this.duel.myPick >= 0)) { this.applyHero(k); this.begin(); } });
     bindDuelUI(this);
