@@ -14,7 +14,7 @@ export const war = {
     { look: 'hall', name: 'Virginia Hall', who: 'American spy, “the limping lady”', trait: 'Spy', effect: 'Sten gun; sentries notice her much later', mods: { stealth: 0.55 }, sleeve: 0xa8946a, cuff: 0x7a6a48 },
     { look: 'bavaud', name: 'Maurice Bavaud', who: 'Of Neuchâtel, who set out to shoot Hitler in 1938', trait: 'Sure hand', effect: 'pistol whose shots hit 60% harder', weapon: 'revolver', weaponName: 'Pistol & knife', mods: { gun: 1.6 }, sleeve: 0x2a3040, cuff: 0xe0dcd0 },
   ],
-  keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
+  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
   foes: 'sentries remain', foesNone: 'The guns are silent', bossName: 'Major Kessler', bossDown: 'The battery has lost its commander', pickupText: 'Calvados  +35',
   deadTitle: 'Missing in action', deadSub: 'London waits for a signal that never comes.', clearTitle: 'The guns are silent',
   build,

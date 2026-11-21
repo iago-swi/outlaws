@@ -86,20 +86,20 @@ VIII they are bystanders and take no part in the fight.
 
 ### Climb, jump and hide
 
-Press `C` or `Caps Lock` to crouch. A crouching player moves at half speed, is noticed
+Press `C` to crouch. A crouching player moves at half speed, is noticed
 from 40% less far, is hidden by anything about a metre high, and fits through low doors.
 Ladders need no key: face one and walk into it, and you climb; at the top you step onto
 the roof or the deck. A jump clears about 1.3 m.
 
 ![The view from the top of Lookout Butte in Dry Gulch: a boulder to crouch behind, the roofs of the town below, the saloon, the jail, the sheriff's office and the bank along the main street, the church on the right, mesas on the horizon, the six-shooter in the foreground](screenshot-butte.jpg)
 
-![The great boulder of Uri in a flowering meadow: a tall grey rock with a flat grassy top and a slim iron cross at its rim, a stair of rough stone slabs winding up its flank on a bank of grass and stones, pines, the lake and snow peaks behind](screenshot-boulder.jpg)
+![The great boulder of Uri in a flowering meadow: a tall grey rock with a flat grassy top and a slim iron cross at its rim, a wooden ladder leaning against its flank, pines, the lake and snow peaks behind](screenshot-boulder.jpg)
 
 | Chapter | Places for an ambush or a sniper |
 | --- | --- |
 | I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, each reached by a ladder at the back; a root cellar with a crawl-in door; the low walls of a ruined adobe; the church tower: a stair to the choir gallery, then a square spiral of steps inside the tower to the belfry, 11 m up, with a parapet to crouch behind |
 | II | a watch platform in the dojo court; a tea hut whose door is a crawl-in hatch |
-| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top, a summit cross of dark iron and a stair of rough stone slabs winding up its flank; a hunter's high seat near the start |
+| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top and a summit cross of dark iron, reached by a wooden ladder that leans against its flank; a hunter's high seat near the start |
 | IV | a lookout above the landing beach; an old cistern to crawl into |
 | V | a watch platform in the village; an earth cellar; the decks of the longships |
 | VI | a hunter's stand among the hedgerows; a dugout; the ruined church |
@@ -107,8 +107,8 @@ the roof or the deck. A jump clears about 1.3 m.
 | VIII | a lookout beside the road; a hermit's cell |
 
 Every watch platform, lookout, high seat and hunter's stand has a ladder too.
-Enemies can follow you up anything that has steps: the butte and the boulder can be
-stormed, and each is held by a marksman when you arrive. Enemies cannot climb ladders or jump, so roofs,
+Enemies can follow you up anything that has steps: the butte can be
+stormed. Both the butte and the boulder are held by a marksman when you arrive. Enemies cannot climb ladders or jump, so roofs,
 platforms and high seats are safe from blades, though not from bullets, and they cannot
 get through a crawl-in door at all. The church tower is an exception among the stairs:
 it has two storeys above its ground floor, and the route grid knows one floor per spot,
@@ -121,7 +121,12 @@ card to see the figure in the opening shot, then click it, or press `1` to `3` a
 `Enter`. Every hero has their own look and one strength; in chapters VI to VIII the heroes
 also carry different weapons.
 
-![The hero selection for Dry Gulch: cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
+Above the cards, the **Enemies** list sets how many enemies the chapter holds: all of
+them (the default), or any number from 10 to 30, as far as the chapter has that many.
+The boss always stays; the others are chosen evenly through the chapter, so the whole map
+remains guarded. The choice is kept for the next chapter and when you retry.
+
+![The hero selection for Dry Gulch: the keys shown as arrows, the Enemies list set to All (31), and cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
 
 | Chapter | Hero | Who | Strength |
 | --- | --- | --- | --- |
@@ -252,11 +257,11 @@ has no relay server.
 
 | Key | Action |
 | --- | --- |
-| `W` `A` `S` `D` | Move |
+| `↑` `↓` `←` `→` | Move: forward, back, sidestep left and right. `W` `A` `S` `D` do the same. The mouse turns the view |
 | `Shift` | Run |
 | `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
-| `W`, facing a ladder | Climb it (no extra key) |
-| `C` or `Caps Lock` | Crouch on and off |
+| `↑`, facing a ladder | Climb it (no extra key) |
+| `C` | Crouch on and off |
 | Left mouse button | Fire, loose an arrow, shoot a bolt, throw a javelin or an axe |
 | Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II, IV and V and with the bow of chapter VIII |
 | `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana and the swords) |
@@ -285,7 +290,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | | |
 | --- | --- |
 | Delivery | One `index.html` of 1.66 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 7,790 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
+| Source | About 7,800 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -305,7 +310,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
 | [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its winding stair and summit cross, ladders, raised hides and crawl-in dens. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its leaning ladder and summit cross, ladders, raised hides and crawl-in dens. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
 | [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
@@ -440,7 +445,7 @@ rotated about the vertical axis, vertical cylinders, and the terrain height func
 
 - **Walking.** The player and enemies are vertical capsules, 1.75 m high for the player and 1.05 m when crouching. Standing up is refused where there is no head room. Each step pushes the
   capsule out of any box or cylinder it overlaps. A ledge up to 0.5 m high is climbed
-  automatically, which makes boardwalks, stairs and the arched bridge walkable. The same rule is applied at the top of a jump (the feet rise 1 m), so a ledge up to about 1.4 m can be reached by jumping. A ladder is a line on a wall with a foot, a top and a facing: a player who stands within a metre of it, faces it and walks forward is held to it and rises at 3.4 m/s, then is carried half a metre onto the surface at the top. Slopes
+  automatically, which makes boardwalks, stairs and the arched bridge walkable. The same rule is applied at the top of a jump (the feet rise 1 m), so a ledge up to about 1.4 m can be reached by jumping. A ladder is a line on a wall with a foot, a top and a facing: a player who stands within a metre of it, faces it and walks forward is held to it and rises at 3.4 m/s, then is carried half a metre onto the surface at the top. A ladder may lean: the one against the boulder of chapter III stands 1.5 m out at its foot, just enough to clear the rock's widest bulge, and the climber follows the tilted rails. Slopes
   steeper than a per-level limit, and deep water, block movement, unless a bridge, a
   jetty or a deck within stepping reach carries the walker over the water. A move is cut into
   strides of at most 0.2 to 0.25 m, so a fast runner cannot skip over a thin wall.
@@ -649,7 +654,7 @@ once for the shadow map.
 | --- | --- | --- | --- | --- | --- |
 | I · Dry Gulch | 449 | 0.83 million | 8,400 | 575 | 53,500 |
 | II · Kagemori | 326 | 0.50 million | 11,900 | 1,703 | 40,000 |
-| III · Uri | 468 | 1.86 million | 52,700 | 609 | 153,700 |
+| III · Uri | 468 | 1.86 million | 52,700 | 546 | 153,700 |
 | IV · Ithaca | 473 | 0.84 million | 18,200 | 678 | 98,900 |
 | V · Jarnvik | 403 | 0.93 million | 2,100 | 930 | 87,700 |
 | VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 607 | 98,000 |
@@ -726,10 +731,9 @@ stair (too steep in the middle: steps of 55 cm where 50 is the limit; the stair 
 24 m long instead of 18), a tent door lower than the player, and routes that led up
 hillsides nobody can climb. The same player then crouched into a crawl-in cellar (and
 was stopped at the door when upright), climbed the ladders onto a roof in chapter I,
-onto the garages of chapter VII and into the high seat of chapter III, and walked up
-the zigzag stair of the butte and the winding stair of the boulder (which at first looked right and could not be climbed: an invisible hollow under its top landing and a grass shoulder 10 cm too low to step back from), and later into the church of chapter I, up to its gallery and round
-the spiral stair to the belfry. Crouching was tried with the `C` key; the automated browser cannot
-press Caps Lock, which uses the same code. Crouching in a duel between two browsers was
+onto the garages of chapter VII and into the high seat of chapter III, walked up
+the zigzag stair of the butte and climbed the leaning ladder onto the boulder of chapter III (which first had a winding stair that proved too hard to climb), and later into the church of chapter I, up to its gallery and round
+the spiral stair to the belfry. Crouching was tried with the `C` key, and the arrow keys were checked against `W` `A` `S` `D` (same distance, same direction, no turning). The Enemies list was tried in chapter I (31, then 15, 31 and 10, with the boss kept each time). Crouching in a duel between two browsers was
 not tried.
 
 Duel mode was tested between two tabs of one automated browser on one computer:
@@ -756,7 +760,6 @@ estimate, and frame rate on slower graphics hardware has not been measured.
   cards than the other chapters.
 - Enemies cannot jump, crouch or climb ladders. A player on a roof or in a den can only be shot at, or
   not reached at all.
-- Caps Lock stays on in the operating system after you leave the game.
 - The climbable butte of chapter I is built from layered blocks and is more angular than
   the rounded mesas on the horizon. (The boulder of chapter III was rebuilt as one irregular rock.)
 - Wind moves plants but not their shadows.
