@@ -164,7 +164,7 @@ export class Sound {
   startMusic(kind) {
     this.stopMusic();
     if (!this.ctx) return;
-    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34, war: 0.27, russia: 0.3, tibet: 0.44 }[kind] || 0.3;
+    const dt = { west: 0.29, japan: 0.4, swiss: 0.46, greece: 0.23, north: 0.34, war: 0.27, russia: 0.3, tibet: 0.44, aztec: 0.24 }[kind] || 0.3;
     this.mus = { kind, k: 0, next: this.t + 0.4, dt, walk: 2 };
     this.mus.timer = setInterval(() => {
       const m = this.mus; if (!m || !this.ctx) return;
@@ -204,6 +204,16 @@ export class Sound {
     else { this.pluck(ch[1], t, 0.2, 0.6); this.pluck(ch[2], t + 0.02, 0.2, 0.6); }
     const mel = [[[0, 3, 72]], [[0, 1, 69], [1, 2, 72]], [[0, 3, 67]], [[0, 1, 67], [1, 1, 70], [2, 1, 72]], [[0, 1, 69], [1, 2, 72]], [[0, 3, 74]], [[0, 2, 72], [2, 1, 67]], [[0, 3, 65]]];
     if (Math.floor(k / 24) % 2 === 1) for (const n of mel[bar]) if (n[0] === s) this.lead('horn', n[2] - 12, t, n[1] * m.dt * 0.95, 0.2);
+  }
+
+  music_aztec(k, t, m) {
+    // the great drum and the two-toned slit drum, rattles, a clay flute in five notes, and now and then a conch
+    const s = k % 16, bar = Math.floor(k / 16), sc = [62, 65, 67, 69, 72, 74, 77];
+    if (s === 0 || s === 6 || s === 10) this.tone({ t, f0: 96, f1: 52, dur: 0.34, vol: s === 0 ? 0.5 : 0.3, dest: this.music, rev: 0.3 });
+    if ([2, 3, 5, 8, 11, 13, 14].includes(s)) this.tone({ t, type: 'triangle', f0: s % 3 === 2 ? 330 : 247, dur: 0.09, vol: 0.15, dest: this.music });
+    if (s % 2 === 1) this.noise({ t, type: 'highpass', f0: 5200, dur: 0.05, vol: 0.045, q: 0.7, dest: this.music });
+    if (bar % 4 >= 2 && (s === 0 || s === 4 || s === 7 || s === 12)) { m.walk = Math.max(0, Math.min(sc.length - 1, m.walk + Math.floor(Math.random() * 5) - 2)); this.lead('flute', sc[m.walk] + 12, t, m.dt * (s === 12 ? 3.5 : 2.6), 0.1); }
+    if (bar % 8 === 7 && s === 0) this.lead('horn', 50, t, m.dt * 14, 0.2);
   }
 
   music_greece(k, t, m) {
@@ -276,7 +286,7 @@ export class Sound {
     this.fall = null;
     if (kind === 'swiss') this.fall = loop('lowpass', 1500, 0.4, 0);
     if (kind === 'japan') this.fall = loop('lowpass', 2600, 0.3, 0);
-    if (kind === 'greece' || kind === 'north' || kind === 'war') this.fall = loop('lowpass', 700, 0.3, 0);          // surf on the shore
+    if (kind === 'greece' || kind === 'north' || kind === 'war' || kind === 'aztec') this.fall = loop('lowpass', 700, 0.3, 0);          // surf on the shore
     this.ambKind = kind;
     this.ambTimer = setInterval(() => {
       if (!this.ctx || this.ctx.state !== 'running') return;
@@ -296,6 +306,11 @@ export class Sound {
       } else if (kind === 'russia') {
         if (r < 0.14) this.tone({ t, type: 'sawtooth', f0: 760, f1: 620, dur: 0.22, vol: 0.02, lp: 1800, dest: this.ambient, rev: 0.7 });                                // a crow
         else if (r < 0.2) for (const f of [1180, 1570]) this.tone({ t, type: 'triangle', f0: f, dur: 0.7, vol: 0.02, dest: this.ambient, rev: 0.8 });                   // a tram bell, far off
+      } else if (kind === 'aztec') {
+        if (r < 0.45) { const f = 4100 + Math.random() * 700; for (let i = 0; i < 12; i++) this.tone({ t: t + i * 0.05, type: 'square', f0: f, dur: 0.025, vol: 0.007, dest: this.ambient }); }   // crickets at dusk
+        else if (r < 0.6) for (let i = 0; i < 3; i++) this.tone({ t: t + i * 0.2, type: 'square', f0: 190, f1: 150, dur: 0.1, vol: 0.02, lp: 900, dest: this.ambient, rev: 0.5 });                // frogs in the reeds
+        else if (r < 0.68) this.tone({ t, type: 'sawtooth', f0: 1900, f1: 1300, dur: 0.3, vol: 0.016, lp: 3000, dest: this.ambient, rev: 0.6 });                                              // a parrot
+        else if (r < 0.76) for (let i = 0; i < 4; i++) this.tone({ t: t + i * 0.42, f0: 70, f1: 44, dur: 0.5, vol: 0.09, dest: this.ambient, rev: 0.9 });                                       // the drum on the Great Temple, far off
       } else if (kind === 'tibet') {
         if (r < 0.3) for (let i = 0; i < 5; i++) this.noise({ t: t + i * 0.09, type: 'bandpass', f0: 1400 + Math.random() * 600, dur: 0.07, vol: 0.02, q: 0.8, dest: this.ambient });   // prayer flags snapping
         else if (r < 0.36) this.tone({ t, type: 'sawtooth', f0: 92, f1: 88, dur: 2.2, vol: 0.03, lp: 500, dest: this.ambient, rev: 0.9 });                                // a long horn from the monastery

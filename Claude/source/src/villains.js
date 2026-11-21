@@ -46,4 +46,9 @@ export const VILLAINS = {
     { look: 'langdarma', name: 'Langdarma', who: 'The king who persecuted the Dharma, 9th century', trait: 'Horned king', effect: 'bow and sword; starts with 140 health', weapon: 'bow', weaponName: 'Bow & sword', alt: 'right mouse — sword', mods: { hp: 140 }, sleeve: 0x1a1a22, cuff: 0x7a1c22 },
     { look: 'jiangqing', name: 'Jiang Qing', who: 'Madame Mao, leader of the Gang of Four', trait: 'Red Guard', effect: 'pistol; moves 20% faster', weapon: 'revolver', weaponName: 'Pistol & knife', alt: KNIFE, mods: { speed: 1.2 }, sleeve: 0x5a6a3e, cuff: 0x4a2c14 },
   ],
+  aztec: [
+    { look: 'cortes', name: 'Hernán Cortés', who: 'Leader of the expedition that took Tenochtitlan', trait: 'Conquistador', effect: 'crossbow and halberd; takes 20% less damage', weapon: 'crossbow', weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd', mods: { armor: 0.8 }, sleeve: 0x1a1a1e, cuff: 0x8a8f96 },
+    { look: 'alvarado', name: 'Pedro de Alvarado', who: 'Cortés’s captain; the Mexica called him Tonatiuh, the Sun', trait: 'Tonatiuh', effect: 'crossbow and halberd; moves 15% faster', weapon: 'crossbow', weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd', mods: { speed: 1.15 }, sleeve: 0x8a1c1c, cuff: 0xc4cad2 },
+    { look: 'guzman', name: 'Nuño de Guzmán', who: 'A later conquistador, notorious even among his own for cruelty', trait: 'Iron hand', effect: 'crossbow and halberd; starts with 140 health', weapon: 'crossbow', weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd', mods: { hp: 140 }, sleeve: 0x3a2a3a, cuff: 0x6a6f76 },
+  ],
 };

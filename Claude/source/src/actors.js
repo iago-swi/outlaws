@@ -70,6 +70,10 @@ function weaponParts(kind, flat, metal) {
       flat.push(gBox(0.03, 0.035, 0.16, 0x3a2414, [0, -0.6, 0.02]), gBox(0.14, 0.03, 0.03, 0xc9a050, [0, -0.6, 0.11]));
       metal.push(gBox(0.012, 0.06, 0.56, STEEL, [0, -0.6, 0.4]));
       break;
+    case 'macuahuitl':  // a wooden blade set with obsidian along both edges
+      flat.push(gBox(0.035, 0.075, 0.9, 0x6a4a2a, [0, -0.6, 0.42]), gCyl(0.028, 0.028, 0.2, 0x3a2414, [0, -0.6, -0.05], [X, 0, 0], 1, 6));
+      for (let i = 0; i < 6; i++) for (const e of [-1, 1]) flat.push(gBox(0.014, 0.05, 0.1, 0x101014, [0, -0.6 + e * 0.058, 0.18 + i * 0.118]));
+      break;
     case 'club':
       flat.push(gCyl(0.085, 0.03, 0.95, 0x5a3a20, [0, -0.6, 0.38], [X, 0, 0], 1, 7));
       break;
@@ -157,6 +161,20 @@ export function makeHumanoid(M, sp) {
       break;
     case 'kasa':
       T.push(gCone(0.33, 0.16, S.hatC ?? 0xc2a35e, [0, HT + 0.04, 0], [0, 0, 0], 1, 16));
+      break;
+    case 'morion':  // the Spanish helmet: a steel bowl with a comb, its brim curling up fore and aft
+      TM.push(gSph(0.142, STEEL, [0, HT - 0.035, 0], [1, 0.95, 1.08]), gBox(0.022, 0.09, 0.3, STEEL, [0, HT + 0.07, 0]),
+        gCyl(0.205, 0.205, 0.022, STEEL, [0, HY + 0.045, 0], [0, 0, 0], [0.82, 1, 1.3], 12), gBox(0.1, 0.02, 0.1, STEEL, [0, HY + 0.085, 0.24], [-0.5, 0, 0]), gBox(0.1, 0.02, 0.1, STEEL, [0, HY + 0.085, -0.24], [0.5, 0, 0]));
+      if (S.plume) T.push(gCone(0.05, 0.34, S.plume, [0, HT + 0.2, -0.1], [-0.5, 0, 0]));
+      break;
+    case 'feather': { // a Mexica war headdress: a gold band and a fan of long plumes
+      const q = S.hatC ?? 0x1f9a5a;
+      T.push(gCyl(0.137, 0.137, 0.06, 0xd9a820, [0, HY + 0.07, 0], [0, 0, 0], 1, 12));
+      for (let i = -3; i <= 3; i++) T.push(gBox(0.045, 0.42 - Math.abs(i) * 0.04, 0.012, i % 2 ? q : 0x2ac8c0, [i * 0.055, HT + 0.2 - Math.abs(i) * 0.02, -0.05], [-0.25, 0, -i * 0.2]));
+      break;
+    }
+    case 'diadem':  // the turquoise diadem of a Mexica lord: a band rising to a point over the brow
+      T.push(gCyl(0.138, 0.138, 0.07, 0x2ac8c0, [0, HY + 0.07, 0], [0, 0, 0], 1, 12), gCone(0.09, 0.2, 0x2ac8c0, [0, HT + 0.06, 0.085], [0.25, 0, 0], [1, 1, 0.4], 4), gBox(0.03, 0.03, 0.02, 0xd9a820, [0, HY + 0.08, 0.14]));
       break;
     case 'kettle':
       TM.push(gSph(0.14, STEEL, [0, HT - 0.03, 0], [1, 0.75, 1.05]), gCyl(0.23, 0.25, 0.02, STEEL, [0, HT - 0.03, 0], [0, 0, 0], 1, 16));
@@ -381,6 +399,23 @@ export function makeHumanoid(M, sp) {
   return { group, hips, armL, armR, legL, legR, mat, scale: S.scale || 1 };
 }
 
+/**
+ * A horseman: a figure lifted into the saddle of a horse. The rig's two "legs" are the horse's fore and hind pairs, so the walk cycle
+ * moves the horse; the rider's own legs hang astride and stay still. Faces +Z.
+ */
+export function makeRider(M, sp) {
+  const man = makeHumanoid(M, sp), g = man.group, mat = man.mat, X = Math.PI / 2, coat = sp.horse ?? 0x5a3a22, dark = 0x1a120c, UP = 0.8;
+  const mk = (list) => { const o = new THREE.Mesh(merge(list), mat); o.castShadow = true; o.receiveShadow = true; return o; };
+  man.hips.position.y += UP;
+  for (const [L, e] of [[man.legL, 1], [man.legR, -1]]) { L.position.set(e * 0.3, 0.92 + UP, 0.02); L.rotation.set(-0.5, 0, e * 0.55); }
+  g.add(mk([gCap(0.36, 1.1, coat, [0, 1.35, 0], [X, 0, 0], [1, 1, 1.1]), gCap(0.17, 0.75, coat, [0, 1.95, 0.85], [0.75, 0, 0]), gCap(0.14, 0.36, coat, [0, 2.28, 1.3], [1.85, 0, 0]), gBox(0.2, 0.2, 0.2, dark, [0, 2.17, 1.55]),
+    gCone(0.05, 0.14, coat, [0.09, 2.5, 1.12]), gCone(0.05, 0.14, coat, [-0.09, 2.5, 1.12]), gBox(0.06, 0.7, 0.12, dark, [0, 2.1, 0.72], [0.75, 0, 0]), gCone(0.1, 0.9, dark, [0, 1.1, -1.0], [-2.7, 0, 0]),
+    gBox(0.5, 0.07, 0.62, 0x7a1c1c, [0, 1.73, -0.05]), gBox(0.78, 0.46, 0.05, 0x7a1c1c, [0, 1.47, -0.05], [0, X, 0])]));                      // the horse, with a red saddle cloth
+  const pair = () => mk([gCap(0.075, 0.9, coat, [0.2, -0.5, 0]), gCap(0.075, 0.9, coat, [-0.2, -0.5, 0]), gBox(0.14, 0.12, 0.16, dark, [0.2, -1.0, 0]), gBox(0.14, 0.12, 0.16, dark, [-0.2, -1.0, 0])]);
+  const fore = pair(), hind = pair(); fore.position.set(0, 1.06, 0.62); hind.position.set(0, 1.06, -0.65); g.add(fore, hind);
+  return { group: g, hips: man.hips, armL: man.armL, armR: man.armR, legL: fore, legR: hind, mat, scale: man.scale };
+}
+
 /** Guard dog: same rig interface as a figure, so the enemy code can drive it. Faces +Z. */
 export function makeDog(M) {
   const BK = 0x241c14, TAN = 0xa87a48, X = Math.PI / 2;
@@ -514,6 +549,30 @@ export function lookFor(type, r) {
     case 'medusa': return { skin: 0x8ab08a, hair: 0x2a5a2a, shirt: 0x2a4a3a, sleeve: 0x8ab08a, pants: 0x8ab08a, boots: 0x8a7a3a, belt: 0xd9b23a, hat: null, face: ['snakes'], extras: ['robe'], robe: 0x2a4a3a, sash: 0xd9b23a, weapon: 'javelin', scale: 0.98 };
     case 'antinous': return { skin: 0xd0a078, hair: 0x1a120c, shirt: 0x6a2a7a, sleeve: 0xd0a078, pants: 0xd0a078, boots: 0x8a6424, bootTop: true, belt: 0xd9b23a, hat: null, face: ['headband'], accent: 0xd9b23a, extras: ['smock', 'cape'], cape: 0x8a1c5a,
       weapon: 'javelin' };
+    // ---- chapter IX: the Spaniards and their captains, the defenders of Tenochtitlan ----
+    case 'rodelero': return { skin: pick(SKINS), hair: pick([0x1a1410, 0x3a2a1a, 0x5a3a1c]), shirt: 0x9aa0a8, sleeve: pick([0x7a2a22, 0x2a3a5a, 0x6a5a2a]), pants: pick([0x7a2a22, 0x2a3a5a, 0x4a3a2a]), boots: 0x2a1c12, bootTop: true,
+      hat: 'morion', face: r() < 0.7 ? ['beard'] : ['moustache'], extras: ['cuirass'], armor: 0xaeb4bc, aspis: 0x8a9098, aspisBoss: 0x5a5f66, weapon: 'sword' };
+    case 'ballestero': return { skin: pick(SKINS), hair: pick([0x1a1410, 0x3a2a1a]), shirt: pick([0x6a5a3a, 0x7a3a2a, 0x3a4a5a]), pants: pick([0x4a3a2a, 0x2a2a30]), boots: 0x2a1c12, bootTop: true,
+      hat: r() < 0.6 ? 'morion' : 'cowl', hatC: 0x5a3a2a, face: ['beard'], extras: ['smock', 'quiver'], weapon: 'crossbow' };
+    case 'arcabucero': return { skin: pick(SKINS), hair: pick([0x1a1410, 0x3a2a1a]), shirt: 0x9aa0a8, sleeve: pick([0x6a5a2a, 0x2a3a5a, 0x7a2a22]), pants: pick([0x4a3a2a, 0x7a2a22]), boots: 0x2a1c12, bootTop: true,
+      hat: 'morion', face: ['beard'], extras: ['cuirass', 'bandolier'], armor: 0x9aa0a8, weapon: 'rifle' };
+    case 'jinete': return { skin: pick(SKINS), hair: 0x1a1410, shirt: 0xb4bac2, sleeve: 0xb4bac2, pants: 0x8a8f96, boots: 0x2a1c12, bootTop: true, hat: 'morion', plume: 0xb01c1c, face: ['beard'],
+      extras: ['cuirass', 'cape'], armor: 0xb4bac2, cape: 0x8a1414, glove: 0x8a8f96, weapon: 'spear', horse: pick([0x5a3a22, 0x2a1c14, 0x8a6a48, 0xb8a888]) };
+    case 'cannoneer': return { skin: pick(SKINS), hair: 0x3a2a1a, shirt: 0xd8d0b8, pants: 0x4a3a2a, boots: 0x2a1c12, bootTop: true, hat: 'cowl', hatC: 0x7a2a22, face: ['beard'], extras: ['bandolier'], weapon: 'club' };
+    case 'aztecBoss': return { skin: 0xd8ac8a, hair: 0x1a1410, shirt: 0xc4cad2, sleeve: 0xc4cad2, pants: 0x9a9fa6, boots: 0x3a3a40, bootTop: true, hat: 'morion', plume: 0xd9a820, face: ['beard'],
+      extras: ['cuirass', 'cape'], armor: 0xc4cad2, cape: 0x7a1010, glove: 0x8a8f96, weapon: 'sword', aspis: 0xc9a030, aspisBoss: 0x8a1414, scale: 1.18, armR: 0.07, legR: 0.095 };
+    case 'cuauhtemoc': return { skin: 0xb07a50, hair: 0x0c0c0c, shirt: 0xf0e8d0, sleeve: 0xb07a50, pants: 0xb07a50, boots: 0x8a6a3a, belt: 0xd9a820, hat: 'feather', hatC: 0x1f9a5a, face: ['longhair'],
+      extras: ['kilt', 'cape'], kilt: 0xf0e8d0, kilt2: 0x2ac8c0, cape: 0x1f8a7a, aspis: 0x2ac8c0, aspis2: 0xd9a820, aspisBoss: 0xd9a820, weapon: 'macuahuitl', scale: 1.04 };
+    case 'tzilacatzin': return { skin: 0xa87048, hair: 0x0c0c0c, shirt: 0x2a8a4a, sleeve: 0x2a8a4a, pants: 0x2a8a4a, boots: 0x8a6a3a, belt: 0xd9a820, hat: null, face: ['topknot'],
+      extras: ['kilt'], kilt: 0xe8d8a0, kilt2: 0xb01c1c, aspis: 0xb01c1c, aspis2: 0xe8d8a0, aspisBoss: 0x2ac8c0, weapon: 'macuahuitl', scale: 1.1, armR: 0.07, legR: 0.1 };
+    case 'nezahualcoyotl': return { skin: 0xb07a50, hair: 0x0c0c0c, shirt: 0x2a6a9a, sleeve: 0xb07a50, pants: 0xb07a50, boots: 0x8a6a3a, belt: 0xd9a820, hat: 'diadem', face: ['longhair'],
+      extras: ['kilt', 'cape', 'quiver'], kilt: 0xf0e8d0, kilt2: 0x2a6a9a, cape: 0x2a6a9a, weapon: 'bow', scale: 1.02 };
+    case 'cortes': return { skin: 0xd8ac8a, hair: 0x1a1410, shirt: 0x1a1a1e, sleeve: 0x1a1a1e, pants: 0x1a1a1e, boots: 0x15120f, bootTop: true, hat: 'morion', plume: 0xf0ece0, face: ['beard'],
+      extras: ['cuirass', 'cape'], armor: 0x8a8f96, cape: 0x1a1a1e, weapon: 'sword', scale: 1.02 };
+    case 'alvarado': return { skin: 0xe0b89a, hair: 0xc85a1c, shirt: 0xb4bac2, sleeve: 0x8a1c1c, pants: 0x8a1c1c, boots: 0x2a1c12, bootTop: true, hat: null, face: ['longhair', 'beard'],
+      extras: ['cuirass', 'cape'], armor: 0xc4cad2, cape: 0xb01c1c, weapon: 'sword', scale: 1.06 };
+    case 'guzman': return { skin: 0xd0a078, hair: 0x15120f, shirt: 0x3a2a3a, sleeve: 0x3a2a3a, pants: 0x2a2a30, boots: 0x15120f, bootTop: true, hat: 'morion', face: ['longbeard'],
+      extras: ['cuirass'], armor: 0x6a6f76, weapon: 'crossbow' };
     case 'bloodaxe': return { skin: 0xd0a07a, hair: 0x8a2a14, shirt: 0x5a2424, pants: 0x3a3a40, boots: 0x2a1c12, bootTop: true, hat: 'nasal', face: ['longbeard'], extras: ['pelt', 'cape'], cape: 0x8a1414, fur: 0x4a2a1c, fur2: 0x8a5a3a, aspis: 0x8a1c1c, aspis2: 0x1a1a1a, aspisBoss: 0x9a9fa6,
       weapon: 'axe', scale: 1.08 };
     case 'ivar': return { skin: 0xe6c8b0, hair: 0xd8c890, shirt: 0x3a4a5a, pants: 0x2a2a30, boots: 0x2a1c12, bootTop: true, hat: null, face: ['longhair', 'beard'], extras: ['pelt'], peltHead: true, fur: 0x1c1c22, fur2: 0x4a4a52, weapon: 'sword', scale: 0.98 };
@@ -606,6 +665,12 @@ export const TYPES = {
   duelist: { hp: 100, speed: 0, ranged: true, range: 0, rMin: 0, rMax: 0, dmg: 0, cool: [1, 1], windup: 1, spread: 0, proj: 'bullet', pspeed: 80, sight: 0 },   // the other player in a duel
   crossbowman: { hp: 70, speed: 2.8, ranged: true, range: 60, rMin: 14, rMax: 32, dmg: 18, cool: [2.7, 3.7], windup: 0.9, spread: 0.018, proj: 'bolt', pspeed: 52, sight: 55, twoHand: true },
   knight: { hp: 190, speed: 3.3, melee: true, reach: 2.4, dmg: 28, windup: 0.5, recover: 0.8, sight: 40 },
+  rodelero: { hp: 100, speed: 3.9, melee: true, reach: 2.4, dmg: 22, windup: 0.45, recover: 0.75, sight: 40 },
+  ballestero: { hp: 70, speed: 2.8, ranged: true, range: 60, rMin: 14, rMax: 32, dmg: 18, cool: [2.7, 3.7], windup: 0.9, spread: 0.018, proj: 'bolt', pspeed: 52, sight: 55, twoHand: true },
+  arcabucero: { hp: 70, speed: 2.7, ranged: true, range: 60, rMin: 12, rMax: 30, dmg: 30, cool: [4.2, 5.4], windup: 1.1, spread: 0.035, proj: 'bullet', pspeed: 90, sight: 54, twoHand: true },   // slow to load, hard when it hits
+  jinete: { hp: 230, speed: 6.2, melee: true, reach: 3.3, dmg: 30, windup: 0.5, recover: 0.9, sight: 55, thrust: true, rider: true, hit: [[2.5, 0.22, true], [2.1, 0.34, false], [1.35, 0.62, false], [0.7, 0.45, false]] },
+  cannoneer: { hp: 90, speed: 2.6, ranged: true, range: 85, rMin: 10, rMax: 80, dmg: 45, cool: [5.5, 7.0], windup: 1.3, spread: 0.012, proj: 'ball', pspeed: 58, sight: 85 },
+  aztecBoss: { hp: 460, speed: 4.3, melee: true, reach: 2.7, dmg: 30, windup: 0.42, recover: 0.55, sight: 50, boss: true },
   swissBoss: { hp: 440, speed: 4.4, melee: true, reach: 2.7, dmg: 30, windup: 0.42, recover: 0.55, sight: 50, boss: true },
 };
 
@@ -616,7 +681,7 @@ export class Enemy {
   constructor(game, type, x, z, o = {}) {
     this.game = game; this.type = type; this.cfg = TYPES[type]; this.id = _uid++;
     const r = game.rand;
-    this.rig = this.cfg.dog ? makeDog(game.M) : makeHumanoid(game.M, lookFor(o.look ?? type, r));
+    this.rig = this.cfg.dog ? makeDog(game.M) : this.cfg.rider ? makeRider(game.M, lookFor(o.look ?? type, r)) : makeHumanoid(game.M, lookFor(o.look ?? type, r));
     this.scale = this.rig.scale;
     this.pos = new THREE.Vector3(x, game.world.groundAt(x, z, o.up !== undefined ? game.world.height(x, z) + o.up : o.y ?? 2), z);   // o.up: floor of a building on a slope
     this.home = this.pos.clone();
@@ -710,10 +775,15 @@ export class Enemy {
     this.flash = Math.max(0, this.flash - dt * 7); this.flinch = Math.max(0, this.flinch - dt * 5);
     rig.mat.emissive.setScalar(this.flash * 0.7);
 
+    if (this.poison > 0 && this.alive && !this.puppet) {                       // poison: it goes on working for five seconds, and turns the skin green
+      this.poison -= dt; this.poisonT = (this.poisonT || 0) + dt; rig.mat.color.setRGB(0.7, 1, 0.64);
+      if (this.poisonT >= 0.5) { this.poisonT = 0; G.hitEnemy(this, 7, false, this.pos.x, this.pos.y + 1.2, this.pos.z, G.player.pos.x, G.player.pos.z, true); }
+      if (this.poison <= 0 && this.alive) rig.mat.color.setRGB(1, 1, 1);
+    }
     if (this.state === 'dead') {
       this.deathT += dt;
       const t = Math.min(1, this.deathT / 0.55), e = t * t;
-      if (this.cfg.dog) rig.group.rotation.z = e * 1.45;                    // a dog rolls onto its side
+      if (this.cfg.dog || this.cfg.rider) rig.group.rotation.z = e * 1.45;  // a dog rolls onto its side, and so does a horse with its rider
       else if (this.slump) { rig.group.rotation.x = this.fallDir * e * 0.5; rig.legL.rotation.x = rig.legR.rotation.x = -e * 1.3; }
       else rig.group.rotation.x = this.fallDir * e * 1.5 + (t >= 1 ? 0 : Math.sin(t * 9) * 0.03);
       rig.group.position.y = this.pos.y + (this.slump ? -e * 0.55 : e * 0.14) * this.scale;
@@ -839,6 +909,7 @@ export class Enemy {
     } else this.moving = damp(this.moving, 0, 10, dt);
     const gy = G.world.groundAt(this.pos.x, this.pos.z, this.pos.y);
     this.pos.y = gy > this.pos.y ? gy : Math.max(gy, this.pos.y - 12 * dt);
+    if (this.pos.y < G.world.waterY - 1.2) { this.wetT = (this.wetT || 0) + dt; if (this.wetT > 1.5) { this.pos.copy(this.home); this.path = null; this.wetT = 0; } } else this.wetT = 0;   // fallen into deep water: back to where he started
 
     // ---- pose / animation ----
     let dYaw = wantYaw - this.yaw; dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
@@ -901,7 +972,7 @@ export class Enemy {
     ax += (r() - 0.5) * 2 * sp; ay += (r() - 0.5) * 1.4 * sp; az += (r() - 0.5) * 2 * sp;
     G.shots.spawn(cfg.proj, mx, my, mz, ax, ay, az, cfg.pspeed, false, cfg.dmg);
     if (G.duel) G.duel.enemyShot(cfg.proj, mx, my, mz, ax, ay, az, cfg.pspeed);
-    if (cfg.proj === 'bullet') { G.muzzle(mx + ax * 0.3, my + ay * 0.3, mz + az * 0.3, ax, ay, az, 0.7); G.sound.gun(Math.max(0.15, 0.8 - dist / 90), Math.min(1, dist / 70)); }
+    if (cfg.proj === 'bullet' || cfg.proj === 'ball') { G.muzzle(mx + ax * 0.3, my + ay * 0.3, mz + az * 0.3, ax, ay, az, cfg.proj === 'ball' ? 2.2 : 0.7); G.sound.gun(cfg.proj === 'ball' ? 1 : Math.max(0.15, 0.8 - dist / 90), Math.min(1, dist / 70)); }
     else G.sound.bow();
   }
   throwStar(dx, dy, dz, dist) {
@@ -929,8 +1000,11 @@ export class Shots {
     const streak = merge([gBox(0.03, 0.03, 1.6, 0xffc86a, [0, 0, -0.8])]);
     const javelin = merge([gCyl(0.013, 0.013, 1.5, 0x6b4526, [0, 0, -0.75], [Math.PI / 2, 0, 0], 1, 5), gCone(0.028, 0.22, 0xc9ced6, [0, 0, 0.1], [Math.PI / 2, 0, 0], 1, 5)]);
     const axe = merge([gCyl(0.016, 0.018, 0.5, 0x6b4526, [0, 0, -0.1], [Math.PI / 2, 0, 0], 1, 5), gBox(0.014, 0.18, 0.14, 0xc9ced6, [0, -0.07, 0.1]), gBox(0.03, 0.05, 0.06, 0x555a62, [0, 0, 0.12])]);
-    this.geo = { arrow, bolt, star, bullet: streak, javelin, axe };
-    this.mat = { arrow: M.flat, bolt: M.flat, star: M.metal, bullet: M.glow, javelin: M.flat, axe: M.flat };
+    const ball = gSph(0.13, 0x2a2c30, [0, 0, 0]), stone = xf(new THREE.IcosahedronGeometry(0.12, 0), [0, 0, 0], [0.4, 0.2, 0], [1, 0.8, 1.1], 0x8a8478);
+    const dart = merge([gCyl(0.008, 0.008, 0.95, 0x8a6a3a, [0, 0, -0.42], [Math.PI / 2, 0, 0], 1, 5), gCone(0.02, 0.1, 0x15161a, [0, 0, 0.1], [Math.PI / 2, 0, 0], 1, 5),
+      gBox(0.07, 0.004, 0.16, 0x1f9a5a, [0, 0, -0.84]), gBox(0.004, 0.07, 0.16, 0x2ac8c0, [0, 0, -0.84])]);
+    this.geo = { arrow, bolt, star, bullet: streak, javelin, axe, ball, dart, stone };
+    this.mat = { arrow: M.flat, bolt: M.flat, star: M.metal, bullet: M.glow, javelin: M.flat, axe: M.flat, ball: M.metal, dart: M.flat, stone: M.flat };
     this.tracerGeo = merge([gBox(1, 1, 1, 0xffe2a0, [0, 0, 0.5])]);
     this.tracerMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
     this.tracers = [];
@@ -944,7 +1018,7 @@ export class Shots {
     mesh.position.set(x, y, z);
     this.game.gfx.root.add(mesh);
     const g = grav ?? (kind === 'bullet' ? 0 : kind === 'star' ? 3 : 9);
-    const spin = kind === 'axe' ? 22 : 0;
+    const spin = kind === 'axe' ? 22 : kind === 'stone' ? 9 : 0;
     const s = { kind, mesh, x, y, z, vx: dx * speed, vy: dy * speed, vz: dz * speed, g, fromPlayer, dmg, life: 5, near: false, stuck: 0, spin };
     this.list.push(s);
     return s;
@@ -999,6 +1073,7 @@ export class Shots {
       if (hitRemote) { G.duel.send({ t: 'hit', d: s.dmg, x: s.x - _d.x * 5, z: s.z - _d.z * 5 }); s.mesh.removeFromParent(); this.list.splice(i, 1); continue; }
       if (hitEnemy) {
         G.hitEnemy(hitEnemy, s.dmg, head, s.x, s.y, s.z, P.pos.x, P.pos.z);
+        if (s.kind === 'dart' && hitEnemy.alive) hitEnemy.poison = 5;                       // the dart was poisoned
         if (s.kind === 'bullet') { s.mesh.removeFromParent(); this.list.splice(i, 1); }
         else { hitEnemy.rig.hips.attach(s.mesh); s.stuck = 30; }
         continue;

@@ -18,6 +18,7 @@
   body.theme-russia { --accent:#d8463a; --display:'IM Fell English', Georgia, serif; }
   body.theme-russia #intro h2 { text-transform:uppercase; letter-spacing:.1em; font-size:clamp(38px,min(6vw,9.5vh),96px); }
   body.theme-tibet { --accent:#e8a030; --display:'Cinzel', Georgia, serif; }
+  body.theme-aztec { --accent:#3ad0c4; --display:'Cinzel', Georgia, serif; }
   body.theme-war #intro h2 { text-transform:uppercase; letter-spacing:.08em; font-size:clamp(38px,min(6vw,9.5vh),96px); }
   * { box-sizing:border-box; }
   html,body { margin:0; height:100%; background:#000; overflow:hidden; color:var(--ink); font-family:var(--font); user-select:none; -webkit-user-select:none; }
@@ -96,8 +97,8 @@
   .kicker { font-size:15px; letter-spacing:.5em; text-transform:uppercase; color:var(--dim); margin-bottom:1.2vh; }
   h1 { font-family:var(--display); font-weight:normal; font-size:clamp(56px,min(9.4vw,17vh),150px); letter-spacing:.14em; margin:0 0 0 .14em; line-height:.95; text-shadow:0 4px 40px rgba(0,0,0,.6); }
   .sub { font-style:italic; font-size:clamp(18px,1.7vw,26px); color:var(--ink); opacity:.9; margin-top:1.4vh; text-shadow:0 2px 12px rgba(0,0,0,.8); }
-  #cards { display:grid; grid-template-columns:repeat(4, auto); gap:1.1vh .9vw; margin-top:3.2vh; }
-  .card { cursor:pointer; width:min(17vw,250px); padding:11px 14px 10px; text-align:left; background:rgba(14,10,8,.5); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); transition:transform .25s, border-color .25s, background .25s; }
+  #cards { display:grid; grid-template-columns:repeat(3, auto); gap:.9vh .9vw; margin-top:2.2vh; }
+  .card { cursor:pointer; width:min(22vw,320px); padding:7px 14px 7px; text-align:left; background:rgba(14,10,8,.5); border:1px solid rgba(244,234,212,.28); backdrop-filter:blur(7px); transition:transform .25s, border-color .25s, background .25s; }
   .card:hover { transform:translateY(-6px); border-color:var(--c); background:rgba(14,10,8,.72); }
   .card .n { font-size:13px; letter-spacing:.4em; color:var(--c); }
   .card .t { font-size:clamp(20px,2.1vw,28px); line-height:1.05; margin:8px 0 6px; }
@@ -106,7 +107,7 @@
   .card { border-top:3px solid var(--c); }
   .card .t { font-family:var(--font); font-size:clamp(19px,1.95vw,27px); letter-spacing:.02em; }
   .card.w { --c:#e8a84a; } .card.j { --c:#e0523c; } .card.s { --c:#e8e2d2; } .card.g { --c:#e6c05a; }
-  .card.n { --c:#8fd0f0; } .card.x { --c:#d6b25a; } .card.ru { --c:#d8463a; } .card.ti { --c:#e8a030; }
+  .card.n { --c:#8fd0f0; } .card.x { --c:#d6b25a; } .card.ru { --c:#d8463a; } .card.ti { --c:#e8a030; } .card.az { --c:#3ad0c4; }
   .foot { margin-top:2.2vh; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
 
   #intro { justify-content:flex-end; align-items:flex-start; text-align:left; padding:0 6vw 14.5vh; }
@@ -197,9 +198,9 @@
 <div id="title" class="layer screen">
   <div class="veil"></div>
   <div id="ver"></div>
-  <div class="kicker">Eight frontiers &nbsp;·&nbsp; Twenty-four legends</div>
+  <div class="kicker">Nine frontiers &nbsp;·&nbsp; Twenty-seven legends</div>
   <h1>LONE HAND</h1>
-  <div class="sub">From Dry Gulch to the passes of Tibet — one hero, alone against many.</div>
+  <div class="sub">From Dry Gulch to Tenochtitlan — one hero, alone against many.</div>
   <div id="cards">
     <div class="card w" data-level="0"><div class="n">I</div><div class="t">Dry Gulch</div><div class="p">Arizona Territory, 1881.<br>A revolver, a dusty street, a gang that owns the town.</div></div>
     <div class="card j" data-level="1"><div class="n">II</div><div class="t">Kagemori</div><div class="p">Japan, 1600.<br>Throwing stars and katana on the shrine path at dusk.</div></div>
@@ -209,6 +210,7 @@
     <div class="card x" data-level="5"><div class="n">VI</div><div class="t">Sainte-Aubine</div><div class="p">Normandy, 6 June 1944.<br>Silence the guns before the landing.</div></div>
     <div class="card ru" data-level="6"><div class="n">VII</div><div class="t">Stalnogorsk</div><div class="p">Soviet Union, winter of 1974.<br>A pistol against the Committee and its grey tower.</div></div>
     <div class="card ti" data-level="7"><div class="n">VIII</div><div class="t">Che La</div><div class="p">Tibet, March 1959.<br>Open the road for the Dalai Lama's escape.</div></div>
+    <div class="card az" data-level="8"><div class="n">IX</div><div class="t">Tenochtitlan</div><div class="p">Mexico, 30 June 1520.<br>Poisoned darts on the causeway at dusk.</div></div>
   </div>
   <div class="foot">Choose a chapter</div>
   <div id="duelbtn">Duel &nbsp;·&nbsp; two players online</div>
@@ -221,7 +223,7 @@
   <div class="dpanel">
     <div class="dcol">
       <h3 id="dhosttitle">Create a duel</h3>
-      <label>Chapter <select id="dlevel"><option value="0">I · Dry Gulch</option><option value="1">II · Kagemori</option><option value="2">III · Uri</option><option value="3">IV · Ithaca</option><option value="4">V · Jarnvik</option><option value="5">VI · Sainte-Aubine</option><option value="6">VII · Stalnogorsk</option><option value="7">VIII · Che La</option></select></label>
+      <label>Chapter <select id="dlevel"><option value="0">I · Dry Gulch</option><option value="1">II · Kagemori</option><option value="2">III · Uri</option><option value="3">IV · Ithaca</option><option value="4">V · Jarnvik</option><option value="5">VI · Sainte-Aubine</option><option value="6">VII · Stalnogorsk</option><option value="7">VIII · Che La</option><option value="8">IX · Tenochtitlan</option></select></label>
       <label>Rules <select id="drules"><option value="rounds">First to 3 rounds</option><option value="one">One life</option><option value="timed">5 minutes, most kills</option></select></label>
       <label>Computer enemies, hostile to both <select id="dfoes"><option value="0">None</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></label>
       <button id="dcreate">Create and get the invite link</button>
