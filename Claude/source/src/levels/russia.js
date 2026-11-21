@@ -4,7 +4,7 @@ import { Heightfield, prismGeo } from '../build.js';
 import { makeAmbient } from '../gfx.js';
 import { signTexture, drawTexture } from '../tex.js';
 import { makeHumanoid } from '../actors.js';
-import { instanced, room, bars, steps, barrel, crate, gCyl, merge } from '../props.js';
+import { instanced, room, bars, steps, shelf, barrel, crate, gCyl, merge } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const russia = {
@@ -98,7 +98,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   };
   const bench = (x, z, ry = 0) => { B.box(M.woodH, 1.8, 0.1, 0.45, x, 0.4, z, { ry, c: 0x6a5a3a }); B.box(M.woodH, 1.8, 0.4, 0.08, x - Math.sin(ry) * 0.2, 0.55, z - Math.cos(ry) * 0.2, { ry, c: 0x6a5a3a }); world.addBox(x, z, 1.8, 0.5, ry, 0, 0.9); };
   const statue = (x, y, z, ry, s, spec, pose) => {
-    const c = 0x5e6468, f = makeHumanoid(M, { skin: c, hair: c, shirt: c, sleeve: c, pants: c, boots: c, belt: c, coat: c, ...spec, scale: s });
+    const c = 0x5e6468, f = makeHumanoid(M, { lip: c, skin: c, hair: c, shirt: c, sleeve: c, pants: c, boots: c, belt: c, coat: c, ...spec, scale: s });
     f.group.position.set(x, y, z); f.group.rotation.y = ry; pose(f); root.add(f.group);
   };
   const trees = [];
@@ -256,6 +256,79 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
   root.add(instanced(merge([gCyl(0.07, 0.13, 5, 0xe6e4de, [0, 2.5, 0], [0, 0, 0], 1, 6), gCyl(0.02, 0.07, 2.6, 0xd8d6d0, [0, 6.2, 0], [0, 0, 0], 1, 5),
     ...[0, 1, 2, 3, 4, 5, 6].map((i) => gCyl(0.012, 0.045, 2.4, 0x3a3432, [Math.cos(i * 2.2) * 0.75, 3.7 + i * 0.36, Math.sin(i * 2.2) * 0.75], [Math.sin(i * 2.2) * 0.8, 0, -Math.cos(i * 2.2) * 0.8], 1, 4))]), M.flat, trees));
+  // ---- the hammer and sickle: on the flags, the tower, the monument, the palace -------------------------
+  const extraFoes = [], extraPicks = [];
+  const EMB = new THREE.MeshStandardMaterial({ roughness: 0.9, side: THREE.DoubleSide, map: (() => {
+    const t = drawTexture(256, 256, (g, w, h) => {
+      g.fillStyle = '#b01414'; g.fillRect(0, 0, w, h); g.fillStyle = g.strokeStyle = '#f2c230'; g.lineCap = 'round';
+      const D = Math.PI / 180;
+      g.beginPath(); g.arc(128, 118, 82, 125 * D, -125 * D, true); g.arc(120, 112, 64, -118 * D, 118 * D, false); g.closePath(); g.fill();      // the sickle's blade
+      g.lineWidth = 20; g.beginPath(); g.moveTo(86, 176); g.lineTo(58, 212); g.stroke();                                                    // its handle
+      g.lineWidth = 15; g.beginPath(); g.moveTo(198, 214); g.lineTo(96, 104); g.stroke();                                                   // the hammer's handle
+      g.save(); g.translate(88, 96); g.rotate(Math.atan2(-110, -102)); g.fillRect(-14, -36, 30, 72); g.restore();                           // and its head
+    });
+    t.userData.own = true; return t; })() });
+  const emblem = (x, y, z, sz, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(sz, sz), EMB); m.position.set(x, y, z); m.rotation.y = ry; root.add(m); };
+  for (const sg of [-1, 1]) for (const k of [14, 24, 34]) { emblem(sg * k + 0.72, 9.32, -30.97, 0.78); emblem(sg * k + 0.72, 9.32, -31.03, 0.78, PI); }
+  emblem(0, 41, -61.9, 7.5); emblem(0, 5.95, -0.76, 1.7); emblem(-44.7, 12.35, -6, 1.9, PI / 2); emblem(59.9, 19.5, -6, 4.6, -PI / 2);
+
+  { // metro pavilion south of the square: turnstiles, a ticket window, the way down closed by a grille
+    const x = 28, z = 34.5;
+    room(B, M, x, 0, z, { w: 12, d: 8, h: 4.4, t: 0.4, mat: M.plaster, c: 0xc8c2b4, base: 0.6, doors: [{ side: 'w', at: 0, w: 2.8, h: 2.8 }, { side: 'n', at: -2.5, w: 2.8, h: 2.8 }], wins: [{ side: 's', at: -1.5, w: 5, y: 1.2, h: 1.8 }],
+      floor: { mat: M.cobble, c: 0x9a8a80 }, ceil: { mat: M.plaster, c: 0xb8b2a4 } });
+    roofed(x, 4.6, z, 12, 8);
+    sign('МЕТРО', x - 6.1, 3.65, z, 4.2, 0.8, { ry: -PI / 2, bg: '#1c2a4a', fg: '#f0e8c8' }); sign('МЕТРО', x - 2.5, 3.65, z - 4.1, 4.2, 0.8, { ry: PI, bg: '#1c2a4a', fg: '#f0e8c8' });
+    B.box(M.metal, 0.16, 2.0, 0.16, x - 5, 5.3, z - 3, { c: IRON }); sign('М', x - 5, 8.1, z - 3, 1.7, 1.7, { ry: -PI / 4, bg: '#f0ece0', fg: '#d01818' });
+    for (const k of [-3.3, -1.25, 0.8]) { B.box(M.metal, 1.3, 1.0, 0.35, x - 1.5, 0.06, z + k, { c: 0x6a6e74, solid: true }); B.box(M.glow, 0.16, 0.06, 0.2, x - 2.0, 1.07, z + k, { c: 0x40ff70 }); }
+    B.box(M.plaster, 2.4, 2.7, 2.5, x - 1.5, 0.06, z + 2.3, { c: 0x8a9aa6, solid: true }); B.box(M.glow, 0.05, 0.7, 1.2, x - 2.72, 1.2, z + 2.3, { c: 0xffe0a0 }); sign('КАССА', x - 2.74, 2.25, z + 2.3, 1.6, 0.36, { ry: -PI / 2, bg: '#e8e0d0', fg: '#1c2a4a' });
+    bars(B, M, x + 1.2, z - 3.6, x + 1.2, z + 1.05, 0.06, 3.2); sign('ЗАКРЫТО', x + 1.12, 2.3, z - 1.3, 2.4, 0.5, { ry: -PI / 2, bg: '#e8e0d0', fg: '#a01818' });
+    B.box(M.flat, 0.1, 3.0, 3.8, x + 5.5, 0.06, z - 1.4, { c: 0x0c0c10 }); for (const k of [-2.6, -1.4, -0.2]) B.box(M.metal, 3.6, 0.12, 0.16, x + 3.6, 0.55, z + k, { rz: -0.32, c: 0x2a2a2e });
+    emblem(x + 5.42, 3.55, z - 1.4, 1.0, -PI / 2);
+    B.box(M.woodH, 0.5, 0.45, 2.6, x - 5.2, 0.06, z + 2.4, { c: 0x6a5a3a, solid: true });
+    for (const k of [-3, 3]) B.box(M.glow, 2.6, 0.08, 0.3, x + k, 4.3, z, { c: 0xf0f4ff });
+    extraFoes.push(['militia', x - 3.6, z - 0.4, { patrol: false }]); extraPicks.push([x - 4.4, z - 2.8]);
+  }
+  { // the district library: rows of shelves to hide between
+    const x = -80, z = -44;
+    room(B, M, x, 0, z, { w: 18, d: 12, h: 4.4, t: 0.45, mat: M.plaster, c: 0xd0c8b0, base: 0.6, doors: [{ side: 'e', at: 2.5, w: 2.4, h: 2.6 }, { side: 's', at: 5.5, w: 2.0, h: 2.5 }], wins: [{ side: 's', at: -3, w: 5, y: 1.1, h: 1.9 }],
+      floor: { mat: M.woodH, c: 0x7a5a3a }, ceil: { mat: M.plaster, c: 0xc0b8a0 } });
+    roofed(x, 4.6, z, 18, 12); sign('БИБЛИОТЕКА', x + 9.1, 3.7, z + 2.5, 6.4, 0.8, { ry: PI / 2, bg: '#d0c8b0', fg: '#2a2a4a' });
+    for (let i = 0; i < 4; i++) shelf(B, M, x - 6.2 + i * 2.6, 0.06, z - 2.7, PI / 2, 5.6, 2.3, { c: 0x5a4028, goods: [0x7a2a22, 0x2a4a6a, 0x8a7a4a, 0x3a5a3a] });
+    for (const [tx, tz] of [[x - 3.5, z + 3.3], [x + 1.5, z + 3.3]]) { B.box(M.woodH, 2.6, 0.78, 1.1, tx, 0.06, tz, { c: 0x6a4a30, solid: true }); B.box(M.glow, 0.3, 0.16, 0.2, tx, 1.1, tz, { c: 0x60d080 }); B.cyl(M.metal, 0.02, 0.02, 0.3, tx, 0.84, tz, { c: 0x2a2a2e, seg: 5 }); B.box(M.flat, 0.4, 0.04, 0.3, tx + 0.7, 0.84, tz, { ry: 0.3, c: 0xe8e0d0 }); }
+    B.box(M.woodH, 1.0, 1.05, 2.6, x + 6.4, 0.06, z - 2.6, { c: 0x4a3626, solid: true }); B.box(M.woodH, 1.8, 1.5, 0.5, x + 4.4, 0.06, z - 5.2, { c: 0x5a4028, solid: true });
+    B.box(M.cloth, 2.4, 1.5, 0.05, x + 6, 2.3, z - 5.5, { c: RED }); emblem(x + 6, 3.05, z - 5.46, 1.0);
+    for (const k of [-5, 0, 5]) B.box(M.glow, 0.3, 0.08, 4, x + k, 4.3, z, { c: 0xfff0d0 });
+    extraFoes.push(['agent', x - 4.9, z - 3, { patrol: false }], ['agent', x + 4, z + 0.6, { patrol: false }]); extraPicks.push([x - 7.6, z - 4.6]);
+  }
+  { // a new block going up: bare concrete frame, a slab you can climb to, a tower crane, the builders' hut
+    const x = -86, z = 62, C2 = 0xa8a8a4, YEL = 0xd8a020;
+    for (const px of [-7, 0, 7]) for (const pz of [-5, 0, 5]) { B.box(M.plaster, 0.6, 6.4, 0.6, x + px, -0.2, z + pz, { c: C2 }); world.addBox(x + px, z + pz, 0.6, 0.6, 0, -1, 6.2); }
+    B.box(M.plaster, 15, 0.3, 11, x, 2.9, z, { c: C2, solid: true }); B.box(M.plaster, 8, 0.3, 11, x - 3.5, 5.9, z, { c: C2, solid: true });
+    steps(B, M, x + 4.6, z + 5.5, 0, 3.2, 9, { w: 2.2, rise: 0.355, run: 0.55, mat: M.plaster, c: C2 });
+    B.box(M.plaster, 6.6, 2.9, 0.25, x - 3.5, 0, z - 5.3, { c: 0xb8b4ac, solid: true }); B.box(M.plaster, 0.25, 2.9, 4.6, x - 7.3, 0, z - 2.6, { c: 0xb8b4ac, solid: true }); B.box(M.plaster, 7, 1.1, 0.25, x - 3.5, 3.2, z - 5.3, { c: 0xb8b4ac, solid: true });
+    for (let k = 0; k < 4; k++) B.box(M.plaster, 3, 0.22, 2.6, x + 11.5, -0.05 + k * 0.26, z - 2.5, { ry: k * 0.03, c: 0xb8b4ac }); world.addBox(x + 11.5, z - 2.5, 3, 2.6, 0, -1, 1.0);
+    crate(B, M, x - 5, 3.2, z + 3, 0.9, 0.3, 0x8a7a5a); crate(B, M, x + 2, 0.02, z - 2, 1.0, 0.5, 0x8a7a5a); barrel(B, M, x + 3.4, 0.02, z - 2.6, 0x5a6a7a);
+    B.geo(M.flat, new THREE.ConeGeometry(2.2, 1.3, 9), [x + 10, 0.6, z + 6.5], [0, 0, 0], 1, 0xc8b88a); world.addCyl(x + 10, z + 6.5, 1.5, -1, 0.9);
+    B.cyl(M.metal, 0.55, 0.7, 1.0, x + 7.6, 0.5, z + 9.5, { rx: 0.5, c: 0xc86a20, seg: 10 }); B.box(M.metal, 0.9, 0.5, 1.2, x + 7.6, 0, z + 9.3, { c: 0x3a3a3e }); world.addCyl(x + 7.6, z + 9.4, 0.8, -1, 1.6);
+    { const cx = x - 11.5, cz = z + 8.5;                                                               // the crane
+      B.box(M.metal, 2.4, 0.5, 2.4, cx, -0.1, cz, { c: 0x4a4a4e, solid: true });
+      for (const a of [-1, 1]) for (const b of [-1, 1]) B.box(M.metal, 0.14, 26, 0.14, cx + a * 0.55, 0.3, cz + b * 0.55, { c: YEL });
+      for (let k = 0; k < 13; k++) for (const a of [-1, 1]) { B.box(M.metal, 0.06, 2.3, 0.06, cx + a * 0.55, 0.3 + k * 2, cz, { rx: (k % 2 ? 1 : -1) * 0.5, c: YEL }); B.box(M.metal, 0.06, 2.3, 0.06, cx, 0.3 + k * 2, cz + a * 0.55, { rz: (k % 2 ? 1 : -1) * 0.5, c: YEL }); }
+      world.addBox(cx, cz, 1.3, 1.3, 0, 0, 26);
+      B.box(M.metal, 2.0, 1.8, 2.0, cx, 26.3, cz, { c: 0xe8e4dc }); B.box(M.flat, 1.6, 0.8, 0.05, cx + 0.2, 27.0, cz - 1.01, { c: 0x1c2630 });
+      B.box(M.metal, 24, 0.7, 0.7, cx + 11, 28.1, cz - 1.5, { ry: 0.3, c: YEL }); B.box(M.metal, 7, 0.7, 0.7, cx - 3.6, 28.1, cz + 1.2, { ry: 0.3, c: YEL }); B.box(M.plaster, 2, 1.4, 1.2, cx - 6, 26.9, cz + 1.9, { ry: 0.3, c: 0x7a7a7e });
+      B.box(M.metal, 0.05, 15.6, 0.05, x + 1, 12.5, z - 2, { c: 0x2a2a2e }); B.box(M.plaster, 3.2, 2.6, 0.22, x + 1, 9.9, z - 2, { ry: 0.3, c: 0xb8b4ac });
+    }
+    { const hx = x + 13.5, hz = z - 8.5;                                                               // the builders' hut
+      room(B, M, hx, 0, hz, { w: 5, d: 3.2, h: 2.5, t: 0.2, mat: M.plaster, c: 0x4a6a8a, base: 0.5, doors: [{ side: 'w', at: 0, w: 1.7, h: 2.1 }], wins: [{ side: 's', at: 0.6, w: 1.2, y: 1.0, h: 0.9 }], floor: { mat: M.woodH, c: 0x6a5a3a }, ceil: { mat: M.woodH, c: 0x5a4a3a } });
+      B.box(M.flat, 5.3, 0.14, 3.5, hx, 2.56, hz, { c: SNOW }); B.box(M.woodH, 1.6, 0.75, 0.7, hx + 1.4, 0.06, hz - 0.9, { c: 0x5a4a3a, solid: true }); B.cyl(M.metal, 0.3, 0.3, 0.9, hx + 1.9, 0.06, hz + 0.9, { c: 0x2a2a2e, seg: 9, solid: true }); B.geo(M.glow, new THREE.SphereGeometry(0.1, 6, 5), [hx + 1.58, 0.5, hz + 0.9], [0, 0, 0], 1, 0xff7a20);
+      extraPicks.push([hx + 0.2, hz + 0.6]);
+    }
+    cwall(-99, 76, -72, 76, 2.2, 0x7a6a4a); cwall(-99, 47, -80, 47, 2.2, 0x7a6a4a); cwall(-99, 47, -99, 76, 2.2, 0x7a6a4a);
+    sign('СТРОЙКА  ·  ОПАСНО', -84, 1.5, 76.22, 6, 0.6, { bg: '#e8c020', fg: '#1a1a1a' });
+    extraFoes.push(['militia', x + 3, z + 1.5, {}], ['agent', x - 4, z - 9, {}]); extraPicks.push([x - 2, z + 2, 3.6]);
+  }
+
   // ---- the rest of the city, beyond reach ------------------------------------------------------------
   for (let i = 0; i < 44; i++) {
     const a = i / 44 * 6.283 + R() * 0.1, r = 135 + R() * 120, x = Math.cos(a) * r, z = Math.sin(a) * r - 10, h = 15 + Math.floor(R() * 4) * 6, along = R() < 0.5;
@@ -291,7 +364,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0, z: 97, yaw: 0 },
     vista: { c: [0, 8, -6], r: 62, h: 18, a: 1.5, speed: 0.03 },
-    enemies, pickups: [[-12.6, 34.4], [34.5, 53], [-36, 57], [1, 12], [-55, -12, 0, 1.8], [82, -56, 0, 1], [-34, -57.6, 0, 1.9], [6.4, -57.4, 0, 1.9]],
+    enemies: enemies.concat(extraFoes), pickups: [[-12.6, 34.4], [34.5, 53], [-36, 57], [1, 12], [-55, -12, 0, 1.8], [82, -56, 0, 1], [-34, -57.6, 0, 1.9], [6.4, -57.4, 0, 1.9]].concat(extraPicks),
     dust: [0.86, 0.9, 0.94], water: [], heroLight: 40,
     makePickup: () => new THREE.Mesh(tea, M.flat),
     update(dt, t, g) {

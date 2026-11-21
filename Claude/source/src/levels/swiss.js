@@ -65,6 +65,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const lake = smooth(-50, -76, z);
     base = base * (1 - lake) - 8 * lake;
     base -= (1 - smooth(1.5, 5.5, dPoly(STREAM, x, z))) * 1.4 * (1 - lake);
+    base -= (1 - smooth(2.5, 6.5, Math.hypot(x - 101, z - 22.5))) * 0.8;                   // the basin the waterfall drops into
     const r = Math.hypot(x * 0.95, z < 0 ? z * 0.4 : z * 0.92);
     const m = smooth(124, 340, r);
     return base + m * (36 + ridged(x * 0.0042 + 3, z * 0.0042 + 7, 5, 4) * 340) + smooth(108, 168, r) * 16 * fbm(x * 0.02 + 7, z * 0.02, 3, 9);
@@ -100,19 +101,29 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
     root.add(new THREE.Mesh(g, makeWater(shared, { deep: 0x1c5a60, scale: 2.2, flow: [-0.9, -0.7], alpha: 0.75 })));
   }
-  const fallX = 97, fallZ = 22.5, poolY = hf.h(fallX, fallZ) + 0.45, topY = poolY + 34;
+  const fallX = 97, fallZ = 22.5, poolY = hf.h(fallX, fallZ) + 0.9, topY = poolY + 34, ledgeY = poolY + 1.0;
   {
-    const crag = [];
-    for (let i = 0; i < 22; i++) {
-      const lvl = i % 5, s = 7 + R() * 6;
-      crag.push({ x: 108 + R() * 12 - lvl * 0.6, y: poolY + lvl * 7 + R() * 3, z: 6 + R() * 34, ry: R() * 6, s: [s, s * 1.1, s * 1.2], c: R.pick([0x7c7a76, 0x8c8880, 0x6e6c6a]) });
-    }
-    for (const s of [-1, 1]) crag.push({ x: 103, y: poolY + 26, z: fallZ + s * 6.5, ry: s, s: [6, 9, 5], c: 0x7c7a76 });
+    for (let i = 0; i < 22; i++) { R(); R(); R(); R(); R(); R.pick([0, 0, 0]); }     // (the same draws as the old crag, so the rest of the valley stays where it was)
+    // A crag built rock by rock around a grotto: the water leaps from an overhang, and a ledge runs behind it.
+    const G = [0x7c7a76, 0x8c8880, 0x6e6c6a], crag = [], rock = (x, y, z, sx, sy, sz, ry = 0) => crag.push({ x, y: poolY + y, z: fallZ + z, ry, s: [sx, sy, sz], c: G[crag.length % 3] });
+    for (const dz of [-13, -4.5, 4.5, 13]) rock(114.5, 3, dz, 5, 9, 5.6, dz > 0 ? 0 : Math.PI);           // the wall at the back of the grotto
+    for (const k of [-1, 1]) rock(104.5, 3.5, k * 13.2, 6.5, 10, 4.5, k > 0 ? 0 : Math.PI);                // a buttress on each side
+    for (const dz of [-6, 6]) rock(107.2, 10.6, dz, 5.6, 5.4, 8, dz > 0 ? 0 : Math.PI);                    // the overhang
+    for (const dz of [-10, 0, 10]) rock(115, 12.5, dz, 6, 6, 7);
+    for (const dz of [-9.5, -2, 6, 13.5]) rock(112, 18.5, dz, 6, 6, 6.5, 1);
+    for (const dz of [-6.5, 3, 11]) rock(115, 25.5, dz, 5.5, 6, 6, 2);
+    for (const k of [-1, 1]) { rock(108.5, 25, k * 7.2, 4.6, 8, 4.4, k); rock(117.5, 31.5, k * 5, 5, 5, 6, 3); }
+    for (const dz of [-3.3, -1.4, 1.6, 3.4]) rock(101.5, 0.75, dz, 0.75, 0.55, 0.95, dz);                  // small rocks on the lip of the ledge
     root.add(instanced(rockGeo(9, 1), M.rock, crag));
-    const n = 16, Pp = [], U = [];
-    const pt = (t) => [105.5 - 8 * Math.pow(t, 0.75), topY - (topY - poolY) * Math.pow(t, 1.35)];
+    B.box(M.rock, 6.6, 3, 15, 104.7, ledgeY - 3, fallZ, { c: 0x6a6866, solid: true });                     // the ledge behind the water
+    for (const k of [-1, 1]) {
+      steps(B, M, 101.4, fallZ + k * 5.7, -Math.PI / 2, ledgeY, 3, { w: 3.4, rise: 0.3, run: 0.65, mat: M.rock, c: 0x7c7a76 });
+      world.addBox(104.2, fallZ + k * 12.7, 9.2, 9.6, 0, poolY - 3, poolY + 10);
+    }
+    world.addBox(111.6, fallZ, 7, 42, 0, poolY - 3, poolY + 12);
+    const prof = [[110.5, 34], [108, 30], [106, 25.5], [103.8, 20], [102, 15.2], [100.7, 11.6], [100.4, 7.5], [100.3, 3.5], [100.3, -0.1]], n = prof.length - 1, Pp = [], U = [];
     for (let i = 0; i < n; i++) {
-      const [x0, y0] = pt(i / n), [x1, y1] = pt((i + 1) / n), w0 = 2.0 + i / n * 1.2, w1 = 2.0 + (i + 1) / n * 1.2;
+      const x0 = prof[i][0], y0 = poolY + prof[i][1], x1 = prof[i + 1][0], y1 = poolY + prof[i + 1][1], w0 = 1.9 + i / n * 1.5, w1 = 1.9 + (i + 1) / n * 1.5;
       Pp.push(x0, y0, fallZ - w0, x0, y0, fallZ + w0, x1, y1, fallZ + w1, x0, y0, fallZ - w0, x1, y1, fallZ + w1, x1, y1, fallZ - w1);
       U.push(0, i / n, 1, i / n, 1, (i + 1) / n, 0, i / n, 1, (i + 1) / n, 0, (i + 1) / n);
     }
@@ -125,11 +136,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
         float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
         void main(){ float t = uTime*1.7; float a = n(vec2(vUv.x*16., vUv.y*5. - t*2.2))*0.6 + n(vec2(vUv.x*40., vUv.y*9. - t*3.4))*0.5;
           a = smoothstep(0.32, 0.9, a + 0.25); float edge = smoothstep(0., 0.22, vUv.x)*smoothstep(1., 0.78, vUv.x);
-          gl_FragColor = vec4(mix(vec3(0.72,0.86,0.95), vec3(1.25), a), (0.55 + a*0.45)*edge); }`,
+          gl_FragColor = vec4(mix(vec3(0.72,0.86,0.95), vec3(1.25), a), (0.4 + a*0.5)*edge); }`,
     }));
     fall.renderOrder = 3; root.add(fall);
     const pool = new THREE.Mesh(new THREE.CircleGeometry(7, 24), makeWater(shared, { deep: 0x1c5a60, scale: 2.4, flow: [-0.5, 0.2], alpha: 0.8 }));
-    pool.rotation.x = -Math.PI / 2; pool.position.set(fallX - 1, poolY, fallZ); root.add(pool);
+    pool.rotation.x = -Math.PI / 2; pool.position.set(fallX + 0.5, poolY, fallZ); root.add(pool);
   }
 
   // ---- buildings --------------------------------------------------------------------------
@@ -168,13 +179,19 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     { const [cx, cz] = P(w * 0.32, 0); B.box(M.stone, 0.8, 1.6, 0.8, cx, y + 4.6, cz, { ry, c: 0xb0a898 }); }
     { const [sx, sz] = P(-w / 2 - 0.55, 0.5); B.box(M.wood, 0.9, 1.9, 2.0, sx, yf - 0.9, sz, { ry, c: 0xc8a878 }); }   // firewood
   };
-  const stadel = (x, z, ry) => {                                 // hay barn on staddle stones
+  let stadelN = 0;
+  const stadel = (x, z, ry) => {                                 // barn on staddle stones, open to visit: hay, cheese or tools inside
     const P = frame(x, z, ry), y = world.height(x, z);
     for (const sx of [-1, 1]) for (const sz of [-1, 0, 1]) { const [px, pz] = P(sx * 1.9, sz * 1.7); B.cyl(M.wood, 0.16, 0.2, 0.8, px, y - 0.1, pz, { c: LOG2, seg: 6 }); B.cyl(M.rock, 0.5, 0.5, 0.12, px, y + 0.7, pz, { c: 0x9a968c, seg: 8 }); }
-    B.box(M.woodH, 5, 2.7, 4.6, x, y + 0.82, z, { ry, c: LOG2 });
-    world.addBox(x, z, 5, 4.6, ry, y - 1, y + 3.6);
+    const kind = ['hay', 'cheese', 'hay', 'tools'][stadelN++ % 4], f = y + 0.88;
+    room(B, M, x, y + 0.82, z, { w: 5, d: 4.6, h: 2.7, t: 0.25, ry, mat: M.woodH, c: LOG2, base: 0.12, doors: [{ side: 's', at: 0, w: 1.7, h: 2.0 }], floor: { mat: M.woodH, c: 0x7a5a3a }, ceil: { mat: M.woodH, c: 0x5a4028 } });
+    steps(B, M, ...P(0, 2.3), ry, f, 3, { w: 1.8, rise: 0.3, run: 0.45, mat: M.woodH, c: 0x6a4c30 });
+    if (kind === 'hay') for (const [lx, lz, ly] of [[-1.3, -1.4, 0], [0.3, -1.5, 0], [-0.5, -1.45, 0.8], [1.5, -0.2, 0]]) { const [hx, hz] = P(lx, lz); B.box(M.thatch, 1.5, 0.8, 0.9, hx, f + ly, hz, { ry: ry + (ly ? 0.2 : 0), c: 0xd8bc68, solid: true }); }
+    else if (kind === 'cheese') { const [sx, sz] = P(0, -1.75); B.box(M.woodH, 4, 1.9, 0.5, sx, f, sz, { ry, c: 0x6a4c30, solid: true }); for (let i = 0; i < 8; i++) { const [cx, cz] = P(-1.6 + (i % 4) * 1.05, -1.5); B.cyl(M.flat, 0.24, 0.24, 0.14, cx, f + 0.75 + Math.floor(i / 4) * 0.62, cz, { c: 0xe8b838, seg: 12 }); } }
+    else { const [bx, bz] = P(1.5, -1.3); barrel(B, M, bx, f, bz); const [wx, wz] = P(-0.4, -1.4); crate(B, M, wx, f, wz, 0.9, ry);
+      for (let i = 0; i < 3; i++) { const [tx, tz] = P(-2.05, -1.4 + i * 0.6); B.box(M.wood, 0.05, 2.0, 0.05, tx, f, tz, { rz: 0.15, c: 0x6a4c30 }); B.box(M.metal, 0.04, 0.08, 0.5, tx, f + 1.9, tz, { c: 0xb8bcc2 }); } }
     B.geo(M.shingle, prismGeo(6.6, 1.5, 6, 3), [x, y + 3.52, z], [0, ry, 0], 1, 0x6e6a64);
-    const [dx, dz] = P(0, 2.33); B.box(M.woodH, 1.1, 1.7, 0.08, dx, y + 0.9, dz, { ry, c: 0x2a1c12 });
+    const [dx, dz] = P(-1.45, 2.8); B.box(M.woodH, 0.08, 1.9, 1.0, dx, y + 0.88, dz, { ry, c: 0x2a1c12 });          // the door stands open
   };
   chalet(-45, 51, 0.9); stadel(-37, 69, 0.3); chalet(-8, 39, -0.35, 9, 7.5); chalet(11, 29, 0.95, 8, 7); stadel(2, 47, 1.2); stadel(18, 41, -0.4);
   chalet(-86, 22, 1.2, 7.5, 6.5); stadel(-78, 35, 0.5);                                     // the alp above the village
@@ -208,6 +225,21 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.cloth, 1.5, 0.5, 0.05, x, y + 7.3, z + d / 2 + 0.06, { c: 0xb01c1c }); B.box(M.cloth, 1.5, 0.5, 0.05, x, y + 6.8, z + d / 2 + 0.06, { c: 0xf0ece0 }); B.box(M.cloth, 1.5, 0.5, 0.05, x, y + 6.3, z + d / 2 + 0.06, { c: 0xb01c1c });
     barrel(B, M, x + 1.6, y + 0.06, z - 1.6); crate(B, M, x + 1.5, y + 0.06, z + 1.5, 0.8, 0.3);
     B.box(M.woodH, 1.6, 1.4, 0.14, x - 1.2, y + 0.9, z - 2.3, { c: 0x4a3626 }); for (let i = 0; i < 4; i++) B.box(M.metal, 0.03, 1.9, 0.03, x - 1.8 + i * 0.4, y + 0.06, z - 2.2, { rx: 0.12, c: 0xc8ccd0 });
+  }
+  const extraFoes = [], extraPicks = [];
+  { // the great hay barn: a cart can drive straight through
+    const x = 26, z = 52, ry = 0.3, w = 9, d = 7, P = frame(x, z, ry);
+    const yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h: 3.6, t: 0.3, ry, mat: M.woodH, c: LOG2, base: 2.6, doors: [{ side: 'e', at: 0, w: 3, h: 3 }, { side: 'w', at: 0, w: 3, h: 3 }], wins: [{ side: 's', at: 0, w: 1.2, y: 1.3, h: 0.9 }],
+      floor: { mat: M.ground, c: 0xb89a62 }, ceil: { mat: M.woodH, c: 0x5a4028 } });
+    B.geo(M.shingle, prismGeo(d + 1.8, 2.8, w + 1.6, 3), [x, yf + 3.6, z], [0, ry + Math.PI / 2, 0], 1, 0x6e6a64);
+    steps(B, M, ...P(w / 2, 0), ry + Math.PI / 2, f, 6, { w: 3.2, c: 0xb0a898 }); steps(B, M, ...P(-w / 2, 0), ry - Math.PI / 2, f, 6, { w: 3.2, c: 0xb0a898 });
+    for (const [lx, lz, ly, r] of [[-3.3, -2.6, 0, 0], [-1.8, -2.7, 0, 0.1], [-2.6, -2.65, 0.8, 0.2], [3.2, -2.6, 0, 0], [3.3, 2.6, 0, 0.1], [1.8, 2.7, 0, 0], [2.6, 2.65, 0.8, 0.3], [-3.4, 2.5, 0, 0.2]]) { const [hx, hz] = P(lx, lz); B.box(M.thatch, 1.5, 0.8, 0.9, hx, f + ly, hz, { ry: ry + r, c: 0xd8bc68, solid: true }); }
+    { const [cx, cz] = P(0.2, -2.3); B.box(M.woodH, 2.2, 0.5, 1.2, cx, f + 0.5, cz, { ry, c: 0x7a5a3a }); B.geo(M.thatch, new THREE.SphereGeometry(0.8, 8, 6), [cx, f + 1.2, cz], [0, 0, 0], [1.3, 0.7, 0.75], 0xd8bc68); world.addBox(cx, cz, 2.2, 1.2, ry, f, f + 1.5);
+      for (const k of [-0.8, 0.8]) { const [wx, wz] = P(0.2 + k, -1.65); B.cyl(M.wood, 0.4, 0.4, 0.08, wx, f + 0.02, wz, { rx: Math.PI / 2, ry, c: 0x4a3020, seg: 12 }); } }
+    extraFoes.push(['halberdier', x, z, { up: 1.8, patrol: false }], ['crossbowman', 2, 47, { up: 1.7, patrol: false }], ['halberdier', 31, 46, {}]);
+    extraPicks.push([18, 41, 0, 1.7]);
+    extraFoes.push(['crossbowman', 105.2, fallZ + 1.5, { up: 1.2, patrol: false, yaw: -Math.PI / 2 }]); extraPicks.push([105.6, fallZ - 3.5, 0, 1.2]);   // behind the waterfall
   }
   // paddock with cows, fountain trough, hay
   fence(B, M, -22, 40, -22, 52, { c: 0x8a7458 }); fence(B, M, -22, 52, -8, 54, { c: 0x8a7458 }); fence(B, M, -8, 54, -4, 46, { c: 0x8a7458 }); fence(B, M, -22, 40, -14, 39, { c: 0x8a7458 });
@@ -295,7 +327,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
 
   // ---- forest, meadow, boulders ----------------------------------------------------------------
-  const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4 || dPoly(STREAM, x, z) < 5 || (x > 26 && x < 72 && z < -12 && z > -56) || (Math.hypot(x + 10, z - 44) < 34) || Math.hypot(x + 44, z - 14) < 8 || Math.hypot(x - fallX, z - fallZ) < 14 || Math.hypot(x + 34, z - 58) < 17 || Math.hypot(x + 84, z - 27) < 16 || Math.hypot(x - 74, z - 34) < 13;
+  const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4 || dPoly(STREAM, x, z) < 5 || (x > 26 && x < 72 && z < -12 && z > -56) || (Math.hypot(x + 10, z - 44) < 34) || Math.hypot(x + 44, z - 14) < 8 || Math.hypot(x - fallX, z - fallZ) < 14 || Math.hypot(x + 34, z - 58) < 17 || Math.hypot(x + 84, z - 27) < 16 || Math.hypot(x - 26, z - 52) < 10 || Math.hypot(x - 74, z - 34) < 13;
   const pines = [];
   for (let i = 0; i < 60000 && pines.length < 2100; i++) {
     const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), d = Math.hypot(x - 6, z - 2);
@@ -352,7 +384,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: -32, z: 60, yaw: -0.71 },
     vista: { c: [0, 6, 20], r: 60, h: 14, a: 2.2, speed: 0.03 },
-    enemies, pickups: [[-9.5, 32.5], [19, 4], [38.5, -19.5], [53, -39.5], [-41, 20], [13.1, 28.65, 0, 1.8], [-44.96, 12.24, 0, 1.8], [75.6, 35.6, 0, 1.8]],
+    enemies: enemies.concat(extraFoes), pickups: [[-9.5, 32.5], [19, 4], [38.5, -19.5], [53, -39.5], [-41, 20], [13.1, 28.65, 0, 1.8], [-44.96, 12.24, 0, 1.8], [75.6, 35.6, 0, 1.8]].concat(extraPicks),
     dust: [0.45, 0.42, 0.3], water: [[fallX, fallZ, 60], [25, -5.5, 16]],
     makePickup: () => new THREE.Mesh(cheese, M.flat),
     update(dt, t, g) {

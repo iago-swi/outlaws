@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
-import { instanced, room, steps, tuftGeo, blobTreeGeo, barrel, crate, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, room, steps, rubble, tuftGeo, blobTreeGeo, barrel, crate, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const war = {
@@ -169,18 +169,23 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   house(15, -16, -Math.PI / 2, 9, 7.5, 5.6); house(-27, 14, 0.2, 8, 7, 5.2); house(28, -22, 2.9, 8, 7, 5.2);
   { // church with its tower
     const x = 24, z = 2, y = world.height(x, z) - 0.3;
-    room(B, M, x, y + 0.3, z, { w: 9, d: 18, h: 7.2, t: 0.6, mat: M.stone, c: STONE, base: 2.4, doors: [{ side: 'w', at: 6, w: 2.0, h: 3.0 }], floor: { mat: M.cobble, c: 0xa8a294 }, ceil: { mat: M.woodH, c: 0x3a2e24 } });
-    B.geo(M.shingle, prismGeo(10, 4.4, 18.8, 3), [x, y + 7.5, z], [0, 0, 0], 1, SLATE);
+    room(B, M, x, y + 0.3, z, { w: 9, d: 18, h: 3.6, t: 0.6, mat: M.stone, c: STONE, base: 2.4, doors: [{ side: 'w', at: 6, w: 2.0, h: 3.0 }, { side: 'w', at: -5.5, w: 2.2, h: 3.6 }, { side: 'e', at: -2, w: 3.4, h: 3.6 }, { side: 'n', at: 1.6, w: 2.6, h: 3.6 }],
+      floor: { mat: M.cobble, c: 0xa8a294 }, ceil: false });   // the church was hit in the bombing: breaches in three walls, no roof
+    for (const [lx, lz, w2, d2, hh] of [[-4.2, -8.7, 0.6, 0.6, 3.6], [4.2, -8.7, 0.6, 0.6, 2.2], [-1.8, -8.7, 2.4, 0.6, 4.4], [-4.2, 1.5, 0.6, 5, 3.0], [-4.2, 8.2, 0.6, 1.6, 4.6], [4.2, 5.5, 0.6, 6, 2.6], [4.2, -6.5, 0.6, 3, 1.4], [4.2, 0.6, 0.6, 1.4, 3.8]])
+      B.box(M.stone, w2, hh, d2, x + lx, y + 3.9, z + lz, { c: STONE, solid: true });                       // what is left of the upper walls
+    for (const [bx, bz, ry, rz, L] of [[0.5, -3, 0.5, 0.35, 7], [-1.5, 3.5, -0.9, 0.5, 6], [1.8, 6, 1.4, 0.25, 5]]) B.box(M.wood, L, 0.24, 0.24, x + bx, y + 1.3, z + bz, { ry, rz, c: 0x1a1612 });   // charred roof beams
+    rubble(B, M, x + 1.5, y + 0.36, z - 1, 1.6, 0xb8b0a0, 9); rubble(B, M, x - 2, y + 0.36, z + 4.5, 1.3, 0xb8b0a0); rubble(B, M, x + 6.4, y + 0.3, z - 2, 1.8, 0xb8b0a0, 9); rubble(B, M, x - 0.5, y + 0.3, z - 11, 1.5, 0xb8b0a0); rubble(B, M, x - 6.2, y + 0.3, z - 5.5, 1.4, 0xb8b0a0);
+    fires.push([x + 1.5, y + 1.0, z - 1]);
     B.box(M.woodH, 1.0, 3.0, 0.12, x - 5.1, y + 0.3, z + 4.9, { ry: 0.5, c: 0x3a2a1c });                                             // side door, ajar
     { const f = y + 0.36;
       B.box(M.stone, 2.4, 1.1, 1.0, x, f, z - 7.4, { c: 0xc8c2b4, solid: true }); B.box(M.cloth, 2.5, 0.04, 1.1, x, f + 1.1, z - 7.4, { c: 0xf0ece0 }); B.box(M.wood, 0.1, 1.5, 0.1, x, f + 1.6, z - 8.2, { c: 0x2a2018 }); B.box(M.wood, 0.7, 0.1, 0.1, x, f + 2.5, z - 8.2, { c: 0x2a2018 });
       for (const s of [-1, 1]) { B.cyl(M.flat, 0.03, 0.03, 0.3, x + s * 0.8, f + 1.12, z - 7.4, { c: 0xe8e0c8, seg: 5 }); B.geo(M.glow, new THREE.SphereGeometry(0.045, 5, 4), [x + s * 0.8, f + 1.48, z - 7.4], [0, 0, 0], [1, 1.6, 1], 0xffb040);
         for (let i = 0; i < 5; i++) { B.box(M.woodH, 2.6, 0.45, 0.45, x + s * 2.3, f, z - 4.4 + i * 1.7, { c: 0x4a3626, solid: true }); B.box(M.woodH, 2.6, 0.5, 0.07, x + s * 2.3, f + 0.45, z - 4.2 + i * 1.7, { c: 0x4a3626 }); } } }
-    B.box(M.stone, 5.2, 15, 5.2, x, y, z + 11.4, { c: STONE, solid: true }); B.geo(M.shingle, new THREE.ConeGeometry(4.1, 8.5, 4), [x, y + 19.2, z + 11.4], [0, Math.PI / 4, 0], 1, SLATE);
-    B.box(M.flat, 0.14, 1.6, 0.14, x, y + 23.4, z + 11.4, { c: 0x2a2a2a }); B.box(M.flat, 0.8, 0.14, 0.14, x, y + 24.3, z + 11.4, { c: 0x2a2a2a });
+    B.box(M.stone, 5.2, 9, 5.2, x, y, z + 11.4, { c: STONE, solid: true });
+    for (const [a, b, hh] of [[-1.7, -1.7, 3.6], [1.7, -1.7, 1.5], [-1.7, 1.7, 2.3], [1.7, 1.7, 5.2]]) B.box(M.stone, 1.8, hh, 1.8, x + a, y + 9, z + 11.4 + b, { c: STONE });   // the broken top of the tower
+    B.cyl(M.metal, 0.5, 0.78, 1.0, x - 4.6, y + 0.5, z + 14.2, { rz: 1.25, c: 0x6a7a5a, seg: 12 }); world.addCyl(x - 4.6, z + 14.2, 0.8, y, y + 1.2); rubble(B, M, x + 3.4, y + 0.3, z + 14.6, 1.6, 0xb8b0a0, 9);   // the bell lies where it fell
     B.box(M.woodH, 1.8, 3, 0.12, x - 2.62, y + 0.3, z + 11.4, { ry: Math.PI / 2, c: 0x3a2a1c });
-    for (const zz of [-5, 0, 5]) B.box(M.flat, 0.1, 3.2, 1.2, x - 4.52, y + 2.6, z + zz, { c: 0x141c26 });
-    for (const s of [-1, 1]) B.box(M.flat, 1.0, 1.8, 0.1, x, y + 11, z + 11.4 + s * 2.62, { c: 0x0c1014 });
+    B.box(M.flat, 0.1, 1.4, 1.0, x - 4.52, y + 2.2, z, { c: 0x141c26 });
   }
   { const y = world.height(0, 2); B.box(M.cobble, 20, 0.14, 44, 0, y - 0.06, 2, { c: 0xb8b2a4 }); B.cyl(M.stone, 1.9, 2.1, 0.8, 0, y, 2, { c: STONE, solid: true, seg: 14 }); B.cyl(M.stone, 0.35, 0.45, 1.9, 0, y + 0.3, 2, { c: STONE, seg: 8 }); B.cyl(M.flat, 1.6, 1.6, 0.02, 0, y + 0.7, 2, { c: 0x0c1820, seg: 14 }); }
   tank(6.5, -8, 0.25); truck(-6.5, 12, 3.3);
@@ -191,6 +196,21 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   barrel(B, M, 9.6, world.height(9.6, 26), 26, 0x4a5248); barrel(B, M, 10.4, world.height(10.4, 26.6), 26.6, 0x4a5248); crate(B, M, -10, world.height(-10, 26), 26, 0.9, 0.3, 0x6a6a52);
   lamp(0, world.height(0, 2) + 3.2, -2, 22, 16, 0xffc890);
 
+  const extraFoes = [], extraPicks = [];
+  { // the farm's barn, and the marks of the night's bombing
+    const x = -36, z = 45, w = 7, d = 9, P = frame(x, z, 0), yf = Math.max(world.height(x, z), ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => world.height(...P(a * w / 2, b * d / 2)))) + 0.05, f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h: 3.4, t: 0.4, mat: M.stone, c: STONE, base: 2.6, doors: [{ side: 'e', at: 0, w: 3.0, h: 3.0 }], wins: [{ side: 'n', at: 0, w: 1.0, y: 1.3, h: 0.9 }], floor: { mat: M.ground, c: 0x8a7a52 }, ceil: { mat: M.woodH, c: 0x4a3a2c } });
+    B.geo(M.shingle, prismGeo(w + 0.9, 2.6, d + 0.8, 3), [x, yf + 3.4, z], [0, 0, 0], 1, SLATE);
+    steps(B, M, x + w / 2, z, Math.PI / 2, f, 6, { w: 3.2, c: 0xa8a294 });
+    for (const [lx, lz, ly] of [[-2.5, -3.6, 0], [-1.0, -3.7, 0], [-1.8, -3.65, 0.8], [-2.5, 3.6, 0], [-2.4, 2.4, 0]]) B.box(M.cloth, 1.5, 0.8, 0.9, x + lx, f + ly, z + lz, { c: 0xb8a060, solid: true });
+    B.box(M.woodH, 1.2, 0.5, 2.2, x + 1.6, f + 0.5, z + 3.0, { c: 0x5a4632 }); world.addBox(x + 1.6, z + 3.0, 1.2, 2.2, 0, f, f + 1.1); for (const k of [-0.8, 0.8]) B.cyl(M.wood, 0.42, 0.42, 0.08, x + 0.95, f + 0.02, z + 3.0 + k, { rz: Math.PI / 2, c: 0x3a2e24, seg: 12 });
+    extraFoes.push(['soldier', x - 0.4, z - 0.5, { up: 1.8, patrol: false, yaw: 1.57 }], ['soldier', 22.4, -5, { up: 1.6, patrol: false }]);
+    extraPicks.push([x - 2.4, z + 0.6, 0, 1.8]);
+    for (const [cx, cz, r] of [[-18, -46, 2.6], [22, -52, 2.2], [14, 58, 2.4], [40, 12, 2.8], [-52, 16, 2.4], [-24, 78, 2.0]]) {                     // bomb craters
+      const y = world.height(cx, cz); B.cyl(M.flat, r, r * 0.7, 0.07, cx, y + 0.02, cz, { c: 0x16130f, seg: 14 });
+      for (let k = 0; k < 4; k++) rubble(B, M, cx + Math.cos(k * 1.7) * (r + 0.5), y - 0.05, cz + Math.sin(k * 1.7) * (r + 0.5), 0.9, 0x5a5238, 4);
+    }
+  }
   // ---- the manor in the east, the mill in the west ----------------------------------------------
   {
     house(92, 22, -Math.PI / 2, 14, 9, 6.6, true);
@@ -248,7 +268,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   for (let i = 0; i < 70; i++) { const x = (R() - 0.5) * 1900, z = -620 - R() * 500, s = 0.6 + R() * 1.6; B.box(M.flat, 26 * s, 3.2 * s, 5 * s, x, 0, z, { c: 0x0c1016 }); B.box(M.flat, 8 * s, 4 * s, 4 * s, x + 2 * s, 3.2 * s, z, { c: 0x0c1016 }); B.box(M.flat, 0.8 * s, 6 * s, 0.8 * s, x - 3 * s, 4 * s, z, { c: 0x0c1016 }); }
 
   // ---- trees, grass, rocks --------------------------------------------------------------------------
-  const built = (x, z) => dPoly(ROAD, x, z) < 5 || (Math.abs(x) < 34 && Math.abs(z - 2) < 30) || (Math.abs(x) < 50 && z < -66) || (x < -8 && x > -34 && z > 38 && z < 60) || Math.hypot(x - 11, z - 98) < 9 || (x > 62 && x < 110 && z > 2 && z < 42) || Math.hypot(x + 90, z + 23) < 12;
+  const built = (x, z) => dPoly(ROAD, x, z) < 5 || (Math.abs(x) < 34 && Math.abs(z - 2) < 30) || (Math.abs(x) < 50 && z < -66) || (x < -8 && x > -34 && z > 38 && z < 60) || Math.hypot(x - 11, z - 98) < 9 || (x > 62 && x < 110 && z > 2 && z < 42) || Math.hypot(x + 90, z + 23) < 12 || Math.hypot(x + 36, z - 45) < 8;
   const apples = [], poplars = [], tufts = [], rocks = [];
   for (let i = 0; i < 3000 && apples.length < 62; i++) { const x = (R() - 0.5) * 230, z = -60 + R() * 160, h = world.height(x, z); if (built(x, z) || fbm(x * 0.05, z * 0.05, 2, 5) < 0.52) continue; const s = 0.8 + R() * 0.5; apples.push({ x, y: h - 0.15, z, ry: R() * 6.28, s }); world.addCyl(x, z, 0.3 * s, h - 2, h + 5); }
   for (let i = 0; i < 3000 && poplars.length < 54; i++) { const x = (R() - 0.5) * 236, z = -64 + R() * 168, h = world.height(x, z); if (built(x, z)) continue; const s = 0.9 + R() * 0.6; poplars.push({ x, y: h - 0.2, z, ry: R() * 6.28, s: [s, s * (1.1 + R() * 0.5), s] }); world.addCyl(x, z, 0.35 * s, h - 2, h + 9); }
@@ -291,7 +311,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0, z: 97.5, yaw: 0 },
     vista: { c: [0, 6, 20], r: 60, h: 14, a: 1.5, speed: 0.03 },
-    enemies, pickups: [[-22, 47.5], [3.5, 23], [-10, 1], [8, -47], [10, -79], [-3, -88.6, 0, 1.6], [93.5, 24.5, 0, 1.8], [-93.6, -25.4, 0, 1.8], [24, -3, 0, 1.6]],
+    enemies: enemies.concat(extraFoes), pickups: [[-22, 47.5], [3.5, 23], [-10, 1], [8, -47], [10, -79], [-3, -88.6, 0, 1.6], [93.5, 24.5, 0, 1.8], [-93.6, -25.4, 0, 1.8], [24, -3, 0, 1.6]].concat(extraPicks),
     dust: [0.5, 0.48, 0.42], water: [[0, -104, 30]], heroLight: 40,
     makePickup: () => new THREE.Mesh(bottle, M.flat),
     update(dt, t, g) {

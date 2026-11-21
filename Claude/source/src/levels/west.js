@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, room, bars, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
@@ -103,17 +103,17 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
 
   // north side (fronts face south, +z) and south side
-  bld({ x: -40, w: 12, d: 12, h: 5.4, dir: 1, wall: 0x8a4a34, text: 'LIVERY & FEED', signO: { bg: '#e8d8b0', fg: '#4a1c10' }, roofC: 0x7a5a44 });
-  bld({ x: -24, w: 11, d: 10, h: 4.7, dir: 1, wall: 0xc9b68a, text: 'GENERAL STORE', signO: { bg: '#2a4a3a', fg: '#f0e2b0' } });
+  bld({ x: -40, w: 12, d: 12, h: 5.4, dir: 1, wall: 0x8a4a34, interior: true, panel: 0x6a4a34, text: 'LIVERY & FEED', signO: { bg: '#e8d8b0', fg: '#4a1c10' }, roofC: 0x7a5a44 });
+  bld({ x: -24, w: 11, d: 10, h: 4.7, dir: 1, wall: 0xc9b68a, interior: true, panel: 0x7a6a4a, text: 'GENERAL STORE', signO: { bg: '#2a4a3a', fg: '#f0e2b0' } });
   const sal = bld({ x: -4, w: 16, d: 13, h: 7.4, dir: 1, wall: 0x9a3a2a, trim: 0xe8d8b0, balcony: true, interior: true, text: 'SALOON', signO: { bg: '#f0e0b0', fg: '#7a1810', size: 100 } });
   bld({ x: 12.5, w: 10, d: 11, h: 4.9, dir: 1, wall: 0x9a9080, trim: 0x2a2a2a, interior: true, panel: 0x8a8274, text: 'JAIL', signO: { bg: '#1c1c1c', fg: '#e8e0d0', size: 100 } });
-  bld({ x: 26, w: 8, d: 8, h: 4.3, dir: 1, wall: 0x8a7a64, text: 'SHERIFF', signO: { bg: '#e8d8b0', fg: '#1c1c1c' } });
+  bld({ x: 26, w: 8, d: 8, h: 4.3, dir: 1, wall: 0x8a7a64, interior: true, panel: 0x6a5a48, text: 'SHERIFF', signO: { bg: '#e8d8b0', fg: '#1c1c1c' } });
   bld({ x: 38, w: 9, d: 9, h: 5.0, dir: 1, wall: 0xb8a48a, trim: 0x3a3a3a, interior: true, panel: 0x3e5244, text: 'BANK', signO: { bg: '#1c1c1c', fg: '#d9b23a' } });
-  bld({ x: -38, w: 10, d: 9, h: 4.5, dir: -1, wall: 0x5a4a3e, text: 'BLACKSMITH', signO: { bg: '#1c1410', fg: '#e0a040' } });
+  bld({ x: -38, w: 10, d: 9, h: 4.5, dir: -1, wall: 0x5a4a3e, interior: true, panel: 0x3a3028, text: 'BLACKSMITH', signO: { bg: '#1c1410', fg: '#e0a040' } });
   bld({ x: -21, w: 14, d: 11, h: 7.6, dir: -1, wall: 0xd8ceb0, trim: 0x5a6a5a, balcony: true, text: 'GRAND HOTEL', signO: { bg: '#3a5a4a', fg: '#f0e2b0' } });
-  bld({ x: -4, w: 8, d: 8, h: 4.5, dir: -1, wall: 0x3a3a40, trim: 0x1c1c1c, text: 'UNDERTAKER', signO: { bg: '#1c1c1c', fg: '#c9c9c9' } });
+  bld({ x: -4, w: 8, d: 8, h: 4.5, dir: -1, wall: 0x3a3a40, trim: 0x1c1c1c, interior: true, panel: 0x2a2a30, text: 'UNDERTAKER', signO: { bg: '#1c1c1c', fg: '#c9c9c9' } });
   bld({ x: 8, w: 7, d: 8, h: 4.3, dir: -1, wall: 0xb8c4c8, trim: 0x8a2a2a, text: 'BARBER', signO: { bg: '#f0f0e8', fg: '#8a1c1c' } });
-  bld({ x: 21, w: 8, d: 8, h: 4.5, dir: -1, wall: 0xa88a5a, text: 'TELEGRAPH', signO: { bg: '#e8d8b0', fg: '#3a2a1a' } });
+  bld({ x: 21, w: 8, d: 8, h: 4.5, dir: -1, wall: 0xa88a5a, interior: true, panel: 0x7a6240, text: 'TELEGRAPH', signO: { bg: '#e8d8b0', fg: '#3a2a1a' } });
   bld({ x: 35, w: 9, d: 9, h: 4.7, dir: -1, wall: 0xc8b8a0, trim: 0x4a5a6a, text: 'DOCTOR', signO: { bg: '#f0f0e8', fg: '#1c3a5a' } });
 
   // ---- saloon interior ---------------------------------------------------------
@@ -183,6 +183,40 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const [sx, sz] of [[37.2, -13.2], [37.7, -13.5], [36.9, -13.8]]) B.geo(M.cloth, new THREE.SphereGeometry(0.26, 8, 6), [sx, F + 0.2, sz], [0, 0, 0], [1, 0.8, 1], 0xb8a070);
     B.box(M.flat, 2.2, 0.9, 0.05, 38, 2.2, -16.62, { c: 0x2a3a30 }); B.box(M.flat, 1.9, 0.66, 0.06, 38, 2.32, -16.6, { c: 0xd8c890 });
     const pl = new THREE.PointLight(0xffc070, 30, 12, 1.8); pl.position.set(38, 3.2, -12.6); root.add(pl);
+  }
+  const extraFoes = [], extraPicks = [];
+  // ---- more doors that open: store, sheriff, livery, smithy, undertaker, telegraph -------------
+  {
+    const F = 0.3;
+    // general store
+    B.box(M.woodH, 6.2, 1.05, 0.7, -25.4, F, -13.6, { c: 0x6a4a2e, solid: true }); B.box(M.woodH, 6.3, 0.06, 0.85, -25.4, F + 1.05, -13.6, { c: 0x8a6a48 });
+    shelf(B, M, -24, F, -17.35, 0, 9, 2.4); shelf(B, M, -19.2, F, -12.4, -Math.PI / 2, 3.6, 2.2);
+    barrel(B, M, -20, F, -9.6); barrel(B, M, -20.8, F, -9.4); crate(B, M, -28.3, F, -9.3, 0.8, 0.2);
+    for (const [sx, sz] of [[-27.6, -16.2], [-28.2, -15.6]]) B.geo(M.cloth, new THREE.SphereGeometry(0.3, 8, 6), [sx, F + 0.22, sz], [0, 0, 0], [1, 0.75, 1], 0xc8b890);
+    // sheriff's office with one cell
+    B.box(M.woodH, 1.6, 0.78, 0.8, 24, F, -13.2, { c: 0x5a3a22, solid: true }); B.box(M.wood, 0.45, 0.45, 0.45, 24, F, -14.3, { c: 0x6a4428 });
+    bars(B, M, 26.6, -12, 27.3, -12, F, 3.8); bars(B, M, 28.9, -12, 29.6, -12, F, 3.8); bars(B, M, 27.3, -12, 28.9, -12, 2.45, 3.8); bars(B, M, 26.6, -12, 26.6, -15.6, F, 3.8); bars(B, M, 27.3, -12, 26.9, -10.6, F, 2.45);
+    B.box(M.woodH, 0.8, 0.42, 1.9, 29.1, F, -14.4, { c: 0x5a4030, solid: true }); B.box(M.cloth, 0.76, 0.08, 1.5, 29.1, F + 0.42, -14.3, { c: 0x6a6a72 });
+    B.box(M.woodH, 1.4, 1.2, 0.12, 23.2, F + 1.0, -15.5, { c: 0x4a2c1c }); for (let i = 0; i < 3; i++) B.cyl(M.metal, 0.018, 0.018, 1.0, 22.8 + i * 0.4, F + 1.05, -15.4, { c: 0x2a2a2e, seg: 5 });
+    // livery stable: stalls, hay, a horse
+    for (const sz of [-11.5, -14.5, -17.5]) B.box(M.wood, 3.2, 1.35, 0.14, -43.9, F, sz, { c: 0x6a4a30, solid: true });
+    B.geo(M.flat, horseGeo(0x3a2a1c, 0x14100c), [-43.6, F, -13], [0, 1.57, 0]); world.addCyl(-43.6, -13, 0.8, F, 2.2);
+    for (const [hx, hz, hy] of [[-35.4, -18.6, 0], [-36.9, -18.6, 0], [-36.1, -18.6, 0.8], [-35.3, -10.2, 0]]) B.box(M.thatch, 1.5, 0.8, 0.9, hx, F + hy, hz, { c: 0xd8b860, solid: true });
+    B.box(M.woodH, 0.5, 0.9, 1.6, -38.6, F, -18.8, { c: 0x5a3a24, solid: true }); B.box(M.cloth, 0.56, 0.2, 0.7, -38.6, F + 0.9, -18.8, { c: 0x6a3420 });
+    // blacksmith: forge, anvil, tools
+    B.box(M.stone, 1.7, 0.95, 1.3, -40.6, F, 15.3, { c: 0x6a625a, solid: true }); B.box(M.glow, 1.1, 0.06, 0.8, -40.6, F + 0.95, 15.3, { c: 0xff5a1a }); B.box(M.stone, 1.3, 2.6, 0.5, -40.6, F + 0.95, 16.2, { c: 0x6a625a });
+    B.cyl(M.wood, 0.3, 0.34, 0.6, -37.6, F, 12.6, { c: 0x5a3a24, seg: 8 }); B.box(M.metal, 0.7, 0.26, 0.28, -37.6, F + 0.6, 12.6, { c: 0x3a3e44 }); world.addCyl(-37.6, 12.6, 0.4, F, 1.2);
+    barrel(B, M, -34.4, F, 15.6, 0x4a5a6a); B.box(M.woodH, 0.14, 1.4, 2.2, -42.4, F + 0.9, 11.5, { c: 0x4a2c1c }); for (let i = 0; i < 4; i++) B.box(M.metal, 0.04, 0.9, 0.06, -42.3, F + 1.0, 10.7 + i * 0.5, { c: 0x4a4e56 });
+    // undertaker: coffins on trestles and against the wall
+    for (const [cx, cz] of [[-5.6, 12], [-3.6, 13.4]]) { B.box(M.wood, 0.62, 0.42, 1.95, cx, F + 0.55, cz, { c: 0x3a2618 }); B.box(M.wood, 0.5, 0.55, 1.5, cx, F, cz, { c: 0x5a4030 }); world.addBox(cx, cz, 0.62, 1.95, 0, F, F + 1.0); }
+    for (const cx of [-6.8, -5.9]) B.box(M.wood, 0.62, 1.95, 0.42, cx, F, 15.3, { rx: -0.12, c: 0x2a1c12 }); world.addBox(-6.3, 15.3, 1.7, 0.5, 0, F, F + 2);
+    B.box(M.woodH, 1.3, 0.76, 0.7, -1.4, F, 10, { c: 0x2a2018, solid: true });
+    // telegraph office: counter, key, a small safe
+    B.box(M.woodH, 4.6, 1.05, 0.7, 20.4, F, 12.4, { c: 0x6a4a2e, solid: true }); B.box(M.metal, 0.3, 0.1, 0.2, 19.6, F + 1.08, 12.4, { c: 0xb8923a });
+    B.box(M.woodH, 1.5, 0.76, 0.8, 23.4, F, 14.8, { c: 0x5a3a22, solid: true }); B.cyl(M.wood, 0.4, 0.4, 0.5, 18.4, F, 15, { c: 0x8a6a48, seg: 10, solid: true });
+    B.box(M.metal, 0.8, 1.0, 0.7, 18.2, F, 9.2, { c: 0x34383e, solid: true });
+    extraFoes.push(['bandit', -22, -11.5, { y: 1, patrol: false }], ['cowboy', 25.2, -10, { y: 1, patrol: false }], ['bandit', -38, -12, { y: 1, patrol: false }], ['cowboy', -36.5, 10.5, { y: 1, patrol: false }], ['bandit', 22, 10.2, { y: 1, patrol: false }]);
+    extraPicks.push([-28, -16.6, 1], [28.9, -13, 1], [-3.2, 15, 1]);
   }
   // batwing doors
   const doors = [];
@@ -429,7 +463,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 72, z: 0.5, yaw: Math.PI / 2 },
     vista: { c: [0, 4, 0], r: 60, h: 4.5, a: 0.0, swing: 0.11, speed: 0.08, up: 1.5 },
-    enemies, pickups: [[27.5, -6.6, 1], [-9.5, -18.5, 1], [-31, 6.6, 1], [-50, 1, 1], [-58, -12, 1], [16.4, -17.2, 1], [41.3, -15.6, 1], [59.6, 48.6, 0.5], [-40.4, 39.6, 0.5], [-74.8, -26.6, 0.5]],
+    enemies: enemies.concat(extraFoes), pickups: [[27.5, -6.6, 1], [-9.5, -18.5, 1], [-31, 6.6, 1], [-50, 1, 1], [-58, -12, 1], [16.4, -17.2, 1], [41.3, -15.6, 1], [59.6, 48.6, 0.5], [-40.4, 39.6, 0.5], [-74.8, -26.6, 0.5]].concat(extraPicks),
     dust: [0.72, 0.52, 0.34],
     makePickup: () => new THREE.Mesh(tonicGeo, M.flat),
     update(dt, t, g) {

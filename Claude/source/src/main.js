@@ -190,7 +190,7 @@ class Game {
         + (c.foes ? ' A few of the chapter’s enemies are still about, and they attack you both.' : '') + ' The larger dot on the compass is your opponent.';
     }
     $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
-    $('#heroes').classList.toggle('many', !!duel);
+    $('#heroes').classList.toggle('many', !!duel); $('#heroes').classList.toggle('lots', !!duel && this.roster().length > 7);
     $('#intro').classList.toggle('duelpick', !!duel);
     const STAR = '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/>';
     const SKULL = '<path d="M12 2C7 2 3.5 5.6 3.5 10.2c0 2.7 1.3 4.9 3.2 6.2V19c0 .8.7 1.5 1.5 1.5h.8v-2h1.5v2h3v-2H15v2h.8c.8 0 1.5-.7 1.5-1.5v-2.6c1.9-1.3 3.2-3.5 3.2-6.2C20.5 5.6 17 2 12 2zM8.5 13a2 2 0 110-4 2 2 0 010 4zm7 0a2 2 0 110-4 2 2 0 010 4zm-3.5 3.2l-1.2-2h2.4z"/>';
@@ -471,7 +471,7 @@ class Game {
 
   frame(now) {
     requestAnimationFrame((t) => this.frame(t));
-    const raw = (now - (this.last || now)) / 1000, real = Math.min(0.05, raw); this.last = now;
+    const raw = (now - (this.last || now)) / 1000, real = Math.max(0, Math.min(0.05, raw)); this.last = now;   // never negative: the first animation frame can carry a time stamp older than the start-up call
     if (raw < 0.5) { this.perfT = (this.perfT || 0) + raw; this.perfN = (this.perfN || 0) + 1; }
     if (this.perfN >= 80) {
       const avg = this.perfT / this.perfN; this.perfT = 0; this.perfN = 0;

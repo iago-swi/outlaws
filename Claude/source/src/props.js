@@ -1,6 +1,6 @@
 // Props shared by the levels: instancing helper, fences, barrels, plants.
 import * as THREE from 'three';
-import { xf, merge, paint } from './build.js';
+import { xf, merge, paint, rockGeo } from './build.js';
 import { gBox, gCyl, gSph, gCone, gCap } from './actors.js';
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
@@ -156,6 +156,126 @@ export function ship(B, M, x, y, z, ry, o = {}) {
   B.world.addBox(x, z, wide * 2.3, len, ry, y - 2, y + 2.3);
 }
 
+/** A straight round bar between two points given as [x, y, z]. r = radius at a, r2 = radius at b. */
+export function rod(B, mat, a, b, r = 0.05, c = 0x6a4a2e, r2 = r, seg = 6) {
+  _p.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]); const len = _p.length(); if (len < 1e-4) return;
+  _q.setFromUnitVectors(_s.set(0, 1, 0), _p.divideScalar(len)); _e.setFromQuaternion(_q, 'YXZ');
+  B.geo(mat, new THREE.CylinderGeometry(r2, r, len, seg), [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], [_e.x, _e.y, _e.z], 1, c);
+}
+
+/**
+ * Viking longship that can be boarded and walked: main deck, raised platforms at bow and
+ * stern, bulwarks, sea chests, mast and sail, dragon prow. Bow toward local +Z; it floats
+ * on water at y = 0. o: {len, beam, hull, strake (painted top plank), gilt, sail, sail2,
+ * furled, shields, tent: [c1, c2], gang: [x, z] (where the gangplank touches land or jetty)}
+ * Returns { P(lx, lz) -> [x, z], P3, D (deck height), hi (platform height), H (half length) }.
+ */
+export function drakkar(B, M, x, z, ry, o = {}) {
+  const { len = 23, beam = 4.8, hull = 0x3a2a1c, strake = 0x8a1c1c, gilt = 0xc9a030, sail = 0x8a1c1c, sail2 = 0xe8e0d0, furled = false, shields = [0x8a1c1c, 0xc8a030, 0x1c4a7a], tent = null, gang = null } = o;
+  const W = B.world, c = Math.cos(ry), s = Math.sin(ry), P = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c], P3 = (lx, y, lz) => [x + lx * c + lz * s, y, z - lx * s + lz * c];
+  const D = 1.0, RAISE = 0.45, N = 24, H = len / 2, tOf = (i) => -1 + 2 * i / N, DARK = 0x2a2018;
+  const bre = (t) => beam / 2 * Math.pow(1 - Math.pow(Math.abs(t), 2.3), 0.8);          // half breadth at the gunwale
+  const top = (t) => D + 0.75 + 1.9 * Math.pow(Math.abs(t), 3.2);                        // the gunwale sweeps up toward bow and stern
+  const keel = (t) => -1.0 + 1.9 * Math.pow(Math.abs(t), 3.6);
+  const halfAt = (t, y) => { const k = keel(t), q = (y - k) / (top(t) - k); return q <= 0 ? 0 : q >= 1 ? bre(t) : bre(t) * Math.pow(Math.sin(Math.acos(1 - q)), 0.75); };
+  const dh = (t) => D + (t < -0.58 || t > 0.66 ? RAISE : 0);                             // deck height: platforms at stern and bow
+  let gw = null;
+  if (gang) { const dx = gang[0] - x, dz = gang[1] - z, lx = dx * c - dz * s; gw = { side: Math.sign(lx), z: dx * s + dz * c, lx: Math.abs(lx), half: 1.0 }; }
+
+  { // hull: overlapping planks from keel to gunwale on both sides
+    const MS = 7, pos = [], col = [], ca = new THREE.Color(hull), cb = new THREE.Color(hull).multiplyScalar(1.35), cs = new THREE.Color(strake);
+    const pt = (i, j, sg) => { const t = tOf(i), a = j / MS * Math.PI / 2, k = keel(t); return [sg * bre(t) * Math.pow(Math.sin(a), 0.75), k + (top(t) - k) * (1 - Math.cos(a)), t * H]; };
+    for (const sg of [-1, 1]) for (let i = 0; i < N; i++) for (let j = 0; j < MS; j++) {
+      const q = [pt(i, j, sg), pt(i + 1, j, sg), pt(i + 1, j + 1, sg), pt(i, j + 1, sg)], cc = j === MS - 1 ? cs : j % 2 ? cb : ca;
+      for (const k of [0, 1, 2, 0, 2, 3]) { pos.push(...q[k]); col.push(cc.r, cc.g, cc.b); }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals();
+    B.geo(M.flat2, g, [x, 0, z], [0, ry, 0], 1);
+  }
+  { // deck planks following the outline of the hull, and the invisible floor and bulwarks under them
+    const pos = [], uv = [];
+    for (let i = 1; i < N - 1; i++) {
+      const t0 = tOf(i), t1 = tOf(i + 1), tm = (t0 + t1) / 2, y = dh(tm), a = halfAt(t0, y), b = halfAt(t1, y), z0 = t0 * H, z1 = t1 * H;
+      const q = [[-a, y, z0], [a, y, z0], [b, y, z1], [-b, y, z1]];
+      for (const k of [0, 2, 1, 0, 3, 2]) { pos.push(...q[k]); uv.push(q[k][0] / 2, q[k][2] / 2); }
+      const [cx, cz] = P(0, (z0 + z1) / 2); W.addBox(cx, cz, 2 * Math.max(a, b), z1 - z0 + 0.02, ry, -1.6, y);
+      for (const sg of [-1, 1]) for (let h = 0; h < 2; h++) {
+        const ax = sg * (a + (b - a) * h / 2), bx = sg * (a + (b - a) * (h + 1) / 2), az = z0 + (z1 - z0) * h / 2, bz = z0 + (z1 - z0) * (h + 1) / 2, mz = (az + bz) / 2;
+        if (gw && sg === gw.side && Math.abs(mz - gw.z) < gw.half) continue;                 // the gangway stays open
+        const [wx, wz] = P((ax + bx) / 2, mz); W.addBox(wx, wz, 0.26, Math.hypot(bx - ax, bz - az) + 0.06, ry + Math.atan2(bx - ax, bz - az), -1.6, top(tm) - 0.02);
+      }
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
+    B.geo(M.woodH, g, [x, 0, z], [0, ry, 0], 1, 0x8a6a48);
+    for (const e of [-1, 1]) { const t = e * (1 - 2 / N), [wx, wz] = P(0, t * H + e * 0.14); W.addBox(wx, wz, 2 * halfAt(t, D + RAISE) + 0.5, 0.3, ry, -1.6, top(t)); }   // closed at both ends
+    for (const t of [tOf(5), tOf(20)]) { const [wx, wz] = P(0, t * H); B.box(M.woodH, 2 * halfAt(t, D + RAISE * 0.6), RAISE, 0.08, wx, D, wz, { ry, c: 0x5a4028 }); }        // the step up to each platform
+  }
+  if (gw) { // boarding: a step inside, a board across the gunwale, and a plank down to land (a stair of invisible steps under it)
+    const t = gw.z / H, hb = halfAt(t, D), sg = gw.side, yT = top(t), wid = 2 * gw.half + 0.3;
+    { const [ax, az] = P(sg * (hb - 0.7), gw.z); B.box(M.woodH, 0.6, (yT - D) / 2, wid, ax, D, az, { ry, c: 0x6a5238, solid: true }); }
+    { const [ax, az] = P(sg * (hb + 0.1), gw.z); B.box(M.woodH, 1.0, 0.12, wid, ax, yT - 0.12, az, { ry, c: 0x7a5a3a }); W.addBox(ax, az, 1.0, wid, ry, -1.6, yT); }
+    const x0 = hb + 0.6, run = Math.max(0.3, gw.lx - x0), yB = W.groundAt(gang[0], gang[1], 2.5), drop = yT - yB, n = Math.max(1, Math.ceil(drop / 0.36));
+    for (let i = 0; i < n; i++) { const f = (i + 0.5) / n, [ax, az] = P(sg * (x0 + run * f), gw.z); W.addBox(ax, az, run / n + 0.02, 1.4, ry, -1.6, yT - drop * f); }
+    { const [ax, az] = P(sg * (x0 + run / 2), gw.z); B.box(M.woodH, Math.hypot(run, drop) + 0.3, 0.07, 1.3, ax, (yT + yB) / 2 - 0.03, az, { ry, rz: -sg * Math.atan2(drop, run), c: 0x8a6a48 }); }
+  }
+  { // mast, yard, sail and rigging
+    const mz = 0.3, [mx, mw] = P(0, mz), yy = D + 9.3;
+    B.cyl(M.wood, 0.13, 0.19, 10.4, mx, D - 0.3, mw, { c: 0x6a4a2e, seg: 8 }); W.addCyl(mx, mw, 0.24, D - 1, D + 10);
+    B.box(M.woodH, 0.5, 0.24, 1.5, mx, D, mw, { ry, c: 0x5a4028 });
+    rod(B, M.wood, P3(-4.2, yy, mz + 0.22), P3(4.2, yy, mz + 0.22), 0.08, 0x6a4a2e);
+    if (furled) {
+      B.geo(M.cloth, new THREE.CylinderGeometry(0.3, 0.3, 7.6, 8), P3(0, yy - 0.32, mz + 0.22), [0, ry, Math.PI / 2], 1, sail2);
+      for (let i = -3; i <= 3; i++) B.geo(M.flat, new THREE.TorusGeometry(0.31, 0.03, 4, 8), P3(i * 1.1, yy - 0.32, mz + 0.22), [0, ry + Math.PI / 2, 0], 1, DARK);
+    } else for (let i = 0; i < 7; i++) { const [sx, sz] = P(-3.3 + i * 1.1, mz + 0.24); B.box(M.cloth, 1.1, 6.3, 0.04, sx, yy - 6.4, sz, { ry, c: i % 2 ? sail2 : sail }); }
+    for (const e of [-1, 1]) rod(B, M.flat, P3(0, D + 10, mz), P3(0, top(0.94) + 0.2, e * 0.94 * H), 0.02, DARK);
+    for (const sg of [-1, 1]) for (const dz of [-1.6, 1.6]) rod(B, M.flat, P3(0, D + 9.7, mz), P3(sg * bre((mz + dz) / H), top((mz + dz) / H), mz + dz), 0.02, DARK);
+    if (!furled) for (const sg of [-1, 1]) rod(B, M.flat, P3(sg * 3.8, yy - 6.4, mz + 0.24), P3(sg * bre(-0.42), top(-0.42), -0.42 * H), 0.015, DARK);   // sheets
+  }
+  for (const e of [1, -1]) { // stem and stern posts: the dragon's head forward, its curled tail aft
+    const y0 = top(1) - 0.15, pts = [[H - 0.08, y0], [H + 0.3, y0 + 0.95], [H + 0.42, y0 + 1.85], [H + 0.2, y0 + 2.6]];
+    for (let i = 0; i < 3; i++) rod(B, M.flat, P3(0, pts[i][1], e * pts[i][0]), P3(0, pts[i + 1][1], e * pts[i + 1][0]), 0.17 - i * 0.025, hull, 0.145 - i * 0.025, 7);
+    const [hz, hy] = pts[3];
+    if (e > 0) {
+      const [ax, az] = P(0, hz + 0.34); B.box(M.flat, 0.3, 0.3, 0.8, ax, hy - 0.05, az, { ry, rx: 0.22, c: gilt });
+      { const [bx, bz] = P(0, hz + 0.42); B.box(M.flat, 0.22, 0.07, 0.6, bx, hy - 0.22, bz, { ry, rx: 0.5, c: gilt }); B.box(M.flat, 0.08, 0.03, 0.42, bx, hy - 0.14, bz, { ry, rx: 0.36, c: 0xb01c1c }); }
+      for (const k of [-1, 1]) { B.geo(M.glow, new THREE.SphereGeometry(0.05, 8, 6), P3(k * 0.155, hy + 0.14, hz + 0.5), [0, 0, 0], 1, 0xff5a20); B.geo(M.flat, new THREE.ConeGeometry(0.06, 0.34, 6), P3(k * 0.1, hy + 0.36, hz + 0.02), [-0.7, ry, 0], 1, gilt); }
+      for (let i = 0; i < 3; i++) B.geo(M.flat, new THREE.ConeGeometry(0.07, 0.3, 5), P3(0, pts[i + 1][1] - 0.1, pts[i + 1][0] - 0.22 - i * 0.02), [-1.2, ry, 0], 1, gilt);
+    } else B.geo(M.flat, new THREE.TorusGeometry(0.4, 0.085, 6, 12, Math.PI * 1.5), P3(0, hy + 0.28, -(hz - 0.36)), [0, ry + Math.PI / 2, 0.5], 1, gilt);
+  }
+  for (let i = 6; i <= 18; i += 2) for (const sg of [-1, 1]) {      // sea chests: the rowers sat on them
+    const t = tOf(i), lz = t * H; if (gw && sg === gw.side && Math.abs(lz - gw.z) < 1.9) continue;
+    const [ax, az] = P(sg * (halfAt(t, D) - 0.48), lz);
+    B.box(M.woodH, 0.5, 0.4, 0.8, ax, D, az, { ry, c: [0x6a4a2e, 0x5a4028, 0x7a5a3a][(i / 2 + (sg > 0 ? 1 : 0)) % 3], solid: true }); B.box(M.metal, 0.52, 0.04, 0.1, ax, D + 0.37, az, { ry, c: 0x3a3e44 });
+  }
+  for (let i = 6; i < 18; i++) for (const sg of [-1, 1]) {           // shields along the rail
+    const t = tOf(i) + 1 / N, lz = t * H; if (gw && sg === gw.side && Math.abs(lz - gw.z) < 1.4) continue;
+    B.geo(M.flat, new THREE.CylinderGeometry(0.4, 0.4, 0.05, 12), P3(sg * (bre(t) + 0.06), top(t) - 0.32, lz), [0, ry, Math.PI / 2], 1, shields[i % shields.length]);
+    B.geo(M.metal, new THREE.SphereGeometry(0.09, 8, 6), P3(sg * (bre(t) + 0.1), top(t) - 0.32, lz), [0, 0, 0], 1, 0xc9ced6);
+  }
+  { // the oars, stowed on two crutches above head height
+    for (const lz of [-1.9, -5.9]) { const [ax, az] = P(0, lz); B.cyl(M.wood, 0.06, 0.08, 2.5, ax, D, az, { c: 0x5a4028, seg: 6 }); W.addCyl(ax, az, 0.12, D - 0.5, D + 2.5); B.box(M.wood, 0.7, 0.08, 0.1, ax, D + 2.5, az, { ry, c: 0x5a4028 }); }
+    for (let i = 0; i < 6; i++) { const lx = -0.28 + i * 0.11; rod(B, M.wood, P3(lx, D + 2.63, -6.5), P3(lx, D + 2.63, -1.3), 0.03, 0x8a6a44); const [ax, az] = P(lx, -6.3 - (i % 2) * 0.25); B.box(M.wood, 0.03, 0.14, 0.7, ax, D + 2.56, az, { ry, c: 0x8a6a44 }); }
+  }
+  if (tent) { // a striped tent pitched over the deck forward of the mast, open at both ends
+    const z0 = 1.9, z1 = 6.7, n = 4, ridge = D + 3.0;
+    for (let i = 0; i < n; i++) {
+      const za = z0 + (z1 - z0) * i / n, zb = za + (z1 - z0) / n, zm = (za + zb) / 2, hw = bre(zm / H) + 0.05, base = top(zm / H) + 0.02, sl = Math.hypot(hw, ridge - base);
+      for (const sg of [-1, 1]) { const [tx, tz] = P(sg * hw / 2, zm); B.box(M.cloth, sl, 0.04, zb - za, tx, (ridge + base) / 2 - 0.02, tz, { ry, rz: -sg * Math.atan2(ridge - base, hw), c: tent[i % 2] }); }
+    }
+    rod(B, M.wood, P3(0, ridge, z0 - 0.3), P3(0, ridge, z1 + 0.3), 0.06, 0x5a4028);
+    for (const ze of [z0, z1]) for (const sg of [-1, 1]) rod(B, M.wood, P3(sg * (bre(ze / H) + 0.05), top(ze / H), ze), P3(-sg * 0.55, ridge + 0.75, ze), 0.06, 0x5a4028);
+    for (const [lx, lz, cc] of [[-1.15, 4.6, 0x8a7458], [1.15, 3.2, 0x5a4632]]) { const [ax, az] = P(lx, lz); B.box(M.cloth, 0.85, 0.12, 1.9, ax, D, az, { ry, c: cc }); }   // furs to sleep on
+  }
+  { // steering oar on the right-hand quarter, with its tiller; a coil of rope in the bow
+    const t = -0.8, lz = t * H, hb = halfAt(t, D + RAISE);
+    rod(B, M.wood, P3(-(hb + 0.3), D + RAISE + 1.5, lz + 0.1), P3(-(hb + 0.45), -1.1, lz - 0.5), 0.06, 0x6a4a2e);
+    rod(B, M.wood, P3(-(hb + 0.31), D + RAISE + 1.25, lz + 0.05), P3(-0.3, D + RAISE + 1.15, lz + 0.05), 0.035, 0x6a4a2e);
+    { const [ax, az] = P(-(hb + 0.42), lz - 0.38); B.box(M.wood, 0.06, 1.3, 0.44, ax, -1.0, az, { ry, rx: 0.22, c: 0x6a4a2e }); }
+    B.geo(M.flat, new THREE.TorusGeometry(0.34, 0.07, 5, 12), P3(0.35, D + RAISE + 0.07, 0.76 * H), [Math.PI / 2, 0, 0], 1, 0xb8a070);
+  }
+  return { P, P3, D, hi: D + RAISE, H };
+}
+
 /** Fire bowl on a tripod. Returns the flame position [x, y, z]. */
 export function brazier(B, M, x, y, z, s = 1) {
   for (let i = 0; i < 3; i++) B.cyl(M.metal, 0.025 * s, 0.03 * s, 1.15 * s, x + Math.cos(i * 2.09) * 0.2 * s, y, z + Math.sin(i * 2.09) * 0.2 * s, { c: 0x2a2a2e, seg: 5, rz: Math.cos(i * 2.09) * -0.22, rx: Math.sin(i * 2.09) * 0.22 });
@@ -204,6 +324,18 @@ export function room(B, M, x, y, z, o) {
 export function steps(B, M, x, z, ry, yTop, n = 4, o = {}) {
   const { w = 2, rise = 0.36, run = 0.5, mat = M.stone, c = 0xb0a898 } = o, cs = Math.cos(ry), sn = Math.sin(ry);
   for (let k = 0; k < n; k++) { const lz = (k + 0.5) * run; B.box(mat, w, 3, run + 0.02, x + lz * sn, yTop - (k + 1) * rise - 3, z + lz * cs, { ry, c, solid: true }); }
+}
+
+/** Heap of rubble: a few rocks and a low collider. */
+export function rubble(B, M, x, y, z, r = 1.2, c = 0x9a9488, n = 7) {
+  for (let i = 0; i < n; i++) { const a = i * 2.4, d = (i % 3) * r * 0.35, s = r * (0.28 + (i % 4) * 0.09); B.geo(M.rock, rockGeo(i + 2, 0), [x + Math.cos(a) * d, y + s * 0.4, z + Math.sin(a) * d], [i, a, 0], [s, s * 0.7, s], c); }
+  B.world.addCyl(x, z, r * 0.75, y - 1, y + r * 0.42);
+}
+/** Shelves against a wall, with goods on them. (x, z) = centre, w along local X. */
+export function shelf(B, M, x, y, z, ry, w = 3, h = 2.2, o = {}) {
+  const c = Math.cos(ry), s = Math.sin(ry), cols = o.goods || [0xb83a2a, 0x3a5a8a, 0xd8c060, 0x5a7a4a];
+  B.box(M.woodH, w, h, 0.45, x, y, z, { ry, c: o.c ?? 0x5a4028, solid: true });
+  for (let k = 0; k < Math.floor(h / 0.6); k++) for (let i = 0; i < Math.floor(w / 0.42); i++) { if ((i * 7 + k * 3) % 5 === 0) continue; const lx = -w / 2 + 0.25 + i * 0.42; B.box(M.flat, 0.26, 0.3, 0.2, x + lx * c + 0.24 * s, y + 0.2 + k * 0.6, z - lx * s + 0.24 * c, { ry, c: cols[(i + k) % cols.length] }); }
 }
 
 /** Row of iron bars from (x0,z0) to (x1,z1), between heights y0 and y1. */

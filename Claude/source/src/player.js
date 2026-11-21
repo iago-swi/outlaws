@@ -146,7 +146,7 @@ export class Player {
     const steps = Math.max(1, Math.ceil(Math.hypot(this.vel.x, this.vel.z) * dt / 0.2));   // small steps: thin walls cannot be skipped
     for (let q = 0; q < steps; q++) {
       const nx = this.pos.x + this.vel.x * dt / steps, nz = this.pos.z + this.vel.z * dt / steps;
-      if (W.walkable(this.pos.x, this.pos.z, nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
+      if (W.walkable(this.pos.x, this.pos.z, nx, nz, this.pos.y)) { this.pos.x = nx; this.pos.z = nz; }
       else { this.vel.x *= 0.5; this.vel.z *= 0.5; }
       W.collide(this.pos, 0.4, 1.75);
     }

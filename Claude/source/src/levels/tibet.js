@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
-import { instanced, room, steps, crate, tuftGeo, horseGeo, gBox, gCyl, gCone, gSph, gCap, merge } from '../props.js';
+import { instanced, room, steps, crate, tuftGeo, horseGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const tibet = {
@@ -102,6 +102,41 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const k of [-0.5, 0, 0.5]) { const [lx, lz] = P(0.4 + k, -d / 2 + 0.75); B.cyl(M.metal, 0.05, 0.03, 0.1, lx, f + 1.0, lz, { c: GOLD, seg: 7 }); B.geo(M.glow, new THREE.SphereGeometry(0.035, 5, 4), [lx, f + 1.16, lz], [0, 0, 0], [1, 1.7, 1], 0xffb040); }
     return yf + h + 0.98;
   };
+  const extraFoes = [], extraPicks = [];
+  /** Seated Buddha, gilded: lotus throne, crossed legs, the right hand touching the earth, a bowl in the left, a halo. About 2.5 m high at s = 1; faces local +Z. */
+  const buddha = (x, y, z, ry = 0, s = 1) => {
+    const HAIR = 0x1a2a6a, G2 = 0xb8862a, X = PI / 2, g = [], f = [];
+    g.push(gCyl(1.2, 1.25, 0.12, G2, [0, 0.06, 0], [0, 0, 0], 1, 16), gCyl(1.05, 0.9, 0.26, GOLD, [0, 0.25, 0], [0, 0, 0], 1, 16));
+    for (let i = 0; i < 14; i++) { const a = i / 14 * 6.283; f.push(gCone(0.2, 0.34, i % 2 ? 0xd86a4a : 0xe89a6a, [Math.cos(a) * 1.02, 0.2, Math.sin(a) * 1.02], [Math.sin(a) * 0.9, 0, -Math.cos(a) * 0.9], 1, 6)); }   // lotus petals
+    g.push(gSph(0.5, GOLD, [0, 0.62, 0.1], [1.8, 0.5, 1.2]), gSph(0.27, GOLD, [0.62, 0.62, 0.22], [1.2, 0.8, 1.3]), gSph(0.27, GOLD, [-0.62, 0.62, 0.22], [1.2, 0.8, 1.3]));                                             // crossed legs
+    g.push(gCyl(0.36, 0.45, 0.78, GOLD, [0, 1.17, 0], [0, 0, 0], [1, 1, 0.72], 12), gSph(0.4, GOLD, [0, 1.38, 0.02], [1.06, 0.8, 0.76]), gSph(0.2, GOLD, [0.43, 1.5, 0]), gSph(0.2, GOLD, [-0.43, 1.5, 0]));
+    f.push(gBox(0.84, 0.1, 0.52, 0xb8501c, [0.02, 1.3, 0], [0, 0, 0.72]));                                                                                                                                              // the robe over one shoulder
+    g.push(gCap(0.105, 0.42, GOLD, [0.5, 1.22, 0.05], [0.2, 0, 0.14]), gCap(0.105, 0.42, GOLD, [-0.5, 1.22, 0.05], [0.2, 0, -0.14]));
+    g.push(gCap(0.09, 0.4, GOLD, [0.3, 0.9, 0.36], [X, -0.95, 0]), gSph(0.11, GOLD, [0.04, 0.86, 0.5], [1.4, 0.6, 1]));                                                                                                  // left hand in the lap
+    g.push(gCap(0.09, 0.38, GOLD, [-0.55, 0.92, 0.3], [0.95, 0, 0]), gSph(0.1, GOLD, [-0.56, 0.68, 0.52], [1, 1.4, 0.8]));                                                                                               // right hand touches the earth
+    f.push(gSph(0.14, HAIR, [0.04, 0.97, 0.5], [1, 0.7, 1]));                                                                                                                                                           // alms bowl
+    g.push(gCyl(0.13, 0.15, 0.16, GOLD, [0, 1.62, 0]), gSph(0.3, GOLD, [0, 1.94, 0.02], [0.95, 1.1, 0.98]), gBox(0.05, 0.32, 0.08, GOLD, [0.285, 1.88, 0]), gBox(0.05, 0.32, 0.08, GOLD, [-0.285, 1.88, 0]), gBox(0.045, 0.1, 0.05, GOLD, [0, 1.91, 0.3]));
+    f.push(gSph(0.305, HAIR, [0, 2.06, -0.03], [0.99, 0.9, 1]), gSph(0.13, HAIR, [0, 2.33, -0.04]), gBox(0.1, 0.02, 0.02, 0x15120f, [0.11, 1.97, 0.287]), gBox(0.1, 0.02, 0.02, 0x15120f, [-0.11, 1.97, 0.287]),
+      gBox(0.11, 0.025, 0.02, 0xb83a2a, [0, 1.82, 0.29]), gSph(0.025, 0xf4f4f0, [0, 2.05, 0.29]));
+    g.push(gCone(0.05, 0.14, GOLD, [0, 2.5, -0.04]), xf(new THREE.TorusGeometry(0.6, 0.04, 6, 24), [0, 1.98, -0.34], [0, 0, 0], 1, GOLD), xf(new THREE.TorusGeometry(1.0, 0.045, 6, 26), [0, 1.2, -0.42], [0, 0, 0], 1, GOLD));
+    f.push(gCyl(0.6, 0.6, 0.04, 0xa01c1c, [0, 1.98, -0.34], [X, 0, 0], 1, 20), gCyl(1.0, 1.0, 0.04, 0x1a5a3a, [0, 1.2, -0.42], [X, 0, 0], 1, 22));                                                                    // halo and aureole
+    B.geo(M.metal, merge(g), [x, y, z], [0, ry, 0], s); B.geo(M.flat, merge(f), [x, y, z], [0, ry, 0], s);
+    world.addBox(x, z, 2.3 * s, 2.0 * s, ry, y - 0.2, y + 2.5 * s);
+  };
+  /** Small temple; the door is on the local +Z side. Returns { P, yf, f }. */
+  const temple = (x, z, ry, w, d, h, c = 0xa83a2a) => {
+    const P = frame(x, z, ry), yf = top(P, w, d, x, z), f = yf + 0.06;
+    room(B, M, x, yf, z, { w, d, h, t: 0.55, ry, mat: M.plaster, c, base: 2.6, doors: [{ side: 's', at: 0, w: 2.4, h: 2.8 }], floor: { mat: M.woodH, c: 0x6a3a22 }, ceil: { mat: M.woodH, c: MAROON } });
+    steps(B, M, ...P(0, d / 2), ry, f, 6, { w: 3, c: 0xd8d0c0 });
+    B.box(M.plaster, w + 0.3, 0.9, d + 0.3, x, yf + h + 0.2, z, { ry, c: MAROON }); B.box(M.flat, w + 0.6, 0.2, d + 0.6, x, yf + h + 1.1, z, { ry, c: 0x2a2018 });
+    for (let i = 0; i < Math.floor(w / 1.1); i++) { const [a, b] = P(-w / 2 + 0.6 + i * 1.1, d / 2 + 0.17); B.cyl(M.flat, 0.2, 0.2, 0.06, a, yf + h + 0.45, b, { rx: PI / 2, ry, c: WHITE, seg: 10 }); }
+    B.box(M.plaster, w * 0.45, 0.5, d * 0.45, x, yf + h + 1.25, z, { ry, c: MAROON }); B.geo(M.metal, new THREE.ConeGeometry(Math.min(w, d) * 0.3, 1.5, 4), [x, yf + h + 2.5, z], [0, ry + PI / 4, 0], 1, GOLD);
+    for (const sg of [-1, 1]) {                                               // a row of prayer wheels on each side of the door
+      for (let k = 0; k < 3; k++) { const [a, b] = P(sg * (w / 4 + 0.2 + k * 0.75), d / 2 + 0.45); B.cyl(M.metal, 0.24, 0.24, 0.7, a, yf + 0.75, b, { c: k % 2 ? GOLD : 0xb8862a, seg: 10 }); }
+      const [a, b] = P(sg * (w / 4 + 0.95), d / 2 + 0.45); B.box(M.woodH, 2.4, 0.12, 0.5, a, yf + 1.5, b, { ry, c: MAROON }); B.box(M.woodH, 2.4, 0.12, 0.5, a, yf + 0.6, b, { ry, c: MAROON }); world.addBox(a, b, 2.4, 0.6, ry, yf - 3, yf + 1.6);
+    }
+    return { P, yf, f };
+  };
   const yakGeo = (c) => merge([gCap(0.5, 1.2, c, [0, 1.05, 0], [PI / 2, 0, 0], [1, 1, 1.1]), gBox(0.96, 0.55, 1.6, c, [0, 0.62, 0]), gSph(0.4, c, [0, 1.52, 0.45], [1, 1, 1.3]), gCap(0.23, 0.3, c, [0, 1.0, 1.15], [1.2, 0, 0]),
     gBox(0.3, 0.22, 0.24, 0x4a3c30, [0, 0.8, 1.42]), gCone(0.05, 0.4, 0xd8d0c0, [0.3, 1.32, 1.12], [0, 0, -0.9]), gCone(0.05, 0.4, 0xd8d0c0, [-0.3, 1.32, 1.12], [0, 0, 0.9]),
     ...[[0.28, 0.55], [-0.28, 0.55], [0.28, -0.55], [-0.28, -0.55]].map(([lx, lz]) => gCap(0.1, 0.5, c, [lx, 0.3, lz])), gBox(0.16, 0.75, 0.16, c, [0, 0.78, -0.98])]);
@@ -146,7 +181,25 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     lowWall(34, 28, 46, 28); lowWall(46, 28, 46, 38); lowWall(34, 38, 46, 38); lowWall(34, 28, 34, 31.5); }
   yak(40, 33, 0.6); yak(42.5, 30.5, 2.4, 0x3a2a1c); yak(-15, 27, 1.4); yak(44, 9, -0.6, 0x2a1c14); yak(-72, 38, 0.3); yak(-68, 42, 2.0, 0x4a3a2a); yak(60, 60, 1.1); yak(-30, 80, 2.6);
   // nomad tent of black yak hair, a ruined fort
-  { const x = -74, z = 30, y = world.height(x, z) - 0.2; B.geo(M.cloth, prismGeo(7, 2.6, 6, 2), [x, y, z], [0, 0.3, 0], 1, 0x1c1814); world.addBox(x, z, 6, 5.6, 0.3, y - 1, y + 2.2); for (const s of [-1, 1]) B.box(M.wood, 0.08, 3.2, 0.08, x + s * 3.9, y, z - s * 1.2, { rz: s * -0.3, c: 0x5a4028 }); }
+  { const x = -74, z = 30, ry = 0.3, P = frame(x, z, ry), yf = top(P, 6.4, 5.4, x, z), f = yf + 0.06;      // you can go in
+    room(B, M, x, yf, z, { w: 6.4, d: 5.4, h: 1.8, t: 0.18, ry, mat: M.cloth, c: 0x1c1814, base: 1.6, doors: [{ side: 's', at: 0, w: 1.8, h: 1.62 }], floor: { mat: M.ground, c: 0x6a5a48 }, ceil: false });
+    B.geo(M.cloth, prismGeo(7.0, 1.9, 6.0, 2), [x, yf + 1.75, z], [0, ry, 0], 1, 0x1c1814);
+    for (const sg of [-1, 1]) { const [a, b] = P(sg * 4.0, 0); B.box(M.wood, 0.08, 3.2, 0.08, a, yf - 0.3, b, { ry, rz: sg * -0.3, c: 0x5a4028 }); }
+    { const [a, b] = P(0, -0.3); B.cyl(M.stone, 0.45, 0.5, 0.3, a, f, b, { c: 0x4a4038, seg: 9, solid: true }); B.geo(M.glow, new THREE.ConeGeometry(0.2, 0.5, 6), [a, f + 0.55, b], [0, 0, 0], 1, 0xff7a20); fires.push([a, f + 0.5, b]); }
+    for (const [lx, lz, c] of [[-2.1, -1.2, 0x8a2a2a], [2.1, -1.0, 0x2a4a8a]]) { const [a, b] = P(lx, lz); B.box(M.cloth, 1.2, 0.14, 2.2, a, f, b, { ry, c }); }
+    { const [a, b] = P(-1.9, 1.6); B.box(M.woodH, 0.9, 0.6, 0.6, a, f, b, { ry, c: 0xb8862a, solid: true }); }
+    extraPicks.push([...P(2.0, 1.4), 0, 1.6]);
+  }
+  { // the village temple: a great gilded Buddha, butter lamps, painted pillars, thangkas
+    const R2 = PI / 2, t = temple(-24, 2, R2, 10, 9, 5.2), { P, f } = t;
+    { const [a, b] = P(0, -2.2); B.box(M.woodH, 4.6, 0.5, 3.6, a, f, b, { ry: R2, c: 0xa01c1c, solid: true }); B.box(M.metal, 4.8, 0.08, 3.8, a, f + 0.5, b, { ry: R2, c: GOLD }); buddha(a, f + 0.58, b, R2, 1.45); }
+    for (const sg of [-1, 1]) { const [a, b] = P(sg * 3.2, 1.0); B.cyl(M.flat, 0.24, 0.28, 5.2, a, f, b, { c: 0xa01c1c, seg: 10 }); B.box(M.flat, 0.8, 0.26, 0.8, a, f + 4.9, b, { ry: R2, c: 0x2a5ac8 }); world.addCyl(a, b, 0.3, f - 0.2, f + 5.2); }
+    { const [a, b] = P(0, 0.5); B.box(M.woodH, 3.2, 0.8, 0.7, a, f, b, { ry: R2, c: 0x6a3a22, solid: true }); for (let k = 0; k < 7; k++) { const [c1, c2] = P(-1.35 + k * 0.45, 0.5); B.cyl(M.metal, 0.07, 0.04, 0.12, c1, f + 0.8, c2, { c: GOLD, seg: 7 }); B.geo(M.glow, new THREE.SphereGeometry(0.04, 5, 4), [c1, f + 1.0, c2], [0, 0, 0], [1, 1.8, 1], 0xffb040); } }
+    for (const sg of [-1, 1]) for (let k = 0; k < 2; k++) { const [a, b] = P(sg * 4.41, -1.6 + k * 3.2); B.box(M.cloth, 1.5, 2.4, 0.05, a, f + 1.6, b, { ry: PI, c: [0x2a5ac8, 0xc82a22][k] }); B.box(M.cloth, 0.9, 1.5, 0.08, a, f + 2.05, b, { ry: PI, c: GOLD }); }
+    for (const sg of [-1, 1]) { const [a, b] = P(sg * 1.7, 2.7); B.box(M.cloth, 1.0, 0.22, 2.2, a, f, b, { ry: R2, c: MAROON }); }
+    extraFoes.push(['redguard', ...P(-2.8, 2.4), { up: 1.8, patrol: false }], ['pla', -14, 7, {}]); extraPicks.push([...P(3.4, -0.4), 0, 1.8]);
+    { const y = world.height(-14.5, -4); B.cyl(M.wood, 0.06, 0.09, 7, -14.5, y - 0.2, -4, { c: 0x6a4a30, seg: 6 }); world.addCyl(-14.5, -4, 0.12, y - 1, y + 7); flags(-14.5, y + 6.8, -4, -19.6, t.yf + 6.2, 6.8, 10); flags(-14.5, y + 6.8, -4, -19.6, t.yf + 6.2, -2.8, 8); }
+  }
   {
     const x = 80, z = 40, w = 8, d = 8, P = frame(x, z, 0), yf = top(P, w, d, x, z);
     room(B, M, x, yf, z, { w, d, h: 4, t: 0.7, mat: M.stone, c: 0xb8ac98, base: 3, doors: [{ side: 'w', at: 0, w: 1.8, h: 2.3 }], wins: [{ side: 's', at: 0, w: 0.6, y: 1.2, h: 1.2 }, { side: 'n', at: 0, w: 0.6, y: 1.2, h: 1.2 }],
@@ -198,13 +251,10 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     // inside: pillars, cushions, the great image, butter lamps
     for (const px of [-4.6, 4.6]) for (const pz of [5.2, 1.6, -2, -5.6]) { B.cyl(M.flat, 0.3, 0.34, 7, x + px, F, z + pz, { c: 0xa01c1c, seg: 10 }); B.box(M.flat, 1.0, 0.3, 1.0, x + px, F + 6.6, z + pz, { c: 0x2a5ac8 }); B.box(M.cloth, 0.5, 2.6, 0.5, x + px, F + 3.6, z + pz, { c: FLAGS[(pz + 6) % 5 | 0] }); world.addCyl(x + px, z + pz, 0.36, F - 0.2, F + 7); }
     for (const px of [-2.3, 2.3, -7.4, 7.4]) B.box(M.cloth, 1.1, 0.24, 9.4, x + px, F, z - 0.2, { c: px * px > 20 ? 0x8a2a2a : MAROON });
-    B.box(M.woodH, 5.4, 1.3, 2.2, x, F, z - 7.2, { c: 0xa01c1c, solid: true }); B.box(M.metal, 5.6, 0.14, 2.4, x, F + 1.3, z - 7.2, { c: GOLD });
-    B.geo(M.metal, new THREE.SphereGeometry(1.25, 14, 10), [x, F + 2.5, z - 7.4], [0, 0, 0], [1.25, 0.95, 0.9], GOLD); B.geo(M.metal, new THREE.SphereGeometry(1.0, 14, 10), [x, F + 3.5, z - 7.5], [0, 0, 0], [0.95, 1.1, 0.8], GOLD);
-    B.geo(M.metal, new THREE.SphereGeometry(0.56, 14, 10), [x, F + 5.0, z - 7.5], [0, 0, 0], [1, 1.1, 1], GOLD); B.geo(M.flat, new THREE.SphereGeometry(0.3, 10, 8), [x, F + 5.6, z - 7.55], [0, 0, 0], [1, 0.9, 1], 0x1a2a6a);
-    for (const s of [-1, 1]) { B.geo(M.metal, new THREE.SphereGeometry(0.42, 10, 8), [x + s * 1.15, F + 2.2, z - 6.9], [0, 0, 0], [1.3, 0.8, 1.2], GOLD); B.box(M.metal, 0.1, 0.34, 0.1, x + s * 0.58, F + 4.95, z - 7.5, { c: GOLD }); }
-    B.cyl(M.flat, 2.3, 2.3, 0.1, x, F + 2.4, z - 8.2, { rx: PI / 2, c: 0xa01c1c, seg: 20 }); B.geo(M.metal, new THREE.TorusGeometry(2.3, 0.1, 6, 24), [x, F + 4.7, z - 8.2], [0, 0, 0], 1, GOLD);
-    B.box(M.woodH, 4.4, 0.85, 0.8, x, F, z - 4.9, { c: 0x6a3a22, solid: true });
-    for (let k = 0; k < 9; k++) { B.cyl(M.metal, 0.07, 0.04, 0.12, x - 1.8 + k * 0.45, F + 0.85, z - 4.9, { c: GOLD, seg: 7 }); B.geo(M.glow, new THREE.SphereGeometry(0.04, 5, 4), [x - 1.8 + k * 0.45, F + 1.05, z - 4.9], [0, 0, 0], [1, 1.8, 1], 0xffb040); }
+    B.box(M.woodH, 5.6, 1.3, 4.0, x, F, z - 6.3, { c: 0xa01c1c, solid: true }); B.box(M.metal, 5.8, 0.14, 4.2, x, F + 1.3, z - 6.3, { c: GOLD });
+    buddha(x, F + 1.44, z - 6.35, 0, 1.5);                                                                    // the great image
+    B.box(M.woodH, 4.4, 0.85, 0.8, x, F, z - 3.3, { c: 0x6a3a22, solid: true });
+    for (let k = 0; k < 9; k++) { B.cyl(M.metal, 0.07, 0.04, 0.12, x - 1.8 + k * 0.45, F + 0.85, z - 3.3, { c: GOLD, seg: 7 }); B.geo(M.glow, new THREE.SphereGeometry(0.04, 5, 4), [x - 1.8 + k * 0.45, F + 1.05, z - 3.3], [0, 0, 0], [1, 1.8, 1], 0xffb040); }
     for (const s of [-1, 1]) for (let k = 0; k < 3; k++) { B.box(M.cloth, 0.06, 2.6, 1.7, x + s * 12.2, F + 2.2, z - 5 + k * 4.4, { c: [0x2a5ac8, 0xc82a22, 0x2a9a4a][k] }); B.box(M.cloth, 0.08, 1.6, 1.0, x + s * 12.16, F + 2.7, z - 5 + k * 4.4, { c: GOLD }); }
     lamp(x, F + 3.2, z - 3.6, 60, 22, 0xffb060);
     steps(B, M, x, z + 9, 0, F, 2, { w: 14, rise: 0.06, run: 0.4, c: 0xd8d0c0 });
@@ -214,6 +264,12 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.geo(M.glow, new THREE.ConeGeometry(0.6, 1.5, 7), [0, fy + 1.1, -64], [0, 0, 0], 1, 0xff7a20); fires.push([0, fy + 1.0, -64]); world.addCyl(0, -64, 1.1, fy - 1, fy + 1.2); lamp(0, fy + 1.6, -64, 46, 18, 0xff8a40);
     B.box(M.cloth, 3.4, 1.0, 0.05, -5.5, fy + 2.6, -60.5, { ry: 0.5, c: 0xc81c1c }); for (const s of [-1, 1]) B.box(M.wood, 0.08, 3.4, 0.08, -5.5 + s * 1.5, fy, -60.5 - s * 0.8, { c: 0x4a3c2c });
     chorten(15, -62, 2); house(-21, -68, 0.4, 9, 6.5); house(22, -72, -0.5, 8, 6.5);
+    { // the mani chapel beside the great hall: one huge prayer wheel and a small Buddha
+      const t = temple(21.5, -88.5, 0, 7, 7, 4.2, WHITE), P2 = t.P, f2 = t.f;
+      { const [a, b] = P2(0, 0.3); B.cyl(M.metal, 0.85, 0.85, 2.3, a, f2 + 0.35, b, { c: 0xa01c1c, seg: 14 }); for (const yy of [0.35, 1.43, 2.51]) B.cyl(M.metal, 0.88, 0.88, 0.14, a, f2 + yy, b, { c: GOLD, seg: 14 }); B.cyl(M.wood, 0.07, 0.07, 3.6, a, f2, b, { c: 0x4a3626, seg: 6 }); world.addCyl(a, b, 0.9, f2 - 0.2, f2 + 2.8); }
+      { const [a, b] = P2(0, -2.3); B.box(M.woodH, 2.6, 0.7, 1.4, a, f2, b, { c: 0xa01c1c, solid: true }); buddha(a, f2 + 0.7, b, 0, 0.7); }
+      extraPicks.push([...P2(2.3, 1.7), 0, 1.8]); extraFoes.push(['plaGunner', 17, -80, {}]);
+    }
     const py = world.height(-11, -60); B.cyl(M.wood, 0.08, 0.12, 10, -11, py - 0.2, -60, { c: 0x6a4a30, seg: 6 }); world.addCyl(-11, -60, 0.14, py - 1, py + 10);
     for (const [ex, ez] of [[-20, -56], [-4, -54], [-16, -64], [-6, -66]]) flags(-11, py + 9.6, -60, ex, world.height(ex, ez) + 0.5, ez, 12);
   }
@@ -226,13 +282,15 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const x = (R() - 0.5) * 360, z = (R() - 0.5) * 360, h = world.height(x, z); if (built(x, z)) continue;
     const s = 0.4 + R() * R() * 3.2;
     rocks.push({ x, y: h + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: R.pick([0x8a7c6a, 0x9a8c7a, 0x7a6e60]) });
+    if (Math.hypot(x + 24, z - 2) < 10) { rocks.pop(); continue; }
     if (s > 1 && Math.abs(x) < 116 && Math.abs(z) < 112) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
   }
-  for (let i = 0; i < 260; i++) { const x = (R() - 0.5) * 230, z = (R() - 0.5) * 220, h = world.height(x, z); if (built(x, z) || h > 40 || fbm(x * 0.04, z * 0.04, 2, 6) < 0.5) continue; const s = 0.5 + R() * 0.8; shrubs.push({ x, y: h + 0.2, z, ry: R() * 6, s: [s * 1.3, s * 0.75, s * 1.3], c: R.pick([0x3a4a2c, 0x4a5632, 0x2e3e26]) }); }
+  for (let i = 0; i < 260; i++) { const x = (R() - 0.5) * 230, z = (R() - 0.5) * 220, h = world.height(x, z); if (built(x, z) || h > 40 || fbm(x * 0.04, z * 0.04, 2, 6) < 0.5) continue; const s = 0.5 + R() * 0.8; shrubs.push({ x, y: h + 0.2, z, ry: R() * 6, s: [s * 1.3, s * 0.75, s * 1.3], c: R.pick([0x3a4a2c, 0x4a5632, 0x2e3e26]) }); if (Math.hypot(x + 24, z - 2) < 10) shrubs.pop(); }
   for (let i = 0; i < 90000 && tufts.length < 20000; i++) {
     const x = (R() - 0.5) * 236, z = (R() - 0.5) * 226, h = world.height(x, z);
     if (h > 34 || dPoly(PATH, x, z) < 1.6 || Math.hypot(x + 58, z - 4) < 17 || Math.hypot(x - HILL.x, z - HILL.z) < 27 || (Math.abs(x) < 5.5 && z < -28 && z > -54)) continue;
     tufts.push({ x, y: h, z, ry: R() * 6.28, s: [0.35 + R() * 0.4, 0.2 + R() * 0.35, 0.35 + R() * 0.4], c: R.pick([0xd8c070, 0xc8ae60, 0xb89a50, 0xe2cc84]) });
+    if (Math.hypot(x + 24, z - 2) < 9 || Math.hypot(x + 74, z - 30) < 4.8) tufts.pop();
   }
   root.add(instanced(rockGeo(5, 1), M.rock, rocks));
   root.add(instanced(new THREE.IcosahedronGeometry(1, 1), M.rock, shrubs));
@@ -262,7 +320,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     },
     spawn: { x: 0, z: 101, yaw: 0 },
     vista: { c: [0, 6, 20], r: 62, h: 15, a: 1.6, speed: 0.03 },
-    enemies, pickups: [[3, 84], [-1.2, 36.6, 0, 1.8], [13, 21], [50.5, -17.5], [-44, 8], [81.4, 42, 0, 1.8], [0, -56], [8.4, -88.4, 0, 1.8], [23.2, -70.6, 0, 1.8]],
+    enemies: enemies.concat(extraFoes), pickups: [[3, 84], [-1.2, 36.6, 0, 1.8], [13, 21], [50.5, -17.5], [-44, 8], [81.4, 42, 0, 1.8], [0, -56], [8.4, -88.4, 0, 1.8], [23.2, -70.6, 0, 1.8]].concat(extraPicks),
     dust: [0.8, 0.72, 0.54], water: [], heroLight: 30,
     makePickup: () => new THREE.Mesh(bowl, M.flat),
     update(dt, t, g) {
