@@ -14,7 +14,7 @@ export const war = {
     { look: 'hall', name: 'Virginia Hall', who: 'American spy, “the limping lady”', trait: 'Spy', effect: 'Sten gun; sentries notice her much later', mods: { stealth: 0.55 }, sleeve: 0xa8946a, cuff: 0x7a6a48 },
     { look: 'bavaud', name: 'Maurice Bavaud', who: 'Of Neuchâtel, who set out to shoot Hitler in 1938', trait: 'Sure hand', effect: 'pistol whose shots hit 60% harder', weapon: 'revolver', weaponName: 'Pistol & knife', mods: { gun: 1.6 }, sleeve: 0x2a3040, cuff: 0xe0dcd0 },
   ],
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
   foes: 'sentries remain', foesNone: 'The guns are silent', bossName: 'Major Kessler', bossDown: 'The battery has lost its commander', pickupText: 'Calvados  +35',
   deadTitle: 'Missing in action', deadSub: 'London waits for a signal that never comes.', clearTitle: 'The guns are silent',
   build,
@@ -280,7 +280,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (h < 6 || dPoly(ROAD, x, z) < 1.8 || (Math.abs(x) < 10 && Math.abs(z - 2) < 22)) continue;
     tufts.push({ x, y: h, z, ry: R() * 6.28, s: [0.35 + R() * 0.45, 0.25 + R() * 0.5, 0.35 + R() * 0.45], c: R.pick([0x5c7a3c, 0x4e6c34, 0x6a8644, 0x8a8a4c]) });
   }
-  root.add(instanced(tuftGeo(5, 0x6a7a4a, 0xffffff), windify(M.flat2.clone(), shared, 0.22, 1, 1.8), tufts, { cast: false }));
+  root.add(instanced(tuftGeo(5, 0x6a7a4a, 0xffffff), windify(M.flat2.clone(), shared, 0.22, 1, 1.8), tufts, { cast: false, thin: true }));
   for (let i = 0; i < 40; i++) { const x = (R() - 0.5) * 200, z = -100 - R() * 6, s = 1 + R() * 3; rocks.push({ x, y: world.height(x, z) + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: 0xd0ccbc }); }
   root.add(instanced(rockGeo(3, 1), M.rock, rocks));
 

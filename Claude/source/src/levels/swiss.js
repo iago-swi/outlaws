@@ -16,7 +16,7 @@ export const swiss = {
     { look: 'winkelried', name: 'Arnold von Winkelried', who: 'Hero of Sempach, from Nidwalden', trait: 'Breaks the line', effect: 'starts with 150 health', mods: { hp: 150 }, sleeve: 0x8a8f96, cuff: 0x6a6f76 },
     { look: 'stauffacher', name: 'Werner Stauffacher', who: 'Man of Schwyz, of the Rütli oath', trait: 'Steadfast', effect: 'slowly recovers health out of danger', mods: { regen: 3 }, sleeve: 0x8a1c1c, cuff: 0x4a3020 },
   ], weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd',
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> shoot a bolt &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>F</kbd> halberd thrust',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> shoot a bolt &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>F</kbd> halberd thrust',
   foes: 'soldiers remain', foesNone: 'The valley is free', bossName: 'The Bailiff', bossDown: 'The bailiff has fallen', pickupText: 'Alp cheese  +35',
   deadTitle: 'Fallen', deadSub: 'The mountains will remember.', clearTitle: 'The valley is free',
   build,
@@ -346,9 +346,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     tufts.push({ x, y: h, z, ry: R() * 6.28, s: [0.35 + R() * 0.4, 0.2 + R() * 0.4, 0.35 + R() * 0.4], c: R.pick([0x86a84e, 0x74983e, 0x94b058, 0x688c3a]) });
     if (i % 5 === 0) flowers.push({ x: x + 0.3, y: h, z: z + 0.2, ry: R() * 6, s: 0.7 + R() * 0.7, c: R.pick([0xffffff, 0xffe04a, 0xffffff, 0x6a8cf0, 0xf07aa8, 0xffe04a]) });
   }
-  root.add(instanced(tuftGeo(5, 0x8a9a6a, 0xffffff), windify(M.flat2.clone(), shared, 0.22, 1, 1.9), tufts, { cast: false }));
+  root.add(instanced(tuftGeo(5, 0x8a9a6a, 0xffffff), windify(M.flat2.clone(), shared, 0.22, 1, 1.9), tufts, { cast: false, thin: true }));
   const flowerGeo = merge([gBox(0.012, 0.3, 0.012, 0x2a5a1c, [0, 0.15, 0]), xf(new THREE.IcosahedronGeometry(0.06, 0), [0, 0.32, 0], [0, 0, 0], [1, 0.6, 1], 0xffffff)]);
-  root.add(instanced(flowerGeo, windify(M.flat.clone(), shared, 0.2, 0.4, 1.9), flowers, { cast: false }));
+  root.add(instanced(flowerGeo, windify(M.flat.clone(), shared, 0.2, 0.4, 1.9), flowers, { cast: false, thin: true }));
   for (let i = 0; i < 260; i++) {
     const x = (R() - 0.5) * 330, z = (R() - 0.5) * 330, h = world.height(x, z); if (h < 0.5 || nearBuilt(x, z)) continue;
     const s = 0.4 + R() * R() * 3;

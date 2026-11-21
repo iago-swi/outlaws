@@ -11,6 +11,10 @@ const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Eule
  */
 export function instanced(geo, mat, items, o = {}) {
   if (!geo.attributes.color) paint(geo, 0xffffff);      // materials multiply by vertex colour
+  if (o.thin) {                                          // shuffled (always the same way), so that the first half of the list is spread over the whole map
+    items = items.slice(); let k = 12345;
+    for (let i = items.length - 1; i > 0; i--) { k = (k * 1103515245 + 12345) & 0x7fffffff; const j = k % (i + 1), t = items[i]; items[i] = items[j]; items[j] = t; }
+  }
   const im = new THREE.InstancedMesh(geo, mat, items.length);
   items.forEach((it, i) => {
     _e.set(it.rx || 0, it.ry || 0, it.rz || 0, 'YXZ'); _q.setFromEuler(_e);
@@ -23,6 +27,7 @@ export function instanced(geo, mat, items, o = {}) {
   if (im.instanceColor) im.instanceColor.needsUpdate = true;
   im.castShadow = o.cast ?? true; im.receiveShadow = o.receive ?? true;
   im.frustumCulled = false;
+  if (o.thin) { im.userData.thin = true; im.userData.full = items.length; }
   return im;
 }
 

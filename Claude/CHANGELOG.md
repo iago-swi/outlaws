@@ -16,6 +16,37 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.4.0] - 2026-11-21
+
+### Added
+
+- **A Graphics setting**, at the bottom left of the title screen: Automatic, High, Medium
+  or Low. During a chapter, `G` steps through the four (also while paused).
+  - High is the picture as it was. Medium draws three quarters of the resolution. Low draws
+    half of it, with fewer grass tufts and far trees, shorter shadows and no glow.
+  - Automatic, the default, starts on High and steps down by itself while the game runs
+    below about 42 frames a second. If a step brings nothing, it is taken back.
+  - Your choice is remembered for the next visit.
+  - Measured on a laptop graphics chip at 3840 × 2160, in the heaviest chapter (IX): 19
+    frames a second on High, 30 on Medium, 78 on Low.
+- A frame counter for reporting how the game runs on your machine: add `?fps` to the
+  address.
+
+### Changed
+
+- The key hints show `W` `A` `S` `D` again. The arrow keys still move you in the same way.
+- **The code of a duel is easier to read and to type.** It is shown in plain upright
+  letters instead of the chapter's display type, and no longer contains characters that
+  are easily taken for one another (no 0, O or Q; no 1 or I; no 2 or Z; no 5 or S; no 8 or
+  B; no G; neither U nor V). A code may be typed in small letters or with spaces.
+- The lists on the Duel screen and the hero screen (chapter, rules, number of enemies) use a
+  plain typeface, so that a 5 or a 9 reads clearly.
+
+### Removed
+
+- The backup way of connecting a duel with copy-paste codes. The invite link and its code
+  have proved reliable, and the Duel screen is simpler without it.
+
 ## [1.3.0] - 2026-11-21
 
 ### Added
@@ -146,6 +177,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.4.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.4.0
 [1.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.3.0
 [1.2.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.2.0
 [1.1.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.1.0

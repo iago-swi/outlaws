@@ -234,11 +234,12 @@ export function bindDuelUI(G) {
   G.duelStatus = (t) => { $('#dstatus').textContent = t; };
   const cfg = () => ({ level: +$('#dlevel').value, rules: $('#drules').value, foes: +$('#dfoes').value });
   const fresh = (host) => { if (G.duel) G.duel.link.close(); const d = (G.duel = new Duel(G)); d.isHost = host; d.link.onerror = fail; return d; };
-  const fail = (e) => G.duelStatus('Could not connect (' + ((e && (e.type || e.message)) || 'unknown error') + '). Check the code, or use the copy-paste codes below.');
+  const fail = (e) => G.duelStatus('Could not connect (' + ((e && (e.type || e.message)) || 'unknown error') + '). Check the code and try again; if it still fails, create a new duel.');
   const copy = (text, done) => { const p = navigator.clipboard && navigator.clipboard.writeText(text); if (p) p.then(() => G.duelStatus(done), () => {}); };
-  const code5 = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
+  // no letter or digit that is easily taken for another one: no 0/O/Q, 1/I, 2/Z, 5/S, 8/B, G, and neither U nor V
+  const code5 = () => { const a = 'ACDEFHJKLMNPRTWXY34679'; let s = ''; for (let i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; };
   const join = async (code) => {
-    code = String(code || '').trim().toUpperCase(); if (!code) return;
+    code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!code) return;
     const d = fresh(false); G.duelStatus('Connecting…');
     try { await d.link.join(code); } catch (e) { fail(e); }
   };
@@ -256,18 +257,4 @@ export function bindDuelUI(G) {
   $('#dagain').addEventListener('click', () => { if (G.duel) G.duel.startNext(cfg()); });
   $('#dcopy').addEventListener('click', () => copy($('#dlink').value, 'Link copied. Send it to your opponent, then wait here.'));
   $('#djoinbtn').addEventListener('click', () => join($('#dcodein').value));
-  // without the invite service: two codes, pasted by hand
-  $('#mhost').addEventListener('click', async () => {
-    const d = fresh(true); d.cfg = cfg(); G.duelStatus('Making your code…');
-    try { $('#moffer').value = await d.link.manualOffer(); G.duelStatus('Send this code to your opponent, then paste their reply.'); } catch (e) { fail(e); }
-  });
-  $('#mconnect').addEventListener('click', async () => {
-    if (!G.duel || !G.duel.isHost) return G.duelStatus('Make your code first (step 1).');
-    try { await G.duel.link.manualAccept($('#manswerin').value); G.duelStatus('Connecting…'); } catch (e) { fail(e); }
-  });
-  $('#mreply').addEventListener('click', async () => {
-    const d = fresh(false); G.duelStatus('Making your reply…');
-    try { $('#manswer').value = await d.link.manualAnswer($('#mofferin').value); G.duelStatus('Send this reply to the host. The duel starts when they paste it.'); } catch (e) { fail(e); }
-  });
-  for (const id of ['moffer', 'manswer']) $('#' + id).addEventListener('click', (e) => { e.target.select(); if (e.target.value) copy(e.target.value, 'Code copied.'); });
 }
