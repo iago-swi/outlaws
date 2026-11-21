@@ -12,8 +12,10 @@ export class Input {
     this.fireAt = -1e9; this.altAt = -1e9; // time of the last press: a quick tap is remembered for a moment
     this.cx = 0.5;                       // cursor position across the window, used when the mouse is not captured
     this.pressed = new Set(); this.canvas = canvas; this.free = false;   // free = debug mode without pointer lock
-    addEventListener('keydown', (e) => { if (!e.repeat) this.pressed.add(e.code); this.keys.add(e.code); if (this.locked && ['Space', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) e.preventDefault(); });
-    addEventListener('keyup', (e) => this.keys.delete(e.code));
+    this.caps = false;                   // the real state of Caps Lock: one of the two crouch toggles
+    const caps = (e) => { if (e.getModifierState) this.caps = e.getModifierState('CapsLock'); };
+    addEventListener('keydown', (e) => { caps(e); if (!e.repeat) this.pressed.add(e.code); this.keys.add(e.code); if (this.locked && ['Space', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) e.preventDefault(); });
+    addEventListener('keyup', (e) => { caps(e); this.keys.delete(e.code); });
     addEventListener('blur', () => { this.keys.clear(); this.fire = this.alt = false; });
     addEventListener('mousemove', (e) => {
       // works with the mouse captured (pointer lock) and, as a fallback, without it
@@ -65,6 +67,7 @@ export class Player {
     this.game = game;
     this.pos = new THREE.Vector3(); this.vel = new THREE.Vector3();
     this.yaw = 0; this.pitch = 0; this.hp = 100; this.dead = false; this.onGround = true;
+    this.crouch = false; this.crouchWant = false; this.duck = 0;      // duck: 0 upright .. 1 crouched, eased
     this.camY = 1.65; this.bob = 0; this.bobAmt = 0; this.kick = 0; this.kickV = 0; this.land = 0; this.roll = 0;
     this.fov = 72; this.aim = 0; this.swayX = 0; this.swayY = 0; this.deadT = 0; this.stepPhase = 0;
     // hero traits: multipliers set by the chosen character (1 = no change)
@@ -92,6 +95,7 @@ export class Player {
     const W = this.game.world;
     this.pos.set(x, W.groundAt(x, z, 100), z); this.vel.set(0, 0, 0);
     this.yaw = yaw; this.pitch = 0; this.hp = this.maxHp; this.hurtT = 99; this.dead = false; this.deadT = 0; this.camY = this.pos.y + 1.65;
+    this.crouch = this.crouchWant = false; this.duck = 0; this.capsWas = undefined; document.body.classList.remove('crouched');
     this.kick = this.kickV = 0; this.aim = 0;
     this.setWeapon(weaponKind, sleeve);
   }
@@ -132,15 +136,29 @@ export class Player {
       f = (K.has('KeyW') || K.has('ArrowUp') ? 1 : 0) - (K.has('KeyS') || K.has('ArrowDown') ? 1 : 0);
       s = (K.has('KeyD') ? 1 : 0) - (K.has('KeyA') ? 1 : 0);
     }
-    const sprint = K.has('ShiftLeft') || K.has('ShiftRight');
+    // crouching: C or Caps Lock toggles it. Half speed, lower eyes and body, harder for enemies to see.
+    if (active) {
+      if (this.capsWas === undefined) this.capsWas = input.caps;
+      if (input.pressed.has('KeyC')) this.crouchWant = !this.crouchWant;
+      if (input.caps !== this.capsWas) { this.capsWas = input.caps; this.crouchWant = !!input.caps; }
+      if (this.crouch && input.pressed.has('Space')) this.crouchWant = false;
+      if (this.crouchWant !== this.crouch) {
+        if (this.crouchWant) this.crouch = true;
+        else { const t = { x: this.pos.x, y: this.pos.y, z: this.pos.z }; W.collide(t, 0.4, 1.75); if (Math.hypot(t.x - this.pos.x, t.z - this.pos.z) < 0.02) this.crouch = false; }   // stand up only where there is head room
+        document.body.classList.toggle('crouched', this.crouch);
+      }
+    }
+    this.duck = damp(this.duck, this.crouch ? 1 : 0, 12, dt);
+    const H = this.crouch ? 1.05 : 1.75, eye = 1.65 - 0.7 * this.duck;
+    const sprint = !this.crouch && (K.has('ShiftLeft') || K.has('ShiftRight'));
     const sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);
     let wx = -sy * f + cy * s, wz = -cy * f - sy * s;
     const wl = Math.hypot(wx, wz);
-    const top = (sprint && f > 0 ? 8.6 : 5.6) * (1 - this.aim * 0.4) * this.mods.speed;
+    const top = (sprint && f > 0 ? 8.6 : 5.6) * (1 - this.aim * 0.4) * (1 - 0.5 * this.duck) * this.mods.speed;
     if (wl > 0) { wx = wx / wl * top; wz = wz / wl * top; }
     const acc = this.onGround ? 11 : 2.5;
     this.vel.x = damp(this.vel.x, wx, acc, dt); this.vel.z = damp(this.vel.z, wz, acc, dt);
-    if (active && this.onGround && input.pressed.has('Space')) { this.vel.y = 5.8; this.onGround = false; }
+    if (active && this.onGround && !this.crouch && input.pressed.has('Space')) { this.vel.y = 5.8; this.onGround = false; }
     this.vel.y -= 17 * dt;
 
     const steps = Math.max(1, Math.ceil(Math.hypot(this.vel.x, this.vel.z) * dt / 0.2));   // small steps: thin walls cannot be skipped
@@ -148,14 +166,14 @@ export class Player {
       const nx = this.pos.x + this.vel.x * dt / steps, nz = this.pos.z + this.vel.z * dt / steps;
       if (W.walkable(this.pos.x, this.pos.z, nx, nz, this.pos.y)) { this.pos.x = nx; this.pos.z = nz; }
       else { this.vel.x *= 0.5; this.vel.z *= 0.5; }
-      W.collide(this.pos, 0.4, 1.75);
+      W.collide(this.pos, 0.4, H);
     }
     for (const e of G.enemies) {               // living bodies are solid
       if (!e.alive || e.state === 'hidden') continue;
       const ex = this.pos.x - e.pos.x, ez = this.pos.z - e.pos.z, d2 = ex * ex + ez * ez, rr = e.cfg.dog ? 0.7 : 0.8;
       if (d2 < rr * rr && d2 > 1e-6 && Math.abs(this.pos.y - e.pos.y) < 1.6) { const d = Math.sqrt(d2); this.pos.x = e.pos.x + ex / d * rr; this.pos.z = e.pos.z + ez / d * rr; }
     }
-    W.collide(this.pos, 0.4, 1.75);
+    W.collide(this.pos, 0.4, H);
     const ground = W.groundAt(this.pos.x, this.pos.z, this.pos.y);
     this.pos.y += this.vel.y * dt;
     if (this.pos.y <= ground) {
@@ -171,8 +189,8 @@ export class Player {
     if (ph !== this.stepPhase) { this.stepPhase = ph; if (this.onGround && spd > 1.5) G.sound.step(ground > W.height(this.pos.x, this.pos.z) + 0.05); }
     this.land = damp(this.land, 0, 9, dt);
     this.kickV += (-this.kick * 90 - this.kickV * 13) * dt; this.kick += this.kickV * dt;
-    this.camY = damp(this.camY, this.pos.y + 1.65, 20, dt);
-    if (Math.abs(this.camY - (this.pos.y + 1.65)) > 1.2) this.camY = this.pos.y + 1.65;
+    this.camY = damp(this.camY, this.pos.y + eye, 20, dt);
+    if (Math.abs(this.camY - (this.pos.y + eye)) > 1.2) this.camY = this.pos.y + eye;
     this.roll = damp(this.roll, -s * 0.012 * this.bobAmt, 8, dt);
     cam.position.set(this.pos.x, this.camY + Math.abs(Math.sin(this.bob)) * 0.045 * this.bobAmt - this.land, this.pos.z);
     cam.rotation.set(this.pitch + this.kick, this.yaw, this.roll + Math.cos(this.bob) * 0.004 * this.bobAmt);

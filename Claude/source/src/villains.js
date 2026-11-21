@@ -24,7 +24,6 @@ export const VILLAINS = {
     { look: 'antinous', name: 'Antinous', who: 'Leader of the suitors in Ulysses’ hall', trait: 'Usurper', effect: 'moves 15% faster', mods: { speed: 1.15 }, sleeve: 0xd0a078, cuff: 0xd9b23a },
     { look: 'minotaur', name: 'Minotaur', who: 'The bull-headed monster of the Cretan labyrinth', trait: 'Bull of Minos', effect: 'throwing axes and sword; starts with 160 health', weapon: 'axe', weaponName: 'Axes & sword', alt: 'right mouse — sword', mods: { hp: 160 }, sleeve: 0x8a5a3a, cuff: 0x8a5a3a },
     { look: 'xerxes', name: 'Xerxes', who: 'Great King of Persia, who invaded Greece in 480 BC', trait: 'King of Kings', effect: 'bow and sword; takes 20% less damage', weapon: 'bow', weaponName: 'Bow & sword', alt: 'right mouse — sword', mods: { armor: 0.8 }, sleeve: 0x5a2a7a, cuff: 0xd9b23a },
-    { look: 'circe', name: 'Circe', who: 'The sorceress who turned Ulysses’ men into swine', trait: 'Enchantress', effect: 'throws javelins much faster', mods: { fire: 0.65 }, sleeve: 0xe0b48e, cuff: 0xd9b23a },
   ],
   north: [
     { look: 'bloodaxe', name: 'Erik Bloodaxe', who: 'King of Norway, slayer of his brothers', trait: 'Bloodaxe', effect: 'throws axes much faster', mods: { fire: 0.65 }, sleeve: 0x5a2424, cuff: 0x2a1c12 },

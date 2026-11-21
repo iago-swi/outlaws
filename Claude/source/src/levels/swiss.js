@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { drawTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
-import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge } from '../props.js';
+import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, butte, stand } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const swiss = {
@@ -327,7 +327,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   }
 
   // ---- forest, meadow, boulders ----------------------------------------------------------------
-  const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4 || dPoly(STREAM, x, z) < 5 || (x > 26 && x < 72 && z < -12 && z > -56) || (Math.hypot(x + 10, z - 44) < 34) || Math.hypot(x + 44, z - 14) < 8 || Math.hypot(x - fallX, z - fallZ) < 14 || Math.hypot(x + 34, z - 58) < 17 || Math.hypot(x + 84, z - 27) < 16 || Math.hypot(x - 26, z - 52) < 10 || Math.hypot(x - 74, z - 34) < 13;
+  const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4 || dPoly(STREAM, x, z) < 5 || (x > 26 && x < 72 && z < -12 && z > -56) || (Math.hypot(x + 10, z - 44) < 34) || Math.hypot(x + 44, z - 14) < 8 || Math.hypot(x - fallX, z - fallZ) < 14 || Math.hypot(x + 34, z - 58) < 17 || Math.hypot(x + 84, z - 27) < 16 || Math.hypot(x - 26, z - 52) < 10 || Math.hypot(x + 52, z + 17) < 16 || Math.hypot(x - 74, z - 34) < 13;
   const pines = [];
   for (let i = 0; i < 60000 && pines.length < 2100; i++) {
     const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), d = Math.hypot(x - 6, z - 2);
@@ -362,6 +362,13 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const eagle = new THREE.Mesh(merge([gBox(2.6, 0.03, 0.5, 0x2a2018, [0, 0, 0]), gBox(0.3, 0.06, 1.0, 0x2a2018, [0, 0, 0.1]), gBox(0.5, 0.03, 0.3, 0x2a2018, [0, 0, 0.6])]), M.flat);
   root.add(eagle);
 
+  { // a rocky knoll west of the path, climbed by a zigzag of rock steps; a hunter's high seat near the start
+    const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
+    clearAt(-52, -17, 15);
+    butte(B, M, -52, -21, { w: 14, d: 10, h: 9, legs: 3, y: 5.05, bands: [0x6e6c6a, 0x7c7a76, 0x8c8880, 0x767470, 0x9a968c], topC: 0x6a9040, cover: 0x7c7a76 });
+    extraFoes.push(['crossbowman', -52, -22, { y: 14.5, patrol: false, yaw: 0 }]); extraPicks.push([-48, -19.5, 14.5]);
+    clearAt(-44, 65, 4); stand(B, M, -44, world.height(-44, 64.7), 64.7, 0, { c: 0x7a5a3a, roof: 0x5a4632 });
+  }
   const enemies = [
     ['halberdier', -15, 41, {}], ['crossbowman', -2, 44.5, {}], ['halberdier', 5, 24, { patrol: true }], ['crossbowman', 17, 33, {}],
     ['halberdier', -39, 18, { patrol: true }], ['halberdier', 21, 0, {}], ['crossbowman', 29.5, -10, {}], ['knight', 32, -15, {}],

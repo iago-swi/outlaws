@@ -181,13 +181,13 @@ class Game {
     $('#intro .chap').textContent = d.chapter;
     $('#intro h2').innerHTML = (d.kanji ? `<span class="kanji">${d.kanji}</span>` : '') + d.title;
     $('#intro .story').textContent = d.story;
-    $('#intro .keys').innerHTML = d.keys;
+    $('#intro .keys').innerHTML = d.keys.replace('<kbd>Space</kbd> jump', '<kbd>Space</kbd> jump &nbsp; <kbd>C</kbd> or <kbd>Caps Lock</kbd> crouch');
     const duel = this.duel && this.duel.active, n = d.heroes.length;
     if (duel) {
       const c = this.duel.cfg;
       $('#intro .chap').textContent = 'Duel · ' + RULES[c.rules];
       $('#intro .story').textContent = 'Two players, one world. ' + (c.rules === 'rounds' ? 'Each kill ends a round; the first to win three rounds wins.' : c.rules === 'one' ? 'One life each: the first kill decides.' : 'Five minutes: whoever has more kills at the end wins.')
-        + (c.foes ? ' A few of the chapter’s enemies are still about, and they attack you both.' : '') + ' The larger dot on the compass is your opponent.';
+        + (c.foes ? (c.foes > 1 ? ` ${['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][c.foes - 2]} of the chapter’s enemies are still about, and they attack you both.` : ' One of the chapter’s enemies is still about, and attacks you both.') : '') + ' The larger dot on the compass is your opponent.';
     }
     $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
     $('#heroes').classList.toggle('many', !!duel); $('#heroes').classList.toggle('lots', !!duel && this.roster().length > 7);

@@ -15,10 +15,12 @@ export class RemotePlayer extends Enemy {
   constructor(game, hero) {
     super(game, 'duelist', 0, 0, { look: hero.look, patrol: false, static: true });
     this.remote = true; this.name = hero.name; this.mods = { stealth: 1, ...hero.mods };
-    this.vel = new THREE.Vector3(); this.net = null; this.aimF = 0; this.swing = 0;
+    this.vel = new THREE.Vector3(); this.net = null; this.aimF = 0; this.swing = 0; this.duck = 0;
     this.rig.group.visible = false;                    // until the first report arrives
   }
   get dead() { return !this.alive; }
+  /** A crouching opponent is hit where the figure is drawn: half a metre lower. */
+  rayHit(o, d, max) { const k = 0.5 * this.duck; this.pos.y -= k; const h = super.rayHit(o, d, max); this.pos.y += k; return h; }
   /** A hit by this player's weapon: the damage is applied in the other browser. */
   damage(amount, head, fromX, fromZ) {
     if (!this.alive) return false;
@@ -51,6 +53,8 @@ export class RemotePlayer extends Enemy {
     rig.legL.rotation.x = sw; rig.legR.rotation.x = -sw;
     rig.group.position.y = this.pos.y + Math.abs(Math.cos(this.walk)) * 0.04 * this.moving;
     rig.hips.rotation.x = this.moving * 0.08 - this.flinch * 0.35;
+    const dk = (this.duck = damp(this.duck, n.f & 8 ? 1 : 0, 12, dt));
+    if (dk > 0.01) { rig.group.position.y -= 0.5 * dk; rig.legL.rotation.x = sw * (1 - dk) - 1.35 * dk; rig.legR.rotation.x = -sw * (1 - dk) + 0.9 * dk; rig.hips.rotation.x += 0.25 * dk; }   // down on one knee
     this.aimF = damp(this.aimF, n.f & 1 ? 1 : 0.6, 12, dt);
     this.swing = n.f & 2 ? Math.min(1, this.swing + dt * 5) : Math.max(0, this.swing - dt * 6);
     rig.armR.rotation.x = (-Math.PI / 2 - n.pitch) * this.aimF + sw * 0.5 * (1 - this.aimF) - Math.sin(this.swing * Math.PI) * 1.2;
@@ -79,11 +83,11 @@ export class Duel {
   /** Host: start another duel over the same connection, with the same or new settings. */
   startNext(cfg) { if (!this.isHost || !this.link.open || this.phase === 'pick' || this.phase === 'play') return; this.cfg = cfg; this.send({ t: 'setup', c: cfg }); this.enterPick(); }
 
-  /** Which of the chapter's computer enemies stay in a duel: none, or six spread over the map. */
+  /** Which of the chapter's computer enemies stay in a duel: none, or the number the host chose (1 to 9), spread over the map. */
   enemyList(list) {
     if (!this.cfg.foes) return [];
     const ok = list.filter(([type, , , o]) => !TYPES[type].boss && !(o && (o.static || o.ambush || o.up !== undefined || o.y !== undefined)));
-    const n = Math.min(6, ok.length), out = [];
+    const n = Math.min(Math.max(0, Math.round(this.cfg.foes)), 9, ok.length), out = [];
     for (let i = 0; i < n; i++) out.push(ok[Math.floor((i + 0.5) * ok.length / n)]);
     return out;
   }
@@ -167,7 +171,7 @@ export class Duel {
     }
   }
   sendState() {
-    const P = this.game.player, w = P.weapon, m = { t: 's', x: r2(P.pos.x), y: r2(P.pos.y), z: r2(P.pos.z), yaw: r3(P.yaw), pitch: r3(P.pitch), f: (P.aim > 0.5 ? 1 : 0) | (w && w.meleeT > 0 ? 2 : 0) | (P.dead ? 4 : 0) };
+    const P = this.game.player, w = P.weapon, m = { t: 's', x: r2(P.pos.x), y: r2(P.pos.y), z: r2(P.pos.z), yaw: r3(P.yaw), pitch: r3(P.pitch), f: (P.aim > 0.5 ? 1 : 0) | (w && w.meleeT > 0 ? 2 : 0) | (P.dead ? 4 : 0) | (P.crouch ? 8 : 0) };
     if (this.isHost && this.cfg.rules === 'timed') m.c = Math.ceil(this.clock);
     this.send(m);
   }

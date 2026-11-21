@@ -4,10 +4,11 @@ A first-person shooter in eight chapters, built with Claude (Anthropic) in the s
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
 a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
 and the Tibetan plateau in 1959, one hero faces many enemies alone, in a real-time 3D
-world you can walk through freely. Most buildings can be entered, and the longships
-at Jarnvik can be boarded. Twenty-four heroes from history and legend are playable,
-three per chapter. In Duel mode two players fight each other online, as a hero or as
-one of twenty-eight villains.
+world you can walk through freely. Most buildings can be entered, the longships at
+Jarnvik can be boarded, and every chapter has places to climb, jump onto and crawl
+into for an ambush. Twenty-four heroes from history and legend are playable, three per
+chapter. In Duel mode two players fight each other online, as a hero or as one of
+twenty-seven villains.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -17,7 +18,7 @@ files.
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori |
 | :---: | :---: |
-| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour: the bank with its lit windows and open door, then the sheriff's office, the jail and the saloon along the boardwalk, an outlaw and a tumbleweed in the street, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; a wandering flute monk (komusō) in black, a basket hat over his head, stands beside the path; the samurai's bow in the foreground"> |
+| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour, looking west: the doctor's and the telegraph office on the left, the sheriff's office, the jail and the saloon on the right, an outlaw on the boardwalk, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; a wandering flute monk (komusō) in black, a basket hat over his head, stands beside the path; the samurai's bow in the foreground"> |
 | **Chapter III · Uri** | **Chapter IV · Ithaca** |
 | <img src="screenshot-uri.jpg" width="400" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="400" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> |
 | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
@@ -51,9 +52,9 @@ show where the remaining enemies are; the last three come looking for you. Healt
 
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 28: cowboys, sombrero bandits, the gang boss Silas Crowe |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 29: cowboys, sombrero bandits, the gang boss Silas Crowe |
 | II · Kagemori, Japan, 1600 | bow (yumi) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 26: Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 27: Habsburg halberdiers, crossbowmen, knights, the bailiff |
 | IV · Ithaca, Greece, the age of heroes | javelins and short sword | 30: Spartan hoplites, javelin throwers, their captain |
 | V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 34: rival Vikings, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
 | VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 33: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
@@ -82,6 +83,30 @@ Buddha in each of the three temples of Che La; bomb craters in Sainte-Aubine. In
 three flute monks (komusō), their heads hidden under basket hats, and four geisha under
 oil-paper umbrellas stand about the valley; like the Dalai Lama's caravan in chapter
 VIII they are bystanders and take no part in the fight.
+
+### Climb, jump and hide
+
+Press `C` or `Caps Lock` to crouch. A crouching player moves at half speed, is noticed
+from 40% less far, is hidden by anything about a metre high, and fits through low doors.
+A jump clears about 1.3 m, enough to get onto a crate and from crate to crate.
+
+![The view from the top of Lookout Butte in Dry Gulch: a boulder to crouch behind, the roofs of the town below, the saloon, the jail, the sheriff's office and the bank along the main street, the church on the right, mesas on the horizon, the six-shooter in the foreground](screenshot-butte.jpg)
+
+| Chapter | Places for an ambush or a sniper |
+| --- | --- |
+| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, reached by jumping up the crates behind them; a root cellar with a crawl-in door; the low walls of a ruined adobe |
+| II | a watch platform in the dojo court; a tea hut whose door is a crawl-in hatch |
+| III | a rocky knoll west of the path with a zigzag stair, 9 m high; a hunter's high seat near the start |
+| IV | a lookout above the landing beach; an old cistern to crawl into |
+| V | a watch platform in the village; an earth cellar; the decks of the longships |
+| VI | a hunter's stand among the hedgerows; a dugout; the ruined church |
+| VII | the roofs of the garages (two crates, then along the whole row); a cellar hatch; the slab of the building site |
+| VIII | a lookout beside the road; a hermit's cell |
+
+Enemies can follow you up anything that has steps: the butte and the knoll can be
+stormed, and each is held by a marksman when you arrive. Enemies cannot jump, so roofs,
+platforms and high seats are safe from blades, though not from bullets, and they cannot
+get through a crawl-in door at all.
 
 ### Choose your hero
 
@@ -147,8 +172,8 @@ belong to the years after 1966 and are in the chapter by request, not by the cal
 Click **Duel** on the title screen. Two players, each on their own computer, hunt each
 other in one of the eight chapters; the goal is to kill the other player.
 
-1. One player chooses the chapter, the rules and whether a few computer enemies stay in
-   the world, then clicks *Create and get the invite link*.
+1. One player chooses the chapter, the rules and how many computer enemies stay in
+   the world (none, or one to nine), then clicks *Create and get the invite link*.
 2. They send the link, or its five-letter code, to the other player, who opens it.
 3. Both choose a fighter. The duel starts when both have chosen.
 4. After a duel the two players stay connected. A click on the end screen leads back to
@@ -181,7 +206,6 @@ carries the same mark. Like a hero, a villain has their own look and one strengt
 | IV | Antinous | Leader of the suitors in Ulysses' hall | Usurper: moves 15% faster |
 | IV | Minotaur | The bull-headed monster of the Cretan labyrinth | Bull of Minos: throwing axes and sword; starts with 160 health |
 | IV | Xerxes | Great King of Persia, who invaded Greece in 480 BC | King of Kings: bow and sword; takes 20% less damage |
-| IV | Circe | The sorceress who turned Ulysses' men into swine | Enchantress: throws javelins much faster |
 | V | Erik Bloodaxe | King of Norway, slayer of his brothers | Bloodaxe: throws axes much faster |
 | V | Ivar the Boneless | Ragnar's son, leader of the Great Heathen Army | Cunning: takes 25% less damage |
 | V | Loki | Trickster god, father of the wolf Fenrir | Shape-shifter: moves 20% faster |
@@ -196,7 +220,7 @@ carries the same mark. Like a hero, a villain has their own look and one strengt
 | VIII | Langdarma | The king who persecuted the Dharma, 9th century | Horned king: bow and sword; starts with 140 health |
 | VIII | Jiang Qing | Madame Mao, leader of the Gang of Four | Red Guard: pistol; moves 20% faster |
 
-The villains can only be played in a duel. Chapter IV has six of them, chapter VII four,
+The villains can only be played in a duel. Chapter IV has five of them, chapter VII four,
 the others three. The dictators are there to be fought: their figures carry no party
 symbols, and each has a plain description of who they were. Several
 villains, like several heroes, do not belong to their chapter's year.
@@ -206,8 +230,8 @@ Things to know in a duel:
 - The whole map is used. The larger dot on the compass is your opponent.
 - Weapons do 60% of their usual damage against the other player, so a duel is not over
   in one hit. A hit to the head still counts two and a half times.
-- If computer enemies are in the world, there are six of them; they attack whichever
-  player is nearer, and being killed by one counts for your opponent.
+- If computer enemies are in the world, there are as many as the host chose, one to
+  nine; they attack whichever player is nearer, and being killed by one counts for your opponent.
 - A duel cannot be paused, and practice mode is switched off.
 
 **Connecting.** The two browsers talk to each other directly. The invite link uses a
@@ -224,7 +248,8 @@ has no relay server.
 | --- | --- |
 | `W` `A` `S` `D` | Move |
 | `Shift` | Run |
-| `Space` | Jump |
+| `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
+| `C` or `Caps Lock` | Crouch on and off |
 | Left mouse button | Fire, loose an arrow, shoot a bolt, throw a javelin or an axe |
 | Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II, IV and V and with the bow of chapter VIII |
 | `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana and the swords) |
@@ -252,8 +277,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.64 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 7,480 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.65 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 7,660 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -273,11 +298,11 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
 | [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble and the longship you can board. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable rock with its zigzag stair, jump blocks, raised hides and crawl-in dens. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
 | [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
-| [villains.js](source/src/villains.js) | The twenty-eight villains that can be played in a duel. |
+| [villains.js](source/src/villains.js) | The twenty-seven villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
 ### Rendering pipeline
@@ -406,9 +431,9 @@ the same on every run.
 Physics does not use the drawn meshes. A separate `World` holds boxes that may be
 rotated about the vertical axis, vertical cylinders, and the terrain height function.
 
-- **Walking.** The player and enemies are vertical capsules. Each step pushes the
+- **Walking.** The player and enemies are vertical capsules, 1.75 m high for the player and 1.05 m when crouching. Standing up is refused where there is no head room. Each step pushes the
   capsule out of any box or cylinder it overlaps. A ledge up to 0.5 m high is climbed
-  automatically, which makes boardwalks, stairs and the arched bridge walkable. Slopes
+  automatically, which makes boardwalks, stairs and the arched bridge walkable. The same rule is applied at the top of a jump (the feet rise 1 m), so a ledge up to about 1.4 m can be reached by jumping; the jump blocks are 1.1 to 1.2 m apart in height. Slopes
   steeper than a per-level limit, and deep water, block movement, unless a bridge, a
   jetty or a deck within stepping reach carries the walker over the water. A move is cut into
   strides of at most 0.2 to 0.25 m, so a fast runner cannot skip over a thin wall.
@@ -426,10 +451,16 @@ When a chapter loads, a grid of 0.7 m cells is laid over the playable area: betw
 40,000 and 154,000 cells. For each cell the game looks for the lowest surface on which a
 body fits (the ground, or a floor, step or plinth above it) by testing the same capsule
 the walkers use against the same colliders. Over deep water the search starts at the
-water's surface, so a bridge or a ship's deck becomes walkable and open water does not. Two neighbouring cells are linked if the
+water's surface, so a bridge or a ship's deck becomes walkable and open water does not.
+The search goes up as far as 18 m, so the top of a rock or a roof is in the grid too;
+whether enemies can get there depends only on whether steps link it to the ground. On
+open ground a link goes uphill only as steeply as a walker can climb, with a margin, so
+routes take the stair and not the hillside beside it. Two neighbouring cells are linked if the
 height between them is a step of at most half a metre, or an open slope; a larger
 difference is walked in three short strides to tell a staircase from a wall. Building
-the grid takes about 0.4 to 1.7 s per chapter.
+the grid takes about 0.1 to 0.3 s per chapter: while it is built, the colliders are
+sorted into buckets of four by four cells, so each test looks at a handful of boxes and
+not at all of them. (Without the buckets it took 1 to 3 s.)
 
 An enemy that can see the player and has a clear straight line simply walks it.
 Otherwise it asks for a route (A* over the grid, with a binary heap; 0.05 to 0.4 ms per
@@ -446,7 +477,7 @@ barrels. A description object selects skin, clothes, hat, beard, extras such as 
 poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
-The same builder makes the twenty-four playable heroes, the twenty-eight duel villains
+The same builder makes the twenty-four playable heroes, the twenty-seven duel villains
 (the one-eyed Cyclops, Medusa with her snakes and the bull-headed Minotaur included),
 the human enemy types, the bystanders (the Dalai Lama, his monks and riders in chapter
 VIII; the flute monks under their basket hats and the geisha with their umbrellas in
@@ -465,6 +496,11 @@ the damage.
 | Idle | Stands or patrols near its post. A line-of-sight ray is cast every 0.18 to 0.3 s. Gunshots are heard at a distance; bows, the crossbow and thrown weapons are silent. |
 | Combat, ranged | Keeps within a distance band, strafes, and raises the weapon for 0.4 to 0.9 s before firing. Machine-gunners stay behind their sandbags and fire bursts of five. |
 | Combat, melee | Runs in, winds up for 0.2 to 0.5 s, then strikes if still in reach. Ninja zigzag and throw shuriken; berserkers zigzag; hoplites and halberdiers thrust. |
+
+A crouching player is a smaller target in every respect: the sight line ends 0.7 m
+lower, the distance at which an idle enemy notices the player shrinks by 40%, enemies
+aim half a metre lower, and the three hit spheres of the player's body are squeezed to
+60% of their height.
 
 Enemy shots are real projectiles, not instant hits. They are aimed with only 45% of the
 lead a moving target needs, so standing still gets you hit and strafing avoids most
@@ -527,6 +563,8 @@ and whether they aim or swing, in a small JSON message over a WebRTC data channe
   stay. They are simulated on the host only and turn on whichever player is nearer. The
   guest receives their positions ten times a second and shows them as puppets; a guest's
   hit on a puppet is sent to the host, which applies it.
+- **Crouching.** One bit of the position report says whether the player crouches. The
+  opponent's figure then goes down on one knee, and its hit spheres are lowered with it.
 - **Between duels.** The data channel is kept open when a duel ends. Starting the next
   duel is the same message that started the first one (the host's settings), so a
   rematch needs no new handshake; the level, the figures and the scores are rebuilt on
@@ -602,14 +640,14 @@ once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 418 | 0.81 million | 8,400 | 422 | 53,500 |
-| II · Kagemori | 324 | 0.50 million | 11,900 | 1,689 | 40,000 |
-| III · Uri | 415 | 1.84 million | 52,700 | 521 | 153,700 |
-| IV · Ithaca | 469 | 0.84 million | 18,200 | 649 | 98,900 |
-| V · Jarnvik | 402 | 0.93 million | 2,100 | 913 | 87,700 |
-| VI · Sainte-Aubine | 368 | 0.84 million | 22,700 | 590 | 98,000 |
-| VII · Stalnogorsk | 422 | 0.20 million | 23 | 400 | 81,100 |
-| VIII · Che La | 420 | 0.87 million | 20,400 | 415 | 97,900 |
+| I · Dry Gulch | 436 | 0.82 million | 8,400 | 502 | 53,500 |
+| II · Kagemori | 326 | 0.50 million | 11,900 | 1,705 | 40,000 |
+| III · Uri | 468 | 1.86 million | 52,700 | 575 | 153,700 |
+| IV · Ithaca | 473 | 0.84 million | 18,200 | 680 | 98,900 |
+| V · Jarnvik | 403 | 0.93 million | 2,100 | 932 | 87,700 |
+| VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 609 | 98,000 |
+| VII · Stalnogorsk | 433 | 0.20 million | 23 | 413 | 81,100 |
+| VIII · Che La | 422 | 0.87 million | 20,400 | 434 | 97,900 |
 
 Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has the most
 colliders because every bamboo stalk near the path is solid; chapter V comes second
@@ -674,6 +712,18 @@ animation frame the clock could run backwards, which lifted them into the air. B
 fixed. The three new Greek villains were tried in single-player only (weapon and health
 as described), not in a duel between two browsers.
 
+After a player reported that the temple of chapter IV could not be reached, a stricter
+test was added: a scripted player really walks, by keyboard input, to every enemy post
+and every item of every chapter, and reports where it gets stuck. It found the temple
+stair (too steep in the middle: steps of 55 cm where 50 is the limit; the stair is now
+24 m long instead of 18), a tent door lower than the player, and routes that led up
+hillsides nobody can climb. The same player then crouched into a crawl-in cellar (and
+was stopped at the door when upright), jumped up the crates onto two roofs in chapter I,
+onto the garages of chapter VII and into the hides of chapters II and III, and walked up
+both zigzag stairs. Crouching was tried with the `C` key; the automated browser cannot
+press Caps Lock, which uses the same code. Crouching in a duel between two browsers was
+not tried.
+
 Duel mode was tested between two tabs of one automated browser on one computer:
 connecting by invite link and by copy-paste codes, the choice of fighters, the start at
 opposite ends, a full three-round match to the end screen, the timed rule with
@@ -694,10 +744,13 @@ estimate, and frame rate on slower graphics hardware has not been measured.
   The route grid does not know about other enemies, so several can crowd one doorway.
 - The longships lie at fixed moorings and cannot be sailed. The bystanders do not move
   or react.
-- With six villains and three heroes, the fighter selection of chapter IV uses smaller
+- With five villains and three heroes, the fighter selection of chapter IV uses smaller
   cards than the other chapters.
-- A chapter takes up to about two seconds longer to load than a version without the
-  route grid.
+- Enemies cannot jump or crouch. A player on a roof or in a den can only be shot at, or
+  not reached at all.
+- Caps Lock stays on in the operating system after you leave the game.
+- The climbable butte and knoll are built from layered blocks and are more angular than
+  the rounded mesas on the horizon.
 - Wind moves plants but not their shadows.
 - Duel mode has no relay server and no chat; if one player switches
   to another browser tab, their game stops sending until they come back.

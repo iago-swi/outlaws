@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { makeHumanoid } from '../actors.js';
 import { drawTexture } from '../tex.js';
-import { instanced, room, steps, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, room, steps, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, xf, merge, stand, den } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const greece = {
@@ -50,7 +50,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     h += 3.2 * Math.exp(-((x - 74) ** 2 + (z + 8) ** 2) / 260) * land;                   // headland of the round temple
     const hd = Math.hypot(x - HILL.x, z - HILL.z);
     let hill = 1 - smooth(25, 33.5, hd);
-    if (Math.abs(x) < 5.2 && z > -34 && z < -10) hill = smooth(-13, -31, z);              // the stairway
+    if (Math.abs(x) < 5.2 && z > -34.5 && z < -7.5) hill = smooth(-9, -33, z);            // the stairway: 24 m long, so no step is higher than a walker can climb
     h = h * (1 - hill) + HILL.top * hill;
     for (const [ix, iz, r, ht] of ISLETS) h = Math.max(h, -7.5 + (ht + 7.5) * (1 - smooth(r * 0.3, r, Math.hypot(x - ix, z - iz))));
     return h;
@@ -156,8 +156,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   statue(-11, -33, 0.4, 1.6); statue(11, -33, -0.4, 1.6); athena(0, -64.5, 0, 2.3, 0xd9b23a, 1.3); mosaic(0, HILL.top + 1.2, -56.6, 6.6, 6.6);
   athena(15.5, -40, -0.5, 3.0, 0x6a8a6e, 2.2);                                              // Athena in bronze, watching the stair                      // the god of the house, inside the cella
   // stairway (the terrain underneath is a ramp)
-  for (let i = 0; i < 30; i++) { const z = -13 - i * 0.6; B.box(M.plaster, 9.6, 0.5, 0.66, 0, world.height(0, z - 0.3) - 0.42, z - 0.3, { c: i % 2 ? 0xe6dfcc : 0xdcd4c0, solid: true }); }
-  for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const z = -13 - i * 3.6; B.box(M.plaster, 0.9, 1.6, 3.7, s * 5.3, world.height(s * 5.3, z - 1.8) - 0.5, z - 1.8, { c: MARBLE, solid: true }); }
+  for (let i = 0; i < 40; i++) { const z = -9 - i * 0.6; B.box(M.plaster, 9.6, 0.5, 0.66, 0, world.height(0, z - 0.3) - 0.42, z - 0.3, { c: i % 2 ? 0xe6dfcc : 0xdcd4c0, solid: true }); }
+  for (const s of [-1, 1]) for (let i = 0; i < 7; i++) { const z = -9 - i * 3.6; B.box(M.plaster, 0.9, 1.6, 3.7, s * 5.3, world.height(s * 5.3, z - 1.8) - 0.5, z - 1.8, { c: MARBLE, solid: true }); }
 
   // ---- village and agora ------------------------------------------------------------------
   { const y = world.height(0, 24); B.box(M.cobble, 16, 0.14, 15, 0, y - 0.06, 24, { c: 0xf0e8d4 }); mosaic(0, y + 0.1, 24, 9, 9); }
@@ -292,6 +292,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const gullGeo = merge([gBox(1.5, 0.03, 0.26, 0xf4f4f0, [0, 0, 0]), gBox(0.2, 0.06, 0.6, 0xf4f4f0, [0, 0, 0.05])]);
   const gulls = [0, 1, 2, 3].map((i) => { const m = new THREE.Mesh(gullGeo, M.flat); root.add(m); return { m, r: 40 + i * 22, h: 26 + i * 6, sp: 0.16 + i * 0.03, ph: i * 1.7, cx: i % 2 ? -40 : 30, cz: i % 2 ? 60 : -10 }; });
 
+  { // a lookout above the landing beach (jump up the two blocks), an old cistern to crawl into
+    const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
+    clearAt(9, 84, 4); stand(B, M, 9, world.height(9, 83.7), 83.7, 0, { c: 0xb8a070, roof: 0xb86a42 });
+    clearAt(-16, 71.5, 4); den(B, M, -16, world.height(-16, 71.1) + 0.02, 71.1, 0, { mat: M.plaster, c: 0xe8e0d0 }); extraPicks.push([-16, 71.3, 0, 0.6]);
+  }
   const enemies = [
     ['hoplite', 5, 76, {}], ['peltast', -16, 66, {}], ['hoplite', 19, 58, { patrol: true }],
     ['peltast', -21, 31, {}], ['hoplite', -5, 33, {}], ['hoplite', 9, 20, { patrol: true }], ['peltast', 21, 10, { y: 6 }], ['hoplite', 12, 3, {}],

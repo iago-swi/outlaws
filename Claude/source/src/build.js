@@ -234,6 +234,31 @@ export class World {
     return g;
   }
 
+  /** Is this point inside a solid box at body height? (Pushing a body out of one box can push it into the next and back, which looks like a fit.) */
+  inBox(x, z, y, h) {
+    for (const b of this.boxes) {
+      if (b.y1 <= y + STEP || b.y0 >= y + h) continue;
+      const dx = x - b.x, dz = z - b.z;
+      if (dx * dx + dz * dz > b.r * b.r) continue;
+      const lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c;
+      if (Math.abs(lx) < b.hw && Math.abs(lz) < b.hd) return true;
+    }
+    return false;
+  }
+
+  /** The lowest top of a solid box above height y at this point, or Infinity: the next floor up. */
+  nextUp(x, z, y) {
+    let best = Infinity;
+    for (const b of this.boxes) {
+      if (b.y1 <= y + 0.01 || b.y1 >= best) continue;
+      const dx = x - b.x, dz = z - b.z;
+      if (dx * dx + dz * dz > b.r * b.r) continue;
+      const lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c;
+      if (Math.abs(lx) <= b.hw + 1e-6 && Math.abs(lz) <= b.hd + 1e-6) best = b.y1;
+    }
+    return best;
+  }
+
   /** Can a walker go from (x0,z0) toward (x1,z1) given slope and water? */
   walkable(x0, z0, x1, z1, feetY) {
     const dx = x1 - x0, dz = z1 - z0, d = Math.hypot(dx, dz);
@@ -394,22 +419,32 @@ export class Nav {
     this.free = new Uint8Array(n); this.hgt = new Float32Array(n); this.onT = new Uint8Array(n); this.links = new Map();
     this.g = new Float32Array(n); this.from = new Int32Array(n); this.mark = new Uint32Array(n); this.stamp = 0;
     const p = { x: 0, y: 0, z: 0 };
+    // While the grid is built, the world's colliders are swapped for the few near each cell (buckets of 4 x 4 cells):
+    // every test below then looks at a handful of boxes instead of all of them.
+    const allB = world.boxes, allC = world.cyls, BS = cell * 4, bnx = Math.ceil(this.nx / 4) + 1, bnz = Math.ceil(this.nz / 4) + 1, bb = new Array(bnx * bnz), bc = new Array(bnx * bnz), none = [];
+    const put = (arr, o, r) => {
+      const i0 = Math.max(0, Math.floor((o.x - r - this.x0) / BS)), i1 = Math.min(bnx - 1, Math.floor((o.x + r - this.x0) / BS)), j0 = Math.max(0, Math.floor((o.z - r - this.z0) / BS)), j1 = Math.min(bnz - 1, Math.floor((o.z + r - this.z0) / BS));
+      for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) (arr[j * bnx + i] ||= []).push(o);
+    };
+    for (const b of allB) put(bb, b, b.r + 0.7); for (const c of allC) put(bc, c, c.r + 0.7);
     for (let j = 0; j < this.nz; j++) for (let i = 0; i < this.nx; i++) {
-      const x = this.x0 + (i + 0.5) * cell, z = this.z0 + (j + 0.5) * cell, k = j * this.nx + i;
+      const x = this.x0 + (i + 0.5) * cell, z = this.z0 + (j + 0.5) * cell, k = j * this.nx + i, q0 = (j >> 2) * bnx + (i >> 2);
+      world.boxes = bb[q0] || none; world.cyls = bc[q0] || none;
       const gy = world.height(x, z), wet = gy < world.waterY, g0 = wet ? world.waterY : gy;   // over deep water the search starts at the surface: a bridge or a deck may cross it
       if (wet && world.groundAt(x, z, g0 + 4) < world.waterY) { this.hgt[k] = gy; continue; }   // open water
       // find the lowest surface here on which a body fits: the ground, or a floor / step / plinth above it
       let y = Math.max(g0, world.groundAt(x, z, g0 + 0.05)), fits = false;
-      for (let tries = 0; tries < 6; tries++) {
+      for (let tries = 0; tries < 8; tries++) {
         for (let q = 0; q < 8; q++) { const up = world.groundAt(x, z, y); if (up > y + 0.01) y = up; else break; }   // a walker is lifted onto anything within step height
         p.x = x; p.y = y; p.z = z; world.collide(p, 0.25, 1.7);
-        if (!(wet && y < world.waterY + 0.02) && Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03) { fits = true; break; }   // the water surface itself is never a place to stand
-        let y2 = y; for (let s = 0.5; s <= 4.5 && y2 <= y + 0.01; s += 0.5) y2 = world.groundAt(x, z, y + s);
-        if (y2 <= y + 0.01 || y2 - g0 > (wet ? 3.6 : 2.4)) break;         // nothing higher, or a roof: not a place to walk
+        if (!(wet && y < world.waterY + 0.02) && Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03 && !world.inBox(x, z, y, 1.7)) { fits = true; break; }   // the water surface itself is never a place to stand
+        const y2 = world.nextUp(x, z, y);
+        if (y2 - g0 > 18) break;                            // nothing higher. (A roof is found too, but with no steps up to it nothing links it to the ground.)
         y = y2;
       }
       this.hgt[k] = y; this.onT[k] = !wet && y - gy < 0.03 ? 1 : 0; if (fits && !(wet && y < world.waterY + 0.02)) this.free[k] = 1;
     }
+    world.boxes = allB; world.cyls = allC;
   }
   idx(x, z) { const i = Math.floor((x - this.x0) / this.cell), j = Math.floor((z - this.z0) / this.cell); return i < 0 || j < 0 || i >= this.nx || j >= this.nz ? -1 : j * this.nx + i; }
   /** Nearest walkable cell to a point (searches a few rings outward). */
@@ -429,7 +464,10 @@ export class Nav {
     if (!this.free[b]) return false;
     const ha = this.hgt[a], hb = this.hgt[b], d = Math.abs(ha - hb);
     if (d <= 0.52) return true;
-    if (this.onT[a] && this.onT[b]) return d <= 0.5 + this.cell * 1.42 * this.w.maxSlope;
+    if (this.onT[a] && this.onT[b]) {                 // open ground: any way down, but up only as steeply as a walker can climb (the same limit as World.walkable)
+      if (hb < ha) return d <= 0.5 + this.cell * 1.42 * this.w.maxSlope;
+      const df = Math.abs(a - b); return d <= this.cell * (df === 1 || df === this.nx ? 1 : 1.414) * this.w.maxSlope * 0.85;   // with a margin, so routes take the stair, not the edge of what is climbable
+    }
     if (d > 1.3) return false;
     const lo = Math.min(a, b), df = Math.max(a, b) - lo, key = lo * 4 + (df === 1 ? 0 : df === this.nx - 1 ? 1 : df === this.nx ? 2 : 3);
     let v = this.links.get(key);
