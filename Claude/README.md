@@ -652,9 +652,9 @@ once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 449 | 0.83 million | 8,400 | 575 | 53,500 |
+| I · Dry Gulch | 449 | 0.83 million | 8,400 | 713 | 53,500 |
 | II · Kagemori | 326 | 0.50 million | 11,900 | 1,703 | 40,000 |
-| III · Uri | 468 | 1.86 million | 52,700 | 546 | 153,700 |
+| III · Uri | 468 | 1.86 million | 52,700 | 561 | 153,700 |
 | IV · Ithaca | 473 | 0.84 million | 18,200 | 678 | 98,900 |
 | V · Jarnvik | 403 | 0.93 million | 2,100 | 930 | 87,700 |
 | VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 607 | 98,000 |
@@ -735,6 +735,14 @@ onto the garages of chapter VII and into the high seat of chapter III, walked up
 the zigzag stair of the butte and climbed the leaning ladder onto the boulder of chapter III (which first had a winding stair that proved too hard to climb), and later into the church of chapter I, up to its gallery and round
 the spiral stair to the belfry. Crouching was tried with the `C` key, and the arrow keys were checked against `W` `A` `S` `D` (same distance, same direction, no turning). The Enemies list was tried in chapter I (31, then 15, 31 and 10, with the boss kept each time). Crouching in a duel between two browsers was
 not tried.
+
+A player then found crossbow bolts hanging in the air at the paddock of chapter III. Each
+fence line had one flat-topped collision box, set from the ground at the middle of the
+line; on the sloping paddock it stood half a metre above the top rail at one corner, above
+eye level, and bolts lodged in it. Fences now have one collider per bay, as high as the
+top rail, and cows, yaks and horses have a box the size of their body instead of a
+cylinder that stood out beyond their flanks. The check: 42 rays across each paddock fence
+at eye height (none blocked) and at waist height (all blocked).
 
 Duel mode was tested between two tabs of one automated browser on one computer:
 connecting by invite link and by copy-paste codes, the choice of fighters, the start at

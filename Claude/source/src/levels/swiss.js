@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { drawTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
-import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, boulder } from '../props.js';
+import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, boulder, beast } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const swiss = {
@@ -248,7 +248,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     ...[[0.24, 0.6], [-0.24, 0.6], [0.24, -0.6], [-0.24, -0.6]].flatMap(([x, z]) => [gCap(0.085, 0.6, c1, [x, 0.42, z]), gBox(0.14, 0.1, 0.16, 0x2a2018, [x, 0.05, z])]),
     gSph(0.17, 0xf0b8b8, [0, 0.72, -0.4]), gCap(0.03, 0.7, c1, [0, 0.95, -0.98], [0.15, 0, 0]), gCyl(0.07, 0.1, 0.13, 0xd9b23a, [0, 0.84, 0.9])]);
   for (const [x, z, ry, a, b] of [[-16, 46, 0.5, 0x7a4a2c, 0xf2ece0], [-11, 50, 2.6, 0xf2ece0, 0x3a2a20], [-18, 50.5, -1.2, 0x8a5a36, 0xf2ece0], [24, 22, 1.9, 0x7a4a2c, 0xf2ece0], [-28, 30, 0.2, 0x3a2a20, 0xf2ece0]]) {
-    B.geo(M.flat, cow(a, b), [x, world.height(x, z), z], [0, ry, 0]); world.addCyl(x, z, 0.9, -5, world.height(x, z) + 1.6);
+    B.geo(M.flat, cow(a, b), [x, world.height(x, z), z], [0, ry, 0]); beast(world, x, z, ry, 1.0, 2.7, -5, world.height(x, z) + 1.55, 0.15);
   }
   { const x = 1, z = 35, y = world.height(x, z); B.box(M.woodH, 3.2, 0.6, 0.9, x, y, z, { ry: 0.4, c: 0x5a4028, solid: true }); B.box(M.glow, 2.8, 0.02, 0.55, x, y + 0.6, z, { ry: 0.4, c: 0x1c4450 }); B.box(M.wood, 0.22, 1.5, 0.22, x - 1.6, y, z + 0.7, { c: 0x5a4028 }); }
   for (const [x, z] of [[-27, 44], [5, 23], [-2, 52]]) { const y = world.height(x, z); B.geo(M.thatch, new THREE.ConeGeometry(1.5, 2.6, 9), [x, y + 1.2, z], [0, 0, 0], 1, 0xd8bc68); B.box(M.wood, 0.1, 3.2, 0.1, x, y, z, { c: 0x5a4028 }); world.addCyl(x, z, 1.1, y - 1, y + 2.4); }
