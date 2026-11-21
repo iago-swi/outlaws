@@ -5,7 +5,7 @@ late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpin
 a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974
 and the Tibetan plateau in 1959, one hero faces many enemies alone, in a real-time 3D
 world you can walk through freely. Most buildings can be entered, the longships at
-Jarnvik can be boarded, and every chapter has places to climb, jump onto and crawl
+Jarnvik can be boarded, and every chapter has places to climb, by a ladder or by steps of rock, and to crawl
 into for an ambush. Twenty-four heroes from history and legend are playable, three per
 chapter. In Duel mode two players fight each other online, as a hero or as one of
 twenty-seven villains.
@@ -88,23 +88,27 @@ VIII they are bystanders and take no part in the fight.
 
 Press `C` or `Caps Lock` to crouch. A crouching player moves at half speed, is noticed
 from 40% less far, is hidden by anything about a metre high, and fits through low doors.
-A jump clears about 1.3 m, enough to get onto a crate and from crate to crate.
+Ladders need no key: face one and walk into it, and you climb; at the top you step onto
+the roof or the deck. A jump clears about 1.3 m.
 
 ![The view from the top of Lookout Butte in Dry Gulch: a boulder to crouch behind, the roofs of the town below, the saloon, the jail, the sheriff's office and the bank along the main street, the church on the right, mesas on the horizon, the six-shooter in the foreground](screenshot-butte.jpg)
 
+![The great boulder of Uri in a flowering meadow: a tall grey rock with a flat grassy top and a slim iron cross at its rim, a stair of rough stone slabs winding up its flank on a bank of grass and stones, pines, the lake and snow peaks behind](screenshot-boulder.jpg)
+
 | Chapter | Places for an ambush or a sniper |
 | --- | --- |
-| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, reached by jumping up the crates behind them; a root cellar with a crawl-in door; the low walls of a ruined adobe; the church tower: a stair to the choir gallery, then a square spiral of steps inside the tower to the belfry, 11 m up, with a parapet to crouch behind |
+| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, each reached by a ladder at the back; a root cellar with a crawl-in door; the low walls of a ruined adobe; the church tower: a stair to the choir gallery, then a square spiral of steps inside the tower to the belfry, 11 m up, with a parapet to crouch behind |
 | II | a watch platform in the dojo court; a tea hut whose door is a crawl-in hatch |
-| III | a rocky knoll west of the path with a zigzag stair, 9 m high; a hunter's high seat near the start |
+| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top, a summit cross of dark iron and a stair of rough stone slabs winding up its flank; a hunter's high seat near the start |
 | IV | a lookout above the landing beach; an old cistern to crawl into |
 | V | a watch platform in the village; an earth cellar; the decks of the longships |
 | VI | a hunter's stand among the hedgerows; a dugout; the ruined church |
-| VII | the roofs of the garages (two crates, then along the whole row); a cellar hatch; the slab of the building site |
+| VII | the roofs of the garages (a ladder, then along the whole row); a cellar hatch; the slab of the building site |
 | VIII | a lookout beside the road; a hermit's cell |
 
-Enemies can follow you up anything that has steps: the butte and the knoll can be
-stormed, and each is held by a marksman when you arrive. Enemies cannot jump, so roofs,
+Every watch platform, lookout, high seat and hunter's stand has a ladder too.
+Enemies can follow you up anything that has steps: the butte and the boulder can be
+stormed, and each is held by a marksman when you arrive. Enemies cannot climb ladders or jump, so roofs,
 platforms and high seats are safe from blades, though not from bullets, and they cannot
 get through a crawl-in door at all. The church tower is an exception among the stairs:
 it has two storeys above its ground floor, and the route grid knows one floor per spot,
@@ -251,6 +255,7 @@ has no relay server.
 | `W` `A` `S` `D` | Move |
 | `Shift` | Run |
 | `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
+| `W`, facing a ladder | Climb it (no extra key) |
 | `C` or `Caps Lock` | Crouch on and off |
 | Left mouse button | Fire, loose an arrow, shoot a bolt, throw a javelin or an axe |
 | Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II, IV and V and with the bow of chapter VIII |
@@ -279,8 +284,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.65 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 7,660 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.66 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 7,790 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 260 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -300,7 +305,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
 | [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable rock with its zigzag stair, jump blocks, raised hides and crawl-in dens. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its winding stair and summit cross, ladders, raised hides and crawl-in dens. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
 | [net.js](source/src/net.js) | The connection between the two browsers: invite link through PeerJS, or two codes pasted by hand. |
@@ -435,7 +440,7 @@ rotated about the vertical axis, vertical cylinders, and the terrain height func
 
 - **Walking.** The player and enemies are vertical capsules, 1.75 m high for the player and 1.05 m when crouching. Standing up is refused where there is no head room. Each step pushes the
   capsule out of any box or cylinder it overlaps. A ledge up to 0.5 m high is climbed
-  automatically, which makes boardwalks, stairs and the arched bridge walkable. The same rule is applied at the top of a jump (the feet rise 1 m), so a ledge up to about 1.4 m can be reached by jumping; the jump blocks are 1.1 to 1.2 m apart in height. Slopes
+  automatically, which makes boardwalks, stairs and the arched bridge walkable. The same rule is applied at the top of a jump (the feet rise 1 m), so a ledge up to about 1.4 m can be reached by jumping. A ladder is a line on a wall with a foot, a top and a facing: a player who stands within a metre of it, faces it and walks forward is held to it and rises at 3.4 m/s, then is carried half a metre onto the surface at the top. Slopes
   steeper than a per-level limit, and deep water, block movement, unless a bridge, a
   jetty or a deck within stepping reach carries the walker over the water. A move is cut into
   strides of at most 0.2 to 0.25 m, so a fast runner cannot skip over a thin wall.
@@ -642,14 +647,14 @@ once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 449 | 0.83 million | 8,400 | 587 | 53,500 |
-| II · Kagemori | 326 | 0.50 million | 11,900 | 1,705 | 40,000 |
-| III · Uri | 468 | 1.86 million | 52,700 | 575 | 153,700 |
-| IV · Ithaca | 473 | 0.84 million | 18,200 | 680 | 98,900 |
-| V · Jarnvik | 403 | 0.93 million | 2,100 | 932 | 87,700 |
-| VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 609 | 98,000 |
-| VII · Stalnogorsk | 433 | 0.20 million | 23 | 413 | 81,100 |
-| VIII · Che La | 422 | 0.87 million | 20,400 | 434 | 97,900 |
+| I · Dry Gulch | 449 | 0.83 million | 8,400 | 575 | 53,500 |
+| II · Kagemori | 326 | 0.50 million | 11,900 | 1,703 | 40,000 |
+| III · Uri | 468 | 1.86 million | 52,700 | 609 | 153,700 |
+| IV · Ithaca | 473 | 0.84 million | 18,200 | 678 | 98,900 |
+| V · Jarnvik | 403 | 0.93 million | 2,100 | 930 | 87,700 |
+| VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 607 | 98,000 |
+| VII · Stalnogorsk | 433 | 0.20 million | 23 | 411 | 81,100 |
+| VIII · Che La | 422 | 0.87 million | 20,400 | 432 | 97,900 |
 
 Chapter III is the heaviest because of its 42,000 grass tufts. Chapter II has the most
 colliders because every bamboo stalk near the path is solid; chapter V comes second
@@ -720,9 +725,9 @@ and every item of every chapter, and reports where it gets stuck. It found the t
 stair (too steep in the middle: steps of 55 cm where 50 is the limit; the stair is now
 24 m long instead of 18), a tent door lower than the player, and routes that led up
 hillsides nobody can climb. The same player then crouched into a crawl-in cellar (and
-was stopped at the door when upright), jumped up the crates onto two roofs in chapter I,
-onto the garages of chapter VII and into the hides of chapters II and III, and walked up
-both zigzag stairs, and later into the church of chapter I, up to its gallery and round
+was stopped at the door when upright), climbed the ladders onto a roof in chapter I,
+onto the garages of chapter VII and into the high seat of chapter III, and walked up
+the zigzag stair of the butte and the winding stair of the boulder (which at first looked right and could not be climbed: an invisible hollow under its top landing and a grass shoulder 10 cm too low to step back from), and later into the church of chapter I, up to its gallery and round
 the spiral stair to the belfry. Crouching was tried with the `C` key; the automated browser cannot
 press Caps Lock, which uses the same code. Crouching in a duel between two browsers was
 not tried.
@@ -749,11 +754,11 @@ estimate, and frame rate on slower graphics hardware has not been measured.
   or react.
 - With five villains and three heroes, the fighter selection of chapter IV uses smaller
   cards than the other chapters.
-- Enemies cannot jump or crouch. A player on a roof or in a den can only be shot at, or
+- Enemies cannot jump, crouch or climb ladders. A player on a roof or in a den can only be shot at, or
   not reached at all.
 - Caps Lock stays on in the operating system after you leave the game.
-- The climbable butte and knoll are built from layered blocks and are more angular than
-  the rounded mesas on the horizon.
+- The climbable butte of chapter I is built from layered blocks and is more angular than
+  the rounded mesas on the horizon. (The boulder of chapter III was rebuilt as one irregular rock.)
 - Wind moves plants but not their shadows.
 - Duel mode has no relay server and no chat; if one player switches
   to another browser tab, their game stops sending until they come back.

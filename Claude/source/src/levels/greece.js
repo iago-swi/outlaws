@@ -292,7 +292,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const gullGeo = merge([gBox(1.5, 0.03, 0.26, 0xf4f4f0, [0, 0, 0]), gBox(0.2, 0.06, 0.6, 0xf4f4f0, [0, 0, 0.05])]);
   const gulls = [0, 1, 2, 3].map((i) => { const m = new THREE.Mesh(gullGeo, M.flat); root.add(m); return { m, r: 40 + i * 22, h: 26 + i * 6, sp: 0.16 + i * 0.03, ph: i * 1.7, cx: i % 2 ? -40 : 30, cz: i % 2 ? 60 : -10 }; });
 
-  { // a lookout above the landing beach (jump up the two blocks), an old cistern to crawl into
+  { // a lookout above the landing beach (up its ladder), an old cistern to crawl into
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(9, 84, 4); stand(B, M, 9, world.height(9, 83.7), 83.7, 0, { c: 0xb8a070, roof: 0xb86a42 });
     clearAt(-16, 71.5, 4); den(B, M, -16, world.height(-16, 71.1) + 0.02, 71.1, 0, { mat: M.plaster, c: 0xe8e0d0 }); extraPicks.push([-16, 71.3, 0, 0.6]);

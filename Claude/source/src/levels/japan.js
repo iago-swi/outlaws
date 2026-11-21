@@ -338,7 +338,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   root.add(makeAmbient(shared, { count: 520, box: 30, boxY: 16, size: 0.085, colorA: 0xffc4d6, colorB: 0xfff0f4, petal: true, alpha: 0.95, fall: 0.55, wind: [0.5, 0, -0.25], flutter: 1.3 }));
   root.add(makeAmbient(shared, { count: 130, box: 36, boxY: 5, size: 0.11, colorA: 0xd8ff7a, colorB: 0xfff0a0, additive: true, blink: true, alpha: 1, bright: 2.6, fall: 0, wind: [0.05, 0, 0.03], flutter: 1.6 }));
 
-  { // places to climb and to hide: a watch platform in the dojo court (jump up the two blocks), a tea hut whose door is a crawl-in hatch
+  { // places to climb and to hide: a watch platform in the dojo court (up its ladder), a tea hut whose door is a crawl-in hatch
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(50, -18, 4); stand(B, M, 50, world.height(50, -18.3), -18.3, 0, { c: 0x6a4630, roof: 0x4e5c60 });
     clearAt(31, 30, 4); den(B, M, 31, world.height(31, 30.1) + 0.02, 30.1, 0, { mat: M.plaster, c: 0xe6dec8, floor: { mat: M.woodH, c: 0xb8a070 } }); B.box(M.thatch, 4.6, 0.5, 4.4, 31, world.height(31, 30.1) + 1.97, 30.1, { c: 0xa08a58 });

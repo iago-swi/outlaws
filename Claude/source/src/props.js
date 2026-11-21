@@ -389,17 +389,15 @@ export function butte(B, M, x, z, o = {}) {
   return { top: T };
 }
 
-/** Blocks to jump up: n in a row from (x, z) along (dx, dz), each `rise` higher than the one before (a jump clears about 1.3 m). */
-export function stepsUp(B, M, x, z, dx, dz, n, o = {}) {
-  const { rise = 1.1, size = 1.3, y = 0, mat = M.wood, c = 0x9a7648, c2 = 0x6a4a2a } = o;
-  for (let i = 0; i < n; i++) {
-    const px = x + dx * size * i, pz = z + dz * size * i, hh = rise * (i + 1);
-    B.box(mat, size, hh + 0.4, size, px, y - 0.4, pz, { c: i % 2 ? c : c2, solid: true });
-    B.box(M.woodH, size + 0.05, 0.08, size + 0.05, px, y + hh - 0.08, pz, { c: 0x4a3420 });
-  }
+/** A ladder against a wall or the edge of a deck. (x, z) = the foot of the wall under it, (nx, nz) = the direction away from the wall. Walk into it to climb to y1. */
+export function ladder(B, M, x, z, nx, nz, y0, y1, o = {}) {
+  const { c = 0x8a6a44 } = o, ry = Math.atan2(nx, nz), px = x + nx * 0.14, pz = z + nz * 0.14, top = y1 + 0.95;
+  for (const k of [-1, 1]) B.box(M.wood, 0.07, top - y0 + 0.2, 0.07, px + nz * k * 0.3, y0 - 0.2, pz - nx * k * 0.3, { ry, c });
+  for (let yy = y0 + 0.3; yy < top - 0.1; yy += 0.32) B.box(M.wood, 0.62, 0.045, 0.045, px, yy, pz, { ry, c });
+  B.world.ladders.push({ x, z, nx, nz, y0, y1 });
 }
 
-/** A raised hide: a deck on four posts with a low wall on three sides (open on the local +Z side) and a light roof. Climb to it with stepsUp. */
+/** A raised hide: a deck on four posts with a low wall on three sides (open on the local +Z side) and a light roof, with a ladder up to it. */
 export function stand(B, M, x, y, z, ry, o = {}) {
   const { h = 3.3, w = 3, d = 3, c = 0x7a5a3a, wall = 1.0, roof = 0x5a4632 } = o, cs = Math.cos(ry), sn = Math.sin(ry), P = (lx, lz) => [x + lx * cs + lz * sn, z - lx * sn + lz * cs];
   for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = P(a * (w / 2 - 0.15), b * (d / 2 - 0.15)); B.box(M.wood, 0.2, h + (roof !== null ? 2.3 : 0), 0.2, px, y - 0.3, pz, { ry, c: 0x5a4028 }); B.world.addCyl(px, pz, 0.14, y - 1, y + h - 0.2); }
@@ -407,14 +405,92 @@ export function stand(B, M, x, y, z, ry, o = {}) {
   { const [a, b] = P(0, -d / 2 + 0.08); B.box(M.wood, w, wall, 0.16, a, y + h, b, { ry, c, solid: true }); }
   for (const k of [-1, 1]) { const [a, b] = P(k * (w / 2 - 0.08), 0); B.box(M.wood, 0.16, wall, d, a, y + h, b, { ry, c, solid: true }); }
   if (roof !== null) B.box(M.woodH, w + 0.6, 0.12, d + 0.6, x, y + h + 2.0, z, { ry, c: roof });
-  if (o.steps !== false) for (let i = 0; i < 2; i++) {                         // two blocks to jump up, on the open side
-    const [a, b] = P(0, d / 2 + 0.66 + (1 - i) * 1.3), hh = (i + 1) * h / 3;
-    B.box(M.wood, 1.3, hh + 0.4, 1.3, a, y - 0.4, b, { ry, c: i ? 0x9a7648 : 0x6a4a2a, solid: true }); B.box(M.woodH, 1.35, 0.08, 1.35, a, y + hh - 0.08, b, { ry, c: 0x4a3420 });
-  }
+  if (o.steps !== false) { const [a, b] = P(0, d / 2); ladder(B, M, a, b, sn, cs, y - 0.2, y + h); }      // a ladder on the open side
 }
 
 /** A low den that can only be entered crouching: the door is 1.25 m high. Local +Z has the door. */
 export function den(B, M, x, y, z, ry, o = {}) {
   const { w = 3.4, d = 3.2, mat = M.stone, c = 0x8a8478, floor = { mat: M.ground, c: 0x6a5a48 }, ceil = { mat, c } } = o;
   return room(B, M, x, y, z, { w, d, h: 1.95, t: 0.35, ry, mat, c, base: 1.6, doors: [{ side: 's', at: 0, w: 1.4, h: 1.25 }], floor, ceil });
+}
+
+/**
+ * A great boulder with a flat, grassy top, climbed by a stair of rough stone steps that winds up round its flank.
+ * (x, z) = centre, y = ground level under it. o: { rx, rz, h, seed, start (angle where the stair begins), turn (+1 / -1),
+ * rock: [colours], grass, cross (true = a summit cross at the rim) }. Returns { top } (height of the flat top).
+ */
+export function boulder(B, M, x, y, z, o = {}) {
+  const { rx = 8, rz = 7, h = 7.5, seed = 3, start = 0.9, turn = 1, rock = [0x8c8880, 0x767470, 0x9a968c, 0x6e6c6a], grass = 0x587f36, grass2 = 0x7c9c48, moss = 0x6a7a44 } = o;
+  const W = B.world, AMP = 0.17, CUT = 0.5, SINK = 0.3, PW = 2.7, Hy = h / (CUT + SINK), yc = y + SINK * Hy, T = y + h;
+  const side = (u) => Math.pow(Math.max(0, 1 - Math.pow(Math.abs(u), PW)), 1 / PW);        // how far out the rock reaches at height u: steep flanks, a broad top
+  // the rock: a sphere pushed in and out by noise, its top sliced flat; grass on the flat, moss on the shoulders
+  const hsh = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7 + seed * 74.7) * 43758.5453; return v - Math.floor(v); };
+  const wav = (vx, vy, vz, f, ph) => Math.sin(vx * f + ph) * Math.cos(vy * f * 1.13 + ph * 1.7) + Math.sin(vz * f * 0.91 + ph * 0.6) * Math.cos(vx * f * 0.77 - ph);   // about -2 .. 2
+  const g = new THREE.IcosahedronGeometry(1, 3).toNonIndexed(), P = g.attributes.position, col = new Float32Array(P.count * 3);
+  const c = new THREE.Color(), c2 = new THREE.Color(), cg = new THREE.Color(grass), cg2 = new THREE.Color(grass2), cm = new THREE.Color(moss);
+  for (let i = 0; i < P.count; i++) {
+    const vx = P.getX(i), vy = P.getY(i), vz = P.getZ(i), calm = 1 - Math.min(1, Math.max(0, (vy - 0.2) / 0.3));          // no bumps near the flat top: its rim stays where the floor is
+    const k = 1 + (0.085 * wav(vx, vy, vz, 2.1, seed) + 0.045 * wav(vx, vy, vz, 5.3, seed * 2.3)) * calm, rh = Math.hypot(vx, vz) || 1, q = side(vy) / rh * k;
+    P.setXYZ(i, vx * q, Math.min(CUT, vy * (1 + (k - 1) * 0.5)), vz * q);
+  }
+  const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
+  for (let f = 0; f < P.count; f += 3) {
+    va.set(P.getX(f) * rx, P.getY(f) * Hy, P.getZ(f) * rz); vb.set(P.getX(f + 1) * rx, P.getY(f + 1) * Hy, P.getZ(f + 1) * rz).sub(va); vc.set(P.getX(f + 2) * rx, P.getY(f + 2) * Hy, P.getZ(f + 2) * rz).sub(va);
+    const ny = vb.cross(vc).normalize().y, fi = f / 3, mx = (P.getX(f) + P.getX(f + 1) + P.getX(f + 2)) / 3, my = (P.getY(f) + P.getY(f + 1) + P.getY(f + 2)) / 3, mz = (P.getZ(f) + P.getZ(f + 1) + P.getZ(f + 2)) / 3;
+    if (ny > 0.36) c.copy(cg).lerp(cg2, hsh(fi, 1));                                                                         // the flat top and every ledge carry grass
+    else {
+      c.set(rock[0]).lerp(c2.set(rock[1]), Math.min(1, Math.max(0, wav(mx, my, mz, 1.4, seed * 0.7) * 0.25 + 0.5))).multiplyScalar(0.86 + hsh(fi, 2) * 0.28);
+      if (my > -0.05) c.lerp(cm, Math.min(0.75, Math.max(0, ny + 0.25) * 1.3 * (0.35 + hsh(fi, 3) * 0.65)));                // moss where the face leans back
+    }
+    for (let j = 0; j < 3; j++) { col[(f + j) * 3] = c.r; col[(f + j) * 3 + 1] = c.g; col[(f + j) * 3 + 2] = c.b; }
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
+  B.geo(M.rock, g, [x, yc, z], [0, 0, 0], [rx, Hy, rz]);
+  B.geo(M.ground, new THREE.CylinderGeometry(1, 1, 0.05, 28), [x, T + 0.01, z], [0, 0, 0], [rx * side(CUT) * 0.985, 1, rz * side(CUT) * 0.985], grass);     // turf on the flat top, the same as the meadow
+  // what you can stand on and bump into: six nested slabs under the flat top (their corners lie on its oval rim), six more for the body
+  const px = rx * side(CUT) * 0.97, pz = rz * side(CUT) * 0.97;
+  for (let i = 0; i < 6; i++) { const a = (i + 0.5) * Math.PI / 12; W.addBox(x, z, 2 * Math.cos(a) * px, 2 * Math.sin(a) * pz, 0, T - 1.2, T); }
+  for (let i = 0; i < 6; i++) { const a = (i + 0.5) * Math.PI / 12; W.addBox(x, z, 2 * Math.cos(a) * rx * 0.96, 2 * Math.sin(a) * rz * 0.96, 0, y - 2, T - 1.3); }
+  // the stair: below the rock's widest point the steps stand just outside it, above it they follow the shoulder inward
+  const prof = (yy) => { const u = (yy - yc) / Hy; return (u < 0 ? 1 : side(u)) * (1 + AMP * 1.1); };
+  let th = start; const sx0 = x + Math.cos(th) * (prof(y) * rx + 0.9), sz0 = z + Math.sin(th) * (prof(y) * rz + 0.9), yS = W.height(sx0, sz0), n = Math.ceil((T - yS) / 0.33);
+  for (let i = 0; i < n; i++) {
+    const top = yS + (i + 1) * (T - yS) / n, k = prof(top - 0.1), cx = x + Math.cos(th) * (k * rx + 0.9), cz = z + Math.sin(th) * (k * rz + 0.9), wide = 1.6 + ((i * 7) % 5) * 0.08;
+    const ry = -th + ((i * 5) % 3 - 1) * 0.07, ox = x + Math.cos(th) * (k * rx + 1.45), oz = z + Math.sin(th) * (k * rz + 1.45);
+    B.box(M.rock, wide, 0.42, 1.42, cx, top - 0.42, cz, { ry, c: rock[(i * 3 + 1) % rock.length] });          // the tread: one rough slab
+    W.addBox(cx, cz, wide, 1.35, ry, y - 2, top);
+    { const m = (0.9 + k) / 2; W.addBox(x + Math.cos(th) * (m * rx + 0.05), z + Math.sin(th) * (m * rz + 0.05), (k - 0.9) * (rx + rz) / 2 + 0.2, 1.35, ry, y - 2, Math.min(top + 2.6, T - 1.3)); }   // no hollow between the stair and the rock
+    W.addBox(x + Math.cos(th) * (k * rx + 2.2), z + Math.sin(th) * (k * rz + 2.2), 1.0, 1.35, ry, y - 2, top - (T - yS) / n);      // the grass shoulder beside the stones: one step lower, so a walker who strays onto it steps back up
+    for (let dpt = 0.5, j = 0; top - dpt > y - 0.5; j++) {                                                                   // under it a bank of earth and stones, wider toward the ground
+      const r1 = hsh(i, j), r2 = hsh(i + 31, j + 7), r3 = hsh(i + 57, j + 13), stone = r1 < 0.36, sc = stone ? 0.4 + r2 * r2 * 1.5 : 1.3 + r2 * 1.2;
+      const outw = 1.3 + dpt * 0.62 + (r3 - 0.5) * 0.8, a = th + (r2 - 0.5) * 0.24;
+      B.geo(stone ? M.rock : M.ground, rockGeo((i * 7 + j * 3) % 11 + 1, stone ? 1 : 2), [x + Math.cos(a) * (k * rx + outw), top - dpt - sc * (stone ? 0.25 : 0.12), z + Math.sin(a) * (k * rz + outw)], [stone ? r3 * 0.5 : 0, r1 * 6.28, stone ? (r2 - 0.5) * 0.5 : 0],
+        [sc * (0.9 + r3 * 0.5), sc * (stone ? 0.7 + r1 : 0.4), sc * (0.9 + r1 * 0.5)], stone ? rock[(i + j) % rock.length] : c.copy(cg).lerp(cg2, r3).getHex());
+      dpt += stone ? 0.45 + sc * 0.5 : 0.85;
+    }
+    if (i < n - 1) th += turn * 1.0 / (k * (rx + rz) / 2 + 0.9);
+  }
+  { // the last stone: a slab from the top step onto the flat
+    const k = prof(T - 0.1), r1 = k * (rx + rz) / 2 + 1.7, r0 = (rx + rz) / 2 * 0.55, rm = (r0 + r1) / 2;
+    const lx = x + Math.cos(th) * rm * rx / ((rx + rz) / 2), lz = z + Math.sin(th) * rm * rz / ((rx + rz) / 2);
+    B.box(M.rock, r1 - r0, 0.42, 1.9, lx, T - 0.45, lz, { ry: -th, c: rock[0] }); W.addBox(lx, lz, r1 - r0, 1.9, -th, y - 2, T - 0.03);
+  }
+  for (let i = 0; i < 9; i++) {                              // round the foot, away from the stair: fallen rocks and tussocks
+    const a = start - turn * (0.45 + i * 0.36 + hsh(i, 90) * 0.2), stone = i % 3 !== 1, sc = stone ? 0.7 + hsh(i, 91) * hsh(i, 92) * 2.6 : 1.1 + hsh(i, 93) * 0.8, rr = 1.03 + hsh(i, 94) * 0.2;
+    const bx = x + Math.cos(a) * rx * rr, bz = z + Math.sin(a) * rz * rr, by = W.height(bx, bz);
+    B.geo(stone ? M.rock : M.ground, rockGeo(i + 6, stone ? 1 : 2), [bx, by + sc * (stone ? 0.3 : 0.05), bz], [stone ? hsh(i, 95) * 0.5 : 0, i * 2.3, 0], [sc * (stone ? 1 : 1.5), sc * (stone ? 0.8 + hsh(i, 96) * 0.4 : 0.38), sc * (stone ? 0.8 + hsh(i, 97) * 0.5 : 1.4)], stone ? rock[i % rock.length] : c.copy(cg).lerp(cg2, hsh(i, 98)).getHex());
+    if (stone && sc > 1.2) W.addCyl(bx, bz, sc * 0.75, by - 1, by + sc * 0.8);
+  }
+  for (let i = 0; i < 3; i++) {                              // a few stones on top to crouch behind
+    const a = th + Math.PI * (0.5 + i * 0.5), bx = x + Math.cos(a) * px * 0.72, bz = z + Math.sin(a) * pz * 0.72, sc = 0.8 + (i % 2) * 0.35;      // never where the stair arrives
+    B.geo(M.rock, rockGeo(i + 4, 1), [bx, T + sc * 0.3, bz], [0, i * 1.9, 0], [sc * 1.1, sc * 0.95, sc * 0.8], rock[i % rock.length]); W.addBox(bx, bz, sc * 1.7, sc * 1.2, -i * 1.9, T - 0.2, T + sc * 0.95);
+  }
+  if (o.cross) {                                             // a summit cross of dark iron, set in a rough stone at the rim, a quarter turn from where the stair arrives
+    const a = th + Math.PI * 0.25, bx = x + Math.cos(a) * px * 0.8, bz = z + Math.sin(a) * pz * 0.8, ry = -a, IR = 0x34302c, Hc = 3.5, ya = T + 0.35 + Hc * 0.7;
+    B.geo(M.rock, rockGeo(9, 1), [bx, T + 0.2, bz], [0, a, 0], [0.75, 0.5, 0.62], rock[2]); W.addCyl(bx, bz, 0.5, T - 0.2, T + 0.5); W.addCyl(bx, bz, 0.12, T, T + 0.35 + Hc);
+    B.box(M.metal, 0.09, Hc, 0.11, bx, T + 0.35, bz, { ry, c: IR }); B.box(M.metal, 0.09, 0.11, 1.7, bx, ya, bz, { ry, c: IR });
+    B.box(M.metal, 0.07, 0.1, 0.25, bx, T + 0.35 + Hc, bz, { ry, c: IR });                                                  // the ends flare, as hammered iron does
+    for (const sd of [-1, 1]) B.box(M.metal, 0.07, 0.25, 0.1, bx - Math.sin(a) * sd * 0.9, ya - 0.07, bz + Math.cos(a) * sd * 0.9, { ry, c: IR });
+  }
+  return { top: T };
 }

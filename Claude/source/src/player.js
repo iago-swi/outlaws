@@ -95,7 +95,7 @@ export class Player {
     const W = this.game.world;
     this.pos.set(x, W.groundAt(x, z, 100), z); this.vel.set(0, 0, 0);
     this.yaw = yaw; this.pitch = 0; this.hp = this.maxHp; this.hurtT = 99; this.dead = false; this.deadT = 0; this.camY = this.pos.y + 1.65;
-    this.crouch = this.crouchWant = false; this.duck = 0; this.capsWas = undefined; document.body.classList.remove('crouched');
+    this.mount = null; this.crouch = this.crouchWant = false; this.duck = 0; this.capsWas = undefined; document.body.classList.remove('crouched');
     this.kick = this.kickV = 0; this.aim = 0;
     this.setWeapon(weaponKind, sleeve);
   }
@@ -152,14 +152,26 @@ export class Player {
     const H = this.crouch ? 1.05 : 1.75, eye = 1.65 - 0.7 * this.duck;
     const sprint = !this.crouch && (K.has('ShiftLeft') || K.has('ShiftRight'));
     const sy = Math.sin(this.yaw), cy = Math.cos(this.yaw);
+    // Ladders: face one and walk into it, and you climb. At the top you step onto whatever it leans against.
+    const lad = this.crouch ? null : W.ladderFor(this.pos, -sy, -cy), climbing = !!lad && f > 0 && this.pos.y < lad.y1 && !this.mount;
     let wx = -sy * f + cy * s, wz = -cy * f - sy * s;
     const wl = Math.hypot(wx, wz);
     const top = (sprint && f > 0 ? 8.6 : 5.6) * (1 - this.aim * 0.4) * (1 - 0.5 * this.duck) * this.mods.speed;
     if (wl > 0) { wx = wx / wl * top; wz = wz / wl * top; }
     const acc = this.onGround ? 11 : 2.5;
-    this.vel.x = damp(this.vel.x, wx, acc, dt); this.vel.z = damp(this.vel.z, wz, acc, dt);
-    if (active && this.onGround && !this.crouch && input.pressed.has('Space')) { this.vel.y = 5.8; this.onGround = false; }
-    this.vel.y -= 17 * dt;
+    if (this.mount) {                                       // from the top rung onto the roof or the deck, in a quarter of a second
+      const m = this.mount; m.t = Math.min(1, m.t + dt / 0.25);
+      this.pos.set(m.x0 + (m.x1 - m.x0) * m.t, m.y, m.z0 + (m.z1 - m.z0) * m.t); this.vel.set(0, 0, 0); if (m.t >= 1) this.mount = null;
+    } else if (climbing) {
+      const tx = lad.x + lad.nx * 0.47, tz = lad.z + lad.nz * 0.47, k = Math.min(1, dt * 10);
+      this.pos.x += (tx - this.pos.x) * k; this.pos.z += (tz - this.pos.z) * k; this.vel.set(0, 3.4 * this.mods.speed, 0); this.onGround = false;
+      this.rung = (this.rung || 0) + 3.4 * dt; if (this.rung > 0.45) { this.rung = 0; G.sound.step(true); }
+    } else {
+      this.vel.x = damp(this.vel.x, wx, acc, dt); this.vel.z = damp(this.vel.z, wz, acc, dt);
+      if (active && this.onGround && !this.crouch && input.pressed.has('Space')) { this.vel.y = 5.8; this.onGround = false; }
+      this.vel.y -= 17 * dt;
+      if (lad && !this.onGround && this.vel.y < -3.4) this.vel.y = -3.4;         // holding on to the ladder on the way down
+    }
 
     const steps = Math.max(1, Math.ceil(Math.hypot(this.vel.x, this.vel.z) * dt / 0.2));   // small steps: thin walls cannot be skipped
     for (let q = 0; q < steps; q++) {
@@ -176,7 +188,9 @@ export class Player {
     W.collide(this.pos, 0.4, H);
     const ground = W.groundAt(this.pos.x, this.pos.z, this.pos.y);
     this.pos.y += this.vel.y * dt;
-    if (this.pos.y <= ground) {
+    if (climbing && this.pos.y >= lad.y1) { this.vel.y = 0; this.mount = { t: 0, x0: this.pos.x, z0: this.pos.z, x1: lad.x - lad.nx * 0.55, z1: lad.z - lad.nz * 0.55, y: lad.y1 + 0.02 }; this.pos.y = lad.y1 + 0.02; }
+    if (this.mount) this.onGround = true;
+    else if (this.pos.y <= ground) {
       if (!this.onGround && this.vel.y < -6) { this.land = Math.min(0.25, -this.vel.y * 0.02); G.sound.step(false); }
       this.pos.y = ground; this.vel.y = 0; this.onGround = true;
     } else if (this.pos.y - ground > 0.12) this.onGround = false;

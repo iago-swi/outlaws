@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { drawTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
-import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, butte, stand } from '../props.js';
+import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, boulder } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const swiss = {
@@ -362,11 +362,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const eagle = new THREE.Mesh(merge([gBox(2.6, 0.03, 0.5, 0x2a2018, [0, 0, 0]), gBox(0.3, 0.06, 1.0, 0x2a2018, [0, 0, 0.1]), gBox(0.5, 0.03, 0.3, 0x2a2018, [0, 0, 0.6])]), M.flat);
   root.add(eagle);
 
-  { // a rocky knoll west of the path, climbed by a zigzag of rock steps; a hunter's high seat near the start
+  { // a great boulder in the meadow west of the path, with a summit cross on its grassy top and a stair of rough stones winding up its flank; a hunter's high seat near the start
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(-52, -17, 15);
-    butte(B, M, -52, -21, { w: 14, d: 10, h: 9, legs: 3, y: 5.05, bands: [0x6e6c6a, 0x7c7a76, 0x8c8880, 0x767470, 0x9a968c], topC: 0x6a9040, cover: 0x7c7a76 });
-    extraFoes.push(['crossbowman', -52, -22, { y: 14.5, patrol: false, yaw: 0 }]); extraPicks.push([-48, -19.5, 14.5]);
+    const rk = boulder(B, M, -52, 5.1, -19, { rx: 8, rz: 7, h: 7.5, seed: 3, start: 0.9, turn: -1, cross: true });
+    extraFoes.push(['crossbowman', -51, -20.5, { y: rk.top + 0.5, patrol: false, yaw: 0 }]); extraPicks.push([-54, -17.5, rk.top + 0.5]);
     clearAt(-44, 65, 4); stand(B, M, -44, world.height(-44, 64.7), 64.7, 0, { c: 0x7a5a3a, roof: 0x5a4632 });
   }
   const enemies = [

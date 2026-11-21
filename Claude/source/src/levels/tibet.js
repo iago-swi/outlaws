@@ -298,7 +298,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   root.add(makeAmbient(shared, { count: 320, box: 40, boxY: 14, size: 0.04, colorA: 0xffffff, colorB: 0xfff4d8, alpha: 0.55, fall: -0.02, wind: [0.9, 0, 0.3], flutter: 0.9 }));
   const eagle = new THREE.Mesh(merge([gBox(2.8, 0.03, 0.55, 0x2a2018, [0, 0, 0]), gBox(0.3, 0.06, 1.0, 0x2a2018, [0, 0, 0.1]), gBox(0.5, 0.03, 0.3, 0x2a2018, [0, 0, 0.6])]), M.flat); root.add(eagle);
 
-  { // a lookout beside the road (jump up the two blocks), a hermit's cell to crawl into
+  { // a lookout beside the road (up its ladder), a hermit's cell to crawl into
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(20, 59, 4); stand(B, M, 20, world.height(20, 58.7), 58.7, 0, { c: 0x8a6a48, roof: 0x7a2420 });
     clearAt(-20, 49.5, 4); den(B, M, -20, world.height(-20, 49.1) + 0.02, 49.1, 0, { mat: M.stone, c: 0xa89c88 }); extraPicks.push([-20, 49.3, 0, 0.6]);
