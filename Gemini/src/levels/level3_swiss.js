@@ -40,7 +40,7 @@ export const LEVEL3_META = {
   ],
   spawnPos: new THREE.Vector3(-4, 0, 50),
   spawnYaw: 0,
-  cameraPreview: { center: new THREE.Vector3(-4, 6, -6), radius: 44, height: 15, speed: 0.12 }
+  cameraPreview: { center: new THREE.Vector3(-4, 6, -4), radius: 28, height: 21, speed: 0.11 }
 };
 
 export function buildLevel3(scene, collision, particles) {
