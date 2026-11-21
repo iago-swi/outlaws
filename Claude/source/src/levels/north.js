@@ -8,13 +8,13 @@ import { fbm, ridged, smooth } from '../util.js';
 export const north = {
   id: 'north', theme: 'theme-north', chapter: 'Chapter V', title: 'Jarnvik', place: 'Jarnvik · Norway · winter of 985',
   story: 'You sail home through the ice and find another jarl\'s shields hanging on your hall. His raiders hold the village and the gate. Land under the northern lights, fight through the snow, and take back the high seat.',
-  weapon: 'axe', weaponName: 'Throwing axes & sword', alt: 'right mouse — sword',
+  weapon: 'axe', weaponName: 'Throwing axes & flail', alt: 'right mouse — flail',
   heroes: [
     { look: 'erik', name: 'Erik the Red', who: 'Outlaw and founder of Greenland', trait: 'Hot temper', effect: 'throws axes much faster', mods: { fire: 0.6 }, sleeve: 0x3a5a3a, cuff: 0x5a4632 },
     { look: 'leif', name: 'Leif Erikson', who: 'Leif the Lucky, who sailed to Vinland', trait: 'The Lucky', effect: 'takes 30% less damage', mods: { armor: 0.7 }, sleeve: 0x9a9fa6, cuff: 0x1c4a8a },
-    { look: 'ragnar', name: 'Ragnar Lothbrok', who: 'Legendary sea-king and raider', trait: 'Raider', effect: 'faster, harder sword blows', mods: { melee: 0.75, meleeDmg: 1.7, reach: 0.4 }, sleeve: 0x4a3a2a, cuff: 0x3a3028 },
+    { look: 'ragnar', name: 'Ragnar Lothbrok', who: 'Legendary sea-king and raider', trait: 'Raider', effect: 'faster, harder blows with the flail', mods: { melee: 0.75, meleeDmg: 1.7, reach: 0.4 }, sleeve: 0x4a3a2a, cuff: 0x3a3028 },
   ],
-  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw an axe &nbsp; <kbd>Right mouse</kbd> sword cut',
+  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw an axe &nbsp; <kbd>Right mouse</kbd> swing the flail',
   foes: 'raiders remain', foesNone: 'The hall is yours', bossName: 'Jarl Hrafn the Grey', bossDown: 'The grey jarl has fallen', pickupText: 'Mead  +35',
   deadTitle: 'Valhalla', deadSub: 'The valkyries lift you from the snow.', clearTitle: 'The high seat is yours',
   build,

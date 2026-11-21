@@ -1,6 +1,6 @@
 # Lone Hand — Claude version
 
-**Version 1.1.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 1.2.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in eight chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -24,7 +24,7 @@ files.
 | **Chapter III · Uri** | **Chapter IV · Ithaca** |
 | <img src="screenshot-uri.jpg" width="400" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="400" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> |
 | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
-| <img src="screenshot-north.jpg" width="400" alt="A wooden jetty in a Norwegian fjord at night, falling snow: two Viking longships moored beside it, one with a black and red striped sail set, the other with its sail furled and a gilded dragon's head, gangplanks leading aboard; a throwing axe and a round shield in the foreground"> | <img src="screenshot-normandy.jpg" width="400" alt="A Norman village before dawn: the church in ruins after the bombing, its walls breached and roofless, charred beams inside, the stump of its tower on the right, stone houses and a sentry on the left, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
+| <img src="screenshot-north.jpg" width="400" alt="A wooden jetty in a Norwegian fjord at night, falling snow: two Viking longships moored beside it, one with a black and red striped sail set, the other with its sail furled and a gilded dragon's head, gangplanks leading aboard; a throwing axe and a round shield in the foreground, and the weapon name "Throwing axes & flail""> | <img src="screenshot-normandy.jpg" width="400" alt="A Norman village before dawn: the church in ruins after the bombing, its walls breached and roofless, charred beams inside, the stump of its tower on the right, stone houses and a sentry on the left, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
 | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** |
 | <img src="screenshot-russia.jpg" width="400" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth that carries the hammer and sickle, red flags with the same emblem, panel blocks with lit windows and a tower behind, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="400" alt="Inside the assembly hall of a Tibetan monastery: red pillars with blue capitals, a gilded seated Buddha with a halo on a lotus throne, a row of butter lamps burning before it, a rifle in the foreground"> |
 
@@ -58,7 +58,7 @@ show where the remaining enemies are; the last three come looking for you. Healt
 | II · Kagemori, Japan, 1600 | throwing stars (shuriken) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
 | III · Uri, the Waldstätten, 1307 | crossbow and halberd | 27: Habsburg halberdiers, crossbowmen, knights, the bailiff |
 | IV · Ithaca, Greece, the age of heroes | javelins and short sword | 30: Spartan hoplites, javelin throwers, their captain |
-| V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 34: rival Vikings, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
+| V · Jarnvik, Norway, winter of 985 | throwing axes and a flail | 34: rival Vikings in animal skins, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
 | VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 33: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
 | VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | 37: KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
 | VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | 35: Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
@@ -146,7 +146,7 @@ remains guarded. The choice is kept for the next chapter and when you retry.
 | IV | Heracles | Strongest of heroes, of the twelve labours | Strength of ten: starts with 170 health |
 | V | Erik the Red | Outlaw and founder of Greenland | Hot temper: throws axes much faster |
 | V | Leif Erikson | Leif the Lucky, who sailed to Vinland | The Lucky: takes 30% less damage |
-| V | Ragnar Lothbrok | Legendary sea-king and raider | Raider: faster, harder sword blows |
+| V | Ragnar Lothbrok | Legendary sea-king and raider | Raider: faster, harder blows with the flail |
 | VI | Lyudmila Pavlichenko | Soviet sniper, 309 confirmed kills | Sniper: scoped rifle, one shot fells a soldier |
 | VI | Virginia Hall | American spy, “the limping lady” | Spy: Sten gun; sentries notice her much later |
 | VI | Maurice Bavaud | Of Neuchâtel, who set out to shoot Hitler in 1938 | Sure hand: pistol whose shots hit 60% harder |
@@ -217,7 +217,7 @@ carries the same mark. Like a hero, a villain has their own look and one strengt
 | IV | Polyphemus | The Cyclops, son of Poseidon | Giant: starts with 180 health, but is a large target |
 | IV | Medusa | The Gorgon whose gaze turns men to stone | Deadly gaze: javelins fly faster and hit harder |
 | IV | Antinous | Leader of the suitors in Ulysses' hall | Usurper: moves 15% faster |
-| IV | Minotaur | The bull-headed monster of the Cretan labyrinth | Bull of Minos: throwing axes and sword; starts with 160 health |
+| IV | Minotaur | The bull-headed monster of the Cretan labyrinth | Bull of Minos: throwing axes and flail; starts with 160 health |
 | IV | Xerxes | Great King of Persia, who invaded Greece in 480 BC | King of Kings: bow and sword; takes 20% less damage |
 | V | Erik Bloodaxe | King of Norway, slayer of his brothers | Bloodaxe: throws axes much faster |
 | V | Ivar the Boneless | Ragnar's son, leader of the Great Heathen Army | Cunning: takes 25% less damage |
@@ -265,8 +265,8 @@ has no relay server.
 | `↑`, facing a ladder | Climb it (no extra key) |
 | `C` | Crouch on and off |
 | Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow |
-| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II, IV and V and with the bow of chapter VIII |
-| `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana and the swords) |
+| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II and IV and with the bow of chapter VIII; the flail in chapter V |
+| `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana, the swords and the flail) |
 | `R` | Reload the six-shooter and the guns of chapters VI to VIII |
 | `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
 | `M` | Sound on/off |
@@ -291,8 +291,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.66 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 7,850 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.68 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 7,900 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -488,7 +488,8 @@ an enemy standing beside a crate does not plan from the top of it.
 Characters are built from capsules, cylinders, spheres and boxes, merged into five
 meshes: torso and head, two arms and two legs, plus a metal mesh for blades and gun
 barrels. A description object selects skin, clothes, hat, beard, extras such as a
-poncho or surcoat, and the weapon. Walking, aiming, striking, flinching and falling are
+poncho, a surcoat or the animal skins of the Vikings (tufts of fur over the shoulders, paws,
+a ragged pelt, a torn hem, sometimes the beast's head), and the weapon. Walking, aiming, striking, flinching and falling are
 animated by rotating those five parts; there are no skeletons or animation files.
 
 The same builder makes the twenty-four playable heroes, the twenty-seven duel villains
@@ -596,14 +597,15 @@ and whether they aim or swing, in a small JSON message over a WebRTC data channe
 | Weapon | Type | Damage | Timing |
 | --- | --- | --- | --- |
 | Six-shooter | Instant ray | 35 | 6 rounds, 0.33 s between shots, 1.45 s reload |
-| Throwing stars | Three stars at 52 m/s in a fan of ±2°, light gravity | 26 each | 0.1 s wind-up, 0.36 s to the next throw |
+| Throwing stars | Three eight-pointed stars at 52 m/s in a fan of ±2°, light gravity | 26 each | 0.1 s wind-up, 0.36 s to the next throw |
 | Bow (chapter VIII, duel villains) | Arrow at 82 m/s with gravity | 60 | 0.34 s draw, 0.5 s to nock the next arrow |
 | Katana | Arc, 3.3 m reach | 110 | 0.42 s |
 | Crossbow | Bolt at 118 m/s with gravity | 95 | 1.0 s reload |
 | Halberd | Thrust, 3.7 m reach | 95 | 0.55 s |
 | Javelin | Thrown at 50 m/s with gravity | 85 | 0.16 s wind-up, 0.55 s to ready the next |
 | Throwing axe | Thrown at 36 m/s with gravity, spinning | 80 | 0.16 s wind-up, 0.55 s to ready the next |
-| Sword (chapters IV and V) | Arc, 3.0 to 3.2 m reach | 100 | 0.4 s |
+| Sword (chapter IV) | Arc of ±57°, 3.0 m reach | 100 | 0.4 s |
+| Flail (chapter V) | Arc of ±78°, 3.4 m reach, strikes everyone in it | 150 | 0.8 s: whirled once, the blow lands at 60% |
 | Sten gun (also the submachine gun of chapter VII) | Instant ray, automatic | 16 | 32 rounds, 0.085 s between shots, 1.7 s reload |
 | Scoped rifle | Instant ray | 120 | 5 rounds, 1.15 s to work the bolt, 2.3 s reload |
 | Rifle (chapter VIII) | Instant ray, iron sights | 82 | 8 rounds, 0.85 s to work the bolt, 2.1 s reload |

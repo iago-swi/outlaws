@@ -22,7 +22,7 @@ export const VILLAINS = {
     { look: 'cyclops', name: 'Polyphemus', who: 'The Cyclops, son of Poseidon', trait: 'Giant', effect: 'starts with 180 health, but is a large target', mods: { hp: 180 }, sleeve: 0xb89070, cuff: 0xb89070 },
     { look: 'medusa', name: 'Medusa', who: 'The Gorgon whose gaze turns men to stone', trait: 'Deadly gaze', effect: 'javelins fly faster and hit harder', mods: { power: 1.3 }, sleeve: 0x8ab08a, cuff: 0xd9b23a },
     { look: 'antinous', name: 'Antinous', who: 'Leader of the suitors in Ulysses’ hall', trait: 'Usurper', effect: 'moves 15% faster', mods: { speed: 1.15 }, sleeve: 0xd0a078, cuff: 0xd9b23a },
-    { look: 'minotaur', name: 'Minotaur', who: 'The bull-headed monster of the Cretan labyrinth', trait: 'Bull of Minos', effect: 'throwing axes and sword; starts with 160 health', weapon: 'axe', weaponName: 'Axes & sword', alt: 'right mouse — sword', mods: { hp: 160 }, sleeve: 0x8a5a3a, cuff: 0x8a5a3a },
+    { look: 'minotaur', name: 'Minotaur', who: 'The bull-headed monster of the Cretan labyrinth', trait: 'Bull of Minos', effect: 'throwing axes and flail; starts with 160 health', weapon: 'axe', weaponName: 'Axes & flail', alt: 'right mouse — flail', mods: { hp: 160 }, sleeve: 0x8a5a3a, cuff: 0x8a5a3a },
     { look: 'xerxes', name: 'Xerxes', who: 'Great King of Persia, who invaded Greece in 480 BC', trait: 'King of Kings', effect: 'bow and sword; takes 20% less damage', weapon: 'bow', weaponName: 'Bow & sword', alt: 'right mouse — sword', mods: { armor: 0.8 }, sleeve: 0x5a2a7a, cuff: 0xd9b23a },
   ],
   north: [

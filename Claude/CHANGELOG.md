@@ -16,6 +16,22 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.2.0] - 2026-11-21
+
+### Changed
+
+- **The Vikings of Jarnvik swing a flail instead of a sword** (right mouse button): a wooden
+  haft with two spiked iron balls on chains. It is whirled once, then swept across. A swing
+  takes twice as long as the sword's, but it hits harder and strikes everyone in a wide arc in
+  front of you. The throwing axes are unchanged. The Minotaur, who carries the same axes in
+  Duel mode, has the flail too.
+- **The Vikings wear animal skins:** shaggy fur over the shoulders, paws down the chest, a
+  ragged pelt on the back and a fur kilt, in five colours of fur; many carry the beast's head
+  on a shoulder. This goes for every enemy in Jarnvik, its three heroes, and the duel villains
+  Erik Bloodaxe and Ivar the Boneless.
+- **The throwing stars are real stars:** eight sharp points and a hole in the middle, dark
+  steel with bright ground edges. The enemy ninja throw the same ones.
+
 ## [1.1.0] - 2026-11-21
 
 ### Changed
@@ -105,6 +121,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.2.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.2.0
 [1.1.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.1.0
 [1.0.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.1
 [1.0.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.0
