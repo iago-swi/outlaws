@@ -16,6 +16,18 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.1.0] - 2026-11-21
+
+### Changed
+
+- **Kagemori is fought with throwing stars (shuriken) instead of the bow.** Each throw sends
+  three stars in a narrow fan, about two throws a second: deadly close up, where all three
+  strike, and weak far off, where only one does. The katana stays on the right mouse button.
+- Tomoe Gozen's strength is now *Swift hands*: she throws her stars almost twice as fast.
+- The three villains of Kagemori in Duel mode throw stars too.
+- The bow remains in the game with Songtsen Gampo (chapter VIII) and the duel villains Xerxes
+  and Langdarma.
+
 ## [1.0.1] - 2026-11-21
 
 ### Fixed
@@ -93,5 +105,6 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.1.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.1.0
 [1.0.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.1
 [1.0.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.0

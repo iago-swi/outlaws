@@ -307,8 +307,9 @@ class Game {
     else if (wh) this.impact(hx, hy, hz, wh.nx, wh.ny, wh.nz, 'bullet');
   }
 
-  playerShoot(kind, speed, dmg, grav) {
+  playerShoot(kind, speed, dmg, grav, turn = 0) {
     const P = this.player, o = this.gfx.camera.getWorldPosition(this._v), d = P.forward(this._v2);
+    if (turn) { const c = Math.cos(turn), s = Math.sin(turn), x = d.x * c - d.z * s; d.z = d.x * s + d.z * c; d.x = x; }      // one missile of a fan: turned a little to the side
     const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
     this.stats.shots++; this.crossGap = 14;
     const sx = o.x + d.x * 0.5 + rx * 0.04, sy = o.y + d.y * 0.5 - 0.07, sz = o.z + d.z * 0.5 + rz * 0.04;

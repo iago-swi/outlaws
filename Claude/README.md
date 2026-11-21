@@ -1,6 +1,6 @@
 # Lone Hand — Claude version
 
-**Version 1.0.1** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 1.1.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in eight chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -20,7 +20,7 @@ files.
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori |
 | :---: | :---: |
-| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour, looking west: the doctor's and the telegraph office on the left, the sheriff's office, the jail and the saloon on the right, an outlaw on the boardwalk, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; a wandering flute monk (komusō) in black, a basket hat over his head, stands beside the path; the samurai's bow in the foreground"> |
+| <img src="screenshot.jpg" width="400" alt="The main street of Dry Gulch at golden hour, looking west: the doctor's and the telegraph office on the left, the sheriff's office, the jail and the saloon on the right, an outlaw on the boardwalk, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="400" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; in the foreground the samurai's hands, three throwing stars fanned in the right, the spare ones on the left palm"> |
 | **Chapter III · Uri** | **Chapter IV · Ithaca** |
 | <img src="screenshot-uri.jpg" width="400" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> | <img src="screenshot-greece.jpg" width="400" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> |
 | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
@@ -55,7 +55,7 @@ show where the remaining enemies are; the last three come looking for you. Healt
 | Chapter | Weapons | Enemies |
 | --- | --- | --- |
 | I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 31: cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | bow (yumi) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| II · Kagemori, Japan, 1600 | throwing stars (shuriken) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
 | III · Uri, the Waldstätten, 1307 | crossbow and halberd | 27: Habsburg halberdiers, crossbowmen, knights, the bailiff |
 | IV · Ithaca, Greece, the age of heroes | javelins and short sword | 30: Spartan hoplites, javelin throwers, their captain |
 | V · Jarnvik, Norway, winter of 985 | throwing axes and sword | 34: rival Vikings, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
@@ -136,7 +136,7 @@ remains guarded. The choice is kept for the next chapter and when you retry.
 | I | Calamity Jane | Scout and sharpshooter of Deadwood | Frontier scout: moves 18% faster |
 | I | Billy the Kid | The fastest gun in New Mexico | Quick draw: fires and reloads much faster |
 | II | Miyamoto Musashi | Undefeated duellist, master of two swords | Two swords: faster katana cuts with longer reach |
-| II | Tomoe Gozen | Woman warrior of the Genpei War | Peerless archer: draws the bow almost twice as fast |
+| II | Tomoe Gozen | Woman warrior of the Genpei War | Swift hands: throws her stars almost twice as fast |
 | II | Date Masamune | The One-Eyed Dragon of Sendai | Black armour: takes 30% less damage |
 | III | Wilhelm Tell | The crossbowman of Bürglen, Uri | Master shot: reloads the crossbow 40% faster |
 | III | Arnold von Winkelried | Hero of Sempach, from Nidwalden | Breaks the line: starts with 150 health |
@@ -264,7 +264,7 @@ has no relay server.
 | `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
 | `↑`, facing a ladder | Climb it (no extra key) |
 | `C` | Crouch on and off |
-| Left mouse button | Fire, loose an arrow, shoot a bolt, throw a javelin or an axe |
+| Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow |
 | Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II, IV and V and with the bow of chapter VIII |
 | `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana and the swords) |
 | `R` | Reload the six-shooter and the guns of chapters VI to VIII |
@@ -292,7 +292,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | | |
 | --- | --- |
 | Delivery | One `index.html` of 1.66 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 7,800 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
+| Source | About 7,850 lines of plain JavaScript (ES modules) in 20 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -530,8 +530,8 @@ builder, sleeve colours for the first-person hands, and a small object of multip
 | --- | --- | --- |
 | `armor` | Scales every hit the player takes | Wyatt Earp (0.75), Date Masamune (0.7), Achilles (0.65), Leif Erikson (0.7), Aleksandr Solzhenitsyn (0.85), Songtsen Gampo (0.8) |
 | `speed` | Scales walking and running speed | Calamity Jane (1.18), Rudolf Nureyev (1.25), Ani Pachen (1.2) |
-| `fire`, `reload` | Scale the time between shots or throws and the reload | Billy the Kid (0.68, 0.6), Wilhelm Tell (reload 0.6), Erik the Red (fire 0.6) |
-| `draw` | Scales the bow's draw and nock time | Tomoe Gozen (0.55) |
+| `fire`, `reload` | Scale the time between shots or throws and the reload | Billy the Kid (0.68, 0.6), Wilhelm Tell (reload 0.6), Tomoe Gozen (fire 0.55), Erik the Red (fire 0.6) |
+| `draw` | Scales the bow's draw and nock time | no hero at present |
 | `melee`, `reach`, `meleeDmg` | Scale the blade's swing time, add reach in metres, scale its damage | Miyamoto Musashi (0.62, +0.6), Ragnar Lothbrok (0.75, +0.4, damage 1.7) |
 | `power` | Scales the speed and damage of thrown weapons | Ulysses (1.3) |
 | `hp` | Starting and maximum health | Arnold von Winkelried (150), Heracles (170) |
@@ -596,7 +596,8 @@ and whether they aim or swing, in a small JSON message over a WebRTC data channe
 | Weapon | Type | Damage | Timing |
 | --- | --- | --- | --- |
 | Six-shooter | Instant ray | 35 | 6 rounds, 0.33 s between shots, 1.45 s reload |
-| Bow | Arrow at 82 m/s with gravity | 60 | 0.34 s draw, 0.5 s to nock the next arrow |
+| Throwing stars | Three stars at 52 m/s in a fan of ±2°, light gravity | 26 each | 0.1 s wind-up, 0.36 s to the next throw |
+| Bow (chapter VIII, duel villains) | Arrow at 82 m/s with gravity | 60 | 0.34 s draw, 0.5 s to nock the next arrow |
 | Katana | Arc, 3.3 m reach | 110 | 0.42 s |
 | Crossbow | Bolt at 118 m/s with gravity | 95 | 1.0 s reload |
 | Halberd | Thrust, 3.7 m reach | 95 | 0.55 s |
@@ -698,8 +699,7 @@ npm run build
 over `index.html` in this folder to publish it.
 
 Four address flags help while editing: `?level=2` jumps into a chapter (1 to 8),
-`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture (arrow
-keys turn), and `&peace` makes enemies passive. In the browser console,
+`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture, and `&peace` makes enemies passive. In the browser console,
 `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
 
 ### Testing and known limits

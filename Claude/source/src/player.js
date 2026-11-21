@@ -314,7 +314,10 @@ class Weapon {
     g.add(this.hand);
     g.position.set(-0.2, -0.1, -0.62); g.rotation.set(0, -0.26, -0.16);
     this.root.add(g);
-    // katana (right mouse button)
+    this.addKatana(M);
+  }
+  /** The katana on the right mouse button, held in both hands: shared by the bow and the throwing stars. */
+  addKatana(M) {
     const k = (this.melee = new THREE.Group());
     k.add(mesh([gBox(0.03, 0.27, 0.036, 0x16161c, [0, 0, 0]), gCyl(0.05, 0.05, 0.012, 0x2a2418, [0, 0.142, 0], [0, 0, 0], 1, 10),
       fist([0, 0.075, 0.0], [0, 0, 0], 1.05), fist([0, -0.07, 0.0], [0, 0, 0], 1.05, -1),
@@ -322,6 +325,45 @@ class Weapon {
     k.add(mesh([gBox(0.007, 0.76, 0.034, 0xdfe4ea, [0, 0.53, 0], [0, 0, 0]), gBox(0.008, 0.04, 0.04, 0xc9a45a, [0, 0.16, 0])], M.metal));
     k.visible = false;
     this.meleeDur = 0.42; this.meleeAt = 0.42; this.meleeRange = 3.3; this.meleeCone = 0.55; this.meleeDmg = 110;
+  }
+
+  // ---- throwing stars + katana (Kagemori) --------------------------------------
+  // Three stars leave the hand in a narrow fan: deadly close up, where all three strike, and weak far off, where one does.
+  build_shuriken(M) {
+    this.thrown = true; this.canAim = false; this.aimFov = 72; this.cuff = this.cuffIn ?? 0x1a1e2c;
+    const X = Math.PI / 2, ST = 0xc4cad2;
+    const star = (p, r, s = 1) => [gBox(0.16 * s, 0.012, 0.05 * s, ST, p, r), gBox(0.05 * s, 0.012, 0.16 * s, ST, p, r), gCyl(0.02 * s, 0.02 * s, 0.015, 0x2a2c30, p, r, 1, 8)];
+    const g = (this.gun = new THREE.Group());
+    this.base = [0.3, -0.27, -0.5, -0.2, 0.05];
+    g.add(mesh([fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.04, -0.2, 0.12], [0.5, 0, 0.2], 0.36)], M.flat));
+    this.missile = new THREE.Group();                        // the three stars about to be thrown, held upright like a hand of cards
+    this.missile.add(mesh([...star([0, 0.105, -0.04], [0, 0, X], 1.15), ...star([0.014, 0.098, -0.005], [0.55, 0, X], 1.15), ...star([-0.014, 0.098, -0.078], [-0.55, 0, X], 1.15)], M.metal));
+    g.add(this.missile); this.root.add(g);
+    const off = (this.off = new THREE.Group());             // the left hand, with the stars still to come lying on the palm
+    off.add(mesh([fist([0, 0, 0], [X, 0, 0], 1.05, -1), ...this.arm(this.sleeve, [-0.07, -0.16, 0.2], [1.0, 0, -0.35], 0.38)], M.flat));
+    off.add(mesh([0, 1, 2, 3].flatMap((i) => star([0, 0.06 + i * 0.016, -0.02], [0, i * 0.42, 0], 1.15)), M.metal));
+    off.position.set(-0.4, -0.36, -0.62); off.rotation.set(0.25, 0.45, 0.1); this.root.add(off);
+    this.addKatana(M);
+  }
+  update_shuriken(dt, input, active) {
+    const P = this.p, G = this.game, b = this.base, WIND = 0.1, REC = 0.36;
+    if (this.state === 'ready') { if (active && input.shoot && this.meleeT <= 0) { this.state = 'wind'; this.t = 0; } }
+    else if (this.state === 'wind') {
+      this.t += dt / this.m.fire;
+      if (this.t >= WIND) {
+        this.state = 'recover'; this.t = 0; this.kickV += 3; P.recoil(0.08);
+        for (const turn of [0, -0.035, 0.035]) G.playerShoot('star', 52 * (1 + (this.m.power - 1) * 0.7), 26 * this.m.power, undefined, turn);
+        G.sound.whiz();
+      }
+    } else { this.t += dt / this.m.fire; if (this.t >= REC) this.state = 'ready'; }
+    const wind = this.state === 'wind' ? ease(Math.min(1, this.t / WIND)) : 0, rec = this.state === 'recover' ? this.t / REC : 1;
+    this.missile.visible = this.state !== 'recover' || rec > 0.5;
+    const rise = this.state === 'recover' ? 1 - ease(clamp((rec - 0.5) / 0.5, 0, 1)) : 0;          // the next three come up from below
+    const fwd = this.state === 'recover' && rec < 0.4 ? Math.sin((rec / 0.4) * Math.PI) : 0;       // the flick: the hand sweeps forward and across
+    const m = this.meleeT > 0 ? Math.sin(Math.min(1, this.meleeT / this.meleeDur) * Math.PI) : 0, g = this.gun;
+    g.position.set(b[0] + wind * 0.1 - fwd * 0.26 - m * 0.2, b[1] - rise * 0.3 - m * 0.4 + wind * 0.04, b[2] + wind * 0.16 - fwd * 0.22 + this.kick * 0.02);
+    g.rotation.set(b[3] + P.swayY - wind * 0.3 + fwd * 0.5 - m * 0.4, b[4] + P.swayX + wind * 0.5 - fwd * 0.9, P.swayX * 0.8 - fwd * 0.3);
+    this.off.position.set(-0.4 - P.swayX * 0.6 - m * 0.25, -0.36 - P.swayY * 0.4 - m * 0.45, -0.62);
   }
   update_bow(dt, input, active) {
     const P = this.p, G = this.game;
