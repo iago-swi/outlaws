@@ -16,7 +16,7 @@ export const russia = {
     { look: 'sakharov', name: 'Andrei Sakharov', who: 'Physicist, and the conscience of a country', trait: 'Precision', effect: 'pistol whose shots hit 60% harder', mods: { gun: 1.6 }, sleeve: 0x4a4a54, cuff: 0xe8e4d8 },
     { look: 'nureyev', name: 'Rudolf Nureyev', who: 'The dancer who leapt to freedom in 1961', trait: 'The leap', effect: 'moves 25% faster; agents notice him later', mods: { speed: 1.25, stealth: 0.75 }, sleeve: 0x1c1c22, cuff: 0xf0ece0 },
   ],
-  keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
+  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
   foes: 'agents remain', foesNone: 'The square is silent', bossName: 'Colonel Voronin', bossDown: 'The Committee has lost its colonel', pickupText: 'Hot tea  +35',
   deadTitle: 'The cellar', deadSub: 'No one will ask where you went.', clearTitle: 'The manuscript is out',
   build,

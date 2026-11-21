@@ -12,10 +12,8 @@ export class Input {
     this.fireAt = -1e9; this.altAt = -1e9; // time of the last press: a quick tap is remembered for a moment
     this.cx = 0.5;                       // cursor position across the window, used when the mouse is not captured
     this.pressed = new Set(); this.canvas = canvas; this.free = false;   // free = debug mode without pointer lock
-    this.caps = false;                   // the real state of Caps Lock: one of the two crouch toggles
-    const caps = (e) => { if (e.getModifierState) this.caps = e.getModifierState('CapsLock'); };
-    addEventListener('keydown', (e) => { caps(e); if (!e.repeat) this.pressed.add(e.code); this.keys.add(e.code); if (this.locked && ['Space', 'ArrowUp', 'ArrowDown', 'Tab'].includes(e.code)) e.preventDefault(); });
-    addEventListener('keyup', (e) => { caps(e); this.keys.delete(e.code); });
+    addEventListener('keydown', (e) => { if (!e.repeat) this.pressed.add(e.code); this.keys.add(e.code); if (this.locked && ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault(); });
+    addEventListener('keyup', (e) => { this.keys.delete(e.code); });
     addEventListener('blur', () => { this.keys.clear(); this.fire = this.alt = false; });
     addEventListener('mousemove', (e) => {
       // works with the mouse captured (pointer lock) and, as a fallback, without it
@@ -95,7 +93,7 @@ export class Player {
     const W = this.game.world;
     this.pos.set(x, W.groundAt(x, z, 100), z); this.vel.set(0, 0, 0);
     this.yaw = yaw; this.pitch = 0; this.hp = this.maxHp; this.hurtT = 99; this.dead = false; this.deadT = 0; this.camY = this.pos.y + 1.65;
-    this.mount = null; this.crouch = this.crouchWant = false; this.duck = 0; this.capsWas = undefined; document.body.classList.remove('crouched');
+    this.mount = null; this.crouch = this.crouchWant = false; this.duck = 0; document.body.classList.remove('crouched');
     this.kick = this.kickV = 0; this.aim = 0;
     this.setWeapon(weaponKind, sleeve);
   }
@@ -127,20 +125,17 @@ export class Player {
     if (active) {
       const sens = 0.0022 * Math.min(1, cam.fov / 72 + 0.06);        // slower when zoomed in
       this.yaw -= input.mx * sens; this.pitch -= input.my * sens;
-      if (K.has('ArrowLeft')) this.yaw += dt * 1.8; if (K.has('ArrowRight')) this.yaw -= dt * 1.8;
       if (!input.locked && !input.free) { if (input.cx < 0.04) this.yaw += dt * 1.7; else if (input.cx > 0.96) this.yaw -= dt * 1.7; }
       this.pitch = clamp(this.pitch, -1.45, 1.45);
     }
     let f = 0, s = 0;
     if (active) {
       f = (K.has('KeyW') || K.has('ArrowUp') ? 1 : 0) - (K.has('KeyS') || K.has('ArrowDown') ? 1 : 0);
-      s = (K.has('KeyD') ? 1 : 0) - (K.has('KeyA') ? 1 : 0);
+      s = (K.has('KeyD') || K.has('ArrowRight') ? 1 : 0) - (K.has('KeyA') || K.has('ArrowLeft') ? 1 : 0);      // the arrow keys move exactly like W A S D; the mouse turns the view
     }
-    // crouching: C or Caps Lock toggles it. Half speed, lower eyes and body, harder for enemies to see.
+    // crouching: C toggles it. Half speed, lower eyes and body, harder for enemies to see.
     if (active) {
-      if (this.capsWas === undefined) this.capsWas = input.caps;
       if (input.pressed.has('KeyC')) this.crouchWant = !this.crouchWant;
-      if (input.caps !== this.capsWas) { this.capsWas = input.caps; this.crouchWant = !!input.caps; }
       if (this.crouch && input.pressed.has('Space')) this.crouchWant = false;
       if (this.crouchWant !== this.crouch) {
         if (this.crouchWant) this.crouch = true;
@@ -163,7 +158,7 @@ export class Player {
       const m = this.mount; m.t = Math.min(1, m.t + dt / 0.25);
       this.pos.set(m.x0 + (m.x1 - m.x0) * m.t, m.y, m.z0 + (m.z1 - m.z0) * m.t); this.vel.set(0, 0, 0); if (m.t >= 1) this.mount = null;
     } else if (climbing) {
-      const tx = lad.x + lad.nx * 0.47, tz = lad.z + lad.nz * 0.47, k = Math.min(1, dt * 10);
+      const out = 0.47 + (lad.lean || 0) * Math.max(0, lad.y1 - this.pos.y), tx = lad.x + lad.nx * out, tz = lad.z + lad.nz * out, k = Math.min(1, dt * 10);
       this.pos.x += (tx - this.pos.x) * k; this.pos.z += (tz - this.pos.z) * k; this.vel.set(0, 3.4 * this.mods.speed, 0); this.onGround = false;
       this.rung = (this.rung || 0) + 3.4 * dt; if (this.rung > 0.45) { this.rung = 0; G.sound.step(true); }
     } else {

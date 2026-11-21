@@ -16,7 +16,7 @@ export const swiss = {
     { look: 'winkelried', name: 'Arnold von Winkelried', who: 'Hero of Sempach, from Nidwalden', trait: 'Breaks the line', effect: 'starts with 150 health', mods: { hp: 150 }, sleeve: 0x8a8f96, cuff: 0x6a6f76 },
     { look: 'stauffacher', name: 'Werner Stauffacher', who: 'Man of Schwyz, of the Rütli oath', trait: 'Steadfast', effect: 'slowly recovers health out of danger', mods: { regen: 3 }, sleeve: 0x8a1c1c, cuff: 0x4a3020 },
   ], weaponName: 'Crossbow & halberd', alt: 'right mouse — aim   ·   F — halberd',
-  keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> shoot a bolt &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>F</kbd> halberd thrust',
+  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> shoot a bolt &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>F</kbd> halberd thrust',
   foes: 'soldiers remain', foesNone: 'The valley is free', bossName: 'The Bailiff', bossDown: 'The bailiff has fallen', pickupText: 'Alp cheese  +35',
   deadTitle: 'Fallen', deadSub: 'The mountains will remember.', clearTitle: 'The valley is free',
   build,
@@ -362,11 +362,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const eagle = new THREE.Mesh(merge([gBox(2.6, 0.03, 0.5, 0x2a2018, [0, 0, 0]), gBox(0.3, 0.06, 1.0, 0x2a2018, [0, 0, 0.1]), gBox(0.5, 0.03, 0.3, 0x2a2018, [0, 0, 0.6])]), M.flat);
   root.add(eagle);
 
-  { // a great boulder in the meadow west of the path, with a summit cross on its grassy top and a stair of rough stones winding up its flank; a hunter's high seat near the start
+  { // a great boulder in the meadow west of the path, with a summit cross on its grassy top and a ladder leaning against its flank; a hunter's high seat near the start
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(-52, -17, 15);
-    const rk = boulder(B, M, -52, 5.1, -19, { rx: 8, rz: 7, h: 7.5, seed: 3, start: 0.9, turn: -1, cross: true });
-    extraFoes.push(['crossbowman', -51, -20.5, { y: rk.top + 0.5, patrol: false, yaw: 0 }]); extraPicks.push([-54, -17.5, rk.top + 0.5]);
+    const rk = boulder(B, M, -52, 5.1, -19, { rx: 8, rz: 7, h: 7.5, seed: 3, ladder: 0.35, cross: true });
+    extraFoes.push(['crossbowman', -51, -20.5, { y: rk.top + 0.5, static: true, yaw: 0 }]); extraPicks.push([-54, -17.5, rk.top + 0.5]);
     clearAt(-44, 65, 4); stand(B, M, -44, world.height(-44, 64.7), 64.7, 0, { c: 0x7a5a3a, roof: 0x5a4632 });
   }
   const enemies = [

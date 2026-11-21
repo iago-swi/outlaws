@@ -210,7 +210,7 @@ const STEP = 0.5;   // highest ledge you can walk up without jumping
 export class World {
   constructor() {
     this.boxes = []; this.cyls = [];
-    this.ladders = [];             // {x, z, nx, nz, y0, y1}: foot of the wall, the direction away from it, bottom and top
+    this.ladders = [];             // {x, z, nx, nz, y0, y1, lean}: where it touches the wall at the top, the direction away from it, bottom and top, metres out per metre down
     this.height = () => 0;         // terrain height function
     this.bounds = null;            // {x0,x1,z0,z1} or {r} hard limits
     this.maxSlope = 1.15;          // steeper terrain cannot be climbed
@@ -238,7 +238,7 @@ export class World {
   /** The ladder that a body at p stands in front of and faces (fx, fz = the way it looks), or null. */
   ladderFor(p, fx, fz) {
     for (const L of this.ladders) {
-      const dx = p.x - L.x, dz = p.z - L.z, out = dx * L.nx + dz * L.nz, lat = dz * L.nx - dx * L.nz;
+      const k = (L.lean || 0) * Math.max(0, L.y1 - p.y), dx = p.x - L.x - L.nx * k, dz = p.z - L.z - L.nz * k, out = dx * L.nx + dz * L.nz, lat = dz * L.nx - dx * L.nz;   // (a leaning ladder stands further out the lower you are)
       if (out > 0.05 && out < 1.0 && Math.abs(lat) < 0.55 && p.y > L.y0 - 0.4 && p.y < L.y1 + 0.1 && -(fx * L.nx + fz * L.nz) > 0.4) return L;
     }
     return null;

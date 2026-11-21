@@ -16,7 +16,7 @@ export const tibet = {
     { look: 'pachen', name: 'Ani Pachen', who: 'The warrior nun who led her clan on horseback', trait: 'Rider', effect: 'pistol; moves 20% faster', weapon: 'revolver', weaponName: 'Pistol & knife', mods: { speed: 1.2 }, sleeve: 0x7a1c22, cuff: 0xd9a020 },
     { look: 'songtsen', name: 'Songtsen Gampo', who: 'The king who founded the Tibetan empire', trait: 'King of old', effect: 'bow and sword; takes 20% less damage', weapon: 'bow', weaponName: 'Bow & sword', alt: 'right mouse — sword', mods: { armor: 0.8 }, sleeve: 0xa01c1c, cuff: 0xd9b23a },
   ],
-  keys: '<kbd>W A S D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
+  keys: '<kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> fire &nbsp; <kbd>Right mouse</kbd> aim &nbsp; <kbd>R</kbd> reload &nbsp; <kbd>F</kbd> knife',
   foes: 'soldiers remain', foesNone: 'The pass is open', bossName: 'Commander Zhao', bossDown: 'The column has lost its commander', pickupText: 'Butter tea  +35',
   deadTitle: 'Snow closes the road', deadSub: 'The caravan waits for a scout who does not return.', clearTitle: 'The pass is open',
   build,

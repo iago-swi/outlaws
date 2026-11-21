@@ -11,7 +11,7 @@ import { Sound } from './audio.js';
 import { makeMaterials } from './tex.js';
 import { World, Builder, Nav } from './build.js';
 import { Player, Input } from './player.js';
-import { Enemy, Shots, makeHumanoid, lookFor } from './actors.js';
+import { Enemy, Shots, makeHumanoid, lookFor, TYPES } from './actors.js';
 import { rng, clamp, damp } from './util.js';
 import { west } from './levels/west.js';
 import { japan } from './levels/japan.js';
@@ -41,6 +41,7 @@ class Game {
     this.player = new Player(this);
     this.shots = new Shots(this);
     this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0; this.practice = false; this.typed = '';
+    this.foeWant = params.has('foes') ? +params.get('foes') || 0 : 0;   // how many enemies a chapter holds: 0 = all of them
     this.time = 0; this.noise = 0; this.state = 'boot'; this.index = 0; this.timeScale = 1; this.slow = 0;
     this.flashLight = new THREE.PointLight(0xffb060, 0, 16, 2);
     this.gfx.scene.add(this.flashLight);
@@ -66,6 +67,7 @@ class Game {
     // hero cards: pointing at one previews that hero in the opening shot, clicking starts the chapter
     const cardOf = (e) => { const c = e.target.closest('.hero'); return c ? +c.dataset.hero : -1; };
     $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k); });
+    $('#foesel').addEventListener('change', (e) => { this.foeWant = +e.target.value; e.target.blur(); if (this.state === 'intro' && !(this.duel && this.duel.active)) this.spawnEnemies(); });
     $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && !(this.duel && this.duel.myPick >= 0)) { this.applyHero(k); this.begin(); } });
     bindDuelUI(this);
     this.canvas.addEventListener('mousedown', () => { if (this.state === 'play' && !this.input.locked && !this.input.free) this.input.lock(); });   // a click captures the mouse again
@@ -129,7 +131,7 @@ class Game {
     if (backdrop) this.nav = null;                         // the title screen only shows the world; nobody has to find a way
     else { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
     this.gfx.setEnvironment(L.env);
-    for (const [type, x, z, o] of (this.duel && this.duel.active ? this.duel.enemyList(L.enemies) : L.enemies)) this.enemies.push(new Enemy(this, type, x, z, o));
+    this.spawnEnemies();
     for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[3] !== undefined ? this.world.height(p[0], p[1]) + p[3] : p[2]);
     this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon);
     this.hero = null;
@@ -143,6 +145,21 @@ class Game {
     this.gfx.camera.fov = 72; this.gfx.camera.updateProjectionMatrix();
     this.gfx.fade = 0; this.gfx.fadeTarget = 1; this.gfx.damage = 0;
     this.perfT = 0; this.perfN = 0; this.skipPerf = true;        // ignore the loading hitch when measuring speed
+  }
+
+  /** The chapter's enemies as chosen on the hero screen: all of them, or that many spread evenly over the map. The boss always stays. */
+  foeList(list) {
+    const n = Math.round(this.foeWant); if (!n || n >= list.length) return list;
+    const boss = list.filter(([t]) => TYPES[t].boss), rest = list.filter(([t]) => !TYPES[t].boss), m = Math.max(0, n - boss.length), keep = new Set(boss);
+    for (let i = 0; i < m; i++) keep.add(rest[Math.floor((i + 0.5) * rest.length / m)]);
+    return list.filter((e) => keep.has(e));
+  }
+  /** Put the enemies into the loaded chapter (again, when the number is changed on the hero screen). */
+  spawnEnemies() {
+    for (const e of this.enemies) { e.rig.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); e.rig.group.removeFromParent(); }
+    this.enemies = []; this.cache = {};
+    const L = this.level, duel = this.duel && this.duel.active;
+    for (const [type, x, z, o] of (duel ? this.duel.enemyList(L.enemies) : this.foeList(L.enemies))) this.enemies.push(new Enemy(this, type, x, z, o));
   }
 
   /** Switch the playable character: figure in the opening shot, hands, and the hero's trait. */
@@ -181,7 +198,7 @@ class Game {
     $('#intro .chap').textContent = d.chapter;
     $('#intro h2').innerHTML = (d.kanji ? `<span class="kanji">${d.kanji}</span>` : '') + d.title;
     $('#intro .story').textContent = d.story;
-    $('#intro .keys').innerHTML = d.keys.replace('<kbd>Space</kbd> jump', '<kbd>Space</kbd> jump &nbsp; <kbd>C</kbd> or <kbd>Caps Lock</kbd> crouch');
+    $('#intro .keys').innerHTML = d.keys.replace('<kbd>Space</kbd> jump', '<kbd>Space</kbd> jump &nbsp; <kbd>C</kbd> crouch');
     const duel = this.duel && this.duel.active, n = d.heroes.length;
     if (duel) {
       const c = this.duel.cfg;
@@ -190,6 +207,9 @@ class Game {
         + (c.foes ? (c.foes > 1 ? ` ${['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][c.foes - 2]} of the chapter’s enemies are still about, and they attack you both.` : ' One of the chapter’s enemies is still about, and attacks you both.') : '') + ' The larger dot on the compass is your opponent.';
     }
     $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
+    { const all = this.level.enemies.length, sel = $('#foesel'), want = Math.round(this.foeWant);       // the list offers 10 to 30, as far as the chapter has that many
+      let h = `<option value="0">All (${all})</option>`; for (let k = 10; k <= 30 && k < all; k++) h += `<option value="${k}">${k}</option>`;
+      sel.innerHTML = h; sel.value = want >= 10 && want <= 30 && want < all ? want : 0; }
     $('#heroes').classList.toggle('many', !!duel); $('#heroes').classList.toggle('lots', !!duel && this.roster().length > 7);
     $('#intro').classList.toggle('duelpick', !!duel);
     const STAR = '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/>';
