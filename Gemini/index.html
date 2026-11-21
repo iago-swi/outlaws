@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OUTLAWS: Eight Horizons</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%231b0e08'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='38' fill='%23f2b755'>★</text></svg>" />
-  <script type="module" crossorigin src="./assets/index-3Ho-gATi.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-B1vGmJ9n.css">
+  <script type="module" crossorigin src="./assets/index-2coDntVW.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BguXD0Zf.css">
 </head>
 <body>
   <div id="game-container"></div>
@@ -26,7 +26,7 @@
   <div id="damage-overlay"></div>
   <div id="hit-flash"></div>
 
-  <!-- Hidden Practice Mode Indicator (Visible on every screen ONLY while PAX is active) -->
+  <!-- Hidden Practice Mode Indicator (Visible on every screen ONLY while PAX is active; never during Duel) -->
   <div id="pax-badge" class="hidden" aria-live="polite">
     <svg class="pax-olive" viewBox="0 0 42 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M3 16 C12 14, 24 10, 38 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -54,14 +54,14 @@
     </div>
   </div>
 
-  <!-- Floating Callout (Headshot, Boss Incoming, Reload, Pickup) -->
+  <!-- Floating Callout (Headshot, Boss Incoming, Reload, Pickup, Duel Round) -->
   <div id="callout-banner" class="hidden"></div>
   <div id="pickup-toast"></div>
 
   <!-- Main Gameplay HUD -->
   <div id="hud" class="hidden">
-    <!-- Top Left: Mission & Level Title -->
-    <div class="hud-top-left">
+    <!-- Top Left: Mission & Level Title (Single-Player) -->
+    <div class="hud-top-left" id="hud-sp-left">
       <div class="hud-era-badge" id="hud-era-badge">ACT I • RED GULCH</div>
       <div class="hud-objective" id="hud-objective">Eliminate the Outlaws</div>
       <div class="hud-counter">
@@ -71,7 +71,19 @@
       </div>
     </div>
 
-    <!-- Top Center: Boss Health Bar (Hidden until Boss activates) -->
+    <!-- Top Center: Duel Scoreline & Compass Bar (Duel Mode Only) -->
+    <div id="duel-hud-top" class="hidden">
+      <div class="duel-scoreline" id="duel-scoreline">You 0–0 Opponent · round 1</div>
+      <div class="duel-compass" id="duel-compass">
+        <div class="compass-track" id="compass-track"></div>
+        <div class="compass-center-tick"></div>
+      </div>
+    </div>
+
+    <!-- Duel Respawn Countdown Banner (Timed 5-min mode) -->
+    <div id="duel-respawn-banner" class="hidden"></div>
+
+    <!-- Top Center: Boss Health Bar (Single-Player only) -->
     <div id="boss-bar-wrap" class="hidden">
       <div class="boss-name" id="boss-name">EL DIABLO</div>
       <div class="boss-bar-bg">
@@ -81,12 +93,12 @@
 
     <!-- Top Right: Score & Quick Controls -->
     <div class="hud-top-right">
-      <div class="hud-score-box">
+      <div class="hud-score-box" id="hud-score-box">
         <div class="hud-score-label">BOUNTY</div>
         <div class="hud-score-val" id="hud-score">$0</div>
       </div>
       <div class="hud-controls-hint">
-        <span>[ESC] Menu</span>
+        <span id="hud-esc-hint">[ESC] Menu</span>
         <span>[M] Mute</span>
         <span>[R] Reload</span>
         <span>[RMB] Zoom / Alt</span>
@@ -116,7 +128,7 @@
     <!-- Bottom Center: Weapon Bar -->
     <div class="hud-weapon-strip" id="hud-weapon-strip"></div>
 
-    <!-- Bottom Right: Ammo Cylinder / Quiver Display -->
+    <!-- Bottom Right: Ammo Display -->
     <div class="hud-bottom-right">
       <div class="hud-panel ammo-panel">
         <div class="hud-weapon-name" id="hud-weapon-name">.45 PEACEMAKER</div>
@@ -133,7 +145,14 @@
     </div>
   </div>
 
-  <!-- Title / Level Select Screen (Over live 3D rotating camera preview!) -->
+  <!-- Non-Pausing Duel Pointer-Unlock Bar (duel simulation keeps running — no pause invulnerability!) -->
+  <div id="duel-unlock-bar" class="hidden">
+    <span>DUEL LIVE — Click screen to resume aiming</span>
+    <button id="btn-duel-resume" class="btn-primary-western btn-compact">AIM</button>
+    <button id="btn-duel-leave" class="btn-secondary-western btn-compact">LEAVE DUEL</button>
+  </div>
+
+  <!-- Title / Level Select Screen (Coherent 8-card grid over random live 3D frontier!) -->
   <div id="title-screen" class="overlay-screen">
     <div class="title-vignette"></div>
     <div class="title-content">
@@ -143,53 +162,53 @@
       <div class="title-tagline">Eight frontiers — Twenty-four legends</div>
 
       <div class="level-cards">
-        <button class="level-card active" data-level="0">
-          <div class="card-badge">ACT I • 1884</div>
+        <button class="level-card active" data-level="0" style="--card-accent:#e89b3c">
+          <div class="card-num">I</div>
           <div class="card-title">RED GULCH</div>
-          <div class="card-region">Wild West Frontier</div>
-          <div class="card-desc">Saloon, jail, bank, barn, homestead &amp; Boot Hill cemetery. Duel outlaws as Wyatt Earp, Calamity Jane, or Billy the Kid.</div>
+          <div class="card-meta">Wild West · 1884</div>
+          <div class="card-desc">Saloon, jail, bank, barn, homestead and Boot Hill cemetery.</div>
         </button>
-        <button class="level-card" data-level="1">
-          <div class="card-badge">ACT II • 1603</div>
+        <button class="level-card" data-level="1" style="--card-accent:#e04a3f">
+          <div class="card-num">II</div>
           <div class="card-title">KYOTO MIST</div>
-          <div class="card-region">Feudal Japan</div>
-          <div class="card-desc">Shrine hall, open-screen houses, walled dojo &amp; bamboo hermitage. Fight as Musashi, Tomoe Gozen, or Date Masamune.</div>
+          <div class="card-meta">Feudal Japan · 1603</div>
+          <div class="card-desc">Shrine hall, open-screen houses, walled dojo and bamboo hermitage.</div>
         </button>
-        <button class="level-card" data-level="2">
-          <div class="card-badge">ACT III • 1307</div>
+        <button class="level-card" data-level="2" style="--card-accent:#59b8e6">
+          <div class="card-num">III</div>
           <div class="card-title">RÜTLI VALLEY</div>
-          <div class="card-region">Medieval Switzerland</div>
-          <div class="card-desc">Alps, waterfall, chalets, chapel, watchtower &amp; alp hut. Battle Habsburg forces as Wilhelm Tell, Winkelried, or Stauffacher.</div>
+          <div class="card-meta">Switzerland · 1307</div>
+          <div class="card-desc">Alpine chalets, waterfall, chapel, watchtower and high alp hut.</div>
         </button>
-        <button class="level-card" data-level="3">
-          <div class="card-badge">ACT IV • 480 BC</div>
+        <button class="level-card" data-level="3" style="--card-accent:#2cb8c9">
+          <div class="card-num">IV</div>
           <div class="card-title">AEGEAN ISLE</div>
-          <div class="card-region">Ancient Greece</div>
-          <div class="card-desc">Marble temple sanctuary, village houses, fishermen's cape &amp; beacon tower. Face Spartans as Ulysses, Achilles, or Heracles.</div>
+          <div class="card-meta">Ancient Greece · 480 BC</div>
+          <div class="card-desc">Whitewashed village, marble temple sanctuary and coastal beacon tower.</div>
         </button>
-        <button class="level-card" data-level="4">
-          <div class="card-badge">ACT V • 985 AD</div>
+        <button class="level-card" data-level="4" style="--card-accent:#36d99a">
+          <div class="card-num">V</div>
           <div class="card-title">FJORD OF THE NORTH</div>
-          <div class="card-region">Scandinavia</div>
-          <div class="card-desc">Northern lights, longhouses, horned chieftains, old temple &amp; Great Hall. Fight as Erik the Red, Leif Erikson, or Ragnar Lothbrok.</div>
+          <div class="card-meta">Scandinavia · 985 AD</div>
+          <div class="card-desc">Northern lights, longhouses, horned chieftains, old temple and Great Hall.</div>
         </button>
-        <button class="level-card" data-level="5">
-          <div class="card-badge">ACT VI • 6 JUNE 1944</div>
+        <button class="level-card" data-level="5" style="--card-accent:#c98f6b">
+          <div class="card-num">VI</div>
           <div class="card-title">NORMANDY</div>
-          <div class="card-region">Occupied France</div>
-          <div class="card-desc">Bocage lanes, parish church, manor, windmill &amp; cliff battery under searchlights. Resist as Pavlichenko, Virginia Hall, or Bavaud.</div>
+          <div class="card-meta">Occupied France · 6 June 1944</div>
+          <div class="card-desc">Bocage lanes, parish church, walled manor, windmill and cliff battery.</div>
         </button>
-        <button class="level-card" data-level="6">
-          <div class="card-badge">ACT VII • WINTER 1974</div>
+        <button class="level-card" data-level="6" style="--card-accent:#d43838">
+          <div class="card-num">VII</div>
           <div class="card-title">STALNOGORSK</div>
-          <div class="card-region">Soviet Russia</div>
-          <div class="card-desc">Snowy avenue, Palace of Culture, factory &amp; Committee archive. Reclaim the manuscript as Solzhenitsyn, Sakharov, or Nureyev.</div>
+          <div class="card-meta">Soviet Russia · Winter 1974</div>
+          <div class="card-desc">Snowy tram avenue, Palace of Culture, factory and Committee archive.</div>
         </button>
-        <button class="level-card" data-level="7">
-          <div class="card-badge">ACT VIII • MARCH 1959</div>
+        <button class="level-card" data-level="7" style="--card-accent:#e6b438">
+          <div class="card-num">VIII</div>
           <div class="card-title">ROAD TO LHASA</div>
-          <div class="card-region">Tibet</div>
-          <div class="card-desc">High valley, village houses, ruined fort, army camp &amp; ridge monastery. Stand as Gompo Tashi, Ani Pachen, or Songtsen Gampo.</div>
+          <div class="card-meta">Tibet · March 1959</div>
+          <div class="card-desc">High ochre valley, village houses, ruined fort, camp and ridge monastery.</div>
         </button>
       </div>
 
@@ -200,10 +219,13 @@
           <button class="diff-btn active" data-diff="bad">THE BAD <em>(Normal)</em></button>
           <button class="diff-btn" data-diff="ugly">THE UGLY <em>(Deadly)</em></button>
         </div>
-        <button id="btn-play" class="btn-primary-western">
-          <span>RIDE OUT</span>
-          <span class="btn-arrow">▶</span>
-        </button>
+        <div class="title-action-btns">
+          <button id="btn-duel-open" class="btn-duel-entry">⚔ DUEL · TWO PLAYERS ONLINE</button>
+          <button id="btn-play" class="btn-primary-western">
+            <span>RIDE OUT</span>
+            <span class="btn-arrow">▶</span>
+          </button>
+        </div>
       </div>
 
       <div class="controls-legend">
@@ -219,7 +241,156 @@
     </div>
   </div>
 
-  <!-- Hero Selection Screen (Before Every Level, with Live 3D Hero Turntable!) -->
+  <!-- Duel Lobby Screen (Host / Join via 5-letter Invite Link or Copy-Paste Backup) -->
+  <div id="duel-lobby-screen" class="overlay-screen hidden">
+    <div class="duel-lobby-shell">
+      <div class="duel-lobby-header">
+        <div>
+          <div class="picker-eyebrow">ONLINE FACE-TO-FACE</div>
+          <h2 class="duel-lobby-title">DUEL LOBBY</h2>
+        </div>
+        <button id="btn-duel-lobby-back" class="btn-secondary-western btn-compact">← BACK</button>
+      </div>
+
+      <p class="duel-privacy-note">
+        Direct browser-to-browser connection (WebRTC): the two computers talk directly and each player can see the other's network address.
+      </p>
+
+      <div id="duel-status-bar" class="duel-status-bar status-idle">
+        Choose Host or Join to start a two-player duel.
+      </div>
+
+      <div class="duel-lobby-columns">
+        <!-- Host Column -->
+        <div class="duel-panel">
+          <h3 class="duel-panel-title">HOST A DUEL</h3>
+
+          <label class="duel-field">
+            <span>Level</span>
+            <select id="duel-level-select">
+              <option value="0">I · Red Gulch (Wild West, 1884)</option>
+              <option value="1">II · Kyoto Mist (Feudal Japan, 1603)</option>
+              <option value="2">III · Rütli Valley (Switzerland, 1307)</option>
+              <option value="3">IV · Aegean Isle (Ancient Greece, 480 BC)</option>
+              <option value="4">V · Fjord of the North (Scandinavia, 985 AD)</option>
+              <option value="5">VI · Normandy (Occupied France, 1944)</option>
+              <option value="6">VII · Stalnogorsk (Soviet Russia, 1974)</option>
+              <option value="7">VIII · Road to Lhasa (Tibet, 1959)</option>
+            </select>
+          </label>
+
+          <label class="duel-field">
+            <span>Rules</span>
+            <select id="duel-rule-select">
+              <option value="first3">First to 3 rounds (swap ends each round)</option>
+              <option value="onelife">One life (first kill decides)</option>
+              <option value="timed5">5 minutes, most kills (3s respawn)</option>
+            </select>
+          </label>
+
+          <label class="duel-field">
+            <span>Computer enemies</span>
+            <select id="duel-enemies-select">
+              <option value="none">None (only the two players)</option>
+              <option value="few">A few, hostile to both (6 enemies)</option>
+            </select>
+          </label>
+
+          <button id="btn-duel-host" class="btn-primary-western btn-full">CREATE INVITE LINK</button>
+
+          <div id="duel-invite-box" class="duel-invite-box hidden">
+            <div class="duel-code-row">
+              <span class="duel-code-label">CODE</span>
+              <strong id="duel-code-display" class="duel-code-value">-----</strong>
+            </div>
+            <div class="duel-link-row">
+              <input id="duel-invite-url" type="text" readonly />
+              <button id="btn-duel-copy-link" class="btn-secondary-western btn-compact">COPY LINK</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Join Column -->
+        <div class="duel-panel">
+          <h3 class="duel-panel-title">JOIN A DUEL</h3>
+          <p class="duel-panel-hint">Open your host's invite link directly, or enter their 5-letter code below:</p>
+          <div class="duel-join-row">
+            <input id="duel-join-code" type="text" maxlength="5" placeholder="ABCDE" autocomplete="off" />
+            <button id="btn-duel-join" class="btn-primary-western btn-compact">JOIN</button>
+          </div>
+          <div class="duel-rules-summary">
+            <div><b>First to 3 rounds:</b> each kill ends a round; both reset at opposite ends and swap ends.</div>
+            <div><b>One life:</b> single sudden-death showdown.</div>
+            <div><b>5 minutes, most kills:</b> 3-second respawn at the end farther from your opponent.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fold-out Manual Copy-Paste WebRTC Fallback (Zero External Service) -->
+      <details id="duel-backup-details" class="duel-backup">
+        <summary>Backup connection — copy-paste codes (no outside service, use when the invite link does not work)</summary>
+        <div class="duel-backup-grid">
+          <div class="duel-backup-col">
+            <h4>Host (manual handshake)</h4>
+            <button id="btn-manual-make-offer" class="btn-secondary-western btn-compact">1. Generate Offer Code</button>
+            <textarea id="manual-host-offer" rows="2" readonly placeholder="Your offer code appears here — send it to your opponent via chat"></textarea>
+            <button id="btn-manual-copy-offer" class="btn-secondary-western btn-compact">Copy Offer Code</button>
+            <textarea id="manual-host-answer" rows="2" placeholder="2. Paste your opponent's reply code here"></textarea>
+            <button id="btn-manual-apply-answer" class="btn-primary-western btn-compact">3. Connect Duel</button>
+          </div>
+          <div class="duel-backup-col">
+            <h4>Guest (manual handshake)</h4>
+            <textarea id="manual-guest-offer" rows="2" placeholder="1. Paste the host's offer code here"></textarea>
+            <button id="btn-manual-make-answer" class="btn-primary-western btn-compact">2. Generate Reply Code</button>
+            <textarea id="manual-guest-answer" rows="2" readonly placeholder="Your reply code appears here — send it back to the host"></textarea>
+            <button id="btn-manual-copy-answer" class="btn-secondary-western btn-compact">Copy Reply Code</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <!-- Duel Fighter Selection Screen (Heroes ★ row + Villains ☠ row + Live 3D Turntable) -->
+  <div id="duel-select-screen" class="overlay-screen hidden">
+    <div class="duel-select-shell">
+      <div class="hero-stage-pane">
+        <div class="hero-stage-eyebrow" id="duel-stage-level">ACT I · RED GULCH</div>
+        <h2 class="hero-stage-title" id="duel-stage-title">CHOOSE YOUR FIGHTER</h2>
+        <div class="hero-stage-caption">
+          <div class="duel-preview-role" id="duel-preview-role">★ HERO</div>
+          <div class="hero-caption-name" id="duel-preview-name">Wyatt Earp</div>
+          <div class="hero-caption-bio" id="duel-preview-bio">Lawman of Tombstone, 1881.</div>
+          <div class="hero-caption-strength" id="duel-preview-strength">Takes 25% less damage.</div>
+        </div>
+      </div>
+
+      <div class="duel-picker-pane">
+        <div class="duel-rule-banner">
+          <div class="duel-rule-name" id="duel-rule-title">First to 3 rounds</div>
+          <div class="duel-rule-desc" id="duel-rule-desc">Each kill ends a round; both restart with full health at opposite ends and swap ends every round.</div>
+        </div>
+
+        <div class="duel-roster-section">
+          <div class="duel-row-label row-hero"><span class="role-icon">★</span> HEROES</div>
+          <div class="duel-cards-grid" id="duel-heroes-row"></div>
+        </div>
+
+        <div class="duel-roster-section">
+          <div class="duel-row-label row-villain"><span class="role-icon">☠</span> VILLAINS</div>
+          <div class="duel-cards-grid" id="duel-villains-row"></div>
+        </div>
+
+        <div id="duel-ready-status" class="duel-ready-status">Select a hero or villain and lock in your choice.</div>
+
+        <div class="hero-picker-actions">
+          <button id="btn-duel-lock" class="btn-primary-western">LOCK IN FIGHTER ▶</button>
+          <button id="btn-duel-select-leave" class="btn-secondary-western">← LEAVE DUEL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single-Player Hero Selection Screen (Strictly Heroes Only — NO Villains!) -->
   <div id="intro-card" class="overlay-screen hidden">
     <div class="hero-select-shell">
       <div class="hero-stage-pane">
@@ -250,7 +421,7 @@
     </div>
   </div>
 
-  <!-- Pause Menu -->
+  <!-- Single-Player Pause Menu (Never shown during a Duel) -->
   <div id="pause-screen" class="overlay-screen hidden">
     <div class="modal-panel">
       <h2 class="modal-title">PAUSED</h2>
@@ -265,7 +436,7 @@
     </div>
   </div>
 
-  <!-- Victory / Defeat Screen -->
+  <!-- Victory / Defeat / Duel Result Screen -->
   <div id="end-screen" class="overlay-screen hidden">
     <div class="modal-panel end-panel">
       <div class="comic-act" id="end-eyebrow">STAGE CLEARED</div>

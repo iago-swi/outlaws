@@ -7,6 +7,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { CollisionWorld } from './engine/collision.js';
 import { ParticleSystem } from './engine/particles.js';
 import { SoundEngine } from './engine/audio.js';
+import { DuelController } from './engine/duelController.js';
 import { ERA_WEAPONS, buildWeaponViewmodel } from './entities/weapons.js';
 import { ERA_HEROES, getHeroById, buildHeroFigure } from './entities/heroes.js';
 import { Enemy } from './entities/enemies.js';
@@ -168,12 +169,13 @@ class OutlawsGame {
 
     this._cacheDom();
     this._bindEvents();
+    this.duel = new DuelController(this);
 
-    // Support URL params / hash for direct level selection (#west, #japan, #swiss, #greece, #scandinavia, #normandy)
+    // Support URL params / hash (?duel=CODE, ?level=, #west..#tibet); default to a random level behind the title!
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4, normandy: 5 };
-    let initialLevel = 0;
+    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4, normandy: 5, soviet: 6, tibet: 7 };
+    let initialLevel = Math.floor(Math.random() * LEVELS.length);
     if (hash in mapIdx) initialLevel = mapIdx[hash];
     else if (params.has('level')) {
       const lv = params.get('level').toLowerCase();
@@ -188,11 +190,13 @@ class OutlawsGame {
       this.selectedHeroIds[eraId] = h.id;
       this.activeHero = h;
     }
-    if (params.get('select') === '1') {
+    if (params.has('duel') && params.get('duel').trim().length > 0) {
+      // Opening an invite link leads straight into the duel lobby and auto-connects!
+      this.duel.openLobby(params.get('duel'));
+    } else if (params.get('select') === '1') {
       this.showIntroCard();
     } else if (params.get('autostart') === '1') {
       this.startMission();
-      // Hide transient callout banner cleanly when autostarting for clean framing
       this.dom.callout.classList.add('hidden');
     }
     window.__outlawsGame = this;
@@ -305,7 +309,10 @@ class OutlawsGame {
     document.getElementById('btn-main-menu').addEventListener('click', () => this.returnToTitle());
     document.getElementById('btn-end-restart').addEventListener('click', () => this.restartLevel());
     document.getElementById('btn-end-change-hero').addEventListener('click', () => this.showIntroCard());
-    document.getElementById('btn-end-menu').addEventListener('click', () => this.returnToTitle());
+    document.getElementById('btn-end-menu').addEventListener('click', () => {
+      if (this.duel && this.duel.active) this.duel.leaveDuelToTitle();
+      else this.returnToTitle();
+    });
     document.getElementById('btn-next-level').addEventListener('click', () => {
       const next = (this.levelIndex + 1) % LEVELS.length;
       this.loadLevel(next, true);
@@ -319,10 +326,14 @@ class OutlawsGame {
 
     // Keyboard Controls
     window.addEventListener('keydown', (e) => {
+      // Do not steal keys when typing in lobby inputs / textareas!
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
       this.keys[e.code] = true;
 
-      // Hidden Practice Mode sequence listener ("PAX", case-insensitive, works on every screen without disturbing play)
-      if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key && e.key.length === 1) {
+      // Hidden Practice Mode sequence listener ("PAX", disabled during Duel Mode)
+      if (!(this.duel && this.duel.active) && !e.ctrlKey && !e.metaKey && !e.altKey && e.key && e.key.length === 1) {
         const ch = e.key.toLowerCase();
         if (ch >= 'a' && ch <= 'z') {
           this.paxBuffer = (this.paxBuffer + ch).slice(-3);
@@ -367,7 +378,14 @@ class OutlawsGame {
       if (e.code === 'Digit3') this.switchWeapon(2);
       if (e.code === 'Digit4') this.switchWeapon(3);
       if (e.code === 'KeyR') this.startReload();
-      if (e.code === 'Escape') this.pauseGame();
+      if (e.code === 'Escape') {
+        if (this.duel && this.duel.isPlaying()) {
+          if (document.pointerLockElement) document.exitPointerLock();
+          this.duel.dom.unlockBar.classList.remove('hidden');
+        } else {
+          this.pauseGame();
+        }
+      }
     });
 
     window.addEventListener('keyup', (e) => {
@@ -385,6 +403,11 @@ class OutlawsGame {
     // Pointer Lock & Aim
     document.addEventListener('pointerlockchange', () => {
       this.pointerLocked = document.pointerLockElement === this.renderer.domElement;
+      if (this.duel && this.duel.isPlaying()) {
+        // Duel cannot be paused — never freeze or make invulnerable!
+        this.duel.dom.unlockBar.classList.toggle('hidden', this.pointerLocked);
+        return;
+      }
       if (!this.pointerLocked && this.state === 'playing') {
         this.pauseGame();
       }
@@ -442,14 +465,25 @@ class OutlawsGame {
     this.setScope(false);
   }
 
-  loadLevel(index, isPreviewOnly = false) {
+  getLevelMeta(idx) {
+    return LEVELS[idx] ? LEVELS[idx].meta : LEVELS[0].meta;
+  }
+
+  forceDisablePracticeForDuel() {
+    this.practiceMode = false;
+    this.usedPracticeThisRun = false;
+    document.body.classList.remove('pax-active');
+    if (this.dom.paxBadge) this.dom.paxBadge.classList.add('hidden');
+  }
+
+  loadLevel(index, isPreviewOnly = false, duelOpts = null) {
     this._clearWorld();
     this.levelIndex = index;
     const { meta, builder } = LEVELS[index];
 
-    // Apply era UI theme while preserving Practice Mode class if active
+    // Apply era UI theme while preserving Practice Mode class if active (never in Duel)
     document.body.className = meta.themeClass;
-    if (this.practiceMode) document.body.classList.add('pax-active');
+    if (this.practiceMode && !(duelOpts && duelOpts.duelMode)) document.body.classList.add('pax-active');
 
     // Fresh collision & particle systems inside worldGroup
     this.collision = new CollisionWorld();
@@ -463,12 +497,21 @@ class OutlawsGame {
     this.tellApple = built.tellApple || null;
     this.enterableBuildings = built.enterableBuildings || [];
 
-    // Setup Player, Difficulty & Chosen Hero Modifiers
-    const diff = DIFFICULTY[this.difficultyKey];
-    const hero = getHeroById(meta.id, this.selectedHeroIds[meta.id]);
+    // Remember the far end of the map (boss spawn) for Duel Mode two-end spawning
+    const bossSp = built.enemySpawns.find((s) => s.isBossWave);
+    this.duelFarSpawnPos = bossSp ? bossSp.pos.clone() : new THREE.Vector3(0, 0, -28);
+
+    // Setup Player, Difficulty & Chosen Hero/Fighter Modifiers
+    const isDuel = !!(duelOpts && duelOpts.duelMode);
+    const diff = isDuel ? DIFFICULTY.bad : DIFFICULTY[this.difficultyKey];
+    const hero = (isDuel && duelOpts.fighter)
+      ? duelOpts.fighter
+      : getHeroById(meta.id, this.selectedHeroIds[meta.id]);
     this.activeHero = hero;
     const mods = hero.mods || {};
-    const effectiveMaxHp = Math.round(diff.playerHp * (mods.maxHpMult || 1));
+    const effectiveMaxHp = mods.fixedMaxHp
+      ? mods.fixedMaxHp
+      : Math.round(diff.playerHp * (mods.maxHpMult || 1));
 
     this.player.pos.copy(meta.spawnPos);
     this.player.vel.set(0, 0, 0);
@@ -482,14 +525,30 @@ class OutlawsGame {
 
     this.stats = { score: 0, shots: 0, hits: 0, headshots: 0, kills: 0 };
 
-    // Spawn Enemies (hold Boss in reserve until squad is thinned or player pushes north)
-    for (const sp of built.enemySpawns) {
-      if (sp.isBossWave) {
-        this.bossSpawnPending = sp;
-      } else {
-        const enemy = new Enemy(sp.type, sp.pos, diff.enemyMult, sp.options || {});
-        this.worldGroup.add(enemy.mesh);
-        this.enemies.push(enemy);
+    // Spawn Enemies
+    if (isDuel) {
+      this.bossSpawnPending = null;
+      if (duelOpts.duelEnemiesOpt === 'few') {
+        const ordinary = built.enemySpawns.filter((s) => !s.isBossWave && !(s.options && s.options.hideUntilClose));
+        const pickCount = Math.min(6, ordinary.length);
+        const step = ordinary.length / pickCount;
+        for (let i = 0; i < pickCount; i++) {
+          const sp = ordinary[Math.floor(i * step)];
+          const enemy = new Enemy(sp.type, sp.pos, 0.9);
+          enemy.duelIndex = i;
+          this.worldGroup.add(enemy.mesh);
+          this.enemies.push(enemy);
+        }
+      }
+    } else {
+      for (const sp of built.enemySpawns) {
+        if (sp.isBossWave) {
+          this.bossSpawnPending = sp;
+        } else {
+          const enemy = new Enemy(sp.type, sp.pos, diff.enemyMult, sp.options || {});
+          this.worldGroup.add(enemy.mesh);
+          this.enemies.push(enemy);
+        }
       }
     }
 
@@ -636,6 +695,7 @@ class OutlawsGame {
   }
 
   togglePracticeMode() {
+    if (this.duel && this.duel.active) return; // PAX is disabled during Duel Mode
     this.practiceMode = !this.practiceMode;
     if (this.practiceMode && this.state === 'playing') {
       this.usedPracticeThisRun = true;
@@ -706,7 +766,10 @@ class OutlawsGame {
     this.dom.titleScreen.classList.remove('hidden');
     if (document.pointerLockElement) document.exitPointerLock();
     this.sound.stopMusic();
-    this.loadLevel(this.levelIndex, true);
+    // Choose a random level for the title background & matching accent theme on every visit!
+    const nextBg = Math.floor(Math.random() * LEVELS.length);
+    this.loadLevel(nextBg, true);
+    document.querySelectorAll('.level-card').forEach((c, i) => c.classList.toggle('active', i === nextBg));
   }
 
   // ---------------- Weapons & Combat ----------------
@@ -762,6 +825,7 @@ class OutlawsGame {
 
   tryFire(isAlt) {
     if (this.fireTimer > 0 || this.reloading) return;
+    if (this.duel && this.duel.active && (this.duel.myDead || this.duel.phase !== 'playing')) return;
     const w = this.weapons[this.currentWeaponIdx];
     if (!w) return;
 
@@ -771,7 +835,7 @@ class OutlawsGame {
       return;
     }
 
-    // Melee Weapon (Katana / Swiss Halberd)
+    // Melee Weapon (Katana / Swiss Halberd / Sword / Knife)
     if (w.kind === 'melee') {
       const heavy = isAlt && w.altMode === 'heavy_slash';
       this.fireTimer = heavy ? w.fireRate * 1.45 : w.fireRate;
@@ -783,10 +847,28 @@ class OutlawsGame {
       const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
       const origin = this.camera.getWorldPosition(new THREE.Vector3());
       this.particles.spawnSlashArc(origin, forward, right, w.slashColor);
+      if (this.duel && this.duel.isPlaying()) {
+        this.duel.onLocalMelee(origin, forward, w.slashColor);
+      }
 
       const dmg = heavy ? w.damage * 1.65 : w.damage;
       const range = heavy ? w.range + 1.0 : w.range;
       let hitAny = false;
+
+      // Duel melee vs Remote Opponent (respecting wall LOS!)
+      if (this.duel && this.duel.isPlaying() && this.duel.remoteFighter && this.duel.remoteFighter.alive) {
+        const rf = this.duel.remoteFighter;
+        const targetChest = new THREE.Vector3(rf.root.position.x, rf.root.position.y + 1.15 * rf.figureScale, rf.root.position.z);
+        const toR = new THREE.Vector3().subVectors(targetChest, origin);
+        if (toR.length() <= range + rf.radius * 0.6) {
+          toR.normalize();
+          if (toR.dot(forward) > 0.35 && this.collision.hasLineOfSight(origin, targetChest)) {
+            hitAny = true;
+            this.duel.onLocalHitOpponent(dmg, heavy, targetChest);
+          }
+        }
+      }
+
       for (const enemy of this.enemies) {
         if (!enemy.alive || !enemy.mesh.visible) continue;
         const targetChest = new THREE.Vector3(
@@ -800,7 +882,11 @@ class OutlawsGame {
           toE.normalize();
           if (toE.dot(forward) > 0.35 && this.collision.hasLineOfSight(origin, targetChest)) {
             hitAny = true;
-            this._damageEnemy(enemy, dmg, heavy, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.3, 0)));
+            if (this.duel && this.duel.isPlaying() && this.duel.role === 'guest') {
+              this.duel.onGuestHitAI(enemy.duelIndex, dmg, heavy, targetChest);
+            } else {
+              this._damageEnemy(enemy, dmg, heavy, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.3, 0)));
+            }
           }
         }
       }
@@ -826,13 +912,17 @@ class OutlawsGame {
       mesh.position.copy(origin).addScaledVector(dir, 0.8);
       this.worldGroup.add(mesh);
 
+      const throwVel = dir.multiplyScalar(22).add(new THREE.Vector3(0, 6.2, 0));
       this.playerThrowables.push({
         mesh,
-        vel: dir.multiplyScalar(22).add(new THREE.Vector3(0, 6.2, 0)),
+        vel: throwVel,
         fuse: 1.65,
         damage: w.damage,
         radius: w.blastRadius
       });
+      if (this.duel && this.duel.isPlaying()) {
+        this.duel.onLocalThrow(mesh.position, throwVel, w.projColor, w.blastRadius);
+      }
 
       if (w.mag === 0 && w.curReserve > 0) this.startReload();
       this._updateHud();
@@ -897,10 +987,13 @@ class OutlawsGame {
       .addScaledVector(right, this.scoped ? 0 : 0.18)
       .add(new THREE.Vector3(0, -0.1, 0));
 
-    // Collect shootable meshes
+    // Collect shootable meshes (AI enemies + Duel Remote Fighter!)
     const enemyMeshes = [];
     for (const e of this.enemies) {
       if (e.alive) enemyMeshes.push(...e.getHitMeshes());
+    }
+    if (this.duel && this.duel.isPlaying() && this.duel.remoteFighter && this.duel.remoteFighter.alive) {
+      enemyMeshes.push(...this.duel.remoteFighter.getHitMeshes());
     }
     if (this.tellApple && this.tellApple.visible) {
       enemyMeshes.push(this.tellApple);
@@ -908,6 +1001,7 @@ class OutlawsGame {
 
     let hitEnemy = false;
     let critHit = false;
+    let sentShotNet = false;
 
     for (let p = 0; p < pellets; p++) {
       const dir = baseDir.clone();
@@ -928,6 +1022,10 @@ class OutlawsGame {
       if (hits.length > 0) {
         const hit = hits[0];
         this.particles.spawnTracer(muzzleStart, hit.point, w.tracerColor);
+        if (!sentShotNet && this.duel && this.duel.isPlaying()) {
+          sentShotNet = true;
+          this.duel.onLocalShot(muzzleStart, hit.point, w.sound, w.tracerColor);
+        }
 
         if (hit.object.userData.isTellApple) {
           this.tellApple.visible = false;
@@ -939,17 +1037,35 @@ class OutlawsGame {
           continue;
         }
 
+        const rf = hit.object.userData.remoteFighter;
+        if (rf && rf.alive && this.duel && this.duel.isPlaying()) {
+          const isHead = hit.object.userData.hitZone === 'head';
+          const dmg = isHead ? w.damage * w.headMult : w.damage;
+          hitEnemy = true;
+          if (isHead) critHit = true;
+          this.duel.onLocalHitOpponent(dmg, isHead, hit.point);
+          continue;
+        }
+
         const enemy = hit.object.userData.enemy;
         if (enemy && enemy.alive) {
           const isHead = hit.object.userData.hitZone === 'head';
           const dmg = isHead ? w.damage * w.headMult : w.damage;
           hitEnemy = true;
           if (isHead) critHit = true;
-          this._damageEnemy(enemy, dmg, isHead, hit.point);
+          if (this.duel && this.duel.isPlaying() && this.duel.role === 'guest') {
+            this.duel.onGuestHitAI(enemy.duelIndex, dmg, isHead, hit.point);
+          } else {
+            this._damageEnemy(enemy, dmg, isHead, hit.point);
+          }
         }
       } else {
         const endPt = wallHit ? wallHit.point : origin.clone().addScaledVector(dir, 90);
         this.particles.spawnTracer(muzzleStart, endPt, w.tracerColor);
+        if (!sentShotNet && this.duel && this.duel.isPlaying()) {
+          sentShotNet = true;
+          this.duel.onLocalShot(muzzleStart, endPt, w.sound, w.tracerColor);
+        }
         if (wallHit) {
           this.particles.spawnImpact(wallHit.point, wallHit.tag === 'stone' ? 0xd9d2c5 : 0xcca168, 5, 5);
         }
@@ -1026,6 +1142,7 @@ class OutlawsGame {
   }
 
   _checkStageProgression() {
+    if (this.duel && this.duel.active) return; // Duel uses PvP victory rules, not SP wave clear
     const aliveCount = this.enemies.filter((e) => e.alive).length;
 
     // Trigger Boss Showdown when 3 or fewer regular enemies remain!
@@ -1056,9 +1173,11 @@ class OutlawsGame {
     }
   }
 
-  _damagePlayer(amount) {
+  _damagePlayer(amount, source = 'ai') {
     if (this.state !== 'playing') return;
-    if (this.practiceMode) {
+    const inDuel = !!(this.duel && this.duel.isPlaying());
+    if (inDuel && (this.duel.myDead || this.duel.phase !== 'playing')) return;
+    if (!inDuel && this.practiceMode) {
       this.usedPracticeThisRun = true;
       return;
     }
@@ -1076,7 +1195,11 @@ class OutlawsGame {
 
     this._updateHud();
     if (this.player.hp <= 0) {
-      this._showEndScreen(false);
+      if (inDuel) {
+        this.duel.onLocalPlayerDied(source);
+      } else {
+        this._showEndScreen(false);
+      }
     }
   }
 
@@ -1099,11 +1222,11 @@ class OutlawsGame {
 
     if (victory) {
       const isFinal = this.levelIndex === LEVELS.length - 1;
-      const baseEyebrow = isFinal ? 'ALL SIX HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
+      const baseEyebrow = isFinal ? 'ALL EIGHT HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
       this.dom.endEyebrow.textContent = wasPractice ? `${baseEyebrow} • PRACTICE MODE` : baseEyebrow;
-      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF SIX ERAS' : 'HORIZON CLEARED';
+      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF EIGHT ERAS' : 'HORIZON CLEARED';
       this.dom.endSummary.textContent = isFinal
-        ? 'From Red Gulch and Kyoto Mist to Rütli Valley, the Aegean Isle, the Fjord of the North, and the beaches of Normandy — your legend endures across six eras!'
+        ? 'From Red Gulch and Kyoto Mist through the Alps, Aegean, Fjord, Normandy, and Stalnogorsk to the ridge monastery of Tibet — your legend endures across eight eras!'
         : `${meta.title} is free. Ready your gear for the next horizon!`;
       this.dom.btnNextLevel.classList.remove('hidden');
       this.dom.btnNextLevel.textContent = isFinal ? 'REPLAY FROM ACT I ▶' : `PROCEED TO ACT ${this.levelIndex + 2} ▶`;
@@ -1381,12 +1504,33 @@ class OutlawsGame {
       if (th.fuse <= 0) {
         this.particles.spawnExplosion(th.mesh.position, th.radius);
         this.sound.playExplosion();
-        for (const enemy of this.enemies) {
-          if (!enemy.alive) continue;
-          const dist = enemy.mesh.position.distanceTo(th.mesh.position);
-          if (dist < th.radius) {
-            const falloff = 1 - (dist / th.radius) * 0.55;
-            this._damageEnemy(enemy, th.damage * falloff, false, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
+        const inDuel = !!(this.duel && this.duel.isPlaying());
+        if (th.fromRemote) {
+          // Opponent's thrown explosive deals 60% PvP splash damage to local player
+          const distP = this.player.pos.distanceTo(th.mesh.position);
+          if (distP < th.radius) {
+            const falloff = 1 - (distP / th.radius) * 0.55;
+            this._damagePlayer(Math.round(th.damage * falloff * 0.60), 'opponent');
+          }
+        } else {
+          if (inDuel && this.duel.remoteFighter && this.duel.remoteFighter.alive) {
+            const distR = this.duel.remoteFighter.root.position.distanceTo(th.mesh.position);
+            if (distR < th.radius) {
+              const falloff = 1 - (distR / th.radius) * 0.55;
+              this.duel.onLocalHitOpponent(th.damage * falloff, false, this.duel.remoteFighter.root.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
+            }
+          }
+          for (const enemy of this.enemies) {
+            if (!enemy.alive) continue;
+            const dist = enemy.mesh.position.distanceTo(th.mesh.position);
+            if (dist < th.radius) {
+              const falloff = 1 - (dist / th.radius) * 0.55;
+              if (inDuel && this.duel.role === 'guest') {
+                this.duel.onGuestHitAI(enemy.duelIndex, th.damage * falloff, false, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
+              } else {
+                this._damageEnemy(enemy, th.damage * falloff, false, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
+              }
+            }
           }
         }
         this.worldGroup.remove(th.mesh);
@@ -1421,52 +1565,99 @@ class OutlawsGame {
     }
   }
 
+  spawnDuelAIProjectile(muzzlePos, targetPos, color, damage) {
+    const dir = new THREE.Vector3().subVectors(targetPos, muzzlePos).normalize();
+    const mesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 6, 6),
+      new THREE.MeshBasicMaterial({ color: color || 0xffd266 })
+    );
+    mesh.position.copy(muzzlePos);
+    this.worldGroup.add(mesh);
+    this.particles.spawnTracer(muzzlePos, muzzlePos.clone().addScaledVector(dir, 3.5), color || 0xffd266, 0.08);
+    this.enemyProjectiles.push({
+      mesh,
+      vel: dir.multiplyScalar(30),
+      damage,
+      life: 2.8
+    });
+  }
+
   _updateEnemies(dt) {
+    const inDuel = !!(this.duel && this.duel.isPlaying());
+    // In Duel Mode, the Host authoritatively simulates the 6 AI enemies and syncs them to Guest
+    if (inDuel && this.duel.role === 'guest') {
+      this._resolveLivingSeparation();
+      return;
+    }
+
     const mods = (this.activeHero && this.activeHero.mods) || {};
     const detectMult = mods.stealthMult || 1.0;
 
-    const callbacks = {
-      onDogBark: () => {
-        this.sound.playDogBark();
-      },
-      onMeleeHitPlayer: (dmg) => {
-        this._damagePlayer(dmg);
-      },
-      onEnemyFire: (enemy, muzzlePos, targetPos) => {
-        const dir = new THREE.Vector3().subVectors(targetPos, muzzlePos).normalize();
-        // Fair slight inaccuracy so dodging feels awesome
-        const spread = enemy.isBoss ? 0.04 : 0.07;
-        dir.x += (Math.random() - 0.5) * spread;
-        dir.y += (Math.random() - 0.5) * spread * 0.6;
-        dir.z += (Math.random() - 0.5) * spread;
-        dir.normalize();
-
-        const mesh = new THREE.Mesh(
-          new THREE.SphereGeometry(0.11, 6, 6),
-          new THREE.MeshBasicMaterial({ color: enemy.projectileColor })
-        );
-        mesh.position.copy(muzzlePos);
-        this.worldGroup.add(mesh);
-
-        this.particles.spawnTracer(muzzlePos, muzzlePos.clone().addScaledVector(dir, 3.5), enemy.projectileColor, 0.08);
-        this.enemyProjectiles.push({
-          mesh,
-          vel: dir.multiplyScalar(enemy.isBoss ? 38 : 30),
-          damage: enemy.damage,
-          life: 2.8
-        });
-      }
-    };
-
     for (const enemy of this.enemies) {
-      enemy.update(dt, this.player.pos, this.collision, callbacks, detectMult);
+      // In Duel Mode, each AI enemy targets whichever alive player (host or guest) is closer!
+      let targetPos = this.player.pos;
+      let targetIsGuest = false;
+      if (inDuel && this.duel.remoteFighter && this.duel.remoteFighter.alive) {
+        const dHost = this.duel.myDead ? 1e9 : enemy.mesh.position.distanceTo(this.player.pos);
+        const dGuest = enemy.mesh.position.distanceTo(this.duel.remoteFighter.root.position);
+        if (dGuest < dHost) {
+          targetPos = this.duel.remoteFighter.root.position;
+          targetIsGuest = true;
+        }
+      }
+
+      const callbacks = {
+        onDogBark: () => {
+          this.sound.playDogBark();
+        },
+        onMeleeHitPlayer: (dmg) => {
+          if (targetIsGuest && inDuel) {
+            this.duel.net.send({ type: 'hit', dmg: Math.round(dmg), head: false });
+          } else {
+            this._damagePlayer(dmg, 'ai');
+          }
+        },
+        onEnemyFire: (en, muzzlePos, tPos) => {
+          const dir = new THREE.Vector3().subVectors(tPos, muzzlePos).normalize();
+          const spread = en.isBoss ? 0.04 : 0.07;
+          dir.x += (Math.random() - 0.5) * spread;
+          dir.y += (Math.random() - 0.5) * spread * 0.6;
+          dir.z += (Math.random() - 0.5) * spread;
+          dir.normalize();
+
+          const mesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.11, 6, 6),
+            new THREE.MeshBasicMaterial({ color: en.projectileColor })
+          );
+          mesh.position.copy(muzzlePos);
+          this.worldGroup.add(mesh);
+          this.particles.spawnTracer(muzzlePos, muzzlePos.clone().addScaledVector(dir, 3.5), en.projectileColor, 0.08);
+          this.enemyProjectiles.push({
+            mesh,
+            vel: dir.multiplyScalar(en.isBoss ? 38 : 30),
+            damage: en.damage,
+            life: 2.8
+          });
+          if (inDuel) {
+            this.duel.net.send({
+              type: 'ai_shot',
+              m: [muzzlePos.x, muzzlePos.y, muzzlePos.z],
+              t: [tPos.x, tPos.y, tPos.z],
+              color: en.projectileColor,
+              dmg: en.damage
+            });
+          }
+        }
+      };
+
+      enemy.update(dt, targetPos, this.collision, callbacks, detectMult);
     }
 
-    // Solid living bodies: push overlapping player & enemies apart cleanly, then re-clamp walls
+    // Solid living bodies: push overlapping player, remote opponent & enemies apart cleanly
     this._resolveLivingSeparation();
 
-    // Also wake boss if player charges deep into the northern stronghold!
-    if (this.bossSpawnPending && this.player.pos.z < -12) {
+    // Also wake boss if player charges deep into the northern stronghold (SP only)
+    if (!inDuel && this.bossSpawnPending && this.player.pos.z < -12) {
       this._checkStageProgression();
     }
   }
@@ -1474,6 +1665,22 @@ class OutlawsGame {
   _resolveLivingSeparation() {
     const alive = this.enemies.filter((e) => e.alive && e.mesh.visible);
     const pRadius = 0.52;
+
+    // Solid Duel Opponent vs Local Player
+    if (this.duel && this.duel.isPlaying() && this.duel.remoteFighter && this.duel.remoteFighter.alive && !this.duel.myDead) {
+      const rf = this.duel.remoteFighter;
+      if (Math.abs(rf.root.position.y - this.player.pos.y) <= 1.8) {
+        const dx = this.player.pos.x - rf.root.position.x;
+        const dz = this.player.pos.z - rf.root.position.z;
+        const minD = pRadius + rf.radius;
+        const distSq = dx * dx + dz * dz;
+        if (distSq < minD * minD) {
+          const dist = Math.sqrt(distSq) || 0.001;
+          const push = minD - dist;
+          this.collision.moveHorizontal(this.player.pos, (dx / dist) * push, (dz / dist) * push, pRadius, this.player.pos.y);
+        }
+      }
+    }
 
     // Player vs each living enemy
     for (const e of alive) {
@@ -1526,23 +1733,28 @@ class OutlawsGame {
     if (this.particles) this.particles.update(dt, this.elapsed);
 
     if (this.state === 'playing') {
-      this._updatePlayer(dt);
+      if (!(this.duel && this.duel.active && this.duel.myDead)) {
+        this._updatePlayer(dt);
+      }
       this._updateEnemies(dt);
       this._updateProjectiles(dt);
-    } else if (this.state === 'title' || this.state === 'intro') {
+      if (this.duel && this.duel.isPlaying()) {
+        this.duel.update(dt);
+      }
+    } else if (this.state === 'title' || this.state === 'intro' || this.state === 'duel_lobby' || this.state === 'duel_select') {
       // Sweeping cinematic live camera flyover of the selected 3D world!
       const preview = LEVELS[this.levelIndex].meta.cameraPreview;
       const ang = this.elapsed * preview.speed;
       this.camera.position.set(
         preview.center.x + Math.sin(ang) * preview.radius,
-        preview.height + Math.sin(this.elapsed * 0.45) * 1.8,
+        preview.height + Math.sin(this.elapsed * 0.45) * 1.4,
         preview.center.z + Math.cos(ang) * preview.radius
       );
       this.camera.lookAt(preview.center);
       this.weaponHolder.visible = false;
 
-      if (this.state === 'intro' && this.heroStage.visible) {
-        // Position the live 3D Hero Turntable cleanly inside the left showcase pane across aspect ratios
+      if ((this.state === 'intro' || this.state === 'duel_select') && this.heroStage.visible) {
+        // Position the live 3D Hero/Fighter Turntable cleanly inside the left showcase pane across aspect ratios
         const dist = 3.25;
         const halfH = Math.tan(THREE.MathUtils.degToRad(this.camera.fov * 0.5)) * dist;
         const halfW = halfH * this.camera.aspect;

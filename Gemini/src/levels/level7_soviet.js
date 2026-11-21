@@ -34,7 +34,7 @@ export const LEVEL7_META = {
   currency: '₽ ',
   spawnPos: new THREE.Vector3(0, 0, 74),
   spawnYaw: 0,
-  cameraPreview: { center: new THREE.Vector3(0, 8, -10), radius: 52, height: 18, speed: 0.1 }
+  cameraPreview: { center: new THREE.Vector3(0, 9, 4), radius: 26, height: 22, speed: 0.10 }
 };
 
 export function buildLevel7(scene, collision, particles) {

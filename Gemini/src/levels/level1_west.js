@@ -38,7 +38,7 @@ export const LEVEL1_META = {
   ],
   spawnPos: new THREE.Vector3(0, 0, 52),
   spawnYaw: 0,
-  cameraPreview: { center: new THREE.Vector3(0, 4, -4), radius: 42, height: 14, speed: 0.14 }
+  cameraPreview: { center: new THREE.Vector3(0, 5, -6), radius: 34, height: 20, speed: 0.12 }
 };
 
 export function buildLevel1(scene, collision, particles) {
