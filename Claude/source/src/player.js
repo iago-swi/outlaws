@@ -244,7 +244,7 @@ class Weapon {
   // ---- revolver -------------------------------------------------------------
   build_revolver(M) {
     this.ammo = this.mag = 6; this.canAim = true; this.aimFov = 50; this.cuff = this.cuffIn ?? 0x4a3020;
-    this.hip = new THREE.Vector3(0.17, -0.17, -0.4); this.ads = new THREE.Vector3(0, -0.088, -0.36);
+    this.hip = new THREE.Vector3(0.17, -0.17, -0.4); this.ads = new THREE.Vector3(0, -0.119, -0.36);      // aimed, the gun stays under the crosshair: the target is never hidden behind it
     const g = (this.gun = new THREE.Group()); g.scale.setScalar(1.5);
     const D = 0x34373e, L = 0x6c727c;
     g.add(mesh([
@@ -439,7 +439,7 @@ class Weapon {
   build_carbine(M) {
     this.noScope = true; this.build_rifle(M);
     this.gunCfg = { interval: 0.85, dmg: 82, hip: 0.02, ads: 0.003, reload: 2.1, kick: 7, recoil: 0.42, vol: 0.95, bolt: true };
-    this.ammo = this.mag = 8; this.aimFov = 34; this.scope = false; this.ads = new THREE.Vector3(0, -0.062, -0.3);
+    this.ammo = this.mag = 8; this.aimFov = 34; this.scope = false; this.ads = new THREE.Vector3(0, -0.087, -0.3);
   }
   update_carbine(dt, input, active) { this.updateGun(dt, input, active); }
   update_sten(dt, input, active) { this.updateGun(dt, input, active); }

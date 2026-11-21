@@ -16,6 +16,15 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.0.1] - 2026-11-21
+
+### Fixed
+
+- Aiming with the six-shooter (and with the pistols of chapters VI to VIII) no longer hides
+  the target: the gun now stays under the crosshair, as the Sten gun already did. The carbine,
+  which sat only just under the crosshair, is lowered the same way. Shots land exactly where
+  they did before. Thanks to the player who reported it.
+
 ## [1.0.0] - 2026-11-21
 
 The first numbered version: the game as it stands after the rounds published so far. Eight
@@ -84,4 +93,5 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.0.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.1
 [1.0.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.0.0
