@@ -2,7 +2,7 @@
 // "viewmodels" (the hands and weapon you see at the bottom of the screen).
 import * as THREE from 'three';
 import { merge, xf } from './build.js';
-import { gBox, gCyl, gSph, gCone, gCap } from './actors.js';
+import { gBox, gCyl, gSph, gCone, gCap, gStar } from './actors.js';
 import { clamp, damp, lerp } from './util.js';
 
 export class Input {
@@ -331,8 +331,8 @@ class Weapon {
   // Three stars leave the hand in a narrow fan: deadly close up, where all three strike, and weak far off, where one does.
   build_shuriken(M) {
     this.thrown = true; this.canAim = false; this.aimFov = 72; this.cuff = this.cuffIn ?? 0x1a1e2c;
-    const X = Math.PI / 2, ST = 0xc4cad2;
-    const star = (p, r, s = 1) => [gBox(0.16 * s, 0.012, 0.05 * s, ST, p, r), gBox(0.05 * s, 0.012, 0.16 * s, ST, p, r), gCyl(0.02 * s, 0.02 * s, 0.015, 0x2a2c30, p, r, 1, 8)];
+    const X = Math.PI / 2;
+    const star = (p, r, s = 1) => [gStar(0.085 * s, p, r)];
     const g = (this.gun = new THREE.Group());
     this.base = [0.3, -0.27, -0.5, -0.2, 0.05];
     g.add(mesh([fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.04, -0.2, 0.12], [0.5, 0, 0.2], 0.36)], M.flat));
@@ -520,7 +520,7 @@ class Weapon {
     this.meleeDur = 0.36; this.meleeAt = 0.38; this.meleeRange = 2.5; this.meleeCone = 0.6; this.meleeDmg = 90; this.meleeStyle = 'thrust';
   }
 
-  // ---- thrown weapons: javelins (Greece) and axes (the North), each with a sword ----
+  // ---- thrown weapons: javelins (Greece) with a sword, axes (the North) with a flail ----
   build_javelin(M) { this.buildThrown(M, true); }
   build_axe(M) { this.buildThrown(M, false); }
   update_javelin(dt, input, active) { this.updateThrown(dt, input, active, true); }
@@ -547,13 +547,48 @@ class Weapon {
       : [gCyl(0.44, 0.44, 0.035, 0x8a1c1c, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 22), gBox(0.88, 0.1, 0.04, 0xe8e0d0, [0, 0, 0]), gBox(0.1, 0.88, 0.04, 0xe8e0d0, [0, 0, 0]),
         gCyl(0.09, 0.09, 0.07, 0x9a9fa6, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 10), gCyl(0.445, 0.445, 0.03, 0x4a3a2a, [0, 0, 0.004], [Math.PI / 2, 0, 0], 1, 22)], M.flat);
     sh.scale.setScalar(0.72); sh.position.set(-0.62, -0.6, -0.7); sh.rotation.set(0.3, 0.7, 0.12); this.shield = sh; this.root.add(sh);
+    if (!jav) return this.addFlail(M);
     // sword (right mouse button)
-    const k = (this.melee = new THREE.Group()), len = jav ? 0.52 : 0.7;
-    k.add(mesh([gBox(0.03, 0.17, 0.036, 0x3a2414, [0, 0, 0]), gBox(jav ? 0.13 : 0.19, 0.03, 0.045, jav ? 0xc9a050 : 0x8a8f96, [0, 0.095, 0]), gSph(0.03, jav ? 0xc9a050 : 0x8a8f96, [0, -0.1, 0]),
+    const k = (this.melee = new THREE.Group()), len = 0.52;
+    k.add(mesh([gBox(0.03, 0.17, 0.036, 0x3a2414, [0, 0, 0]), gBox(0.13, 0.03, 0.045, 0xc9a050, [0, 0.095, 0]), gSph(0.03, 0xc9a050, [0, -0.1, 0]),
       fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.06, -0.22, 0.14], [0.6, 0, 0.3], 0.4)], M.flat));
-    k.add(mesh([gBox(0.008, len, jav ? 0.06 : 0.05, 0xdfe4ea, [0, 0.11 + len / 2, 0])], M.metal));
+    k.add(mesh([gBox(0.008, len, 0.06, 0xdfe4ea, [0, 0.11 + len / 2, 0])], M.metal));
     k.visible = false;
-    this.meleeDur = 0.4; this.meleeAt = 0.42; this.meleeRange = jav ? 3.0 : 3.2; this.meleeCone = 0.55; this.meleeDmg = 100; this.meleeStyle = 'cut';
+    this.meleeDur = 0.4; this.meleeAt = 0.42; this.meleeRange = 3.0; this.meleeCone = 0.55; this.meleeDmg = 100; this.meleeStyle = 'cut';
+  }
+  /**
+   * The flail of Jarnvik (right mouse button): a wooden haft and two spiked iron balls on chains. It is whirled once overhead and
+   * then swept across: slower than a sword, but it strikes everyone in a wide arc in front, and harder.
+   */
+  addFlail(M) {
+    const X = Math.PI / 2, IRON = 0x3c4046, DARK = 0x26282c, k = (this.melee = new THREE.Group());
+    k.add(mesh([gCyl(0.02, 0.026, 0.52, 0x6a4426, [0, 0.14, 0], [0, 0, 0], 1, 8), gCyl(0.029, 0.029, 0.16, 0x3a2414, [0, -0.02, 0], [0, 0, 0], 1, 8),       // haft and leather grip
+      ...[0.12, 0.2, 0.28].map((y) => gCyl(0.024, 0.024, 0.014, 0x3a2414, [0, y, 0], [0.35, 0, 0], 1, 8)), gCyl(0.034, 0.03, 0.07, 0x1c1a18, [0, 0.41, 0], [0, 0, 0], 1, 8),
+      fist([0, 0, 0], [0, 0, 0], 1.05), ...this.arm(this.sleeve, [0.06, -0.22, 0.14], [0.6, 0, 0.3], 0.4)], M.flat));
+    const chain = (len) => {                                 // links alternately turned, then the ball with six spikes; it hangs along +y from the top of the haft
+      const g = new THREE.Group(), parts = [], n = Math.round(len / 0.055), R = 0.068, by = len + R;
+      for (let i = 0; i < n; i++) parts.push(gBox(i % 2 ? 0.007 : 0.026, 0.06, i % 2 ? 0.026 : 0.007, IRON, [0, 0.03 + i * (len / n), 0]));
+      parts.push(gSph(R, DARK, [0, by, 0]));
+      for (const [d, r] of [[[0, 1, 0], [0, 0, 0]], [[0, -1, 0], [Math.PI, 0, 0]], [[1, 0, 0], [0, 0, -X]], [[-1, 0, 0], [0, 0, X]], [[0, 0, 1], [X, 0, 0]], [[0, 0, -1], [-X, 0, 0]]])
+        parts.push(gCone(0.024, 0.075, IRON, [d[0] * (R + 0.025), by + d[1] * (R + 0.025), d[2] * (R + 0.025)], r, 1, 6));
+      g.add(mesh(parts, M.metal)); g.position.set(0, 0.44, 0); k.add(g); return g;
+    };
+    this.chainA = chain(0.4); this.chainB = chain(0.29);
+    k.visible = false;
+    this.meleeDur = 0.8; this.meleeAt = 0.6; this.meleeRange = 3.4; this.meleeCone = 0.2; this.meleeDmg = 150; this.meleeStyle = 'flail';
+  }
+  /** Where the flail is at fraction k of its swing: whirl overhead, sweep from right to left, let it drop. */
+  swingFlail(k) {
+    const M = this.melee, A = this.chainA, B = this.chainB;
+    if (k < 0.42) {                                          // the wind-up: the haft comes up on the right, tilted forward, and the balls go round once in view
+      const w = k / 0.42, e = ease(w), s = w * Math.PI * 2.4;
+      M.position.set(0.4, lerp(-0.5, -0.2, e), -0.6); M.rotation.set(-0.85, 0, -0.3);
+      A.rotation.set(0, s, 1.2); B.rotation.set(0, s + 2.2, 1.0);
+    } else {                                                 // the blow: the hand travels from right to left, the balls dragging behind the haft, then it drops
+      const e = ease(clamp((k - 0.42) / 0.36, 0, 1)), drop = clamp((k - 0.8) / 0.2, 0, 1), lag = Math.sin(e * Math.PI);
+      M.position.set(lerp(0.4, -0.3, e), lerp(-0.2, -0.3, e) - drop * 0.4, -0.6 - lag * 0.08); M.rotation.set(lerp(-0.85, -1.05, e), 0, lerp(-0.3, 0.75, e));
+      A.rotation.set(0.15, 0, -0.9 * lag + 0.35 * drop); B.rotation.set(-0.3, 0, -1.2 * lag + 0.6 * drop);
+    }
   }
   updateThrown(dt, input, active, jav) {
     const P = this.p, G = this.game, b = this.base;
@@ -592,7 +627,8 @@ class Weapon {
         const k = this.meleeT / this.meleeDur, M = this.melee;
         M.visible = true;
         if (!this.meleeHit && k >= this.meleeAt) { this.meleeHit = true; G.playerMelee(this.meleeRange + this.m.reach, this.meleeCone, this.meleeDmg * this.m.meleeDmg); }
-        if (this.meleeStyle !== 'thrust') {    // diagonal cut, upper right to lower left
+        if (this.meleeStyle === 'flail') this.swingFlail(Math.min(1, k));
+        else if (this.meleeStyle !== 'thrust') {    // diagonal cut, upper right to lower left
           const e = ease(clamp(k * 1.5, 0, 1));
           M.position.set(lerp(0.5, -0.4, e), lerp(0.2, -0.42, e), -0.55);
           M.rotation.set(lerp(-0.5, -1.35, e), 0, lerp(-1.0, 1.9, e));
