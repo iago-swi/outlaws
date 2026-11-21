@@ -484,8 +484,6 @@ export function lookFor(type, r) {
       scale: 1.25, armR: 0.08, legR: 0.105 };
     case 'xerxes': return { skin: 0xb8845c, hair: 0x14100c, shirt: 0x5a2a7a, sleeve: 0x5a2a7a, pants: 0x5a2a7a, boots: 0xd9b23a, belt: 0xd9b23a, hat: 'tiara', face: ['longbeard'], extras: ['robe', 'chain', 'quiver'], robe: 0x5a2a7a, sash: 0xd9b23a,
       wideSleeve: true, cuff: 0xd9b23a, weapon: 'bow', scale: 1.06 };
-    case 'circe': return { skin: 0xe0b48e, lip: 0xb83a4a, hair: 0x7a2a14, shirt: 0x4a2a6a, sleeve: 0xe0b48e, pants: 0xe0b48e, boots: 0x8a6424, belt: 0xd9b23a, hat: null, face: ['longhair', 'headband'], accent: 0xd9b23a, extras: ['robe', 'chain'],
-      robe: 0x4a2a6a, sash: 0x2a8a7a, weapon: 'javelin', scale: 0.97 };
     case 'medusa': return { skin: 0x8ab08a, hair: 0x2a5a2a, shirt: 0x2a4a3a, sleeve: 0x8ab08a, pants: 0x8ab08a, boots: 0x8a7a3a, belt: 0xd9b23a, hat: null, face: ['snakes'], extras: ['robe'], robe: 0x2a4a3a, sash: 0xd9b23a, weapon: 'javelin', scale: 0.98 };
     case 'antinous': return { skin: 0xd0a078, hair: 0x1a120c, shirt: 0x6a2a7a, sleeve: 0xd0a078, pants: 0xd0a078, boots: 0x8a6424, bootTop: true, belt: 0xd9b23a, hat: null, face: ['headband'], accent: 0xd9b23a, extras: ['smock', 'cape'], cape: 0x8a1c5a,
       weapon: 'javelin' };
@@ -700,11 +698,11 @@ export class Enemy {
     if (this.puppet) { this.puppetUpdate(dt); return; }
 
     const dx = P.pos.x - this.pos.x, dz = P.pos.z - this.pos.z, dist = Math.hypot(dx, dz) || 0.001;
-    const dy = (P.pos.y + 1.2) - (this.pos.y + 1.4 * this.scale);
+    const duck = P.duck || 0, dy = (P.pos.y + 1.2 - 0.5 * duck) - (this.pos.y + 1.4 * this.scale);   // a crouching target is lower, and harder to see
     this.seeT -= dt;
     if (this.seeT <= 0) {
       this.seeT = 0.18 + r() * 0.12;
-      this.los = dist < 110 && G.world.clear(this.pos.x, this.eyeY, this.pos.z, P.pos.x, P.pos.y + 1.5, P.pos.z);
+      this.los = dist < 110 && G.world.clear(this.pos.x, this.eyeY, this.pos.z, P.pos.x, P.pos.y + 1.5 - 0.7 * duck, P.pos.z);
     }
 
     if (this.state === 'hidden') {
@@ -719,7 +717,7 @@ export class Enemy {
     if (this.state === 'idle') {
       if (!P.dead && !G.peace) {
         const facing = Math.cos(this.yaw - Math.atan2(dx, dz));
-        const st = P.mods.stealth ?? 1;                                     // a spy is noticed later
+        const st = (P.mods.stealth ?? 1) * (1 - 0.4 * duck);               // a spy is noticed later, and so is anyone who crouches
         if (this.los && dist < cfg.sight * st && (facing > -0.2 || dist < 10 * st)) this.alert();
         else if (G.noise > 0 && dist < (cfg.sight * 0.55 + 8) * st) this.alert(0.2);
       }
@@ -869,7 +867,7 @@ export class Enemy {
     const mx = this.pos.x + fx * 0.75 - fz * 0.2 * this.scale, my = this.pos.y + 1.42 * this.scale, mz = this.pos.z + fz * 0.75 + fx * 0.2 * this.scale;
     // aim at the chest, with a little lead and a random error
     const tt = dist / cfg.pspeed * 0.45;
-    let ax = P.pos.x + P.vel.x * tt - mx, ay = P.pos.y + 1.15 - my, az = P.pos.z + P.vel.z * tt - mz;
+    let ax = P.pos.x + P.vel.x * tt - mx, ay = P.pos.y + 1.15 - 0.5 * (P.duck || 0) - my, az = P.pos.z + P.vel.z * tt - mz;
     if (cfg.proj !== 'bullet') ay += dist * dist / (cfg.pspeed * cfg.pspeed) * 4.5;   // arc compensation
     const l = Math.hypot(ax, ay, az); ax /= l; ay /= l; az /= l;
     const sp = cfg.spread * (0.6 + r());
@@ -882,7 +880,7 @@ export class Enemy {
   throwStar(dx, dy, dz, dist) {
     const G = this.game, P = this.tgt || G.player;
     const my = this.pos.y + 1.4 * this.scale, tt = dist / 30 * 0.5;
-    let ax = P.pos.x + P.vel.x * tt - this.pos.x, ay = P.pos.y + 1.2 - my + dist * 0.02, az = P.pos.z + P.vel.z * tt - this.pos.z;
+    let ax = P.pos.x + P.vel.x * tt - this.pos.x, ay = P.pos.y + 1.2 - 0.5 * (P.duck || 0) - my + dist * 0.02, az = P.pos.z + P.vel.z * tt - this.pos.z;
     const l = Math.hypot(ax, ay, az);
     G.shots.spawn('star', this.pos.x + ax / l * 0.6, my, this.pos.z + az / l * 0.6, ax / l, ay / l, az / l, 30, false, 8);
     if (G.duel) G.duel.enemyShot('star', this.pos.x + ax / l * 0.6, my, this.pos.z + az / l * 0.6, ax / l, ay / l, az / l, 30);
@@ -960,7 +958,7 @@ export class Shots {
         if (R) { const h = R.rayHit(_o, _d, tMax); if (h) { tMax = h.t; hitRemote = true; } }
         // closest approach of this step's segment to the player's body axis
         if (!P.dead) for (const [cy, rr] of [[1.45, 0.34], [0.95, 0.42], [0.4, 0.36]]) {
-          const ox = s.x - P.pos.x, oy = s.y - (P.pos.y + cy), oz = s.z - P.pos.z;
+          const ox = s.x - P.pos.x, oy = s.y - (P.pos.y + cy * (1 - 0.4 * P.duck)), oz = s.z - P.pos.z;
           const b = ox * _d.x + oy * _d.y + oz * _d.z, t = clamp(-b, 0, tMax);
           const qx = ox + _d.x * t, qy = oy + _d.y * t, qz = oz + _d.z * t, d2 = qx * qx + qy * qy + qz * qz;
           if (d2 < rr * rr) { hitPlayer = true; hitRemote = false; tMax = t; break; }

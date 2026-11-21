@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, room, bars, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, stepsUp, den } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
@@ -80,7 +80,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.woodH, w * 0.5, 0.5, 0.3, x, H2 + 0.24, zf + dir * 0.1, { c: wall });
     B.box(M.woodH, w * 0.5 + 0.4, 0.16, 0.5, x, H2 + 0.74, zf + dir * 0.12, { c: trim });
     for (const s of [-1, 1]) B.box(M.wood, 0.22, H2, 0.36, x + s * (w / 2 + 0.2), 0, zf + dir * 0.12, { c: trim });
-    B.geo(M.shingle, prismGeo(w + 0.3, 1.5, d + 0.1, 3), [x, h, zc], [0, 0, 0], 1, roofC);
+    if (o.flat) {                                      // a flat roof to stand on behind the false front, reached by jumping up the crates at the back
+      B.box(M.woodH, w + 0.3, 0.2, d + 0.1, x, h, zc, { c: 0x6a5240, solid: true });
+      for (const s of [-1, 1]) B.box(M.wood, 0.2, 0.5, d, x + s * (w / 2 + 0.05), h + 0.2, zc, { c: wall, solid: true });
+      stepsUp(B, M, x - 1.3, zf - dir * (d + 0.76), 1, 0, 3, { rise: (h + 0.2) / 4 });
+    } else B.geo(M.shingle, prismGeo(w + 0.3, 1.5, d + 0.1, 3), [x, h, zc], [0, 0, 0], 1, roofC);
     // windows
     const wx = w * 0.3;
     for (const s of [-1, 1]) { win(x + s * wx, 1.25, zo); B.box(M.woodH, 1.35, 0.1, 0.16, x + s * wx, 1.18, zo, { c: trim }); }
@@ -104,16 +108,16 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
 
   // north side (fronts face south, +z) and south side
   bld({ x: -40, w: 12, d: 12, h: 5.4, dir: 1, wall: 0x8a4a34, interior: true, panel: 0x6a4a34, text: 'LIVERY & FEED', signO: { bg: '#e8d8b0', fg: '#4a1c10' }, roofC: 0x7a5a44 });
-  bld({ x: -24, w: 11, d: 10, h: 4.7, dir: 1, wall: 0xc9b68a, interior: true, panel: 0x7a6a4a, text: 'GENERAL STORE', signO: { bg: '#2a4a3a', fg: '#f0e2b0' } });
+  bld({ x: -24, w: 11, d: 10, h: 4.7, dir: 1, wall: 0xc9b68a, interior: true, panel: 0x7a6a4a, flat: true, text: 'GENERAL STORE', signO: { bg: '#2a4a3a', fg: '#f0e2b0' } });
   const sal = bld({ x: -4, w: 16, d: 13, h: 7.4, dir: 1, wall: 0x9a3a2a, trim: 0xe8d8b0, balcony: true, interior: true, text: 'SALOON', signO: { bg: '#f0e0b0', fg: '#7a1810', size: 100 } });
   bld({ x: 12.5, w: 10, d: 11, h: 4.9, dir: 1, wall: 0x9a9080, trim: 0x2a2a2a, interior: true, panel: 0x8a8274, text: 'JAIL', signO: { bg: '#1c1c1c', fg: '#e8e0d0', size: 100 } });
-  bld({ x: 26, w: 8, d: 8, h: 4.3, dir: 1, wall: 0x8a7a64, interior: true, panel: 0x6a5a48, text: 'SHERIFF', signO: { bg: '#e8d8b0', fg: '#1c1c1c' } });
+  bld({ x: 26, w: 8, d: 8, h: 4.3, dir: 1, wall: 0x8a7a64, interior: true, panel: 0x6a5a48, flat: true, text: 'SHERIFF', signO: { bg: '#e8d8b0', fg: '#1c1c1c' } });
   bld({ x: 38, w: 9, d: 9, h: 5.0, dir: 1, wall: 0xb8a48a, trim: 0x3a3a3a, interior: true, panel: 0x3e5244, text: 'BANK', signO: { bg: '#1c1c1c', fg: '#d9b23a' } });
-  bld({ x: -38, w: 10, d: 9, h: 4.5, dir: -1, wall: 0x5a4a3e, interior: true, panel: 0x3a3028, text: 'BLACKSMITH', signO: { bg: '#1c1410', fg: '#e0a040' } });
+  bld({ x: -38, w: 10, d: 9, h: 4.5, dir: -1, wall: 0x5a4a3e, interior: true, panel: 0x3a3028, flat: true, text: 'BLACKSMITH', signO: { bg: '#1c1410', fg: '#e0a040' } });
   bld({ x: -21, w: 14, d: 11, h: 7.6, dir: -1, wall: 0xd8ceb0, trim: 0x5a6a5a, balcony: true, text: 'GRAND HOTEL', signO: { bg: '#3a5a4a', fg: '#f0e2b0' } });
   bld({ x: -4, w: 8, d: 8, h: 4.5, dir: -1, wall: 0x3a3a40, trim: 0x1c1c1c, interior: true, panel: 0x2a2a30, text: 'UNDERTAKER', signO: { bg: '#1c1c1c', fg: '#c9c9c9' } });
   bld({ x: 8, w: 7, d: 8, h: 4.3, dir: -1, wall: 0xb8c4c8, trim: 0x8a2a2a, text: 'BARBER', signO: { bg: '#f0f0e8', fg: '#8a1c1c' } });
-  bld({ x: 21, w: 8, d: 8, h: 4.5, dir: -1, wall: 0xa88a5a, interior: true, panel: 0x7a6240, text: 'TELEGRAPH', signO: { bg: '#e8d8b0', fg: '#3a2a1a' } });
+  bld({ x: 21, w: 8, d: 8, h: 4.5, dir: -1, wall: 0xa88a5a, interior: true, panel: 0x7a6240, flat: true, text: 'TELEGRAPH', signO: { bg: '#e8d8b0', fg: '#3a2a1a' } });
   bld({ x: 35, w: 9, d: 9, h: 4.7, dir: -1, wall: 0xc8b8a0, trim: 0x4a5a6a, text: 'DOCTOR', signO: { bg: '#f0f0e8', fg: '#1c3a5a' } });
 
   // ---- saloon interior ---------------------------------------------------------
@@ -393,6 +397,12 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.wood, 0.62, 0.42, 1.95, 52, 1.38, 26.2, { ry: 1.4, c: 0x2a2018 });
   }
 
+  // ---- Lookout Butte south of town: a zigzag stair to a flat top that overlooks the street; a root cellar to crawl into ----
+  butte(B, M, 6, 48, { topC: 0xc99866 });
+  extraFoes.push(['bandit', 3, 44.5, { y: 12.5, patrol: false, yaw: Math.PI }]); extraPicks.push([10, 50, 12.5]);
+  den(B, M, 30, 0, 38, Math.PI, { mat: M.plaster, c: 0xb89a70 }); B.box(M.ground, 4.4, 0.5, 4.2, 30, 1.95, 38, { c: 0xb07a52 }); extraPicks.push([30, 38.5, 0.5]);
+  for (const [lx, lz, lw2, ld] of [[-14, 33, 5, 0.5], [-17, 35.5, 0.5, 4], [-9.5, 36, 0.5, 3]]) B.box(M.plaster, lw2, 1.05, ld, lx, -0.1, lz, { c: 0xb89a70, solid: true });   // the low walls of a ruined adobe: cover for someone who crouches
+
   // ---- far mesas ----------------------------------------------------------------------
   const mesa = (x, z, rx, rz, h, ry) => {
     const y0 = world.height(x, z) - 4, bands = [0x9a4a2e, 0xb8623a, 0xc98a5a, 0xa85436, 0xd09a6a];
@@ -422,6 +432,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (Math.abs(z) < 21 && Math.abs(x) < 46) continue;
     tufts.push({ x, y: world.height(x, z), z, ry: R() * 6.28, s: [0.3 + R() * 0.3, 0.18 + R() * 0.3, 0.3 + R() * 0.3], c: R.pick([0xe8d090, 0xd8b870, 0xc8aa68, 0xf0dca0]) });
   }
+  { const inB = (x, z) => (x > -10 && x < 22 && z > 33 && z < 64) || (x > 27 && x < 33 && z > 34.5 && z < 41) || (x > -19 && x < -7 && z > 31 && z < 39);      // nothing grows through the butte, the cellar or the ruin
+    for (const L of [cacti, rocks, sage, tufts]) for (const it of L) if (inB(it.x, it.z)) it.s = 0;
+    world.cyls = world.cyls.filter((c) => !inB(c.x, c.z)); }
   root.add(instanced(cactusGeo(), M.flat, cacti));
   root.add(instanced(rockGeo(3, 1), M.rock, rocks));
   root.add(instanced(new THREE.IcosahedronGeometry(1, 1), M.rock, sage, { cast: true }));

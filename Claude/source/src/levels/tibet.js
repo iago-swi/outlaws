@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
-import { instanced, room, steps, crate, tuftGeo, horseGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge } from '../props.js';
+import { instanced, room, steps, crate, tuftGeo, horseGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, den } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const tibet = {
@@ -182,8 +182,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   yak(40, 33, 0.6); yak(42.5, 30.5, 2.4, 0x3a2a1c); yak(-15, 27, 1.4); yak(44, 9, -0.6, 0x2a1c14); yak(-72, 38, 0.3); yak(-68, 42, 2.0, 0x4a3a2a); yak(60, 60, 1.1); yak(-30, 80, 2.6);
   // nomad tent of black yak hair, a ruined fort
   { const x = -74, z = 30, ry = 0.3, P = frame(x, z, ry), yf = top(P, 6.4, 5.4, x, z), f = yf + 0.06;      // you can go in
-    room(B, M, x, yf, z, { w: 6.4, d: 5.4, h: 1.8, t: 0.18, ry, mat: M.cloth, c: 0x1c1814, base: 1.6, doors: [{ side: 's', at: 0, w: 1.8, h: 1.62 }], floor: { mat: M.ground, c: 0x6a5a48 }, ceil: false });
-    B.geo(M.cloth, prismGeo(7.0, 1.9, 6.0, 2), [x, yf + 1.75, z], [0, ry, 0], 1, 0x1c1814);
+    room(B, M, x, yf, z, { w: 6.4, d: 5.4, h: 2.05, t: 0.18, ry, mat: M.cloth, c: 0x1c1814, base: 1.6, doors: [{ side: 's', at: 0, w: 1.8, h: 1.9 }], floor: { mat: M.ground, c: 0x6a5a48 }, ceil: false });
+    B.geo(M.cloth, prismGeo(7.0, 1.9, 6.0, 2), [x, yf + 2.0, z], [0, ry, 0], 1, 0x1c1814);
     for (const sg of [-1, 1]) { const [a, b] = P(sg * 4.0, 0); B.box(M.wood, 0.08, 3.2, 0.08, a, yf - 0.3, b, { ry, rz: sg * -0.3, c: 0x5a4028 }); }
     { const [a, b] = P(0, -0.3); B.cyl(M.stone, 0.45, 0.5, 0.3, a, f, b, { c: 0x4a4038, seg: 9, solid: true }); B.geo(M.glow, new THREE.ConeGeometry(0.2, 0.5, 6), [a, f + 0.55, b], [0, 0, 0], 1, 0xff7a20); fires.push([a, f + 0.5, b]); }
     for (const [lx, lz, c] of [[-2.1, -1.2, 0x8a2a2a], [2.1, -1.0, 0x2a4a8a]]) { const [a, b] = P(lx, lz); B.box(M.cloth, 1.2, 0.14, 2.2, a, f, b, { ry, c }); }
@@ -298,6 +298,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   root.add(makeAmbient(shared, { count: 320, box: 40, boxY: 14, size: 0.04, colorA: 0xffffff, colorB: 0xfff4d8, alpha: 0.55, fall: -0.02, wind: [0.9, 0, 0.3], flutter: 0.9 }));
   const eagle = new THREE.Mesh(merge([gBox(2.8, 0.03, 0.55, 0x2a2018, [0, 0, 0]), gBox(0.3, 0.06, 1.0, 0x2a2018, [0, 0, 0.1]), gBox(0.5, 0.03, 0.3, 0x2a2018, [0, 0, 0.6])]), M.flat); root.add(eagle);
 
+  { // a lookout beside the road (jump up the two blocks), a hermit's cell to crawl into
+    const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
+    clearAt(20, 59, 4); stand(B, M, 20, world.height(20, 58.7), 58.7, 0, { c: 0x8a6a48, roof: 0x7a2420 });
+    clearAt(-20, 49.5, 4); den(B, M, -20, world.height(-20, 49.1) + 0.02, 49.1, 0, { mat: M.stone, c: 0xa89c88 }); extraPicks.push([-20, 49.3, 0, 0.6]);
+  }
   const enemies = [
     ['pla', 4, 78, {}], ['pla', -6, 71, { patrol: true }], ['redguard', 8, 65, {}], ['pla', -30, 56, {}], ['redguard', -38, 64, {}],
     ['pla', 12, 42, {}], ['redguard', 6, 30, {}], ['redguard', 18, 23, {}], ['plaGunner', 24, 15, {}], ['pla', -3, 35, { up: 1.8, patrol: false }], ['pla', 31, 19, { up: 1.8, patrol: false }], ['redguard', 38, 25, {}],

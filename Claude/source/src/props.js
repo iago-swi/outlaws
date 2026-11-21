@@ -347,3 +347,74 @@ export function bars(B, M, x0, z0, x1, z1, y0, y1, o = {}) {
 }
 
 export { gBox, gCyl, gSph, gCone, gCap, xf, merge, paint };
+
+/**
+ * A flat-topped rock that can be climbed: a block of coloured bands with a zigzag stair of rock steps up one face.
+ * The stair is on the local +Z face (flip = -1: on the -Z face). Each leg rises h / legs; the steps are 0.3 m high and
+ * 1 m deep, so walkers and enemies can climb it. o: { w, d, h, legs, bands, y (ground level), flip, cover }
+ * Returns { top } (height of the summit).
+ */
+export function butte(B, M, x, z, o = {}) {
+  const { w = 16, d = 12, h = 12, legs = 4, bands = [0x9a4a2e, 0xb8623a, 0xc98a5a, 0xa85436, 0xd09a6a], y = 0, flip = 1, lw = 1.9, cover = 0x8a5236, topC } = o;
+  const rise = h / legs, n = Math.ceil(rise / 0.3), run = 1.0, L = n * run, band = (yy) => bands[Math.max(0, Math.min(bands.length - 1, Math.floor((yy - y) / h * bands.length)))];
+  // The body: thin layers, each a block (flush with the stair face) plus an eight-sided bulge on the back and the sides,
+  // every second one set back, so the rock reads as weathered ledges. The two top layers are the cap rock: blocks only.
+  const nb = o.layers ?? 7, hb = h / nb, R0 = Math.min(w, d) * 0.62;
+  for (let i = 0; i < nb; i++) {
+    const c = bands[i % bands.length], inset = (i % 2) * 0.5, foot = i === 0 ? 1.5 : 0, y0 = y + i * hb - foot, hh = hb + foot;
+    B.box(M.rock, w - 2 * inset, hh, d - inset, x, y0, z - flip * inset / 2, { c });
+    if (i < nb - 2) { const R = R0 - inset - i * 0.12; B.geo(M.rock, new THREE.CylinderGeometry(R * 0.95, R, hh, 8), [x, y0 + hh / 2, z - flip * (d / 2 - R * 0.55)], [0, 0.39 + i * 0.26, 0], [w / d * 0.95, 1, 1], c); }
+  }
+  B.world.addBox(x, z, w, d, 0, y - 2, y + h);
+  B.world.addCyl(x, z - flip * (d / 2 - R0 * 0.55), R0 * 0.9, y - 2, y + h - 2 * hb - 0.2);
+  for (let i = 0; i < 9; i++) {                             // fallen boulders round the foot, away from the stair
+    const a2 = Math.PI * (1.08 + i * 0.105) * flip, rr = R0 * (1.25 + (i % 3) * 0.12), sc = 0.8 + (i % 4) * 0.45, bx = x + Math.cos(a2) * rr * w / d, bz = z - flip * (d / 2 - R0 * 0.55) + Math.sin(a2) * rr;
+    B.geo(M.rock, rockGeo(i + 2, 1), [bx, y + sc * 0.25, bz], [0, i * 1.7, 0], [sc, sc * 0.8, sc], bands[i % bands.length]); B.world.addCyl(bx, bz, sc * 0.8, y - 1, y + sc * 0.7);
+  }
+  for (const sd of [-1, 1]) for (let i = 0; i < 5; i++) {     // crags on the two flanks, so no face is a flat wall
+    const sc = 1.5 + (i % 2) * 0.8;
+    B.geo(M.rock, rockGeo(i + 7, 1), [x + sd * (w / 2 - 0.35), y + h * (0.08 + i * 0.185), z + flip * d * (0.4 - (i % 3) * 0.2)], [0, i * 2.1 + sd, 0], [sc * 0.85, sc * 1.05, sc], bands[(i + 1) % bands.length]);
+  }
+  if (topC !== undefined) B.box(M.ground, w - 1.0, 0.06, d - 0.6, x, y + h, z + flip * 0.05, { c: topC });
+  for (let k = 0; k < legs; k++) {
+    const dir = k % 2 ? -1 : 1, lz = z + flip * (d / 2 + lw / 2 + (legs - 1 - k) * lw);
+    for (let i = 0; i < n; i++) { const top = y + k * rise + (i + 1) * rise / n; B.box(M.rock, run + 0.02, top - y + 1.5, lw, x + dir * (-L / 2 + (i + 0.5) * run), y - 1.5, lz, { c: band(top - 0.2), solid: true }); }
+    if (k < legs - 1) { const top = y + (k + 1) * rise; B.box(M.rock, lw, top - y + 1.5, lw * 2, x + dir * (L / 2 + lw / 2), y - 1.5, lz - flip * lw / 2, { c: band(top - 0.2), solid: true }); }   // the turn
+  }
+  const T = y + h;                                         // boulders on the summit: cover to crouch behind
+  [[-w * 0.3, -d / 2 + 0.9, 2.6, 0.9], [w * 0.22, -d / 2 + 0.9, 3.0, 0.9], [-w / 2 + 0.9, -0.5, 0.9, 2.8], [w / 2 - 0.9, 1.0, 0.9, 2.4]].forEach(([lx, lz2, sx, sz], i) => {
+    B.geo(M.rock, rockGeo(i + 5, 1), [x + lx, T + 0.28, z + flip * lz2], [0, 0, 0], [sx * 0.56, 0.92, sz * 0.56], cover);
+    B.world.addBox(x + lx, z + flip * lz2, sx, sz, 0, T - 0.2, T + 0.95);
+  });
+  return { top: T };
+}
+
+/** Blocks to jump up: n in a row from (x, z) along (dx, dz), each `rise` higher than the one before (a jump clears about 1.3 m). */
+export function stepsUp(B, M, x, z, dx, dz, n, o = {}) {
+  const { rise = 1.1, size = 1.3, y = 0, mat = M.wood, c = 0x9a7648, c2 = 0x6a4a2a } = o;
+  for (let i = 0; i < n; i++) {
+    const px = x + dx * size * i, pz = z + dz * size * i, hh = rise * (i + 1);
+    B.box(mat, size, hh + 0.4, size, px, y - 0.4, pz, { c: i % 2 ? c : c2, solid: true });
+    B.box(M.woodH, size + 0.05, 0.08, size + 0.05, px, y + hh - 0.08, pz, { c: 0x4a3420 });
+  }
+}
+
+/** A raised hide: a deck on four posts with a low wall on three sides (open on the local +Z side) and a light roof. Climb to it with stepsUp. */
+export function stand(B, M, x, y, z, ry, o = {}) {
+  const { h = 3.3, w = 3, d = 3, c = 0x7a5a3a, wall = 1.0, roof = 0x5a4632 } = o, cs = Math.cos(ry), sn = Math.sin(ry), P = (lx, lz) => [x + lx * cs + lz * sn, z - lx * sn + lz * cs];
+  for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = P(a * (w / 2 - 0.15), b * (d / 2 - 0.15)); B.box(M.wood, 0.2, h + (roof !== null ? 2.3 : 0), 0.2, px, y - 0.3, pz, { ry, c: 0x5a4028 }); B.world.addCyl(px, pz, 0.14, y - 1, y + h - 0.2); }
+  B.box(M.woodH, w, 0.2, d, x, y + h - 0.2, z, { ry, c, solid: true });
+  { const [a, b] = P(0, -d / 2 + 0.08); B.box(M.wood, w, wall, 0.16, a, y + h, b, { ry, c, solid: true }); }
+  for (const k of [-1, 1]) { const [a, b] = P(k * (w / 2 - 0.08), 0); B.box(M.wood, 0.16, wall, d, a, y + h, b, { ry, c, solid: true }); }
+  if (roof !== null) B.box(M.woodH, w + 0.6, 0.12, d + 0.6, x, y + h + 2.0, z, { ry, c: roof });
+  if (o.steps !== false) for (let i = 0; i < 2; i++) {                         // two blocks to jump up, on the open side
+    const [a, b] = P(0, d / 2 + 0.66 + (1 - i) * 1.3), hh = (i + 1) * h / 3;
+    B.box(M.wood, 1.3, hh + 0.4, 1.3, a, y - 0.4, b, { ry, c: i ? 0x9a7648 : 0x6a4a2a, solid: true }); B.box(M.woodH, 1.35, 0.08, 1.35, a, y + hh - 0.08, b, { ry, c: 0x4a3420 });
+  }
+}
+
+/** A low den that can only be entered crouching: the door is 1.25 m high. Local +Z has the door. */
+export function den(B, M, x, y, z, ry, o = {}) {
+  const { w = 3.4, d = 3.2, mat = M.stone, c = 0x8a8478, floor = { mat: M.ground, c: 0x6a5a48 }, ceil = { mat, c } } = o;
+  return room(B, M, x, y, z, { w, d, h: 1.95, t: 0.35, ry, mat, c, base: 1.6, doors: [{ side: 's', at: 0, w: 1.4, h: 1.25 }], floor, ceil });
+}
