@@ -235,7 +235,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   // ---- atmosphere ---------------------------------------------------------------------------------
   root.add(makeAmbient(shared, { count: 1700, box: 34, boxY: 18, size: 0.05, colorA: 0xffffff, colorB: 0xdfeaff, alpha: 0.9, fall: 1.5, wind: [0.9, 0, 0.4], flutter: 0.7 }));
 
-  { // a watch platform in the village (jump up the two blocks), an earth cellar to crawl into
+  { // a watch platform in the village (up its ladder), an earth cellar to crawl into
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(-5, 30, 4); stand(B, M, -5, world.height(-5, 29.7), 29.7, 0, { c: 0x5a4028, roof: 0xdfe8f2 });
     clearAt(30, 43.5, 4); den(B, M, 30, world.height(30, 43.1) + 0.02, 43.1, 0, { mat: M.woodH, c: 0x4a3626 }); B.geo(M.ground, new THREE.SphereGeometry(3.2, 12, 8), [30, world.height(30, 43.1) + 1.2, 43.1], [0, 0, 0], [1, 0.42, 1], 0xdfe8f2);

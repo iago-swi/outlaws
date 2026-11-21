@@ -210,6 +210,7 @@ const STEP = 0.5;   // highest ledge you can walk up without jumping
 export class World {
   constructor() {
     this.boxes = []; this.cyls = [];
+    this.ladders = [];             // {x, z, nx, nz, y0, y1}: foot of the wall, the direction away from it, bottom and top
     this.height = () => 0;         // terrain height function
     this.bounds = null;            // {x0,x1,z0,z1} or {r} hard limits
     this.maxSlope = 1.15;          // steeper terrain cannot be climbed
@@ -232,6 +233,15 @@ export class World {
       if (Math.abs(lx) <= b.hw + 1e-6 && Math.abs(lz) <= b.hd + 1e-6) g = b.y1;
     }
     return g;
+  }
+
+  /** The ladder that a body at p stands in front of and faces (fx, fz = the way it looks), or null. */
+  ladderFor(p, fx, fz) {
+    for (const L of this.ladders) {
+      const dx = p.x - L.x, dz = p.z - L.z, out = dx * L.nx + dz * L.nz, lat = dz * L.nx - dx * L.nz;
+      if (out > 0.05 && out < 1.0 && Math.abs(lat) < 0.55 && p.y > L.y0 - 0.4 && p.y < L.y1 + 0.1 && -(fx * L.nx + fz * L.nz) > 0.4) return L;
+    }
+    return null;
   }
 
   /** Is this point inside a solid box at body height? (Pushing a body out of one box can push it into the next and back, which looks like a fit.) */

@@ -4,7 +4,7 @@ import { Heightfield, prismGeo } from '../build.js';
 import { makeAmbient } from '../gfx.js';
 import { signTexture, drawTexture } from '../tex.js';
 import { makeHumanoid } from '../actors.js';
-import { instanced, room, bars, steps, shelf, barrel, crate, gCyl, merge, stepsUp, den } from '../props.js';
+import { instanced, room, bars, steps, shelf, barrel, crate, gCyl, merge, ladder, den } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const russia = {
@@ -329,8 +329,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     extraFoes.push(['militia', x + 3, z + 1.5, {}], ['agent', x - 4, z - 9, {}]); extraPicks.push([x - 2, z + 2, 3.6]);
   }
 
-  { // onto the garage roofs by one jump from a crate, then along the whole row; a cellar hatch to crawl into
-    stepsUp(B, M, 41.8, 72.6, 1, 0, 2, { rise: 0.92, mat: M.woodH, c: 0x7a7a6a, c2: 0x6a6a5c });
+  { // a ladder onto the garage roofs, then along the whole row; a cellar hatch to crawl into
+    ladder(B, M, 43.8, 72.6, -1, 0, 0, 2.74, { c: 0x7a7a6a });
     B.box(M.flat, 17.6, 0.12, 6.8, 52.6, 2.62, 73, { c: SNOW, solid: true }); B.box(M.plaster, 17.6, 0.6, 0.2, 52.6, 2.74, 69.7, { c: 0x8a8c8c, solid: true });
     den(B, M, -18, 0, 67.6, 0, { mat: M.plaster, c: 0x8a8c8c, floor: { mat: M.flat, c: 0x5a5a5c } }); B.box(M.flat, 3.8, 0.14, 3.6, -18, 1.97, 67.6, { c: SNOW }); extraPicks.push([-18, 67.8, 0.6]);
   }

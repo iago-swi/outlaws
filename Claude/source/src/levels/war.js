@@ -287,7 +287,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   // ---- atmosphere ---------------------------------------------------------------------------------
   root.add(makeAmbient(shared, { count: 380, box: 36, boxY: 12, size: 0.045, colorA: 0xffe0b0, colorB: 0xffffff, additive: true, alpha: 0.35, bright: 1.2, fall: -0.03, wind: [0.4, 0, 0.3], flutter: 0.6 }));
 
-  { // a hunter's stand among the hedgerows (jump up the two blocks), a dugout to crawl into
+  { // a hunter's stand among the hedgerows (up its ladder), a dugout to crawl into
     const clearAt = (x, z, r) => { world.cyls = world.cyls.filter((c) => Math.hypot(c.x - x, c.z - z) > r + c.r); };
     clearAt(11, 72, 4); stand(B, M, 11, world.height(11, 71.7), 71.7, 0, { c: 0x5a4a34, roof: 0x4a4a3a });
     clearAt(-14, 75.5, 4); den(B, M, -14, world.height(-14, 75.1) + 0.02, 75.1, 0, { mat: M.woodH, c: 0x4a3c2c }); B.box(M.ground, 4.6, 0.5, 4.4, -14, world.height(-14, 75.1) + 1.97, 75.1, { c: 0x4a5a34 });

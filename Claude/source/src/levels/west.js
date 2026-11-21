@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, stepsUp, den } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, ladder, den } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
@@ -80,10 +80,10 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.woodH, w * 0.5, 0.5, 0.3, x, H2 + 0.24, zf + dir * 0.1, { c: wall });
     B.box(M.woodH, w * 0.5 + 0.4, 0.16, 0.5, x, H2 + 0.74, zf + dir * 0.12, { c: trim });
     for (const s of [-1, 1]) B.box(M.wood, 0.22, H2, 0.36, x + s * (w / 2 + 0.2), 0, zf + dir * 0.12, { c: trim });
-    if (o.flat) {                                      // a flat roof to stand on behind the false front, reached by jumping up the crates at the back
+    if (o.flat) {                                      // a flat roof to stand on behind the false front, reached by the ladder at the back
       B.box(M.woodH, w + 0.3, 0.2, d + 0.1, x, h, zc, { c: 0x6a5240, solid: true });
       for (const s of [-1, 1]) B.box(M.wood, 0.2, 0.5, d, x + s * (w / 2 + 0.05), h + 0.2, zc, { c: wall, solid: true });
-      stepsUp(B, M, x - 1.3, zf - dir * (d + 0.76), 1, 0, 3, { rise: (h + 0.2) / 4 });
+      ladder(B, M, x - w / 4, zf - dir * (d + 0.05), 0, -dir, 0, h + 0.2);
     } else B.geo(M.shingle, prismGeo(w + 0.3, 1.5, d + 0.1, 3), [x, h, zc], [0, 0, 0], 1, roofC);
     // windows
     const wx = w * 0.3;
