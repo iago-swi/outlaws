@@ -531,7 +531,7 @@ export function lookFor(type, r) {
     case 'musashi': return { skin: 0xd0a078, hair: 0x0c0c0c, shirt: 0x2c2c32, pants: 0x5a5d64, boots: 0xd8cfb8, legR: 0.1, hat: null, face: ['longhair', 'topknot', 'moustache'],
       extras: ['kimono', 'obi', 'hakama', 'scabbard'], trim: 0x9a9fa6, accent: 0x15151a, wideSleeve: true, weapon: 'katana' };
     case 'tomoe': return { skin: 0xe6c0a0, hair: 0x0a0a0a, shirt: 0xf0ece0, pants: 0x8a1c1c, boots: 0xe0d8c0, legR: 0.1, hat: null, face: ['longhair', 'headband'], accent: 0xf4f4f4,
-      extras: ['armor', 'hakama', 'quiver'], armor: 0xa81c1c, armor2: 0x7a1414, wideSleeve: true, weapon: 'bow', scale: 0.96 };
+      extras: ['armor', 'hakama', 'scabbard'], armor: 0xa81c1c, armor2: 0x7a1414, wideSleeve: true, weapon: 'katana', scale: 0.96 };
     case 'date': return { skin: 0xd6a37c, hair: 0x0c0c0c, shirt: 0x2a2a34, pants: 0x24242c, boots: 0x101014, belt: 0xc9a23a, hat: 'kabuto', hatC: 0x1e1e26, crest: true, face: ['eyepatch'],
       extras: ['armor', 'hakama', 'scabbard'], armor: 0x30303a, armor2: 0x1c1c24, glove: 0x15151a, wideSleeve: true, weapon: 'katana', scale: 1.03 };
     case 'winkelried': return { skin: 0xd09a74, hair: 0x6a4a28, shirt: 0x9a9fa6, pants: 0x8a8f96, boots: 0x3a2818, hat: null, face: ['beard'], extras: ['tabard'],
