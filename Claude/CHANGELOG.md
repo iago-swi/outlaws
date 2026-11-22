@@ -16,6 +16,20 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.5.1] - 2026-11-22
+
+### Added
+
+- **An old priest in the closed church of Stalnogorsk** (chapter VII). He has come back to
+  the church that was turned into a store: an old man with a white beard down to his
+  waist, in a black habit embroidered with two white crosses and a black cap with a small
+  cross, standing before the frame of the old icon screen with a lit taper in one hand and
+  the other raised in blessing. Like the other bystanders he takes no part in the fight.
+
+### Changed
+
+- The agent posted inside that church now stands nearer the door, away from the priest.
+
 ## [1.5.0] - 2026-11-22
 
 All nine chapters have been enlarged and filled with life: more of each world to walk
@@ -262,6 +276,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.5.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.1
 [1.5.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.0
 [1.4.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.4.0
 [1.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.3.0
