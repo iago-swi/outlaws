@@ -4,7 +4,7 @@ import { Heightfield, prismGeo } from '../build.js';
 import { makeAmbient } from '../gfx.js';
 import { signTexture, drawTexture } from '../tex.js';
 import { makeHumanoid } from '../actors.js';
-import { instanced, room, bars, steps, shelf, barrel, crate, gCyl, merge, ladder, den } from '../props.js';
+import { instanced, room, bars, steps, shelf, barrel, crate, gCyl, merge, ladder, den, rod, table, bed, sacks, rug, pots, deck, stall, crawlway, person, idle } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const russia = {
@@ -28,7 +28,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const R = rand, PI = Math.PI;
   // ---- ground: flat, snowed-in, with cleared roads ------------------------------------
   const hf = new Heightfield(760, 150, (x, z) => {
-    const paved = Math.max(1 - smooth(9, 13, Math.abs(x)), (1 - smooth(46, 52, Math.abs(x))) * (1 - smooth(30, 36, Math.abs(z + 6))), z < -30 ? 1 - smooth(52, 58, Math.abs(x)) : 0);
+    const paved = Math.max(1 - smooth(9, 13, Math.abs(x)), (1 - smooth(46, 52, Math.abs(x))) * (1 - smooth(30, 36, Math.abs(z + 6))), z < -30 ? 1 - smooth(52, 58, Math.abs(x)) : 0,
+      (1 - smooth(11, 15, Math.abs(x - 90))) * (1 - smooth(68, 74, Math.abs(z - 38))),          // level ground under the goods siding
+      (1 - smooth(11, 14, Math.abs(x + 92))) * (1 - smooth(22, 26, Math.abs(z + 13))));         // and under the church and the boiler house
     return (fbm(x * 0.06, z * 0.06, 3, 4) - 0.5) * 0.4 * (1 - paved);
   });
   world.height = (x, z) => hf.h(x, z);
@@ -68,13 +70,17 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const roofed = (x, y, z, w, d) => { B.box(M.flat, w + 0.4, 0.5, d + 0.4, x, y, z, { c: 0x4a4c50 }); B.box(M.flat, w - 0.4, 0.22, d - 0.4, x, y + 0.5, z, { c: SNOW }); };
   /** Prefabricated block. o.doors: -1 / +1 = side of the stairwell doors. */
   const block = (x, z, w, d, h, c = 0xffffff, o = {}) => {
-    B.box(FAC, w, h, d, x, -0.3, z, { c, solid: true }); roofed(x, h - 0.3, z, w, d);
+    if (o.gap) {                                                    // a stretch of the ground floor is left out: a flat is built there
+      const [a, b] = o.gap, x0 = x - w / 2, x1 = x + w / 2;
+      B.box(FAC, w, h - 3, d, x, 2.7, z, { c, solid: true }); B.box(FAC, a - x0, 3, d, (a + x0) / 2, -0.3, z, { c, solid: true }); B.box(FAC, x1 - b, 3, d, (b + x1) / 2, -0.3, z, { c, solid: true });
+    } else B.box(FAC, w, h, d, x, -0.3, z, { c, solid: true });
+    roofed(x, h - 0.3, z, w, d);
     if (!o.doors) return;
     const along = w >= d, n = Math.max(1, Math.round((along ? w : d) / 12)), s = o.doors;
     for (let i = 0; i < n; i++) {
       const t = ((i + 0.5) / n - 0.5) * (along ? w : d), px = along ? x + t : x + s * (w / 2 + 0.7), pz = along ? z + s * (d / 2 + 0.7) : z + t;
       B.box(M.flat, along ? 2.6 : 1.5, 0.18, along ? 1.5 : 2.6, px, 2.5, pz, { c: 0x5a5c60 });
-      B.box(M.flat, along ? 1.3 : 0.12, 2.2, along ? 0.12 : 1.3, along ? px : x + s * (w / 2 + 0.04), 0, along ? z + s * (d / 2 + 0.04) : pz, { c: 0x4a3626 });
+      if (i !== o.open) B.box(M.flat, along ? 1.3 : 0.12, 2.2, along ? 0.12 : 1.3, along ? px : x + s * (w / 2 + 0.04), 0, along ? z + s * (d / 2 + 0.04) : pz, { c: 0x4a3626 });
       B.box(M.stone, along ? 2.4 : 1.3, 0.3, along ? 1.3 : 2.4, px, -0.14, pz, { c: 0x8a8a8a, solid: true });
     }
   };
@@ -101,8 +107,13 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     const c = 0x5e6468, f = makeHumanoid(M, { lip: c, skin: c, hair: c, shirt: c, sleeve: c, pants: c, boots: c, belt: c, coat: c, ...spec, scale: s });
     f.group.position.set(x, y, z); f.group.rotation.y = ry; pose(f); root.add(f.group);
   };
+  const people = [], extraFoes = [], extraPicks = [];
+  /** Somebody who takes no part in the fight; stands on the ground unless o.y says otherwise. */
+  const folk = (look, x, z, yaw, o = {}) => { people.push(person(B, M, root, look, x, o.y ?? world.height(x, z), z, yaw, o)); };
+  /** A bank of snow left by the plough: cover as high as a crouching man. */
+  const bank = (x, z, ry = 0, len = 4.4) => { B.geo(M.flat, new THREE.SphereGeometry(1, 9, 6), [x, 0.15, z], [0, ry, 0], [len / 2, 1, 1], 0xdfe5ec); world.addBox(x, z, len * 0.8, 1.3, ry, -1, 1.0); };
   const trees = [];
-  const birch = (x, z) => { trees.push({ x, y: world.height(x, z) - 0.1, z, ry: R() * 6.28, s: 0.8 + R() * 0.5 }); world.addCyl(x, z, 0.2, -1, 6); };
+  const birch =(x, z) => { trees.push({ x, y: world.height(x, z) - 0.1, z, ry: R() * 6.28, s: 0.8 + R() * 0.5 }); world.addCyl(x, z, 0.2, -1, 6); };
 
   // ---- the prospekt -----------------------------------------------------------------------
   for (const [z, lit] of [[90, 0], [66, 1], [42, 0], [14, 1]]) { street(-9.2, z, !!lit); street(9.2, z + 6, false); }
@@ -117,7 +128,30 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.glow, 0.05, 0.8, 1.6, x + 1.31, 1.1, z, { c: 0xffe0a0 }); sign('ГАЗЕТЫ', x + 1.34, 2.05, z, 2.2, 0.36, { ry: PI / 2, bg: '#e8e0d0', fg: '#1c2a4a' });
   }
   // ---- the south-west courtyard ---------------------------------------------------------------
-  block(-36, 80, 44, 11, 15, 0xd8d8d2, { doors: -1 }); block(-62, 52, 11, 42, 15, 0xcfd4d0, { doors: 1 }); block(-32, 36, 40, 11, 15, 0xd4d0c8, { doors: 1 });
+  block(-36, 80, 44, 11, 15, 0xd8d8d2, { doors: -1 }); block(-62, 52, 11, 42, 15, 0xcfd4d0, { doors: 1 }); block(-32, 36, 40, 11, 15, 0xd4d0c8, { doors: 1, gap: [-33, -23], open: 1 });
+  { // a ground-floor flat in that block, and the stairwell beside it that runs right through: a short cut from the courtyard to the square
+    const x = -28, z = 36, F = 0.16, WC = 0xc8c4ba, H = 2.34;
+    room(B, M, x, 0.1, z, { w: 10, d: 11, h: 2.4, t: 0.3, mat: M.plaster, c: WC, base: 0.6, doors: [{ side: 's', at: -4, w: 1.6, h: 2.2 }, { side: 'n', at: -4, w: 1.6, h: 2.2 }],
+      wins: [{ side: 's', at: 1.6, w: 1.6, y: 0.9, h: 1.3 }, { side: 'n', at: 1.6, w: 1.6, y: 0.9, h: 1.3 }], floor: { mat: M.woodH, c: 0x6a5a48 }, ceil: { mat: M.plaster, c: 0xb8b4ac } });
+    B.box(M.stone, 2.4, 0.3, 1.3, x - 4, -0.14, z - 6.2, { c: 0x8a8a8a, solid: true });
+    B.box(M.plaster, 0.15, H, 4.2, x - 3.05, F, z - 3.1, { c: WC, solid: true }); B.box(M.plaster, 0.15, H, 4.2, x - 3.05, F, z + 3.1, { c: WC, solid: true }); B.box(M.plaster, 0.15, H - 2.1, 2, x - 3.05, F + 2.1, z, { c: WC, solid: true });
+    B.box(M.metal, 0.08, 0.5, 1.3, x - 4.66, F + 1.1, z + 3.4, { c: 0x3a5a8a }); for (let k = 0; k < 4; k++) B.box(M.flat, 0.02, 0.4, 0.02, x - 4.61, F + 1.15, z + 2.95 + k * 0.3, { c: 0x1c2a4a });      // letter boxes in the stairwell
+    B.box(M.metal, 0.12, 0.6, 1.2, x - 4.62, F + 0.15, z - 3, { c: 0xb8b4a8 });                                                                                                                       // a radiator
+    // the kitchen
+    B.box(M.metal, 0.6, 0.85, 0.6, x + 4.3, F, z - 4.85, { c: 0xe8e4dc, solid: true }); B.box(M.flat, 0.56, 0.03, 0.56, x + 4.3, F + 0.85, z - 4.85, { c: 0x1c1c1e }); B.cyl(M.metal, 0.11, 0.13, 0.16, x + 4.3, F + 0.88, z - 4.85, { c: 0x3a6a8a, seg: 8 });
+    B.box(M.woodH, 2.1, 0.85, 0.55, x + 2.85, F, z - 4.9, { c: 0x8a9a8a, solid: true }); B.box(M.metal, 0.6, 0.03, 0.45, x + 2.4, F + 0.85, z - 4.9, { c: 0xc8ccd0 });
+    B.box(M.metal, 0.6, 1.4, 0.6, x - 2.6, F, z - 4.85, { c: 0xe8e8e2, solid: true });
+    table(B, M, x - 0.4, F, z - 2.6, 0, { w: 1.2, d: 0.8, c: 0x6a4a30, top: 0x8ab0c8 }); for (const k of [-1, 1]) B.box(M.woodH, 0.34, 0.45, 0.34, x - 0.4 + k * 0.95, F, z - 2.6, { c: 0x6a4a30 });
+    B.cyl(M.metal, 0.12, 0.09, 0.32, x - 0.6, F + 0.8, z - 2.6, { c: 0xc9a23a, seg: 10 }); B.cyl(M.metal, 0.045, 0.08, 0.12, x - 0.6, F + 1.12, z - 2.6, { c: 0xc9a23a, seg: 8 }); B.cyl(M.flat, 0.04, 0.035, 0.09, x - 0.1, F + 0.78, z - 2.4, { c: 0xb8601c, seg: 7 });
+    // the room: iron bed under a wall carpet, wardrobe, the radio on the sideboard
+    bed(B, M, x + 4.15, F, z + 3.9, 0, { c: 0x3a3a3e, blanket: 0x7a3a2a });
+    B.box(M.cloth, 0.04, 1.3, 2.3, x + 4.67, F + 0.75, z + 3.9, { c: 0x7a2a26 }); B.box(M.cloth, 0.05, 0.8, 1.6, x + 4.665, F + 1.0, z + 3.9, { c: 0xb8863a }); B.box(M.cloth, 0.06, 0.4, 0.8, x + 4.66, F + 1.2, z + 3.9, { c: 0x2a3a5a });
+    B.box(M.woodH, 1.5, 0.75, 0.45, x + 1.6, F, z + 4.95, { c: 0x5a3c26, solid: true }); B.box(M.woodH, 0.5, 0.3, 0.22, x + 1.4, F + 0.75, z + 4.95, { c: 0x6a4a30 }); B.box(M.glow, 0.22, 0.06, 0.02, x + 1.4, F + 0.86, z + 4.83, { c: 0xffd9a0 });
+    B.box(M.woodH, 0.6, 1.9, 1.4, x - 2.6, F, z + 4.2, { c: 0x4a3020, solid: true });
+    rug(B, M, x + 1, F, z + 2.2, 0, { w: 3, d: 2.2, c: 0x6a2a2a });
+    B.cyl(M.flat, 0.01, 0.01, 0.3, x + 1, 2.2, z, { c: 0x1c1c1e, seg: 4 }); B.geo(M.cloth, new THREE.ConeGeometry(0.3, 0.24, 10, 1, true), [x + 1, 2.14, z], [0, 0, 0], 1, 0xc8742a); B.geo(M.glow, new THREE.SphereGeometry(0.07, 6, 5), [x + 1, 2.07, z], [0, 0, 0], 1, 0xffe0b0);
+    extraFoes.push(['militia', x - 4, z - 1.5, { patrol: false }]);
+  }
   {
     // swing
     for (const s of [-1, 1]) for (const k of [-1, 1]) B.cyl(M.metal, 0.045, 0.045, 2.6, -40 + s * 1.5, 0, 62 + k * 0.5, { rx: k * -0.2, c: 0x3a6a9a, seg: 6 });
@@ -137,7 +171,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   block(38, 86, 44, 11, 15, 0xd6d6d0, { doors: -1 }); block(68, 56, 11, 46, 15, 0xccd0d0, { doors: -1 });
   {
     const x = 28, z = 50;
-    room(B, M, x, 0, z, { w: 22, d: 11, h: 4.2, t: 0.4, mat: M.plaster, c: 0xb8b6ae, base: 0.6, doors: [{ side: 'w', at: 0, w: 2.4, h: 2.5 }], wins: [{ side: 's', at: -5.5, w: 4, y: 1.0, h: 1.8 }, { side: 's', at: 4.5, w: 4, y: 1.0, h: 1.8 }],
+    room(B, M, x, 0, z, { w: 22, d: 11, h: 4.2, t: 0.4, mat: M.plaster, c: 0xb8b6ae, base: 0.6, doors: [{ side: 'w', at: 0, w: 2.4, h: 2.5 }, { side: 'e', at: 1.5, w: 1.6, h: 2.2 }], wins: [{ side: 's', at: -5.5, w: 4, y: 1.0, h: 1.8 }, { side: 's', at: 4.5, w: 4, y: 1.0, h: 1.8 }],
       floor: { mat: M.cobble, c: 0x8a8a84 }, ceil: { mat: M.plaster, c: 0x9a9a94 } });
     roofed(x, 4.4, z, 22, 11);
     sign('ГАСТРОНОМ', x - 11.1, 3.4, z, 8, 0.9, { ry: -PI / 2, bg: '#1c3a2a', fg: '#f0e8c8' }); sign('ПРОДУКТЫ', x, 3.4, z + 5.58, 9, 0.9, { bg: '#1c3a2a', fg: '#f0e8c8' });
@@ -146,6 +180,21 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.metal, 0.5, 0.3, 0.4, x - 1, 1.14, z - 2.4, { c: 0xc8ccd0 }); B.box(M.flat, 1.2, 1.0, 1.2, x - 8.6, 0.06, z + 3.6, { c: 0x5a5a52, solid: true }); B.box(M.metal, 0.5, 0.35, 0.45, x - 8.6, 1.06, z + 3.6, { c: 0x3a3a3e });
     crate(B, M, x + 9.4, 0.06, z + 3.6, 0.9, 0.2, 0x8a7a5a); crate(B, M, x + 8.2, 0.06, z + 4.2, 0.7, 0.6, 0x8a7a5a); crate(B, M, x + 9.5, 0.96, z + 3.7, 0.6, 0.4, 0x8a7a5a);
     for (const k of [-1, 1]) B.box(M.glow, 3.0, 0.08, 0.3, x + k * 5, 4.1, z, { c: 0xf0f4ff }); lamp(x, 3.7, z, 30, 15, 0xf0f4ff);
+    // more of the shop: a cooled counter with next to nothing in it, tins in a pyramid, a barrel of pickles, the abacus, a rail for the queue
+    B.box(M.metal, 4, 0.9, 0.8, x - 7.4, 0.06, z - 2.4, { c: 0xe8e8e4, solid: true }); B.box(M.flat, 3.9, 0.3, 0.5, x - 7.4, 0.96, z - 2.5, { c: 0xa8c8d8 }); for (const k of [-1.2, 0.4]) B.box(M.metal, 0.5, 0.04, 0.24, x - 7.4 + k, 0.97, z - 2.13, { c: 0xc8ccd0 });
+    table(B, M, x - 0.5, 0.06, z + 4.3, 0, { w: 1.4, d: 0.8, c: 0x6a6a62 }); for (let r = 0; r < 4; r++) for (let i = 0; i < 4 - r; i++) B.cyl(M.metal, 0.07, 0.07, 0.14, x - 0.5 + (i - (3 - r) / 2) * 0.16, 0.84 + r * 0.14, z + 4.3, { c: r % 2 ? 0xb83a2a : 0x3a5a8a, seg: 7 });
+    barrel(B, M, x - 2.2, 0.06, z + 4.4, 0x5a4a32);
+    B.box(M.wood, 0.36, 0.26, 0.04, x + 1, 1.14, z - 2.4, { rx: -0.5, c: 0x5a3c26 }); for (let k = 0; k < 3; k++) B.box(M.flat, 0.28, 0.03, 0.05, x + 1, 1.19 + k * 0.06, z - 2.36 + k * 0.035, { rx: -0.5, c: [0x1c1c1e, 0xb83a2a, 0x1c1c1e][k] });
+    B.box(M.metal, 5, 0.05, 0.05, x - 0.5, 0.98, z - 1, { c: 0xc8ccd0 }); for (const k of [-2.5, 0, 2.5]) B.cyl(M.metal, 0.03, 0.03, 0.95, x - 0.5 + k, 0.06, z - 1, { c: 0xc8ccd0, seg: 6 }); world.addBox(x - 0.5, z - 1, 5, 0.1, 0, 0, 1.0);
+    // the store room behind a partition, with the back door to the yard; a ladder outside goes up to the flat roof
+    B.box(M.plaster, 0.15, 4.14, 2, x + 7.4, 0.06, z - 1, { c: 0xb8b6ae, solid: true }); B.box(M.plaster, 0.15, 4.14, 3.3, x + 7.4, 0.06, z + 3.45, { c: 0xb8b6ae, solid: true }); B.box(M.plaster, 0.15, 1.9, 1.8, x + 7.4, 2.3, z + 0.9, { c: 0xb8b6ae, solid: true });
+    sacks(B, M, x + 9.9, 0.06, z - 1.2, PI / 2, { w: 1.6 }); B.box(M.stone, 1.2, 0.3, 2.2, x + 11.6, -0.26, z + 1.5, { c: 0x8a8a8a, solid: true });
+    world.addBox(x, z, 22.4, 11.4, 0, 4.4, 4.9); world.addBox(x, z, 21.6, 10.6, 0, 4.9, 5.12); ladder(B, M, x + 11.2, z - 3.4, 1, 0, world.height(x + 11.7, z - 3.4) - 0.1, 4.9, { c: 0x7a7a6a });
+    B.box(M.plaster, 21.6, 0.6, 0.25, x, 5.12, z + 5.15, { c: 0xa8a69e, solid: true }); B.box(M.plaster, 0.25, 0.6, 10.6, x - 10.65, 5.12, z, { c: 0xa8a69e, solid: true });
+    B.box(M.metal, 1.2, 1.0, 1.2, x - 4, 5.12, z - 1, { c: 0x7a7c80, solid: true }); B.box(M.metal, 1.6, 0.9, 1.0, x + 5, 5.12, z + 1.5, { c: 0x7a7c80, solid: true });
+    // the saleswoman at her counter, and the people waiting outside for the delivery
+    folk('russianWoman', x, z - 3.6, 0, { y: 0.06, pose: 'hips', over: { kerchief: 0xf0ece0, extras: ['dress', 'apron'], apron: 0xf0ece0, shirt: 0xe4e0d6, sleeve: 0xe4e0d6, dress: 0xe4e0d6 } });
+    folk('russianWoman', 15.4, 53, -0.69, { pose: 'talk' }); folk('russianWoman', 14.5, 54.1, 2.46, { pose: 'hips' }); folk('russianWoman', 22.5, 56.7, PI, { arms: [-0.5, -0.2] }); folk('russianMan', 15.05, 46, PI / 2, { pose: 'sit', seat: 0.5 });
     // garages
     for (const [gx, open] of [[46, 0], [50.4, 1], [54.8, 0], [59.2, 1]]) {
       if (open) room(B, M, gx, 0, 73, { w: 4.2, d: 6.6, h: 2.5, t: 0.25, mat: M.plaster, c: 0x8a8c8c, base: 0.5, doors: [{ side: 's', at: 0, w: 3.0, h: 2.2 }], floor: { mat: M.flat, c: 0x5a5a5c }, ceil: { mat: M.flat, c: 0x6a6c6c } });
@@ -171,6 +220,34 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   for (const [x, z, ry] of [[-18, 12, 0.3], [20, 14, -0.4], [-26, -14, 1.2], [24, -18, 0.9]]) bench(x, z, ry);
   for (const [x, z] of [[-30, 14], [-36, 6], [32, 16], [38, -2], [-34, -22], [36, -24]]) { B.box(M.stone, 3, 0.5, 3, x, -0.1, z, { c: GRAN, solid: true }); B.geo(M.flat, new THREE.ConeGeometry(1.1, 3.6, 7), [x, 2.2, z], [0, 0, 0], 1, 0x2a4a3a); B.geo(M.flat, new THREE.ConeGeometry(0.9, 1.4, 7), [x, 3.6, z], [0, 0, 0], 1, SNOW); world.addCyl(x, z, 0.8, 0, 4); }
   street(-44, 20, false); street(44, -26, false);
+  { // winter on the square: an ice slide (stairs up one side, the chute down the other), a fort of snow blocks with its snowman, and the banks the ploughs have left
+    const x = -24, z = -6, L = 6.4, rx = Math.atan2(2.2, L);
+    deck(B, M, x, 0, z, 0, { w: 2.4, d: 2.4, h: 2.2, c: 0x8a6a48, post: 0x6a4a30, rails: 'ew', steps: 'n', stepW: 1.5 });
+    for (let i = 0; i < 7; i++) { const f = (i + 0.5) / 7, top = 2.2 * (1 - f), zc = z + 1.2 + L * f; B.box(M.flat, 1.5, top + 0.1, L / 7 + 0.02, x, -0.3, zc, { c: SNOW }); world.addBox(x, zc, 1.5, L / 7 + 0.02, 0, -1, top); }
+    B.box(M.flat, 1.2, 0.06, Math.hypot(L, 2.2), x, 1.1, z + 1.2 + L / 2, { rx, c: 0xc4dcec }); for (const s of [-1, 1]) B.box(M.woodH, 0.08, 0.34, Math.hypot(L, 2.2), x + s * 0.68, 1.02, z + 1.2 + L / 2, { rx, c: 0x6a4a30 });
+    for (const [fx, fz, w, d] of [[22, -11, 6, 0.8], [19.4, -8.6, 0.8, 4], [24.6, -8.6, 0.8, 4]]) {
+      B.box(M.flat, w, 1.1, d, fx, -0.05, fz, { c: 0xe2e8ee, solid: true });
+      for (let k = 0; k < Math.floor(Math.max(w, d) / 1.2); k++) B.box(M.flat, w > d ? 0.6 : w + 0.04, 0.3, w > d ? d + 0.04 : 0.6, w > d ? fx - w / 2 + 0.6 + k * 1.2 : fx, 1.05, w > d ? fz : fz - d / 2 + 0.6 + k * 1.2, { c: 0xd4dce6 });
+    }
+    for (const [r, y] of [[0.45, 0.38], [0.32, 1.0], [0.22, 1.43]]) B.geo(M.flat, new THREE.SphereGeometry(r, 10, 8), [22, y, -7.4], [0, 0, 0], 1, 0xeef2f6);
+    B.cyl(M.metal, 0.15, 0.19, 0.22, 22, 1.6, -7.4, { c: 0x5a6a7a, seg: 9 }); B.geo(M.flat, new THREE.ConeGeometry(0.035, 0.22, 6), [22, 1.44, -7.12], [PI / 2, 0, 0], 1, 0xd8641c); world.addCyl(22, -7.4, 0.45, 0, 1.7);
+    for (const [bx, bz, ry] of [[-8.9, 78, PI / 2], [-8.9, 54, PI / 2], [-8.9, 35, PI / 2], [8.9, 84, PI / 2], [8.9, 60, PI / 2], [8.9, 38, PI / 2], [-11, 14, 0.3], [12, 11, -0.2], [-40, -12, 1.3], [40, 6, 1.4], [11, -27, 0], [-12, -27, 0.1]]) bank(bx, bz, ry);
+  }
+  { // a tram halted on the prospekt under its wire: walk in at any of the four doors, keep low between the seats
+    const z = 52, RD = 0xa8302a, CR = 0xd8cca0, F = 0.46;
+    B.box(M.woodH, 2.5, F, 13, 0, 0, z, { c: 0x5a4a3a, solid: true }); B.box(M.metal, 2.5, 0.2, 13, 0, 2.75, z, { c: CR, solid: true });                                   // floor and roof
+    for (const s of [-1, 1]) {                                                                                                                                              // sides: panels below the windows, posts between them, the doors left open
+      for (const [a, b] of [[-6.5, -4.35], [-2.85, 2.85], [4.35, 6.5]]) B.box(M.metal, 0.12, 0.9, b - a, s * 1.19, F, z + (a + b) / 2, { c: RD, solid: true });
+      for (const pz of [-6.44, -4.41, -2.79, 0, 2.79, 4.41, 6.44]) B.box(M.metal, 0.12, 1.2, 0.12, s * 1.19, F + 0.9, z + pz, { c: RD });
+      B.box(M.metal, 2.26, 0.9, 0.12, 0, F, z + s * 6.44, { c: RD, solid: true });
+    }
+    B.box(M.metal, 2.56, 0.42, 13.06, 0, 0.02, z, { c: 0x3a3a3e }); B.box(M.metal, 2.54, 0.3, 13.04, 0, 2.52, z, { c: CR }); B.box(M.flat, 2.2, 0.08, 12.6, 0, 2.95, z, { c: SNOW });
+    for (const s of [-1, 1]) { for (let k = -2; k <= 2; k++) { B.box(M.woodH, 0.45, 0.42, 0.45, s * 0.86, F, z + k * 1.1, { c: 0x6a4a30 }); B.box(M.woodH, 0.45, 0.5, 0.06, s * 0.86, F + 0.42, z + k * 1.1 + 0.2, { c: 0x6a4a30 }); } world.addBox(s * 0.86, z, 0.45, 4.9, 0, F, F + 0.9); }
+    B.box(M.woodH, 2.2, 0.42, 0.45, 0, F, z + 6.1, { c: 0x6a4a30, solid: true }); B.box(M.metal, 1.5, 0.9, 0.4, 0, F, z - 6.1, { c: 0x2a2a2e, solid: true }); B.box(M.woodH, 0.45, 0.45, 0.45, 0, F, z - 5.4, { c: 0x3a2a22 });
+    for (const s of [-1, 1]) B.box(M.metal, 0.03, 0.03, 11.4, s * 0.5, 2.4, z, { c: 0xc8ccd0 });
+    for (const s of [-1, 1]) B.box(M.glow, 0.26, 0.18, 0.04, s * 0.75, 0.6, z - 6.53, { c: 0xfff0c0 }); sign('7', 0, 2.67, z - 6.57, 0.6, 0.24, { bg: '#f0ece0', fg: '#1c1c1c' });
+    for (const s of [-1, 1]) rod(B, M.metal, [s * 0.4, 2.95, z + 1], [s * 0.25, 4.6, z - 0.6], 0.025, IRON); B.box(M.metal, 1.3, 0.05, 0.08, 0, 4.58, z - 0.6, { c: IRON }); B.box(M.metal, 0.025, 0.025, 76, 0, 4.63, 66, { c: 0x2a2a2e });
+  }
   // east side: the ministry and the pair of workers
   block(68, -6, 16, 44, 24, 0xc8c8c8); for (const k of [-10, 10]) B.box(M.metal, 0.2, 4.2, 0.2, 60.4, 23.7, -6 + k, { c: IRON });
   sign('СЛАВА ТРУДУ', 60.2, 26.4, -6, 26, 3.2, { ry: -PI / 2 });
@@ -205,17 +282,23 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   // ---- the Committee: lobby, cells and archive under the tower ----------------------------------------
   {
     const F = 1.46, WALL = 0x8a8682;
-    cwall(-52, -34, -10.2, -34, 3); cwall(10.2, -34, 52, -34, 3);
+    cwall(-52, -34, -10.2, -34, 3); cwall(10.2, -34, 31, -34, 3); cwall(33, -34, 52, -34, 3);
+    // a meltwater drain under the wall east of the gate: crawl through and come out behind the black cars
+    crawlway(B, M, 32, 0, -34, 0, { len: 2.2, w: 1.4, h: 1.2, mat: M.plaster, c: CONC }); B.box(M.plaster, 2, 1.5, 0.3, 32, 1.5, -34, { c: CONC, solid: true }); B.box(M.flat, 2, 0.12, 0.4, 32, 3, -34, { c: SNOW });
+    B.box(M.flat, 1.1, 0.02, 10, 32, 0.045, -31.5, { c: 0x34363a });
     for (const s of [-1, 1]) { B.box(M.stone, 1.3, 3.8, 1.3, s * 9.5, -0.2, -34, { c: GRAN, solid: true }); B.geo(M.glow, new THREE.SphereGeometry(0.3, 8, 6), [s * 9.5, 3.9, -34], [0, 0, 0], 1, 0xffe0b0);
       B.box(M.plaster, 2, 2.6, 2, s * 12.4, -0.2, -37.2, { c: 0x5a6a5a, solid: true }); B.box(M.flat, 2.3, 0.14, 2.3, s * 12.4, 2.4, -37.2, { c: SNOW }); }
     car(22, -38.5, PI / 2, 0x0c0c0e); car(29, -38.5, PI / 2, 0x0c0c0e); car(-24, -38.5, -PI / 2, 0x0c0c0e);
     B.box(M.stone, 18, 1.7, 5.2, 0, -0.3, -41.5, { c: GRAN, solid: true }); steps(B, M, 0, -38.9, 0, 1.4, 4, { w: 18, rise: 0.34, run: 0.6, c: GRAN });
     for (const px of [-7.4, -3.4, 3.4, 7.4]) { B.box(M.stone, 1.1, 9.4, 1.1, px, 1.4, -40.4, { c: WALL }); world.addBox(px, -40.4, 1.1, 1.1, 0, 0, 11); }
     B.box(M.stone, 18, 1.6, 2.2, 0, 10.8, -40.6, { c: WALL }); sign('КОМИТЕТ', 0, 11.6, -39.46, 8, 1.0, { bg: '#2a2826', fg: '#c9a23a' });
-    room(B, M, 0, 1.4, -52, { w: 32, d: 16, h: 6.4, t: 0.7, mat: M.stone, c: WALL, base: 2, doors: [{ side: 's', at: 0, w: 4, h: 3.6 }, { side: 'w', at: 2, w: 1.8, h: 2.4 }], floor: { mat: M.cobble, c: 0x8a7a76 }, ceil: { mat: M.plaster, c: 0x9a9690 } });
-    room(B, M, -27, 1.4, -52, { w: 22, d: 16, h: 4.2, t: 0.6, mat: M.plaster, c: WALL, base: 2, doors: [{ side: 'e', at: 2, w: 1.8, h: 2.4 }], floor: { mat: M.plaster, c: 0x6a6a6a }, ceil: { mat: M.plaster, c: 0x7a7a78 } });
-    B.box(FAC, 32, 18, 16, 0, 8, -52, { c: 0xa29e98, solid: true }); B.box(FAC, 22, 20, 16, -27, 5.8, -52, { c: 0x9a9690, solid: true }); B.box(FAC, 22, 26, 16, 27, -0.3, -52, { c: 0x9a9690, solid: true });
+    room(B, M, 0, 1.4, -52, { w: 32, d: 16, h: 6.4, t: 0.7, mat: M.stone, c: WALL, base: 2, doors: [{ side: 's', at: 0, w: 4, h: 3.6 }, { side: 'w', at: 2, w: 1.8, h: 2.4 }, { side: 'e', at: 0.5, w: 1.8, h: 2.4 }], floor: { mat: M.cobble, c: 0x8a7a76 }, ceil: { mat: M.plaster, c: 0x9a9690 } });
+    room(B, M, -27, 1.4, -52, { w: 22, d: 16, h: 4.2, t: 0.6, mat: M.plaster, c: WALL, base: 2, doors: [{ side: 'e', at: 2, w: 1.8, h: 2.4 }, { side: 'w', at: 3, w: 1.6, h: 2.4 }], floor: { mat: M.plaster, c: 0x6a6a6a }, ceil: { mat: M.plaster, c: 0x7a7a78 } });
+    room(B, M, 27, 1.4, -52, { w: 22, d: 16, h: 4.2, t: 0.6, mat: M.plaster, c: WALL, base: 2, doors: [{ side: 'w', at: 0.5, w: 1.8, h: 2.4 }, { side: 'e', at: 2, w: 1.8, h: 2.4 }], floor: { mat: M.woodH, c: 0x5a4030 }, ceil: { mat: M.plaster, c: 0x8a8680 } });
+    B.box(FAC, 32, 18, 16, 0, 8, -52, { c: 0xa29e98, solid: true }); B.box(FAC, 22, 20, 16, -27, 5.8, -52, { c: 0x9a9690, solid: true }); B.box(FAC, 22, 19.9, 16, 27, 5.8, -52, { c: 0x9a9690, solid: true });
     roofed(0, 26, -52, 32, 16); roofed(-27, 25.8, -52, 22, 16); roofed(27, 25.7, -52, 22, 16);
+    steps(B, M, 38, -50, PI / 2, 1.4, 4, { w: 2.4, rise: 0.34, run: 0.5, c: GRAN }); steps(B, M, -38, -49, -PI / 2, 1.4, 4, { w: 2.2, rise: 0.34, run: 0.5, c: GRAN });      // side doors: the colonel's own, and the service door of the cells
+    crate(B, M, -41.4, 0, -45.4, 0.9, 0.3, 0x7a7a6a); barrel(B, M, -42.6, 0, -45.9, 0x5a6a7a); crate(B, M, 41.6, 0, -46.2, 1.0, 0.2, 0x7a7a6a);
     B.box(FAC, 24, 54, 20, 0, -0.3, -72, { c: 0xa6a29c, solid: true }); B.box(FAC, 17, 12, 14, 0, 53.7, -72, { c: 0xa6a29c }); B.box(M.plaster, 9, 9, 9, 0, 65.7, -72, { c: 0xa6a29c });
     B.geo(M.metal, new THREE.ConeGeometry(2.6, 18, 8), [0, 83.7, -72], [0, 0, 0], 1, 0xb8a060); B.geo(M.glow, new THREE.OctahedronGeometry(1.5, 0), [0, 94, -72], [0, 0, 0], [1, 1, 0.4], 0xff2a1a);
     for (const s of [-1, 1]) { B.box(FAC, 30, 21, 16, s * 37, -0.3, -72, { c: 0x9a9690, solid: true }); roofed(s * 37, 20.7, -72, 30, 16); B.box(M.plaster, 5, 6, 5, s * 9, 53.7, -65, { c: 0xa6a29c }); B.geo(M.metal, new THREE.ConeGeometry(1.6, 6, 6), [s * 9, 62.7, -65], [0, 0, 0], 1, 0xb8a060); }
@@ -241,6 +324,28 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.wood, 0.45, 0.45, 0.45, -32, F, -48.6, { c: 0x4a3626 }); B.box(M.wood, 0.45, 0.45, 0.45, -32, F, -46.0, { c: 0x4a3626 });
     for (let i = 0; i < 3; i++) B.box(M.metal, 0.8, 1.7, 0.6, -24 + i * 0.9, F, -45.2, { c: 0x5a6258, solid: i === 0 }); world.addBox(-23.1, -45.2, 2.7, 0.6, 0, F, F + 1.7);
     lamp(-27, F + 3.4, -51, 22, 14, 0xd0e0ff);
+    // two people held in the cells, in plain grey, sitting on their bunks
+    const GREY = { hat: null, coat: 0x6e6e6a, shirt: 0x6e6e6a, sleeve: 0x6e6e6a, pants: 0x5c5c58, dress: 0x5c5c58, boots: 0x2a2826 };
+    folk('russianMan', -36.5, -57.9, PI / 2, { y: F, pose: 'sit', seat: 0.48, over: { ...GREY, face: [] } }); folk('russianWoman', -29.4, -57.3, PI / 2, { y: F, pose: 'sit', seat: 0.48, over: { ...GREY, kerchief: 0x8a8a84 } });
+    // the east wing: the records room, and the colonel's office with its own door to the yard
+    B.box(M.plaster, 0.3, 4.14, 9.8, 28, F, -54.5, { c: WALL, solid: true }); B.box(M.plaster, 0.3, 4.14, 2.2, 28, F, -45.7, { c: WALL, solid: true }); B.box(M.plaster, 0.3, 1.74, 2.8, 28, F + 2.4, -48.2, { c: WALL, solid: true });
+    for (const sx of [20, 23.6]) shelf(B, M, sx, F, -55.6, PI / 2, 6, 2.3, { c: 0x4a4038, goods: [0x8a7a5a, 0x5a6a7a, 0x7a5a4a, 0x9a8a6a] });
+    B.box(M.metal, 9, 1.35, 0.55, 22, F, -45.0, { c: 0x5a6258, solid: true }); for (let i = 0; i < 9; i++) for (let k = 0; k < 3; k++) B.box(M.flat, 0.5, 0.05, 0.03, 18 + i, F + 0.3 + k * 0.42, -45.29, { c: 0x2a2a2e });      // filing cabinets
+    table(B, M, 26.9, F, -57.6, PI / 2, { w: 1.6, d: 0.8, c: 0x4a3626 }); B.box(M.metal, 0.5, 0.3, 0.6, 26.9, F + 0.78, -57.6, { c: 0x3a3e44 }); B.box(M.flat, 0.22, 0.02, 0.5, 26.9, F + 1.08, -57.2, { rx: -0.6, c: 0xf0ece0 });   // the teleprinter
+    B.box(M.woodH, 2.6, 0.8, 1.2, 33, F, -56, { c: 0x3a2a1c, solid: true }); B.box(M.cloth, 2.2, 0.012, 0.9, 33, F + 0.8, -56, { c: 0x2a4a3a });                                                                         // the colonel's desk
+    B.cyl(M.metal, 0.02, 0.06, 0.34, 32.1, F + 0.81, -56.2, { c: 0xc9a23a, seg: 6 }); B.cyl(M.glow, 0.07, 0.16, 0.12, 32.1, F + 1.13, -56.2, { c: 0x60ff90, seg: 10 });
+    B.box(M.flat, 0.3, 0.11, 0.2, 33.9, F + 0.81, -56.1, { c: 0x121214 }); B.box(M.flat, 0.3, 0.015, 0.42, 33.1, F + 0.815, -55.8, { ry: 0.2, c: 0xe8e0d0 });
+    B.box(M.woodH, 0.6, 0.5, 0.6, 33, F, -57.5, { c: 0x2a1c14, solid: true }); B.box(M.woodH, 0.6, 0.7, 0.1, 33, F + 0.5, -57.8, { c: 0x2a1c14 });
+    B.box(M.flat, 3.6, 2.2, 0.05, 33, F + 1.3, -59.36, { c: 0xd8d0b8 }); for (const [mx, my, w, h, c] of [[-0.9, 0.5, 1.2, 0.9, 0xb8c8a0], [0.5, 0.9, 1.5, 0.9, 0xd8b8a0], [0.2, 0.3, 1.0, 0.5, 0xa8c0d0]]) B.box(M.flat, w, h, 0.02, 33 + mx, F + 1.3 + my, -59.32, { c });   // a wall map
+    B.box(M.metal, 0.9, 1.5, 0.8, 36.9, F, -58.95, { c: 0x3a4a3e, solid: true }); B.cyl(M.metal, 0.09, 0.09, 0.05, 36.9, F + 0.8, -58.52, { rx: PI / 2, c: 0xc8ccd0, seg: 8 });                                             // the safe
+    B.box(M.cloth, 2.6, 0.45, 0.85, 32.5, F, -45.1, { c: 0x3a2a22, solid: true }); B.box(M.cloth, 2.6, 0.5, 0.2, 32.5, F + 0.45, -44.78, { c: 0x3a2a22 });
+    table(B, M, 29.2, F, -58.8, 0, { w: 0.9, d: 0.7, c: 0x4a3626 }); B.cyl(M.metal, 0.13, 0.1, 0.36, 29.2, F + 0.82, -58.8, { c: 0xc9a23a, seg: 10 }); B.cyl(M.metal, 0.05, 0.09, 0.14, 29.2, F + 1.18, -58.8, { c: 0xc9a23a, seg: 8 });   // a samovar
+    rug(B, M, 33, F, -52.4, 0, { w: 4.4, d: 3, c: 0x7a1c1c, border: 0x2a1c14 });
+    B.box(M.woodH, 9.2, 1.1, 0.05, 32.8, F, -59.36, { c: 0x4a3020 }); B.box(M.woodH, 0.05, 1.1, 9.6, 37.36, F, -54.5, { c: 0x4a3020 });                                                                                  // panelling, a clock, the coat stand by the door
+    B.cyl(M.woodH, 0.22, 0.22, 0.06, 30.4, F + 2.4, -59.34, { rx: PI / 2, c: 0x3a2a1c, seg: 12 }); B.cyl(M.flat, 0.18, 0.18, 0.07, 30.4, F + 2.4, -59.33, { rx: PI / 2, c: 0xe8e0d0, seg: 12 });
+    B.cyl(M.wood, 0.03, 0.05, 1.8, 36.7, F, -47.4, { c: 0x3a2a1c, seg: 6 }); B.box(M.cloth, 0.42, 0.9, 0.16, 36.7, F + 0.85, -47.25, { c: 0x50564c });
+    for (const lx of [22, 33]) B.box(M.glow, 0.3, 0.06, 3, lx, 5.52, -52, { c: 0xfff0d0 });
+    extraFoes.push(['agent', 31.5, -51, { up: 1.9, patrol: false }]); extraPicks.push([35.6, -54.6, 0, 1.9]);
   }
   // ---- the works in the north-east ---------------------------------------------------------------------
   {
@@ -250,15 +355,29 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     roofed(x, 7.2, z, 28, 16); sign('ЗАВОД', x - 14.1, 5.4, z, 6, 1.1, { ry: -PI / 2, bg: '#3a3a3e', fg: '#e0d8c0' });
     for (const [mx, mz, w] of [[76, -54, 3], [84, -54, 2.4], [88, -47, 2.6], [74, -46, 2]]) { B.box(M.metal, w, 1.5, 1.4, mx, 0.06, mz, { c: 0x4a6a5a, solid: true }); B.cyl(M.metal, 0.5, 0.5, 0.2, mx, 1.56, mz, { rx: PI / 2, c: 0x8a8c90, seg: 12 }); B.box(M.metal, 0.3, 0.8, 0.3, mx + w * 0.3, 1.56, mz, { c: 0x3a3a3e }); }
     crate(B, M, 70, 0.06, -55, 1.1, 0.2, 0x7a7a6a); crate(B, M, 70.2, 1.16, -55, 0.8, 0.5, 0x7a7a6a); crate(B, M, 91, 0.06, -55, 1.0, 0.4, 0x7a7a6a);
+    // a steel gallery along the back wall with stairs up from the shop floor, the lockers, two lathes and the man at one of them, the furnace
+    B.box(M.metal, 22, 0.16, 2, x, 3.3, z - 6.4, { c: 0x5a5c60, solid: true }); steps(B, M, x, z - 5.4, 0, 3.46, 9, { w: 1.6, rise: 3.4 / 9, run: 0.5, mat: M.metal, c: 0x5a5c60 });
+    for (let k = -2; k <= 2; k++) rod(B, M.metal, [x + k * 5.2, 2.3, z - 7.45], [x + k * 5.2, 3.3, z - 5.5], 0.05, IRON);
+    for (const [a, b] of [[-11, -0.8], [0.8, 11]]) { const m = x + (a + b) / 2; B.box(M.metal, b - a, 0.06, 0.06, m, 4.4, z - 5.46, { c: IRON }); B.box(M.metal, b - a, 0.05, 0.05, m, 3.95, z - 5.46, { c: IRON }); for (let q = a; q <= b; q += 1.7) B.box(M.metal, 0.05, 1, 0.05, x + q, 3.46, z - 5.46, { c: IRON }); world.addBox(m, z - 5.46, b - a, 0.1, 0, 3.46, 4.46); }
+    B.box(M.metal, 0.6, 1.9, 4, x + 13.1, 0.06, z - 2, { c: 0x5a6a7a, solid: true }); for (let k = 0; k < 5; k++) B.box(M.flat, 0.02, 1.8, 0.03, x + 12.79, 0.1, z - 4 + k, { c: 0x2a3440 });
+    for (const lx of [x, x + 3.6]) {
+      B.box(M.metal, 2.2, 0.75, 0.7, lx, 0.06, z + 6.3, { c: 0x4a5a6a, solid: true }); B.box(M.metal, 0.6, 0.45, 0.6, lx - 0.75, 0.81, z + 6.3, { c: 0x4a5a6a }); B.box(M.metal, 0.3, 0.3, 0.3, lx + 0.85, 0.81, z + 6.3, { c: 0x4a5a6a });
+      rod(B, M.metal, [lx - 0.45, 1.03, z + 6.3], [lx - 0.3, 1.03, z + 6.3], 0.16, 0x8a8c90, 0.16, 10); rod(B, M.metal, [lx - 0.3, 1.03, z + 6.3], [lx + 0.7, 1.03, z + 6.3], 0.05, 0xc8ccd0);
+    }
+    folk('russianMan', x, z + 5.1, 0, { y: 0.06, pose: 'work', over: { hat: 'beret', hatC: 0x3a3a44, extras: [], shirt: 0x3a4a6a, pants: 0x3a4a6a } });
+    B.box(M.plaster, 2.4, 2.8, 2.2, x + 11.9, 0.06, z + 6.2, { c: 0x7a4a3a, solid: true }); B.box(M.glow, 0.05, 0.6, 0.8, x + 10.68, 0.6, z + 6.2, { c: 0xff7a20 }); B.cyl(M.metal, 0.3, 0.3, 4.2, x + 11.9, 2.86, z + 6.2, { c: 0x3a3a3e, seg: 8 });
+    // the flat roof, by the ladder on the west wall: from its edge you look down on the Committee's forecourt
+    world.addBox(x, z, 28.4, 16.4, 0, 7.2, 7.7); world.addBox(x, z, 27.6, 15.6, 0, 7.7, 7.92); ladder(B, M, x - 14.2, z + 6, -1, 0, world.height(x - 14.8, z + 6) - 0.1, 7.7, { c: IRON });
+    B.box(M.plaster, 0.25, 0.7, 11, x - 13.65, 7.92, z - 2.3, { c: 0x8a6a5a, solid: true }); B.box(M.metal, 3, 0.8, 2, x - 4, 7.92, z, { c: 0x5a5c60, solid: true }); B.box(M.flat, 2.6, 0.04, 1.6, x - 4, 8.72, z, { c: 0x8ab0c0 });
+    extraFoes.push(['agent', x + 6, z - 6.4, { up: 3.6, patrol: false }]);
     for (const [cx, cz, h] of [[86, -66, 36], [94, -64, 28]]) { B.cyl(M.plaster, 1.1, 1.8, h, cx, -0.3, cz, { c: 0x9a5a4a, seg: 12, solid: true }); for (let k = 0; k < 3; k++) B.cyl(M.flat, 1.14 + (2 - k) * 0.05, 1.2 + (2 - k) * 0.05, 1.5, cx, h - 2.2 - k * 3.4, cz, { c: k % 2 ? 0xe8e4dc : RED, seg: 12, open: true }); }
-    B.cyl(M.metal, 0.28, 0.28, 22, 64, 3.6, -62.5, { rz: PI / 2, c: 0x8a8478, seg: 8 }); for (const px of [56, 64, 72]) { B.box(M.metal, 0.2, 3.6, 0.2, px, 0, -62.5, { c: IRON }); world.addCyl(px, -62.5, 0.2, 0, 3.6); }
+    rod(B, M.metal, [53, 3.88, -62.5], [75, 3.88, -62.5], 0.28, 0x8a8478, 0.28, 8); for (const px of [56, 64, 72]) { B.box(M.metal, 0.2, 3.6, 0.2, px, 0, -62.5, { c: IRON }); world.addCyl(px, -62.5, 0.2, 0, 3.6); }
     cwall(60, -36, 60, -64, 2.4, 0x8a8c8c); car(66, -40, 1.6, 0x5a6a4a, true);
   }
   root.add(instanced(merge([gCyl(0.07, 0.13, 5, 0xe6e4de, [0, 2.5, 0], [0, 0, 0], 1, 6), gCyl(0.02, 0.07, 2.6, 0xd8d6d0, [0, 6.2, 0], [0, 0, 0], 1, 5),
     ...[0, 1, 2, 3, 4, 5, 6].map((i) => gCyl(0.012, 0.045, 2.4, 0x3a3432, [Math.cos(i * 2.2) * 0.75, 3.7 + i * 0.36, Math.sin(i * 2.2) * 0.75], [Math.sin(i * 2.2) * 0.8, 0, -Math.cos(i * 2.2) * 0.8], 1, 4))]), M.flat, trees));
   // ---- the hammer and sickle: on the flags, the tower, the monument, the palace -------------------------
-  const extraFoes = [], extraPicks = [];
-  const EMB = new THREE.MeshStandardMaterial({ roughness: 0.9, side: THREE.DoubleSide, map: (() => {
+  const EMB =new THREE.MeshStandardMaterial({ roughness: 0.9, side: THREE.DoubleSide, map: (() => {
     const t = drawTexture(256, 256, (g, w, h) => {
       g.fillStyle = '#b01414'; g.fillRect(0, 0, w, h); g.fillStyle = g.strokeStyle = '#f2c230'; g.lineCap = 'round';
       const D = Math.PI / 180;
@@ -335,6 +454,93 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     den(B, M, -18, 0, 67.6, 0, { mat: M.plaster, c: 0x8a8c8c, floor: { mat: M.flat, c: 0x5a5a5c } }); B.box(M.flat, 3.8, 0.14, 3.6, -18, 1.97, 67.6, { c: SNOW }); extraPicks.push([-18, 67.8, 0.6]);
   }
 
+  { // the goods siding along the east edge: a loading dock, a van standing open beside it, another to crawl under: the long way round from the garages to the works
+    const X = 92, RB = 0x6a3a2e, DK = 0x2a2a2e;
+    B.box(M.flat, 3.4, 0.1, 133, X, -0.04, 37.5, { c: 0x5e5a56 }); for (const s of [-1, 1]) B.box(M.metal, 0.08, 0.14, 133, X + s * 0.76, 0.04, 37.5, { c: 0x5a5046 });
+    for (let k = 0; k < 66; k++) B.box(M.wood, 2.6, 0.1, 0.24, X, -0.01, -28 + k * 2, { c: 0x3a3028 });
+    B.box(M.wood, 2.6, 0.5, 0.4, X, 0.6, -29.2, { c: RED, solid: true }); for (const s of [-1, 1]) B.box(M.metal, 0.2, 1.2, 0.5, X + s * 0.9, 0, -29.2, { c: DK });      // the buffer stop
+    const van = (z, open) => {
+      for (const wz of [-2.9, 2.9]) { rod(B, M.metal, [X - 0.95, 0.68, z + wz], [X + 0.95, 0.68, z + wz], 0.07, DK);
+        for (const s of [-1, 1]) { rod(B, M.metal, [X + s * 0.7, 0.68, z + wz], [X + s * 0.82, 0.68, z + wz], 0.5, DK, 0.5, 14); world.addBox(X + s * 0.76, z + wz, 0.14, 1.0, 0, -0.5, 1.2); } }
+      for (const e of [-1, 1]) for (const s of [-1, 1]) rod(B, M.metal, [X + s * 0.85, 1.38, z + e * 4.5], [X + s * 0.85, 1.38, z + e * 4.8], 0.14, DK, 0.17, 8);
+      if (open) { room(B, M, X, 1.39, z, { w: 2.9, d: 9, h: 2.4, t: 0.12, mat: M.woodH, c: RB, base: 0.14, doors: [{ side: 'w', at: 0, w: 2, h: 2.15 }, { side: 'e', at: 0, w: 2, h: 2.15 }], floor: { mat: M.woodH, c: 0x5a4a3a }, ceil: { mat: M.woodH, c: RB } });
+        for (const s of [-1, 1]) B.box(M.woodH, 0.06, 2.15, 2, X + s * 1.5, 1.45, z + 2.1, { c: 0x5a3026 }); }
+      else { B.box(M.woodH, 2.9, 2.74, 9, X, 1.25, z, { c: RB, solid: true }); for (const s of [-1, 1]) { B.box(M.woodH, 0.06, 2.2, 2.1, X + s * 1.47, 1.5, z, { c: 0x5a3026 }); B.box(M.metal, 0.05, 0.06, 4.4, X + s * 1.5, 3.76, z + 1, { c: DK }); } }
+      B.box(M.metal, 3.1, 0.1, 9.2, X, 3.99, z, { c: 0x4a4a4e }); B.box(M.flat, 2.7, 0.1, 8.9, X, 4.09, z, { c: SNOW });
+    };
+    van(2, true); van(24, false);
+    B.box(M.plaster, 8, 1.6, 14, X - 5.45, -0.3, 2, { c: CONC, solid: true }); B.box(M.flat, 0.3, 0.02, 14, X - 1.65, 1.3, 2, { c: 0xd8b020 });
+    steps(B, M, X - 5.45, 9, 0, 1.3, 4, { w: 4, rise: 0.325, run: 0.6, mat: M.plaster, c: CONC }); steps(B, M, X - 5.45, -5, PI, 1.3, 4, { w: 4, rise: 0.325, run: 0.6, mat: M.plaster, c: CONC });
+    for (const [px, pz] of [[-8.9, 3.6], [-8.9, 8.6], [-2.2, 3.6], [-2.2, 8.6]]) B.box(M.metal, 0.16, 3, 0.16, X + px, 1.3, pz, { c: IRON });      // a roof over the south half of the dock
+    B.box(M.metal, 7.6, 0.12, 6.6, X - 5.55, 4.3, 5.8, { c: 0x5a5c60 }); B.box(M.flat, 7.2, 0.1, 6.2, X - 5.55, 4.42, 5.8, { c: SNOW });
+    crate(B, M, X - 8, 1.3, -2.6, 1.0, 0.2, 0x8a7a5a); crate(B, M, X - 7.9, 2.3, -2.6, 0.7, 0.5, 0x8a7a5a); crate(B, M, X - 6.6, 1.3, -3.4, 0.8, 0.1, 0x8a7a5a); sacks(B, M, X - 7.6, 1.3, 6.6, PI / 2, { w: 2 }); barrel(B, M, X - 3.4, 1.3, 7.6, 0x5a6a7a); barrel(B, M, X - 4.3, 1.3, 7.9, 0x5a6a7a);
+    crate(B, M, X + 0.7, 1.45, 5.6, 0.9, 0.2, 0x8a7a5a); crate(B, M, X - 0.6, 1.45, -1.6, 0.8, 0.4, 0x8a7a5a);
+    B.cyl(M.metal, 0.05, 0.05, 1.3, X - 1.9, 0, 13.5, { c: DK, seg: 6 }); B.box(M.glow, 0.16, 0.16, 0.1, X - 1.9, 1.3, 13.5, { c: 0x3a6aff });                                               // a shunting signal
+    extraFoes.push(['militia', X - 6, 0, { up: 1.5 }]); extraPicks.push([X + 0.4, 3.4, 1.6]);
+  }
+  { // the kolkhoz market between the Palace and the flats: stalls to duck behind on the way to the square
+    for (const [sx, c1] of [[-44.5, 0x6a7a5a], [-40.5, 0x8a6a4a], [-27, 0x5a6a7a], [-23, 0x8a6a4a]]) stall(B, M, sx, world.height(sx, 26.5) - 0.06, 26.5, PI, { cloth: c1, cloth2: 0xd8d4c8, goods: [0x8a6a3a, 0xd8c8a0, 0x5a7a3a, 0xb8502a, 0xc8a84a] });
+    sacks(B, M, -25, world.height(-25, 28.6) - 0.04, 28.6, 0, { w: 1.6 }); pots(B, M, -37.6, world.height(-37.6, 27.2) - 0.04, 27.2, { n: 4, s: 1.2, c: [0x6a7a5a, 0x8a8a6a, 0x5a6a5a], solid: false }); crate(B, M, -43, world.height(-43, 28.5) - 0.05, 28.5, 0.8, 0.3, 0x8a7a5a);
+    folk('russianWoman', -40.5, 26.9, PI, { pose: 'talk', over: { extras: ['dress', 'coat', 'apron'], apron: 0xd8d4c8 } }); folk('russianMan', -27, 26.9, PI, { pose: 'hips' });
+  }
+  { // the district boiler house behind the Palace, and its heating main on trestles: duck under the pipe, or walk through where it arches over the path
+    const x = -93, z = -27, BR = 0x8a5a4a, F = 0.16, PC = 0xa8a49a, Y = 1.52;
+    room(B, M, x, 0.1, z, { w: 10, d: 7, h: 4.6, t: 0.4, mat: M.plaster, c: BR, base: 0.6, doors: [{ side: 's', at: 2, w: 1.8, h: 2.4 }, { side: 'n', at: 3, w: 1.5, h: 2.2 }], wins: [{ side: 's', at: -2.5, w: 2.4, y: 1.7, h: 1.4 }],
+      floor: { mat: M.plaster, c: 0x4a4a4c }, ceil: { mat: M.plaster, c: 0x6a6a68 } });
+    roofed(x, 4.9, z, 10, 7); B.cyl(M.plaster, 0.7, 1.0, 16, x - 6.4, -0.3, z, { c: BR, seg: 10, solid: true }); sign('КОТЕЛЬНАЯ', x + 2, 3.5, z + 3.58, 3.4, 0.5, { bg: '#3a3a3e', fg: '#e0d8c0' });
+    for (const bz of [-1.6, 1.6]) {                                                                                                         // two boilers in their brick settings, fire doors glowing
+      B.box(M.plaster, 3.2, 1.9, 1.9, x - 2.8, F, z + bz, { c: 0x6a4034, solid: true }); rod(B, M.metal, [x - 4.3, F + 2.0, z + bz], [x - 1.3, F + 2.0, z + bz], 0.75, 0x3a3e44, 0.75, 12);
+      B.box(M.glow, 0.05, 0.4, 0.5, x - 1.18, F + 0.4, z + bz, { c: 0xff7a20 }); B.cyl(M.metal, 0.09, 0.09, 0.04, x - 1.17, F + 1.4, z + bz + 0.5, { rz: PI / 2, c: 0xe8e4d8, seg: 10 });
+      rod(B, M.metal, [x - 2.8, F + 2.6, z + bz], [x - 2.8, 3.3, z + bz], 0.14, PC); rod(B, M.metal, [x - 2.8, 3.3, z + bz], [x + 5.3, 3.3, z + 1.4], 0.14, PC);
+    }
+    B.geo(M.flat, new THREE.ConeGeometry(0.9, 0.8, 7), [x + 3.9, F + 0.4, z - 0.4], [0, 0, 0], 1, 0x1a1a1c); world.addCyl(x + 3.9, z - 0.4, 0.7, F, F + 0.6); rod(B, M.wood, [x + 3.1, F, z - 0.9], [x + 3.4, F + 1.3, z - 0.5], 0.02, 0x6a4a2e);
+    B.geo(M.flat, new THREE.ConeGeometry(2.4, 1.5, 9), [x - 3.5, 0.65, z + 5.8], [0, 0, 0], 1, 0x1a1a1c); for (const [r, h] of [[2.1, 0.4], [1.4, 0.8], [0.7, 1.2]]) world.addCyl(x - 3.5, z + 5.8, r, -1, h);      // the coal heap outside: climb it
+    // the heating main: out of the east wall, north behind the Palace and in through its back wall, with one arch over the path
+    const run = (a, b, low) => { rod(B, M.metal, a, b, 0.3, PC, 0.3, 9); if (low) world.addBox((a[0] + b[0]) / 2, (a[2] + b[2]) / 2, Math.abs(b[0] - a[0]) + 0.7, Math.abs(b[2] - a[2]) + 0.7, 0, 1.2, 1.85); };
+    const pts = [[x + 5.4, 3.3, z + 1.4], [x + 5.4, Y, z + 1.4], [-84, Y, z + 1.4], [-84, Y, -21], [-84, 3, -21], [-84, 3, -17], [-84, Y, -17], [-84, Y, -12], [-79, Y, -12]];
+    for (let i = 0; i < pts.length - 1; i++) run(pts[i], pts[i + 1], pts[i][1] === Y && pts[i + 1][1] === Y);
+    for (const [px, pz] of [[x + 5.4, z + 1.4], [-84, -21], [-84, -17]]) world.addCyl(px, pz, 0.34, 0, 3.3);
+    for (const [tx, tz] of [[-86.5, z + 1.4], [-84, -23.6], [-84, -14.6], [-81.5, -12]]) B.box(M.plaster, 0.3, 1.5, 0.3, tx, -0.3, tz, { c: CONC });
+    extraFoes.push(['agent', x + 2.6, z + 6, {}]);
+  }
+  { // a small church, closed long ago and used as a store: the cross is gone from the dome, the windows are boarded, the nave is stacked with crates and sacks
+    const x = -94, z = -6, WH = 0xd2cec2, F = 0.36, RF = 0x56605a;
+    room(B, M, x, 0.3, z, { w: 9, d: 7, h: 5, t: 0.5, mat: M.plaster, c: WH, base: 0.8, doors: [{ side: 'w', at: 0, w: 1.8, h: 2.6 }, { side: 's', at: 2, w: 1.5, h: 2.2 }], floor: { mat: M.stone, c: 0x8a8478 }, ceil: { mat: M.plaster, c: 0xb8b4a8 } });
+    B.box(M.stone, 1.2, 0.3, 2.6, x - 5.1, -0.1, z, { c: 0x8a8478, solid: true }); B.box(M.stone, 2.2, 0.3, 1.1, x + 2, -0.1, z + 4.05, { c: 0x8a8478, solid: true });
+    const pyr = (h, k, y, c) => { const g = new THREE.ConeGeometry(1, h, 4); g.rotateY(PI / 4); B.geo(M.shingle, g, [x, y + h / 2, z], [0, 0, 0], [9.9 / 1.414 * k, 1, 7.9 / 1.414 * k], c); };
+    pyr(2.4, 1, 5.5, RF); pyr(1.9, 0.8, 6.1, SNOW);
+    B.cyl(M.plaster, 1.0, 1.0, 2.4, x, 6.8, z, { c: WH, seg: 10 }); for (let k = 0; k < 4; k++) B.box(M.flat, 0.3, 1.0, 0.06, x + Math.sin(k * PI / 2) * 0.98, 7.9, z + Math.cos(k * PI / 2) * 0.98, { ry: k * PI / 2, c: 0x1c1c22 });
+    B.geo(M.metal, new THREE.LatheGeometry([[0.02, 0], [1.05, 0.02], [1.3, 0.5], [1.15, 1.1], [0.6, 1.7], [0.2, 2.2], [0.06, 2.7]].map(([r, y]) => new THREE.Vector2(r, y)), 12), [x, 9.2, z], [0, 0, 0], 1, RF);
+    B.cyl(M.metal, 0.04, 0.05, 0.3, x, 11.85, z, { c: 0x3a3632, seg: 5 });                                                              // the stump where the cross stood
+    B.cyl(M.plaster, 1.6, 1.6, 4.3, x + 5.7, -0.3, z, { c: WH, seg: 12, solid: true }); B.geo(M.shingle, new THREE.SphereGeometry(1.7, 12, 6, 0, PI * 2, 0, PI / 2), [x + 5.7, 4.0, z], [0, 0, 0], [1, 0.7, 1], RF);
+    for (const [wx, s] of [[-2, -1], [1.5, -1], [-2, 1]]) for (const q of [3.5, 3.0]) { B.box(M.flat, 0.9, 1.9, 0.04, x + wx, 2, z + s * (q + 0.005), { c: 0x1c1c22 }); for (let k = 0; k < 3; k++) B.box(M.wood, 1.15, 0.24, 0.05, x + wx, 2.25 + k * 0.6, z + s * (q + (q > 3.2 ? 0.04 : -0.04)), { rz: (k - 1) * 0.07, c: 0x6a5a48 }); }      // the windows, boarded up inside and out
+    sign('СКЛАД № 4', x - 4.58, 3.5, z, 2.2, 0.45, { ry: -PI / 2, bg: '#c8c0a8', fg: '#2a2a2a' });
+    // inside: stores along the walls; the east end is left bare, with the frame of the old screen and pale patches where the icons hung
+    crate(B, M, x - 2, F, z - 2.3, 1.0, 0.1, 0x8a7a5a); crate(B, M, x - 2, F + 1.0, z - 2.3, 0.8, 0.4, 0x8a7a5a); crate(B, M, x - 0.8, F, z - 2.2, 0.9, 0.3, 0x8a7a5a); crate(B, M, x + 0.6, F, z - 2.3, 1.1, 0, 0x8a7a5a); crate(B, M, x + 0.6, F + 1.1, z - 2.3, 0.9, 0.2, 0x8a7a5a); crate(B, M, x + 1.9, F, z - 2.2, 0.8, 0.5, 0x8a7a5a);
+    sacks(B, M, x - 1.6, F, z + 2.2, PI, { w: 2.2 }); barrel(B, M, x - 3.4, F, z + 2.5, 0x5a6a7a); barrel(B, M, x - 3.5, F, z - 2.5, 0x5a6a7a);
+    B.box(M.woodH, 0.12, 0.2, 5.6, x + 3.3, F + 3, z, { c: 0x5a4028 }); for (const pz of [-2.7, -0.9, 0.9, 2.7]) B.box(M.woodH, 0.12, 3, 0.12, x + 3.3, F, z + pz, { c: 0x5a4028 });
+    for (const pz of [-1.8, 1.8]) B.box(M.flat, 0.02, 1.1, 0.75, x + 3.98, F + 1.2, z + pz, { c: 0xe4e0d4 });
+    extraFoes.push(['agent', x + 0.5, z + 0.4, { patrol: false }]); extraPicks.push([x - 3.2, z + 0.9, 0.6]);
+  }
+  { // the building site: a ladder to the top slab, and a long one to a perch on the crane's mast
+    const x = -86, z = 62, cx = -97.5, cz = 70.5;
+    ladder(B, M, x + 0.5, z + 2.5, 1, 0, 3.2, 6.2); B.box(M.plaster, 0.25, 1.0, 5, x - 7.3, 6.2, z + 2, { c: 0xb8b4ac, solid: true }); crate(B, M, x - 5.4, 6.2, z - 3.6, 0.9, 0.3, 0x8a7a5a);
+    B.box(M.metal, 2.4, 0.12, 2.4, cx + 1.85, 8.88, cz, { c: 0x4a4a4e, solid: true }); for (const s of [-1, 1]) { rod(B, M.metal, [cx + 0.6, 7.4, cz + s * 0.55], [cx + 3, 8.9, cz + s * 1.1], 0.05, 0xd8a020);
+      B.box(M.metal, 2.4, 0.05, 0.05, cx + 1.85, 9.95, cz + s * 1.15, { c: 0xd8a020 }); for (const k of [-1.15, 0, 1.15]) B.box(M.metal, 0.05, 1, 0.05, cx + 1.85 + k, 9, cz + s * 1.15, { c: 0xd8a020 }); world.addBox(cx + 1.85, cz + s * 1.15, 2.4, 0.1, 0, 9, 10); }
+    ladder(B, M, cx + 3.05, cz, 1, 0, world.height(cx + 4.2, cz), 9, { c: 0xb8922a, lean: 0.12 });
+    extraPicks.push([x - 3.5, z, 6.4]);
+  }
+  { // people of the district who take no part: the yard-keeper clearing snow, two pensioners at chess, a man fishing through the ice, the librarian
+    folk('russianMan', -27, 64.5, 0.9, { pose: 'work', over: { extras: ['coat', 'apron'], apron: 0xc8c0a8 } }); rod(B, M.wood, [-26.75, 1.15, 64.75], [-26.2, 0.1, 65.4], 0.02, 0x8a6a44); B.box(M.metal, 0.3, 0.03, 0.34, -26.1, 0.05, 65.5, { ry: 0.9, c: 0x8a8c90 });
+    B.geo(M.flat, new THREE.SphereGeometry(1, 8, 5), [-25.4, 0.05, 66.3], [0, 0, 0], [0.9, 0.45, 0.7], 0xe6eaf0);
+    const ty = world.height(-39, 46.5) - 0.03; table(B, M, -39, ty, 46.5, 0, { w: 0.9, d: 0.9, h: 0.75 }); B.box(M.flat, 0.44, 0.02, 0.44, -39, ty + 0.75, 46.5, { c: 0xd8c8a0 });
+    for (let k = 0; k < 6; k++) B.cyl(M.flat, 0.018, 0.024, 0.07, -39.16 + (k % 3) * 0.14, ty + 0.77, 46.36 + (k > 2 ? 0.28 : 0) + (k % 2) * 0.05, { c: k > 2 ? 0x1c1c1e : 0xf0ece0, seg: 6 });
+    for (const s of [-1, 1]) { B.box(M.woodH, 0.4, 0.45, 0.4, -39 + s * 0.85, ty, 46.5, { c: 0x6a5a3a }); folk('russianMan', -39 + s * 0.85, 46.5, -s * PI / 2, { y: ty, pose: 'sit', seat: 0.45, arms: s < 0 ? [-1.0, -0.4] : [-0.5, -0.5] }); }
+    const py = world.height(-80, 20) + 0.08; B.cyl(M.flat, 0.22, 0.22, 0.02, -80.4, py, 21, { c: 0x16222e, seg: 10 }); B.box(M.wood, 0.4, 0.4, 0.4, -81.2, py, 21, { c: 0x6a5a3a });
+    folk('russianMan', -81.2, 21, PI / 2, { y: py, pose: 'sit', seat: 0.4, arms: [-0.9, -0.4] }); rod(B, M.wood, [-80.85, py + 0.8, 21.12], [-80.4, py + 0.55, 21], 0.012, 0x8a6a44); rod(B, M.flat, [-80.4, py + 0.55, 21], [-80.4, py, 21], 0.004, 0x1c1c1e);
+    folk('russianWoman', -72.3, -46.6, -PI / 2, { y: 0.06, arms: [-0.7, -0.6], over: { face: ['bun', 'glasses'], extras: ['dress', 'shawl'], shawl: 0x6a4a5a, shirt: 0x8a8a7a, sleeve: 0x8a8a7a, dress: 0x4a4a52 } });
+  }
+
   // ---- the rest of the city, beyond reach ------------------------------------------------------------
   for (let i = 0; i < 44; i++) {
     const a = i / 44 * 6.283 + R() * 0.1, r = 135 + R() * 120, x = Math.cos(a) * r, z = Math.sin(a) * r - 10, h = 15 + Math.floor(R() * 4) * 6, along = R() < 0.5;
@@ -374,10 +580,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     dust: [0.86, 0.9, 0.94], water: [], heroLight: 40,
     makePickup: () => new THREE.Mesh(tea, M.flat),
     update(dt, t, g) {
+      idle(people, t);
       st -= dt;
       if (st <= 0) {                                                      // smoke from the works' chimneys
         st = 0.22;
-        for (const [x, y, z] of [[86, 36, -66], [94, 28, -64]]) g.gfx.soft.spawn(x + (Math.random() - 0.5), y, z + (Math.random() - 0.5), 2.2 + Math.random(), 2.2, 1.2, { life: 9 + Math.random() * 4, s0: 2.5, s1: 13, r: 0.42, g: 0.42, b: 0.45, a: 0.3, drag: 0.04 });
+        for (const [x, y, z] of [[86, 36, -66], [94, 28, -64], [-99.4, 15.8, -27]]) g.gfx.soft.spawn(x + (Math.random() - 0.5), y, z + (Math.random() - 0.5), 2.2 + Math.random(), 2.2, 1.2, { life: 9 + Math.random() * 4, s0: 2.5, s1: 13, r: 0.42, g: 0.42, b: 0.45, a: 0.3, drag: 0.04 });
       }
     },
   };

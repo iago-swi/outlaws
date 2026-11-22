@@ -16,6 +16,91 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+## [1.5.0] - 2026-11-22
+
+All nine chapters have been enlarged and filled with life: more of each world to walk
+through, more buildings you can enter, more ways round the enemy, and people who are
+simply there.
+
+### Added
+
+- **People who take no part in the fight, in every chapter**, about 130 in all and half of
+  them women, each at some work of the place and time. They breathe, shift their weight and
+  look about; they are solid, and nobody shoots at them on purpose. Among them:
+  - I, Dry Gulch: the woman who keeps the bar, the pianist, a deputy locked in his own
+    cell, the telegraph operator, a woman hanging out washing.
+  - II, Kagemori: a woman at the well, planters in the rice paddies, an angler, a weaver,
+    a pilgrim (beside the flute monks and geisha who were there already).
+  - III, Uri: the Senn and the dairywoman, a woman spinning, the miller's wife, a boatman,
+    and three men raising their hands for the oath on the Rütli meadow.
+  - IV, Ithaca: women at the well, Penelope at her loom, the swineherd Eumaeus, the old dog
+    Argos by the door, a potter, a bard, a priestess.
+  - V, Jarnvik: Norse women at the loom, the cauldron and the cod racks, a skald, a boat
+    builder, a shepherd, and two captives at a post in the raiders' yard.
+  - VI, Sainte-Aubine: the baker and his wife, the schoolmistress, the curé, a railwayman,
+    a man of the Resistance, a wounded glider pilot by the wreck.
+  - VII, Stalnogorsk: people waiting outside the shop, chess players, a librarian, market
+    women, an ice fisherman, two prisoners in the Committee's cells.
+  - VIII, Che La: Khampa herders, nuns at the prayer wheels, women in striped aprons at the
+    loom and the tea churn, Nepalese traders with their bales.
+  - IX, Tenochtitlan: market women, a woman at the grinding stone, a drummer at the great
+    drum on the temple, people in canoes on the lake.
+- **Larger worlds, with second and third ways to the enemy:**
+  - I: a railroad with depot, loading dock and boxcar; a silver mine; a stage station; a
+    dry wash that leads unseen towards Boot Hill; back doors and back lots behind both rows
+    of the street.
+  - II: rice paddies with a path round the ambush; a charcoal burners' camp; a second stair
+    and a ladder onto the shrine terrace; a back door and an inner sanctuary behind the
+    main hall.
+  - III: a landing on the lake with a boat and a goods store; a mill; a masons' yard with a
+    crane; a sunken lane to the keep; a gap under the camp's palisade.
+  - IV: a goat path up the back of the temple hill; the Cave of the Nymphs; a vineyard; a
+    swineherd's farm; a quarry; a sandbar to an islet with a shrine.
+  - V: a shipyard; a beacon crag; a byre with sheep and ponies; a charcoal clearing behind
+    the hall and a back door into it; a hole under the palisade; ice floes to the jetty.
+  - VI: fourteen holes to crawl through the hedgerows and a sunken lane; a trench to a
+    lookout on the cliff; a railway halt with two wagons; a cider farm; a churchyard.
+  - VII: three more ways into the Committee building (a side wing, a service door, a
+    drain); a block of flats you can walk through; a goods siding; a market; a boiler
+    house; a church closed and used as a store.
+  - VIII: a gully as a covered way to the monastery hill; barley terraces with a barn; a
+    pilgrims' path with prayer wheels; an army checkpoint; side and back doors and a
+    gallery in the great hall.
+  - IX: the island round the temple precinct is now a city, with a palace, a market, a
+    canal with bridges, a ball court and a row of house roofs to cross; two new ways to
+    the shore beside the causeway, over the garden plots and along an aqueduct; a village
+    at the landing.
+- **Buildings that were closed are open**, among them the hotel, the barber's and the
+  doctor's in Dry Gulch and the saloon's upper floor; the keep and the bailiff's pavilion
+  in Uri; the round temple, the beacon tower and the tents in Ithaca; the church tower and
+  both gun casemates in Normandy; the army tents and the fort in Tibet; the temple of the
+  wind god in Tenochtitlan; the second storey of the pagoda in Kagemori.
+- **Rooms are furnished** for what they are: a trade in every house of Ithaca, Jarnvik and
+  the Tibetan village; a café, a bakery, a school and a forge in Sainte-Aubine; a flat with
+  a samovar in Stalnogorsk; market stalls, looms, hearths, beds, chests, jars and sacks.
+- **More to climb and to crawl under.** There are 58 ladders now (roofs, lofts, towers,
+  scaffolds, rocks) and many low places only a crouching player gets through or under: wagons, railway cars, a ship on the stocks, drains, holes in hedges and
+  palisades, raised floors, upturned boats.
+
+### Changed
+
+- **A chapter never holds more than 30 enemies.** The **Enemies** list on the hero screen
+  now offers 5, 10, 15, 20, 25 or 30, and starts at 15. Whatever the number, the boss is
+  there and every kind of enemy is kept as long as the number allows; the others are
+  thinned where they stood thickest, so that those left are spread over the whole map.
+- Enemies have been moved into the new places, so the fight no longer runs along one road.
+- In Tenochtitlan the gunner on the Great Temple now stands on a terrace; the top belongs
+  to the drummer. In Jarnvik the two bowmen at the gate stand on a new fighting step
+  behind the palisade.
+- The game is one file of 1.93 MB (was 1.71 MB).
+
+### For those who build or test
+
+- Three more switches in the address: `&check` writes into the page whether every enemy
+  can walk to where the player starts (and, with `&reach=x,z;x,z`, whether given places
+  can be reached on foot); `&cam=x,y,z,yaw,pitch,fov` shows a still picture from any place;
+  `&kit` sets every shared piece of furniture and every bystander beside the start.
+
 ## [1.4.0] - 2026-11-21
 
 ### Added
@@ -177,6 +262,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[1.5.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.0
 [1.4.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.4.0
 [1.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.3.0
 [1.2.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.2.0

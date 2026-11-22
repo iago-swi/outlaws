@@ -1,14 +1,16 @@
 # Lone Hand — Claude version
 
-**Version 1.4.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 1.5.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
 a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city in 1974,
 the Tibetan plateau in 1959 and the Aztec capital in 1520, one hero faces many enemies alone, in a real-time 3D
 world you can walk through freely. Most buildings can be entered, the longships at
-Jarnvik can be boarded, and every chapter has places to climb, by a ladder or by steps of rock, and to crawl
-into for an ambush. Twenty-seven heroes from history and legend are playable, three per
+Jarnvik can be boarded, and every chapter has several ways to the enemy, places to climb, by a ladder or by steps of rock, and
+low places to crawl through or into for an ambush. About 130 people who take no part in the fight, half of them women, go
+about their work in the nine worlds: a woman keeps the bar in Dry Gulch, Penelope weaves in Ithaca, nuns turn the prayer
+wheels of Che La. Twenty-seven heroes from history and legend are playable, three per
 chapter. In Duel mode two players fight each other online, as a hero or as one of
 thirty villains.
 
@@ -20,11 +22,11 @@ files.
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
 | :---: | :---: | :---: |
-| <img src="screenshot.jpg" width="280" alt="The main street of Dry Gulch at golden hour, looking west: the doctor's and the telegraph office on the left, the sheriff's office, the jail and the saloon on the right, an outlaw on the boardwalk, the well in the distance, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="280" alt="The path of red torii gates through the bamboo forest at dusk, stone lanterns glowing; in the foreground the samurai's hands, three throwing stars fanned in the right, the spare ones on the left palm"> | <img src="screenshot-uri.jpg" width="280" alt="A waterfall leaping from a crag of grey rock into a pool, with a dark grotto and a stone ledge behind the falling water, pines and snow peaks around, the crossbow in the foreground"> |
+| <img src="screenshot.jpg" width="280" alt="The railroad depot north of Dry Gulch at golden hour: the station house on the right, a loading dock on posts with sacks and crates, a red boxcar with a ladder to its roof on the track, a gang man in a black hat, banded mesas behind, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="280" alt="The hamlet green of Kagemori at dusk: a woman drawing water at a roofed well, the granary on stilts behind her, an open cow shed on the left, cherry trees, stone lanterns and a red bridge beyond; in the foreground the samurai's hands with throwing stars"> | <img src="screenshot-uri.jpg" width="280" alt="The Rütli meadow on the Lake of Uri: three men stand by a boulder and a spring with their right hands raised for the oath, pine forest and snow peaks behind, the lake on the right, the crossbow in the foreground"> |
 | **Chapter IV · Ithaca** | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
-| <img src="screenshot-greece.jpg" width="280" alt="A Greek island in bright sun: a broad stair climbs the hill to a temple with a red tile roof, marble statues and a tall bronze Athena beside it, two Spartans with fire bowls at its foot, olive trees and cypresses, a javelin and a bronze shield in the foreground"> | <img src="screenshot-north.jpg" width="280" alt="A wooden jetty in a Norwegian fjord at night, falling snow: two Viking longships moored beside it, one with a black and red striped sail set, the other with its sail furled and a gilded dragon's head, gangplanks leading aboard; a throwing axe and a round shield in the foreground; the weapon is named Throwing axes and flail"> | <img src="screenshot-normandy.jpg" width="280" alt="A Norman village before dawn: the church in ruins after the bombing, its walls breached and roofless, charred beams inside, the stump of its tower on the right, stone houses and a sentry on the left, searchlight beams crossing a pink and violet sky, a Sten gun in the foreground"> |
+| <img src="screenshot-greece.jpg" width="280" alt="The village well of Ithaca in bright sun: one woman draws water, another carries her jar home on her head, a third stands by with a jar at her feet; a Spartan with a round shield on the left, white houses with red tile roofs, a mosaic floor, the temple on its hill, a javelin in the foreground"> | <img src="screenshot-north.jpg" width="280" alt="The farm of Jarnvik on a snowy night: a shepherd with long fair hair beside a haystack, a blonde woman in a red dress carrying a pail between two dark log houses, sheep in a pen, a pony, snow-laden pines, a throwing axe in the foreground"> | <img src="screenshot-normandy.jpg" width="280" alt="The railway halt of Sainte-Aubine before dawn: a stone station house with a lamp, the platform, the track with an open goods wagon and its end ladder, searchlight beams crossing the sky, a scoped rifle in the foreground"> |
 | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** | **Chapter IX · Tenochtitlan** |
-| <img src="screenshot-russia.jpg" width="280" alt="A grey Soviet city in falling snow: a raised checkpoint barrier, a cobbled square with a giant statue on a red granite plinth that carries the hammer and sickle, red flags with the same emblem, panel blocks with lit windows and a tower behind, agents and a guard dog, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="280" alt="Inside the assembly hall of a Tibetan monastery: red pillars with blue capitals, a gilded seated Buddha with a halo on a lotus throne, a row of butter lamps burning before it, a rifle in the foreground"> | <img src="screenshot-aztec.jpg" width="280" alt="The causeway of Tenochtitlan at sunset: a stone road over the lake with a low parapet, a Spanish horseman and a swordsman ahead, gold dropped on the paving, jungle on the far shore and a snow-capped volcano smoking behind; the dart-thrower and a turquoise shield in the foreground"> |
+| <img src="screenshot-russia.jpg" width="280" alt="Outside the food shop of Stalnogorsk in falling snow: the sign Gastronom in Cyrillic letters over an open door with a saleswoman at the counter inside, two women in headscarves and long coats talking, a man on a bench, panel blocks with lit windows, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="280" alt="A field barn above the barley terraces of Che La: a woman in a dark dress with a red blouse and a striped apron works a tall tea churn beside a cooking fire, a herdsman and two yaks behind, snow peaks under a deep blue sky, a rifle in the foreground"> | <img src="screenshot-aztec.jpg" width="280" alt="The lake of Tenochtitlan at sunset seen from the causeway: a canoe with a man poling and a woman paddling, garden plots joined by plank bridges, a reed lookout on stilts, wooded shores and mountains in the haze, the dart-thrower in the foreground"> |
 
 | Duel · choose your fighter | Duel · face to face |
 | :---: | :---: |
@@ -50,17 +52,17 @@ show where the remaining enemies are; the last three come looking for you. Healt
 (tonic, rice cake, alp cheese, ambrosia, mead, calvados, hot tea, butter tea) restore
 35 points.
 
-| Chapter | Weapons | Enemies |
+| Chapter | Weapons | Enemies (at most 30, see *Choose your hero*) |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | 31: cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | throwing stars (shuriken) and katana | 28: ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | crossbow and halberd | 27: Habsburg halberdiers, crossbowmen, knights, the bailiff |
-| IV · Ithaca, Greece, the age of heroes | javelins and short sword | 30: Spartan hoplites, javelin throwers, their captain |
-| V · Jarnvik, Norway, winter of 985 | throwing axes and a flail | 34: rival Vikings in animal skins, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
-| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | 33: German riflemen, officers, machine-gunners, guard dogs, the battery commander |
-| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | 37: KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
-| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | 35: Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
-| IX · Tenochtitlan, Mexico, 30 June 1520 | poisoned dart-thrower, stones or bow, and an obsidian-edged club | 36: Spanish swordsmen, crossbowmen, arquebusiers, horsemen, a cannon and its gunner, Captain Luján of the rear guard |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | cowboys, sombrero bandits, the gang boss Silas Crowe |
+| II · Kagemori, Japan, 1600 | throwing stars (shuriken) and katana | ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd | Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| IV · Ithaca, Greece, the age of heroes | javelins and short sword | Spartan hoplites, javelin throwers, their captain |
+| V · Jarnvik, Norway, winter of 985 | throwing axes and a flail | rival Vikings in animal skins, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
+| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | German riflemen, officers, machine-gunners, guard dogs, the battery commander |
+| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
+| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
+| IX · Tenochtitlan, Mexico, 30 June 1520 | poisoned dart-thrower, stones or bow, and an obsidian-edged club | Spanish swordsmen, crossbowmen, arquebusiers, horsemen, a cannon and its gunner, Captain Luján of the rear guard |
 
 ### Places you can go into, onto and behind
 
@@ -69,22 +71,37 @@ and some enemies wait indoors, on deck or behind the waterfall.
 
 | Chapter | Open buildings and other places |
 | --- | --- |
-| I | saloon, jail with two barred cells, bank with its safe, barn, a homestead, the crypt on Boot Hill (the cemetery outside town); the church, with its nave, a choir gallery and a stair inside the tower up to the bell; general store, sheriff's office with a cell, livery stable with a horse, blacksmith's forge, undertaker's, telegraph office |
-| II | every house (walk-through, with open screens), the shrine hall, the dojo in its walled compound, a hermitage; the ground floor of the pagoda, a storehouse, the bell tower; the arched bridge over the pond |
-| III | the chalets, the chapel, a Habsburg watchtower; the barns on their stone stilts, which hold hay, cheese or tools, and a drive-through hay barn; the ledge behind the waterfall |
-| IV | every house, the temple's inner room with a golden Athena, the beacon tower on the fishermen's cape; a villa with a colonnaded court and a pool, the theatre with its stage house, the olive grove with its press |
-| V | every longhouse, the jarl's great hall, a small temple of the old gods; a boat shed, an open smithy; four longships to board by gangplank: two at the jetty, your own on the beach and the jarl's great ship with a tent on deck |
-| VI | the ground floor of every house, the command bunker, the manor, the windmill; the church, now a roofless ruin after the bombing; a farm barn |
-| VII | the food shop, two garages, the Palace of Culture with its stage, the works, and the Committee building: lobby, cells and archive; a metro pavilion with turnstiles, the district library with its rows of shelves, a building site with a concrete slab to climb and the builders' hut |
-| VIII | the village houses, the old fort, the monks' houses and the monastery's assembly hall; the village temple, the chapel of the great prayer wheel, a nomad tent of black yak hair |
-| IX | the two shrines on top of the Great Temple, each with an altar heaped with gold; the white houses of the garden quarter and of the far shore; a steam bath |
+| I | saloon with its upper floor and balcony, the Grand Hotel with lobby, stairs, bedrooms and balcony, barber's, doctor's, jail with two barred cells, bank with its safe, general store, sheriff's office with a cell, livery stable, blacksmith's forge, undertaker's, telegraph office, most with a back door onto the lots behind the street; the church, with its nave, a choir gallery and a stair inside the tower up to the bell; a barn with a hayloft, a homestead, the crypt on Boot Hill; the railroad station, a boxcar to walk through, the stage station, the Silver Queen mine |
+| II | every house, each furnished differently (walk-through, with open screens), the shrine hall with a back door and an inner sanctuary behind it, the dojo in its walled compound, a hermitage; two storeys of the pagoda, a storehouse, the bell tower; a granary on stilts, a cow shed, a barn by the rice paddies; the arched bridge over the pond, a jetty with a boat |
+| III | the chalets, two of them with an upper room reached by an outside stair, the chapel, a Habsburg watchtower with a fighting gallery; the keep under construction (a masons' store below, a scaffold to the top), the bailiff's pavilion and a soldiers' tent; the barns on their stone stilts and a drive-through hay barn with a loft; a mill with a turning wheel, the Sust (goods store) at the lake landing and a lake boat to board; the ledge behind the waterfall |
+| IV | every house, each with its trade (potter, smith, baker, weaver, fishermen), the temple's inner room with a golden Athena, a treasury on the hill, the round temple, the beacon tower on the fishermen's cape up to its fire platform; a villa with a colonnaded court and a pool, the market under the colonnade, the theatre with its stage house, the olive grove with its press; two tents in the harbour, the Cave of the Nymphs, a swineherd's farm |
+| V | every longhouse, each with its trade (weaver, cook, mead store, fisherman), two of them with a second door and window openings, the jarl's great hall with a back door, a small temple of the old gods; a boat shed, an open smithy, a byre with a hay loft, a shipyard with a hull on the stocks; four longships to board by gangplank: two at the jetty, your own on the beach and the jarl's great ship with a tent on deck |
+| VI | the ground floor of every house (a café, a bakery, a school and a forge among them) and the upper room of the café, the command bunker, both gun casemates, the manor, the windmill with its milling floor; the church, now a roofless ruin after the bombing, and its tower up to the belfry; a farm barn with a hayloft, a cider farm, a railway station |
+| VII | the food shop with its store room, two garages, the Palace of Culture with its stage, the works with a gallery, and the Committee building: lobby, cells, archive, records room and the colonel's office; a block of flats with a stairwell to walk through and a furnished flat, a tram, a goods wagon, a boiler house, a church closed and used as a store; a metro pavilion with turnstiles, the district library, a building site with a concrete slab to climb and the builders' hut |
+| VIII | the village houses, each furnished differently, the old fort, the monks' houses and the monastery's assembly hall with its gallery, side doors and kitchen; the village temple, the chapel of the great prayer wheel, a nomad tent of black yak hair; two army tents, the bed of a lorry, a field barn with a hay loft |
+| IX | the two shrines on top of the Great Temple, each with an altar heaped with gold; the palace of Axayacatl with its rooms round a patio, the market, the temple of the wind god, the House of the Eagles, the ball court; the white houses of the city and of the landing village; a steam bath |
 
 Things to find on the way: mosaic floors and a bronze Athena in Ithaca; the hammer and
 sickle on the flags, the monument, the palace and the tower of Stalnogorsk; a gilded
-Buddha in each of the three temples of Che La; bomb craters in Sainte-Aubine. In Kagemori
-three flute monks (komusō), their heads hidden under basket hats, and four geisha under
-oil-paper umbrellas stand about the valley; like the Dalai Lama's caravan in chapter
-VIII they are bystanders and take no part in the fight.
+Buddha in each of the three temples of Che La; bomb craters in Sainte-Aubine.
+
+### People who take no part in the fight
+
+Every chapter has ten to eighteen bystanders, about half of them women, dressed for the
+place and the time and busy with something. They breathe, shift their weight and look
+about; they are solid, they do not move from their place, and they are not targets.
+
+| Chapter | Who is there |
+| --- | --- |
+| I | the woman who keeps the bar, the pianist, the storekeeper, the telegraph operator, the hotel keeper, the barber, the doctor, the undertaker, the preacher, a deputy locked in his own cell, a woman hanging out washing, a homesteader's wife, a gravedigger |
+| II | three flute monks (komusō) under basket hats and four geisha under oil-paper umbrellas; a woman at the well, two planters in the rice paddies, an old man on the tea-house veranda, an angler, a woodcutter, a pilgrim, a weaver |
+| III | three confederates by the flags at the start; the Senn and the dairywoman, a woman spinning with distaff and spindle, the miller's wife, a priest, a boatman, a woman mending nets, masons; on the Rütli meadow three men raise their hands for the oath |
+| IV | three women at the well, Penelope at her upright loom, the swineherd Eumaeus, the old dog Argos by the villa's door, a baker at her oven, a market woman, a priestess, a potter, an old fisherman, a bard with a lyre, a shepherd with goats |
+| V | Norse women at the loom, the cauldron, the mead casks and the cod racks, one in a doorway looking out to sea; a skald, a priest of the old gods, a boat builder, a shepherd, two of your crew aboard your ship; two captives at a post in the raiders' yard |
+| VI | the baker and his wife, a woman at the café window, the schoolmistress, an old woman in the churchyard, a farm woman, the curé, a farmer, a railwayman, a man of the Resistance, a wounded glider pilot by the wreck |
+| VII | a saleswoman and the people waiting outside the food shop, two men at chess, a yard-keeper, a librarian, two stallholders, an ice fisherman, a lathe worker, two prisoners in the Committee's cells |
+| VIII | the Dalai Lama with two monks and three Khampa riders at the start; nuns at the prayer wheels, women in striped aprons at the loom, the tea churn and on the terraces, two Nepalese traders with their bales, a Khampa herder with his yaks, an old hermit in his cell |
+| IX | a drummer at the great drum on the Great Temple, market women, a woman at the grinding stone, a weaver, an old man in a doorway, a conch-blower on the palace roof, men and women in canoes on the lake |
 
 ### Climb, jump and hide
 
@@ -97,25 +114,26 @@ the roof or the deck. A jump clears about 1.3 m.
 
 ![The great boulder of Uri in a flowering meadow: a tall grey rock with a flat grassy top and a slim iron cross at its rim, a wooden ladder leaning against its flank, pines, the lake and snow peaks behind](screenshot-boulder.jpg)
 
-| Chapter | Places for an ambush or a sniper |
+| Chapter | Places for an ambush, a sniper or a way round |
 | --- | --- |
-| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, each reached by a ladder at the back; a root cellar with a crawl-in door; the low walls of a ruined adobe; the church tower: a stair to the choir gallery, then a square spiral of steps inside the tower to the belfry, 11 m up, with a parapet to crouch behind |
-| II | a watch platform in the dojo court; a tea hut whose door is a crawl-in hatch |
-| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top and a summit cross of dark iron, reached by a wooden ladder that leans against its flank; a hunter's high seat near the start |
-| IV | a lookout above the landing beach; an old cistern to crawl into |
-| V | a watch platform in the village; an earth cellar; the decks of the longships |
-| VI | a hunter's stand among the hedgerows; a dugout; the ruined church |
-| VII | the roofs of the garages (a ladder, then along the whole row); a cellar hatch; the slab of the building site |
-| VIII | a lookout beside the road; a hermit's cell |
-| IX | the top of the Great Temple, 17 m up, reached by its stair, with two shrines for cover; a reed watchtower with a ladder; a steam bath to crawl into; the jungle round the precinct |
+| I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, each reached by a ladder at the back; the catwalk of the water tower, the windmill's platform, the barn's hayloft and the roof of the boxcar, all by ladder; the church tower up to the belfry, 11 m up; the back lots behind both rows of the street, with woodpiles and privies; a dry wash that runs unseen from the street to Boot Hill; a root cellar with a crawl-in door; the loading dock, the boxcar, a hay cart and the stage coach to crawl under; a low drift in the mine |
+| II | a watch platform in the dojo court and a low water gate into it; a side stair and a ladder onto the shrine terrace; the upper room of the pagoda with window slits; a mossy boulder with a ladder above the gate path; the granary on stilts, with a crawl space below and a loft above; a path round the ambush over the dikes of the rice paddies; a tea hut and a charcoal kiln to crawl into |
+| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top and a summit cross of dark iron, reached by a wooden ladder that leans against its flank; a hunter's high seat near the start; the scaffold of the keep, three ladders to the top; the watchtower's gallery; a sunken lane to the keep; a gap under the camp's palisade; a hay wagon and the mill's water channel to crouch under; the stepped blocks of the quarry |
+| IV | a goat path up the back of the temple hill; the roofs of the colonnade and of the stage house, and the fire platform of the beacon tower, by ladder; a flat roof with an outside stair; a crag above the harbour; a lookout above the landing beach; an old cistern that is now a crawl tunnel with two ends; the back door of the cave; a hull on the stocks and a boat on trestles to crawl under; a sandbar to an islet with a shrine |
+| V | a fighting step behind the palisade on both sides of the gate, with stairs; a hole under the palisade; a beacon crag with a ladder; the byre's loft; a watch platform in the village; an earth cellar; a tunnel of cod racks, an upturned boat and the keel of the ship being built to crawl under; firewood stacks behind the houses; ice floes from the beach to the jetty; the decks of the longships |
+| VI | fourteen holes to crawl through the hedgerows, and a sunken lane between two of them; a trench through a gap in the wire to a lookout on the cliff; the belfry of the church tower, by two ladders; the roof of a gun casemate under a camouflage net; the barn's hayloft; three hollow hayricks; two railway wagons to crawl under; a hunter's stand among the hedgerows; a dugout; the churchyard with its gravestones |
+| VII | three ways into the Committee building beside the front steps: a side door, a service door and a drain under the wall; the roofs of the garages, the food shop and the works, by ladder; the gallery in the works; the top slab of the building site and a perch on its crane; an ice slide, a snow fort and snowbanks on the square; a boxcar and the heating pipes to duck under; a cellar hatch |
+| VIII | a gully from the frozen lake to the foot of the monastery hill, with a log bridge over it; the flat roofs of three houses and of the fort, by ladder; a boulder with a ladder beside the monastery court; a breach in the fort's wall to crawl through; two lorries to crawl under; dry-stone walls on the barley terraces; a lookout beside the road; a hermit's cell |
+| IX | the top of the Great Temple, 17 m up, reached by its stair, with two shrines for cover; two ways to the shore beside the causeway: over the garden plots on planks, and along an aqueduct; a row of four house roofs to cross on planks; the roof of the palace; a drain through the precinct wall; raised market floors and upturned canoes to crawl under; a reed watchtower and a reed lookout with ladders; a rock with a ladder at the landing; a steam bath to crawl into |
 
 Every watch platform, lookout, high seat and hunter's stand has a ladder too.
-Enemies can follow you up anything that has steps: the butte can be
-stormed. Both the butte and the boulder are held by a marksman when you arrive. Enemies cannot climb ladders or jump, so roofs,
+Enemies can follow you up anything that has steps and stands in the open: the butte can be
+stormed. Both the butte and the boulder are held by a marksman when you arrive. Enemies cannot climb ladders, crouch or jump, so roofs,
 platforms and high seats are safe from blades, though not from bullets, and they cannot
-get through a crawl-in door at all. The church tower is an exception among the stairs:
-it has two storeys above its ground floor, and the route grid knows one floor per spot,
-so enemies stay below and the bandit in the belfry holds his post.
+get through a crawl space at all. Upper floors are an exception among the stairs: the
+route grid knows one floor per spot, so where a stair leads to a room or a roof above
+another room (the saloon and the hotel in chapter I, the church towers, the house roofs of
+chapters IV and IX) enemies stay below, and whoever is posted up there holds the post.
 
 ### Choose your hero
 
@@ -124,12 +142,13 @@ card to see the figure in the opening shot, then click it, or press `1` to `3` a
 `Enter`. Every hero has their own look and one strength; in chapters VI to VIII the heroes
 also carry different weapons.
 
-Above the cards, the **Enemies** list sets how many enemies the chapter holds: all of
-them (the default), or any number from 10 to 30, as far as the chapter has that many.
-The boss always stays; the others are chosen evenly through the chapter, so the whole map
-remains guarded. The choice is kept for the next chapter and when you retry.
+Above the cards, the **Enemies** list sets how many enemies the chapter holds: 5, 10, 15,
+20, 25 or 30. It starts at 15, and no chapter ever holds more than 30. The boss always
+stays and every kind of enemy is kept as long as the number allows; the others are taken
+away where they stand thickest, so the whole map remains guarded. The choice is kept for
+the next chapter and when you retry.
 
-![The hero selection for Dry Gulch: the keys W A S D, Shift, Space and C, the Enemies list set to All (31), and cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
+![The hero selection for Dry Gulch: the keys W A S D, Shift, Space and C, the Enemies list set to 15, and cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
 
 | Chapter | Hero | Who | Strength |
 | --- | --- | --- | --- |
@@ -310,8 +329,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.71 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 8,400 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 1.93 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 10,900 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
@@ -331,7 +350,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [actors.js](source/src/actors.js) | Character builder, hero and enemy looks, the dog rig, enemy behaviour, projectiles. |
 | [player.js](source/src/player.js) | Mouse and keyboard input, first-person movement, hero strengths, the weapon view models. |
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
-| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its leaning ladder and summit cross, ladders, raised hides and crawl-in dens. |
+| [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its leaning ladder and summit cross; furniture (tables, benches, beds, chests, jars, sacks, hearths, market stalls, woodpiles, haystacks), wagons to crawl under, raised floors with ladders or stairs, crawl passages, and the bystanders with their poses, ladders, raised hides and crawl-in dens. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
 | [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
 | [net.js](source/src/net.js) | The connection between the two browsers: the introduction through PeerJS under a short code, then a direct channel. |
@@ -513,10 +532,11 @@ animated by rotating those five parts; there are no skeletons or animation files
 
 The same builder makes the twenty-seven playable heroes, the thirty duel villains
 (the one-eyed Cyclops, Medusa with her snakes and the bull-headed Minotaur included),
-the human enemy types, the bystanders (the Dalai Lama, his monks and riders in chapter
-VIII; the flute monks under their basket hats and the geisha with their umbrellas in
-chapter II) and the
-statues of chapters IV and VII. There are thirty-one enemy types in all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
+the human enemy types, the bystanders and the
+statues of chapters IV and VII. The bystanders have twenty-two looks of their own, a man's and a woman's for each chapter
+(long skirts, aprons, shawls, brooches, plaits, buns and headscarves were added to the builder for them), beside the monks,
+nuns, flute monks and geisha. One function places a bystander in a pose (standing, talking, carrying, working, praying,
+sitting, lying, or any turn of the five parts) and another lets them breathe and look about. There are thirty-one enemy types in all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
 same parts to the enemy code (a body, and the front and back pairs of legs in place of
 the two legs), with two low hit spheres, a bark instead of a shout, and a roll onto the
 side when it falls. They run at 7.6 m/s, faster than any human enemy, and bite at 1.7 m.
@@ -709,35 +729,39 @@ shadow map, gained two frames and was thrown away. The levels as built, same scr
 
 | | High | Medium | Low |
 | --- | --- | --- | --- |
-| Chapter I | 32 | 61 | 111 |
-| Chapter III | 26 | 43 | 96 |
-| Chapter IX | 19 | 30 | 78 |
+| Chapter I | 24 | 55 | 120 |
+| Chapter III | 22 | 33 | 68 |
+| Chapter IX | 16 | 27 | 51 |
 
-At 1280 × 720 the same machine runs every level at 90 to 120 frames a second, so there the
+These are the figures of version 1.5.0, with 30 enemies; the larger worlds cost a few frames (version 1.4.0 measured
+32 / 61 / 111, 26 / 43 / 96 and 19 / 30 / 78).
+
+At 1280 × 720 the same machine runs every level at 100 to 120 frames a second, so there the
 setting makes no visible difference.
 
-Measured at 1280 × 720, standing at the start of each chapter with every enemy alive.
+Measured at 1280 × 720, standing at the start of each chapter with 30 enemies alive.
 A frame includes the shadow pass and the post-processing passes. Enemies count for much
 of the draw calls: each figure is five or six meshes, drawn once for the picture and
 once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 449 | 0.83 million | 8,400 | 713 | 53,500 |
-| II · Kagemori | 326 | 0.50 million | 11,900 | 1,703 | 40,000 |
-| III · Uri | 468 | 1.86 million | 52,700 | 561 | 153,700 |
-| IV · Ithaca | 473 | 0.84 million | 18,200 | 678 | 98,900 |
-| V · Jarnvik | 403 | 0.93 million | 2,100 | 930 | 87,700 |
-| VI · Sainte-Aubine | 370 | 0.84 million | 22,700 | 607 | 98,000 |
-| VII · Stalnogorsk | 433 | 0.20 million | 23 | 411 | 81,100 |
-| VIII · Che La | 422 | 0.87 million | 20,400 | 432 | 97,900 |
-| IX · Tenochtitlan | 512 | 2.29 million | 9,000 | 1,456 | 84,100 |
+| I · Dry Gulch | 578 | 0.93 million | 8,000 | 1,048 | 53,500 |
+| II · Kagemori | 431 | 0.64 million | 14,900 | 1,890 | 50,800 |
+| III · Uri | 612 | 1.97 million | 52,700 | 902 | 153,700 |
+| IV · Ithaca | 605 | 0.98 million | 18,200 | 1,002 | 106,200 |
+| V · Jarnvik | 490 | 1.05 million | 2,100 | 1,220 | 87,700 |
+| VI · Sainte-Aubine | 416 | 0.92 million | 22,800 | 946 | 98,000 |
+| VII · Stalnogorsk | 517 | 0.27 million | 23 | 716 | 81,100 |
+| VIII · Che La | 455 | 0.93 million | 20,400 | 745 | 118,900 |
+| IX · Tenochtitlan | 524 | 2.12 million | 8,900 | 1,648 | 92,100 |
 
-Chapter IX is the heaviest in triangles because of its jungle; chapter III has the most
+Chapter IX is the heaviest in triangles, with the trees of its shores and its city; chapter III has the most
 instances, with its 42,000 grass tufts. Chapter II has the most
-colliders because every bamboo stalk near the path is solid; chapter V comes second
-since each of its four longships is about 130 collision boxes. Chapter VII is the lightest
-in triangles: a city of boxes with painted windows.
+colliders because every bamboo stalk near the path is solid; chapter IX comes second,
+with its tree trunks and the walls of its city. Chapter VII is the lightest
+in triangles: a city of boxes with painted windows. Bystanders add to the draw calls as
+enemies do: each is five or six meshes.
 
 ### Versions
 
@@ -769,7 +793,7 @@ npm run build
 over `index.html` in this folder to publish it.
 
 Some address flags help while editing: `?level=2` jumps into a chapter (1 to 9),
-`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture, `&peace` makes enemies passive, `&gfx=low` (or `medium`, `high`, `auto`) sets the graphics level and `&fps` shows the frame counter. In the browser console,
+`?title=3` instead shows the title screen over that chapter, `&hero=3` picks its third hero, `&free` starts play at once without mouse capture, `&peace` makes enemies passive, `&foes=20` sets the number of enemies, `&gfx=low` (or `medium`, `high`, `auto`) sets the graphics level and `&fps` shows the frame counter. Three more are for checking a level without playing it: `&check` writes into the page whether every enemy that walks finds a route to the player's start (and, with `&reach=x,z;x,z`, whether the given places can be reached on foot); `&cam=x,y,z,yaw,pitch,fov` shows a still picture from any place, without fades or menus; `&kit` sets every shared piece of furniture and every bystander look in rows beside the start. In the browser console,
 `game.shot(x, y, z, yaw, pitch, fov)` freezes the game and places the camera.
 
 ### Testing and known limits
@@ -857,6 +881,20 @@ and a guest's hit kills one on the host). It has not been tried between two comp
 different networks, only guns were fired at the other player in these tests, and the
 effect of real network delay is unknown.
 
+Version 1.5.0 enlarged all nine chapters at once. Each chapter was first checked with the
+`&check` flag in a browser without a window: every enemy that walks has a route to the
+player's start, in all nine, with 5, 15 and 30 enemies. A scripted player then climbed all
+58 ladders by keyboard input and stepped off at the top; all work. The same player was
+sent crouching through 27 of the new crawl spaces and got through each; at 13 of them it
+was also sent upright and was stopped, at the others the test point may not have been on
+the opening, so that they are for a crouching player only is not confirmed there. Each
+chapter then ran for nine seconds with every enemy alerted at once, without an error; in
+that extreme case the frame rate fell to 66 to 76 a second in chapters III, V and IX,
+where the enemies' sight lines are tested against the most collision shapes. Not tried:
+the jumps (from the loading dock to the flatcar in chapter I, the quarry steps of chapter
+IV), boarding the boats, the box beds of the great hall, and a fight played by hand in
+any of the new places.
+
 The game was not tuned by long sessions of hand play, so the difficulty is a first
 estimate, and frame rate on slower graphics hardware has not been measured.
 
@@ -866,9 +904,13 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - A horseman cannot be unhorsed: horse and rider are one enemy and fall together. The cannon of chapter IX does not move or turn; its gunner aims the shots.
 - Enemies cannot climb onto roofs or balconies, nor onto the concrete slab of the
   building site in chapter VII, which is more than a storey up; they fire from below.
+  They do not follow onto an upper floor that lies above a room either, although the
+  stairs would carry them: their route grid has one floor per spot.
+- Rooms away from a fire or a window are dim: the chapters are at their limit of lights,
+  and the new interiors got none.
   The route grid does not know about other enemies, so several can crowd one doorway.
-- The longships lie at fixed moorings and cannot be sailed. The bystanders do not move
-  or react.
+- The longships lie at fixed moorings and cannot be sailed. The bystanders stay in their place
+  and do not react to the fight.
 - With five villains and three heroes, the fighter selection of chapter IV uses smaller
   cards than the other chapters.
 - Enemies cannot jump, crouch or climb ladders. A player on a roof or in a den can only be shot at, or

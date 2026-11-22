@@ -124,6 +124,10 @@ export function makeHumanoid(M, sp) {
     if (f === 'topknot') T.push(gSph(0.045, S.hair, [0, HY + 0.17, -0.04]));
     if (f === 'longhair') T.push(gSph(0.136, S.hair, [0, HY - 0.01, -0.05], [1.05, 1.25, 0.9]), gBox(0.2, 0.36, 0.07, S.hair, [0, HY - 0.27, -0.125], [0.12, 0, 0]),
       gBox(0.045, 0.3, 0.11, S.hair, [0.122, HY - 0.13, -0.01]), gBox(0.045, 0.3, 0.11, S.hair, [-0.122, HY - 0.13, -0.01]));
+    if (f === 'bun') T.push(gSph(0.137, S.hair, [0, HY + 0.008, -0.04], [1.04, 1.1, 0.98]), gSph(0.062, S.hair, [0, HY + 0.03, -0.17]));                                       // hair drawn back into a knot
+    if (f === 'plaits') T.push(gSph(0.137, S.hair, [0, HY + 0.002, -0.045], [1.05, 1.16, 0.95]), gCyl(0.03, 0.021, 0.46, S.hair, [0.118, HY - 0.3, 0.118], [-0.1, 0, 0], 1, 6), gCyl(0.03, 0.021, 0.46, S.hair, [-0.118, HY - 0.3, 0.118], [-0.1, 0, 0], 1, 6),
+      gSph(0.027, S.tie ?? S.hair, [0.118, HY - 0.5, 0.139]), gSph(0.027, S.tie ?? S.hair, [-0.118, HY - 0.5, 0.139]));                                                         // two long plaits over the shoulders
+    if (f === 'kerchief') T.push(gSph(0.14, S.kerchief ?? 0xe6e0d0, [0, HY + 0.022, -0.032], [1.04, 1.06, 1.06]), gCone(0.085, 0.2, S.kerchief ?? 0xe6e0d0, [0, HY - 0.15, -0.105], [Math.PI, 0, 0], [1, 1, 0.5]));   // a headscarf, knotted at the nape
     if (f === 'eyepatch') T.push(gBox(0.062, 0.046, 0.02, 0x0a0a0a, [-0.046, HY + 0.028, 0.124]), gBox(0.272, 0.016, 0.272, 0x0a0a0a, [0, HY + 0.05, 0], [0, 0, 0.22]));
     if (f === 'glasses') T.push(xf(new THREE.TorusGeometry(0.03, 0.006, 4, 10), [0.046, HY + 0.028, 0.127], [0, 0, 0], 1, 0x15151a), xf(new THREE.TorusGeometry(0.03, 0.006, 4, 10), [-0.046, HY + 0.028, 0.127], [0, 0, 0], 1, 0x15151a),
       gBox(0.035, 0.008, 0.008, 0x15151a, [0, HY + 0.032, 0.129]), gBox(0.008, 0.008, 0.12, 0x15151a, [0.078, HY + 0.03, 0.07]), gBox(0.008, 0.008, 0.12, 0x15151a, [-0.078, HY + 0.03, 0.07]));
@@ -336,6 +340,16 @@ export function makeHumanoid(M, sp) {
         gCone(0.038, 0.08, f1, [-0.355, 0.705, -0.03], [0, 0, 0], 1, 4), gCone(0.038, 0.08, f1, [-0.245, 0.705, -0.03], [0, 0, 0], 1, 4));                                   // and two ears
     }
     if (e === 'braids') T.push(gCyl(0.022, 0.016, 0.26, S.hair, [0.07, HY - 0.2, 0.09], [0.1, 0, 0], 1, 5), gCyl(0.022, 0.016, 0.26, S.hair, [-0.07, HY - 0.2, 0.09], [0.1, 0, 0], 1, 5));
+    if (e === 'dress') T.push(gCyl(0.19, 0.33, 0.86, S.dress ?? S.shirt, [0, -0.42, 0], [0, 0, 0], [1, 1, 0.7], 12), gCyl(0.2, 0.19, 0.1, S.dress ?? S.shirt, [0, 0.05, 0], [0, 0, 0], [1, 1, 0.68], 10),    // a skirt to the ankles,
+      gSph(0.11, S.bodice ?? S.shirt, [0, 0.37, 0.05], [1.45, 0.75, 0.72]), gCyl(0.332, 0.337, 0.05, S.hem ?? S.dress ?? S.shirt, [0, -0.83, 0], [0, 0, 0], [1, 1, 0.7], 12));                               // a fitted bodice, a band at the hem
+    if (e === 'apron') { const ac = S.apron ?? 0xe6e0d0; T.push(gBox(0.3, 0.62, 0.02, ac, [0, -0.3, 0.182], [-0.114, 0, 0]), gBox(0.37, 0.05, 0.26, ac, [0, 0.04, 0]));
+      if (S.bib) T.push(gBox(0.22, 0.27, 0.02, ac, [0, 0.2, 0.138]));
+      (S.stripes || []).forEach((c, i, all) => { const st = 0.62 / all.length, yy = 0.01 - (i + 0.5) * st; T.push(gBox(0.304, st * 0.7, 0.022, c, [0, yy, 0.185 - (yy + 0.3) * 0.114], [-0.114, 0, 0])); }); }      // woven bands across it
+    if (e === 'collar') T.push(gBox(0.11, 0.15, 0.02, S.collar ?? 0xf0ece0, [0, 0.47, 0.126]), gCyl(0.075, 0.1, 0.05, S.collar ?? 0xf0ece0, [0, 0.575, 0], [0, 0, 0], [1, 1, 0.85], 9));               // a blouse showing at the neck
+    if (e === 'brooches') { const bc = S.brooch ?? 0xc9a050, sc = S.strap ?? S.dress ?? S.shirt;                                                            // shoulder straps pinned by two brooches, a string of beads between them
+      T.push(gBox(0.035, 0.24, 0.02, sc, [0.085, 0.4, 0.12], [-0.25, 0, 0]), gBox(0.035, 0.24, 0.02, sc, [-0.085, 0.4, 0.12], [-0.25, 0, 0]), gSph(0.03, bc, [0.085, 0.42, 0.135], [1, 1.3, 0.5]), gSph(0.03, bc, [-0.085, 0.42, 0.135], [1, 1.3, 0.5]),
+        gBox(0.15, 0.016, 0.014, S.beads ?? bc, [0, 0.395, 0.14])); }
+    if (e === 'shawl') T.push(gCyl(0.15, 0.262, 0.2, S.shawl ?? 0x6a4a3a, [0, 0.45, -0.005], [0, 0, 0], [1, 1, 0.7], 12), gCyl(0.262, 0.25, 0.1, S.shawl ?? 0x6a4a3a, [0, 0.3, -0.005], [0, 0, 0], [1, 1, 0.7], 12));      // a shawl over the shoulders
     if (e === 'robe') T.push(gCyl(0.185, 0.3, 0.8, S.robe ?? S.pants, [0, -0.39, 0], [0, 0, 0], [1, 1, 0.64], 10), gBox(0.52, 0.1, 0.32, S.sash ?? S.robe ?? S.pants, [0, 0.34, 0], [0, 0, 0.78]),
       gCyl(0.2, 0.19, 0.12, S.robe ?? S.pants, [0, 0.06, 0], [0, 0, 0], [1, 1, 0.68], 10));
     if (e === 'chuba') T.push(gCyl(0.22, 0.31, 0.72, S.coat ?? 0x5a3a26, [0, -0.3, -0.01], [0, 0, 0], [1, 1, 0.64], 10), gCyl(0.222, 0.222, 0.56, S.coat ?? 0x5a3a26, [0, 0.29, -0.012], [0, 0, 0], [1.04, 1, 0.68]),
@@ -628,6 +642,59 @@ export function lookFor(type, r) {
       extras: ['smock', 'quiver'], belt: 0x3a2414, weapon: 'crossbow', bootTop: true };
     case 'confederate': return { skin: pick(SKINS), hair: pick([0x5a3a1c, 0x8a6a3a, 0x3a2a1a, 0x9a9a90]), shirt: pick([0xcfc6ae, 0x8a7a5a, 0x6a5a40, 0x7a3a2a]), pants: pick([0x5a4a34, 0x4a4030, 0x3a3a3a]), boots: 0x3a2818,
       hat: r() < 0.5 ? 'cowl' : 'felt', hatC: pick([0x6a5a40, 0x3a4a2a, 0x7a2a22]), plume: 0xf0ece0, face: [r() < 0.5 ? 'longbeard' : 'beard'], extras: ['smock'], weapon: 'halberd', bootTop: true };
+    // ---- people who take no part in the fight: the men and women who live where the chapters are set (no weapon, no helmet) ----
+    case 'westWoman': { const d = pick([0x6a3a4a, 0x3a4a6a, 0x7a6a4a, 0x4a5a3a, 0x8a4a3a, 0x5a5a66]);
+      return { skin: pick(SKINS), hair: pick([0x2a1a10, 0x5a3a1c, 0x8a5a2a, 0x1a1210, 0xb89050]), shirt: d, sleeve: d, pants: d, dress: d, hem: 0xe6dcc8, boots: 0x2a1c12, hat: null, face: ['bun'], lip: 0xa8483c,
+        extras: r() < 0.6 ? ['dress', 'apron'] : ['dress', 'shawl'], shawl: pick([0x4a3a30, 0x3a3a44]), scale: 0.94 }; }
+    case 'westMan': return { skin: pick(SKINS), hair: pick([0x2a1a10, 0x4a3018, 0x8a8a84, 0x1a1210]), shirt: pick([0xe0d8c8, 0xc8c0a8, 0x9aa0a8]), pants: pick([0x3a3430, 0x4a4034, 0x2c3440]), boots: 0x2a1c12,
+      hat: r() < 0.4 ? 'fedora' : null, hatC: pick([0x2a2420, 0x3a342c]), extras: ['vest'], vest: pick([0x2a2018, 0x3a2a2a, 0x1c1c22]), face: [pick(['moustache', 'beard', 'bigmoustache'])] };
+    case 'japanWoman': { const d = pick([0x3a4a6a, 0x6a5a48, 0x5a6a5a, 0x7a4a4a, 0x4a4a5a]);
+      return { skin: pick([0xe6c0a0, 0xdcb494, 0xe0b890]), hair: 0x0c0c0e, shirt: d, robe: d, sleeve: d, pants: d, hem: pick([0x2a2a3a, 0x8a3a2a, 0xc8b070]), accent: pick([0x8a2a22, 0xc8a84a, 0x2a4a3a]), boots: 0xe0d8c0, legR: 0.1,
+        hat: r() < 0.3 ? 'kasa' : null, hatC: 0xc8b070, face: ['bun'], lip: 0xa8483c, extras: ['kosode', 'obi'], scale: 0.93 }; }
+    case 'japanMan': return { skin: pick([0xd6a37c, 0xc89868, 0xd0a078]), hair: 0x0c0c0c, shirt: pick([0x4a5a6a, 0x6a5a40, 0x3a4a3a, 0x5a4a3a]), pants: pick([0x3a3a3a, 0x4a4438, 0x2a3040]), boots: 0xd8cfb8, legR: 0.1,
+      hat: r() < 0.6 ? 'kasa' : null, hatC: 0xc8b070, face: r() < 0.5 ? ['topknot'] : [], extras: ['kimono', 'obi'], accent: 0x2a2a2a, trim: 0xd8d0c0 };
+    case 'swissWoman': { const d = pick([0x7a2a22, 0x3a4a6a, 0x4a5a34, 0x6a4a2a, 0x5a3a4a]), b = pick([0x3a2a22, 0x2a3a2a, 0x4a2a2a, d]);
+      return { skin: pick([0xe0b48e, 0xe6c0a0, 0xd6a37c]), hair: pick([0xc8a050, 0x8a6a3a, 0x5a3a1c, 0xd8b860]), shirt: b, sleeve: 0xe6e0d0, pants: d, dress: d, hem: 0x2a2018, boots: 0x3a2818, hat: null, lip: 0xa8483c,
+        face: [r() < 0.5 ? 'kerchief' : 'plaits'], kerchief: pick([0xe6e0d0, 0x8a3a2a, 0xd8cdb0]), extras: ['dress', 'apron'], apron: pick([0xe6e0d0, 0x8a9ab0, 0xc8c0a8]), scale: 0.94 }; }
+    case 'swissMan': return { skin: pick(SKINS), hair: pick([0x5a3a1c, 0x8a6a3a, 0x3a2a1a, 0x9a9a90]), shirt: pick([0xcfc6ae, 0x8a7a5a, 0x6a5a40, 0x5a6a4a]), pants: pick([0x5a4a34, 0x4a4030, 0x3a3a34]), boots: 0x3a2818, bootTop: true,
+      hat: r() < 0.6 ? 'felt' : null, hatC: pick([0x6a5a40, 0x3a4a2a, 0x4a3a2a]), face: [r() < 0.5 ? 'longbeard' : 'beard'], extras: ['smock'], belt: 0x2a1c12 };
+    case 'greekWoman': { const d = pick([0xf0ece0, 0xe8d8a0, 0xd8b23a, 0x9ab0c8, 0xc86a4a, 0x8a5a8a, 0xe6e0d0]);
+      const sk = pick([0xd8a878, 0xc89868, 0xe0b48e]);
+      return { skin: sk, hair: pick([0x14100c, 0x2a1a10, 0x4a3018, 0x6a4424]), shirt: d, sleeve: sk, pants: sk, dress: d, hem: pick([0x2a4a8a, 0x8a1c1c, 0xc9a050, 0x2a2a2a]), boots: 0x8a6a3a, belt: 0xc9a050,
+        hat: null, face: ['bun', 'headband'], accent: pick([0xc9a050, 0xf0ece0, 0x8a1c1c]), lip: 0xa8483c, extras: r() < 0.35 ? ['dress', 'brooches', 'shawl'] : ['dress', 'brooches'], shawl: pick([0x8a5a8a, 0x2a4a8a, 0xc86a4a]), beads: 0xc9a050, scale: 0.94 }; }
+    case 'greekMan': { const sk = pick([0xc89868, 0xb8845c, 0xd8a878]);
+      return { skin: sk, hair: pick([0x14100c, 0x2a1a10, 0x9a9a90]), shirt: pick([0xf0ece0, 0xd8c8a0, 0x9ab0c8, 0xc86a4a]), sleeve: sk, pants: sk, boots: 0x8a6a3a, belt: 0x6a4a2a,
+        hat: r() < 0.3 ? 'pilos' : null, face: r() < 0.7 ? ['beard'] : [], extras: ['smock'] }; }
+    case 'norseWoman': { const d = pick([0x7a2a22, 0x2a4a6a, 0x3a5a3a, 0x8a6a2a, 0x5a3a5a, 0x4a4a52]), u = pick([0xd8ccb0, 0xe6e0d0, 0xb8c4d0]);
+      return { skin: pick([0xe6c8b0, 0xe0bca0, 0xecd0b8]), hair: pick([0xe0c878, 0xd8b860, 0xe8d498, 0xe0c878, 0xc8a050, 0xb8602c]), shirt: d, sleeve: u, pants: u, dress: d, hem: pick([0xc9a050, 0xe6e0d0, 0x8a1c1c]), boots: 0x3a2818, belt: 0x3a2818,
+        hat: null, face: [r() < 0.75 ? 'plaits' : 'longhair', 'headband'], accent: pick([0xc9a050, 0x8a1c1c, 0x2a4a6a]), tie: 0xc9a050, lip: 0xb86a5a, brooch: 0xb8862a, beads: pick([0x2a6a9a, 0xd08a2a, 0x8a1c1c]),
+        extras: r() < 0.4 ? ['dress', 'brooches', 'shawl'] : ['dress', 'brooches'], shawl: pick([0x5a4632, 0x7a7a76, 0x3a3028]), scale: 0.95 }; }
+    case 'norseMan': return { skin: pick([0xe0bca0, 0xdcae8c, 0xe6c8b0]), hair: pick([0xd8b860, 0xb8893a, 0x8a3a1c, 0x5a3a1c, 0xe0c878]), shirt: pick([0x5a6a4a, 0x7a3a2a, 0x3a4a6a, 0x8a7a52]), pants: pick([0x4a4034, 0x3a3a34, 0x4a3a2a]), boots: 0x3a2818,
+      bootTop: true, belt: 0x2a1c12, hat: null, face: r() < 0.6 ? ['longhair', 'beard'] : ['longbeard'], extras: r() < 0.4 ? ['smock', 'cape'] : ['smock'], cape: pick([0x5a4632, 0x3a4a3a, 0x4a4a52]) };
+    case 'frenchWoman': { const d = pick([0x3a4a6a, 0x5a5a5a, 0x6a3a3a, 0x4a4a3a, 0x3a3a44]);
+      return { skin: pick([0xe0b89a, 0xe6c0a0, 0xd6a88a]), hair: pick([0x2a1c12, 0x5a3a1c, 0x8a6a3a, 0x9a9a90]), shirt: d, sleeve: d, pants: d, dress: d, boots: 0x2a1c12, hat: null, lip: 0xa8483c,
+        face: [r() < 0.5 ? 'kerchief' : 'bun'], kerchief: pick([0x3a4a6a, 0xd8cdb0, 0x8a3a2a]), extras: r() < 0.6 ? ['dress', 'apron'] : ['dress', 'shawl'], apron: pick([0xd8d0c0, 0x8a9ab0]), bib: true, shawl: 0x3a3a3a, scale: 0.94 }; }
+    case 'frenchMan': return { skin: pick([0xe0b89a, 0xd6a88a]), hair: pick([0x2a1c12, 0x5a3a1c, 0x9a9a90]), shirt: pick([0xd8d0c0, 0xb8c0c8, 0xa8a090]), pants: pick([0x3a3a44, 0x4a4034, 0x33415c]), boots: 0x2a1c12,
+      hat: 'beret', hatC: pick([0x22222a, 0x3a2a22]), face: [pick(['moustache', 'bigmoustache', 'pipe'])], extras: ['vest'], vest: pick([0x2a2a30, 0x4a3a2a, 0x3a3a3a]) };
+    case 'cure': return { skin: 0xe0b89a, hair: 0x9a9a90, shirt: 0x15151a, sleeve: 0x15151a, pants: 0x15151a, boots: 0x0c0c0c, belt: 0x15151a, hat: null, face: ['glasses'], extras: ['robe'], robe: 0x15151a, sash: 0x15151a };
+    case 'russianWoman': { const d = pick([0x4a4a52, 0x5a4a3a, 0x3a4a5a, 0x5a3a3a]);
+      return { skin: pick([0xe6c8b0, 0xe0bca0]), hair: pick([0x8a6a3a, 0x5a3a1c, 0xc8a050, 0x9a9a90]), shirt: d, sleeve: d, pants: d, dress: pick([0x3a3a44, 0x4a3a30, 0x2a3a4a]), boots: pick([0x8a8478, 0x1a1410]), hat: null, lip: 0xa8483c,
+        face: ['kerchief'], kerchief: pick([0xb83a2a, 0xe6e0d0, 0x3a5a8a, 0xc8a84a]), extras: ['dress', 'coat'], coat: d, scale: 0.94 }; }
+    case 'russianMan': return { skin: pick([0xe0bca0, 0xdcae8c]), hair: pick([0x5a3a1c, 0x2a1c12, 0x9a9a90]), shirt: 0x4a4a52, pants: pick([0x2a2a30, 0x3a3a34]), boots: 0x14120f, bootTop: true, hat: 'ushanka', hatC: pick([0x3a3028, 0x4a4a52, 0x2a2420]),
+      face: r() < 0.5 ? ['moustache'] : [], extras: ['coat'], coat: pick([0x3a3a44, 0x4a4034, 0x2a3040]) };
+    case 'tibetWoman': case 'nepalWoman': { const d = pick([0x1c1c22, 0x2a1c18, 0x3a2420, 0x24242c]), b = pick([0xf0ece0, 0xe0a82a, 0xd85a8a, 0x3a9ac8, 0xb83a2a, 0x9a4ab0]), nep = type === 'nepalWoman';      // a dark sleeveless chuba over a bright blouse, the striped apron of a married woman
+      return { skin: nep ? pick([0xb8845c, 0xa87048, 0xc0875c]) : pick([0xc89468, 0xb8845c, 0xd0a078]), hair: 0x0c0c0c, shirt: d, sleeve: b, pants: d, dress: nep && r() < 0.4 ? pick([0x1c5a6a, 0x5a1c3a]) : d, hem: 0x15151a, boots: 0x4a2c14, belt: 0xe0c060, hat: null,
+        lip: 0xa8483c, face: [r() < 0.5 ? 'plaits' : 'longhair'], tie: 0x2ac8c0, collar: b, extras: ['dress', 'apron', 'collar'], apron: 0xd8d0c0, scale: 0.94,
+        stripes: pick([[0xb83a2a, 0x2a5a8a, 0xe0a82a, 0x3a7a4a, 0xd85a8a, 0x2a5a8a, 0xe0a82a, 0xb83a2a], [0x3a7a4a, 0xe0a82a, 0xb83a2a, 0x2a5a8a, 0xd8d0c0, 0xb83a2a, 0x3a7a4a, 0x9a4ab0], [0x2a5a8a, 0xd85a8a, 0xe0a82a, 0x15151a, 0xb83a2a, 0x3a7a4a, 0xe0a82a, 0x2a5a8a]]) }; }
+    case 'tibetMan': return { skin: pick([0xc0875c, 0xb07a52]), hair: 0x0c0c0c, shirt: 0xb82a22, sleeve: pick([0xb82a22, 0x6a1c22]), pants: pick([0x3a4a5a, 0x3a2a20]), boots: 0x4a2c14, bootTop: true,                                   // a Khampa: wine-red chuba, red shirt, a broad felt hat
+      hat: r() < 0.7 ? 'cowboy' : null, hatC: pick([0xb89a70, 0x8a7a6a, 0xd8c8a8]), hatBand: 0x3a2a20, face: r() < 0.4 ? ['longhair', 'moustache'] : ['longhair'], extras: ['chuba'], coat: pick([0x6a1c22, 0x5a1a24, 0x4a2a2a]), fur2: 0x4a1418, accent: pick([0xb01c1c, 0xd9a020]) };
+    case 'nun': return { skin: pick([0xc89468, 0xd0a078, 0xe0b890]), hair: null, shirt: pick([0xe0a82a, 0xb82a22, 0x7a1c22]), sleeve: 0x7a1c22, pants: 0x7a1c22, boots: 0x4a2c14, hat: null, lip: 0xa8483c, face: r() < 0.3 ? ['glasses'] : [],
+      extras: ['robe', 'shawl'], robe: pick([0x7a1c22, 0x8a2428]), sash: 0x7a1c22, shawl: 0x7a1c22, belt: 0x7a1c22, scale: 0.93 };
+    case 'mexicaWoman': { const s = pick([0xb07a50, 0xa87048, 0xb8845c]);
+      return { skin: s, hair: 0x0c0c0c, shirt: 0xf0e8d0, sleeve: s, pants: s, dress: pick([0xf0e8d0, 0xe8dcc0, 0xd8c8a0]), hem: pick([0xa02c20, 0x2a6a9a, 0x2ac8c0, 0xd9a820]), boots: s, belt: pick([0xa02c20, 0x2a6a9a]), hat: null, lip: 0x8a3a30,
+        face: [r() < 0.5 ? 'bun' : 'plaits'], extras: ['dress', 'smock'], scale: 0.93 }; }
+    case 'mexicaMan': { const s = pick([0xb07a50, 0xa87048, 0xb8845c]);
+      return { skin: s, hair: 0x0c0c0c, shirt: s, sleeve: s, pants: s, boots: s, belt: 0xf0e8d0, hat: null, face: [], extras: ['kilt', 'cape'], kilt: 0xf0e8d0, kilt2: pick([0xa02c20, 0x2a6a9a]), cape: pick([0xf0e8d0, 0xd8c8a0, 0xe8dcc0]) }; }
   }
   return {};
 }

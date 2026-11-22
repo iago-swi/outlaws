@@ -6,6 +6,7 @@ import '@fontsource/im-fell-english';
 import '@fontsource/im-fell-english/400-italic.css';
 import '@fontsource/cinzel';
 import * as THREE from 'three';
+import * as K from './props.js';
 import { Gfx } from './gfx.js';
 import { Sound } from './audio.js';
 import { makeMaterials } from './tex.js';
@@ -27,6 +28,29 @@ import { aztec } from './levels/aztec.js';
 
 const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet, aztec];
 const $ = (s) => document.querySelector(s);
+const MAX_FOES = 30;
+/**
+ * A chapter never fields more than 30 enemies. Where a level lists more (or the player asks for fewer), the surplus is taken away one at a
+ * time: never the boss, a kind of which only two are left as late as possible (variety comes first), and otherwise the one who stands closest
+ * to a comrade, of the commonest kind, and is not posted on a perch. So crowds are thinned and the lone guards of far places stay.
+ */
+function capFoes(list, max = MAX_FOES) {
+  const keep = list.slice();
+  let floor = 2;                                            // how many of a kind are left alone; it gives way only when nothing else can go
+  while (keep.length > max) {
+    const count = {}; for (const [t] of keep) count[t] = (count[t] || 0) + 1;
+    let best = -1, low = Infinity;
+    keep.forEach(([t, x, z, o], i) => {
+      if (TYPES[t].boss || count[t] <= floor) return;
+      let near = Infinity; keep.forEach(([, x2, z2], j) => { if (j !== i) near = Math.min(near, Math.hypot(x - x2, z - z2)); });
+      const score = near - count[t] * 1.5 + (o && o.static ? 6 : 0);
+      if (score < low) { low = score; best = i; }
+    });
+    if (best < 0) { if (floor-- > 0) continue; break; }
+    keep.splice(best, 1);
+  }
+  return keep;
+}
 const params = new URLSearchParams(location.search);
 const GFX_KEY = 'lonehand-graphics', GFX_NAMES = { auto: 'Automatic', high: 'High', medium: 'Medium', low: 'Low' }, GFX_ORDER = ['high', 'medium', 'low'];
 
@@ -43,7 +67,7 @@ class Game {
     this.player = new Player(this);
     this.shots = new Shots(this);
     this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0; this.practice = false; this.typed = '';
-    this.foeWant = params.has('foes') ? +params.get('foes') || 0 : 0;   // how many enemies a chapter holds: 0 = all of them
+    this.foeWant = params.has('foes') ? +params.get('foes') || 0 : params.has('check') ? 0 : 15;   // how many enemies a chapter holds: 15 unless chosen otherwise on the hero screen; 0 = all of them
     { let w = params.get('gfx'); if (!w) try { w = localStorage.getItem(GFX_KEY); } catch (e) { /* no storage: the default */ } this.gfxWant = GFX_NAMES[w] ? w : 'auto'; }
     this.gfx.setQuality(this.gfxWant === 'auto' ? 'high' : this.gfxWant);
     this.time = 0; this.noise = 0; this.state = 'boot'; this.index = 0; this.timeScale = 1; this.slow = 0;
@@ -170,6 +194,7 @@ class Game {
     this.world = new World(); this.rand = rng(4242 + i * 977);
     const B = new Builder(this.world);
     const L = (this.level = def.build({ game: this, gfx: this.gfx, world: this.world, B, M: this.M, root: this.gfx.root, rand: this.rand, shared: this.gfx.shared }));
+    L.enemies = capFoes(L.enemies);
     B.build(this.gfx.root);
     if (backdrop) this.nav = null;                         // the title screen only shows the world; nobody has to find a way
     else { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
@@ -191,12 +216,10 @@ class Game {
     this.autoPrev = null; this.autoLock = false;                 // a new place: automatic graphics may judge again (it keeps the level it reached)
   }
 
-  /** The chapter's enemies as chosen on the hero screen: all of them, or that many spread evenly over the map. The boss always stays. */
+  /** The chapter's enemies as chosen on the hero screen: that many of them, thinned the same way as the cap (crowds first, every kind kept as long as possible, the boss always). */
   foeList(list) {
-    const n = Math.round(this.foeWant); if (!n || n >= list.length) return list;
-    const boss = list.filter(([t]) => TYPES[t].boss), rest = list.filter(([t]) => !TYPES[t].boss), m = Math.max(0, n - boss.length), keep = new Set(boss);
-    for (let i = 0; i < m; i++) keep.add(rest[Math.floor((i + 0.5) * rest.length / m)]);
-    return list.filter((e) => keep.has(e));
+    const n = Math.round(this.foeWant);
+    return !n || n >= list.length ? list : capFoes(list, n);
   }
   /** Put the enemies into the loaded chapter (again, when the number is changed on the hero screen). */
   spawnEnemies() {
@@ -251,9 +274,8 @@ class Game {
         + (c.foes ? (c.foes > 1 ? ` ${['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][c.foes - 2]} of the chapter’s enemies are still about, and they attack you both.` : ' One of the chapter’s enemies is still about, and attacks you both.') : '') + ' The larger dot on the compass is your opponent.';
     }
     $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
-    { const all = this.level.enemies.length, sel = $('#foesel'), want = Math.round(this.foeWant);       // the list offers 10 to 30, as far as the chapter has that many
-      let h = `<option value="0">All (${all})</option>`; for (let k = 10; k <= 30 && k < all; k++) h += `<option value="${k}">${k}</option>`;
-      sel.innerHTML = h; sel.value = want >= 10 && want <= 30 && want < all ? want : 0; }
+    { const all = this.level.enemies.length, sel = $('#foesel'), want = Math.round(this.foeWant), steps = [5, 10, 15, 20, 25, 30].filter((k) => k < all).concat(all);       // the list offers 5 to 30 in steps of five, as far as the chapter has that many
+      sel.innerHTML = steps.map((k) => `<option value="${k}">${k}</option>`).join(''); sel.value = steps.includes(want) ? want : all; }
     $('#heroes').classList.toggle('many', !!duel); $('#heroes').classList.toggle('lots', !!duel && this.roster().length > 7);
     $('#intro').classList.toggle('duelpick', !!duel);
     const STAR = '<path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.3 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z"/>';
@@ -586,6 +608,32 @@ class Game {
     this.player.vm.visible = false; if (this.hero) this.hero.visible = true;
   }
 
+  /** Debug (?kit): every shared piece of furniture and every bystander look in three rows beside the place where the player starts. */
+  kitDemo() {
+    const W = this.world, B = new Builder(W), M = this.M, root = this.gfx.root, P = this.player.pos, x0 = P.x - 14, z0 = P.z, y = W.height(P.x, P.z);
+    const looks = ['westWoman', 'westMan', 'japanWoman', 'japanMan', 'swissWoman', 'swissMan', 'greekWoman', 'greekMan', 'norseWoman', 'norseMan', 'frenchWoman', 'frenchMan', 'cure', 'russianWoman', 'russianMan', 'tibetWoman', 'nepalWoman', 'tibetMan', 'nun', 'monk', 'mexicaWoman', 'mexicaMan'];
+    looks.forEach((k, i) => { K.person(B, M, root, k, x0 + i * 1.25, y, z0 - 4, 0); K.person(B, M, root, k, x0 + i * 1.25, y, z0 - 6.5, 0.5, { pose: ['talk', 'carry', 'work', 'pray', 'point', 'hips', 'cheer'][i % 7] }); });
+    let x = x0;
+    K.table(B, M, x, y, z0 - 9); K.bench(B, M, x, y, z0 - 8.2); K.person(B, M, root, 'westWoman', x - 0.4, y, z0 - 8.2, 0, { pose: 'sit', seat: 0.45 }); K.person(B, M, root, 'norseMan', x + 1.6, y, z0 - 8.4, 0, { pose: 'sit', seat: 0 }); x += 3.4;
+    K.bed(B, M, x, y, z0 - 9); K.person(B, M, root, 'tibetWoman', x, y, z0 - 9, 0, { pose: 'lie', seat: 0.45 }); x += 2;
+    K.chest(B, M, x, y, z0 - 9); x += 1.8; K.pots(B, M, x, y, z0 - 9); x += 1.6; K.pots(B, M, x, y, z0 - 9, { n: 2, s: 2.6 }); x += 2.4;
+    K.sacks(B, M, x, y, z0 - 9); x += 2.6; K.rug(B, M, x, y, z0 - 9); K.hearth(B, M, x, y, z0 - 9, { pot: true }); x += 3;
+    K.cart(B, M, x, y, z0 - 9.5, 0.3, { load: 'hay' }); x += 4; K.stall(B, M, x, y, z0 - 9.5); x += 4;
+    K.deck(B, M, x, y, z0 - 10, 0, { rails: 'nw', steps: 'e', ladder: 's' }); x += 6.5; K.crawlway(B, M, x, y, z0 - 10, 1.57); x += 4; K.woodpile(B, M, x, y, z0 - 9.5); x += 3.2; K.haystack(B, M, x, y, z0 - 9.5);
+    B.build(root);
+  }
+
+  /** Debug (?check): can every enemy that walks find a way to where the player starts, and can the places listed in &reach=x,z,y;x,z,y be reached on foot from there? The answer is written into the page. */
+  selfCheck() {
+    const kinds = {}; for (const e of this.enemies) kinds[e.type] = (kinds[e.type] || 0) + 1;
+    const P = this.player.pos, nav = this.nav, out = { level: this.def.id, kinds, bounds: this.world.bounds, spawn: [+P.x.toFixed(1), +P.y.toFixed(1), +P.z.toFixed(1)], enemies: this.enemies.length, boxes: this.world.boxes.length, cyls: this.world.cyls.length, ladders: this.world.ladders.length, navMs: Math.round(this.navMs || 0), noRoute: [], reach: [] };
+    if (nav) {
+      for (const e of this.enemies) { if (e.static) continue; if (!nav.path(e.pos.x, e.pos.z, P.x, P.z, 60000, e.pos.y, P.y)) out.noRoute.push([e.type, +e.pos.x.toFixed(1), +e.pos.z.toFixed(1), +e.pos.y.toFixed(1)]); }
+      for (const q of (params.get('reach') || '').split(';').filter(Boolean)) { const [x, z, y] = q.split(',').map(Number), yy = y ?? this.world.groundAt(x, z, 200); out.reach.push([x, z, +(+yy).toFixed(1), !!nav.path(P.x, P.z, x, z, 60000, P.y, yy)]); }
+    }
+    const el = document.createElement('pre'); el.id = 'check'; el.textContent = 'CHECK ' + JSON.stringify(out) + ' ENDCHECK'; document.body.appendChild(el);
+  }
+
   async start() {
     await Promise.all(['48px Rye', '48px "Pirata One"', '48px "IM Fell English"', '48px Cinzel'].map((f) => document.fonts.load(f).catch(() => {})));
     const lv = params.has('level') ? clamp(+params.get('level') - 1, 0, LEVELS.length - 1) : params.has('title') ? clamp(+params.get('title') - 1, 0, LEVELS.length - 1) : this.randomChapter();
@@ -594,6 +642,10 @@ class Game {
     else this.setState('title');
     if (params.has('duel')) { this.openDuel(); $('#dcodein').value = params.get('duel').toUpperCase(); this.duelJoin(params.get('duel')); }   // opened from an invite link
     $('#load').classList.add('off'); $('#load').classList.remove('on');
+    if (params.has('cam')) { const v = params.get('cam').split(',').map(Number); this.shot(v[0], v[1], v[2], v[3] || 0, v[4] || 0, v[5] || 72);
+      const st = document.createElement('style'); st.textContent = '*{transition:none!important;animation:none!important}#load{display:none!important}'; document.head.appendChild(st); this.gfx.fade = this.gfx.fadeTarget = 1; }   // debug: a still picture from a given place
+    if (params.has('kit')) this.kitDemo();
+    if (params.has('check')) this.selfCheck();
     this.frame(performance.now());
   }
 }

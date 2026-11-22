@@ -1,7 +1,7 @@
 // Props shared by the levels: instancing helper, fences, barrels, plants.
 import * as THREE from 'three';
 import { xf, merge, paint, rockGeo } from './build.js';
-import { gBox, gCyl, gSph, gCone, gCap } from './actors.js';
+import { gBox, gCyl, gSph, gCone, gCap, makeHumanoid, lookFor } from './actors.js';
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _c = new THREE.Color();
 
@@ -499,4 +499,205 @@ export function boulder(B, M, x, y, z, o = {}) {
     for (const sd of [-1, 1]) B.box(M.metal, 0.07, 0.25, 0.1, bx - Math.sin(a) * sd * 0.9, ya - 0.07, bz + Math.cos(a) * sd * 0.9, { ry, c: IR });
   }
   return { top: T };
+}
+
+// ---------------------------------------------------------------------------
+// Furniture, stores and people: what fills the insides of buildings and the life around them.
+// In all of these (x, z) is the centre, y the floor under it (inside a `room` the floor lies 0.06 above the room's y),
+// ry the turn, and "local +Z" the front. Sizes are in metres.
+
+/** Local frame of a thing standing at (x, z) and turned by ry: P(lx, lz) -> [worldX, worldZ]. The same frame as `room`. */
+export const local = (x, z, ry = 0) => { const cs = Math.cos(ry), sn = Math.sin(ry); return (lx, lz) => [x + lx * cs + lz * sn, z - lx * sn + lz * cs]; };
+
+/** A table: a top on four legs. o: { w, d, h, c, top (colour of the top), solid (false = no collider) }. Returns the height of its top. */
+export function table(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 1.6, d = 0.8, h = 0.78, c = 0x6a4a2e, solid = true } = o, P = local(x, z, ry);
+  B.box(M.woodH, w, 0.07, d, x, y + h - 0.07, z, { ry, c: o.top ?? c });
+  for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = P(a * (w / 2 - 0.08), b * (d / 2 - 0.08)); B.box(M.wood, 0.08, h - 0.07, 0.08, px, y, pz, { ry, c }); }
+  if (solid) B.world.addBox(x, z, w, d, ry, y, y + h);
+  return y + h;
+}
+
+/** A bench or a stool (w about 0.4). o: { w, d, h, c, back (height of a back rest, on the local -Z side) } */
+export function bench(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 1.6, d = 0.36, h = 0.45, c = 0x6a4a2e, back = 0 } = o, P = local(x, z, ry);
+  B.box(M.woodH, w, 0.06, d, x, y + h - 0.06, z, { ry, c });
+  for (const a of w > 0.7 ? [-1, 1] : [0]) { const [px, pz] = P(a * (w / 2 - 0.12), 0); B.box(M.wood, w > 0.7 ? 0.07 : w * 0.6, h - 0.06, d - 0.08, px, y, pz, { ry, c }); }
+  if (back) { const [px, pz] = P(0, -d / 2 + 0.03); B.box(M.woodH, w, back, 0.05, px, y + h, pz, { ry, c }); }
+  B.world.addBox(x, z, w, d, ry, y, y + h);
+}
+
+/** A bed: frame, mattress, blanket and pillow; the head is on the local -Z side. o: { w, l, h, c, blanket, pillow, head (height of a headboard, 0 = none) } */
+export function bed(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 0.95, l = 2.0, h = 0.45, c = 0x5a4028, blanket = 0x8a3a2a, pillow = 0xe6e0d0, head = 0.45 } = o, P = local(x, z, ry);
+  B.box(M.woodH, w, h - 0.14, l, x, y, z, { ry, c }); B.box(M.cloth, w - 0.06, 0.14, l - 0.08, x, y + h - 0.14, z, { ry, c: 0xd8d0c0 });
+  { const [px, pz] = P(0, l * 0.17); B.box(M.cloth, w - 0.02, 0.05, l * 0.62, px, y + h, pz, { ry, c: blanket }); }
+  { const [px, pz] = P(0, -l / 2 + 0.26); B.box(M.cloth, w * 0.62, 0.1, 0.3, px, y + h, pz, { ry, c: pillow }); }
+  if (head) { const [px, pz] = P(0, -l / 2 + 0.03); B.box(M.woodH, w, h + head, 0.06, px, y, pz, { ry, c }); }
+  B.world.addBox(x, z, w, l, ry, y, y + h);
+}
+
+/** A chest with a lid and two iron bands. o: { w, h, d, c, band } */
+export function chest(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 1.0, h = 0.6, d = 0.55, c = 0x5a4028, band = 0x2a2a2e } = o, P = local(x, z, ry);
+  B.box(M.woodH, w, h * 0.7, d, x, y, z, { ry, c, solid: true }); B.box(M.woodH, w + 0.04, h * 0.3, d + 0.04, x, y + h * 0.7, z, { ry, c });
+  for (const a of [-1, 1]) { const [px, pz] = P(a * w * 0.3, 0); B.box(M.metal, 0.06, h + 0.01, d + 0.06, px, y, pz, { ry, c: band }); }
+  { const [px, pz] = P(0, d / 2 + 0.03); B.box(M.metal, 0.09, 0.12, 0.03, px, y + h * 0.58, pz, { ry, c: band }); }
+}
+
+/** A cluster of jars or pots. o: { n, s (size: 1 = knee-high, 2.6 = a man-high store jar), c: [colours], spread, solid } */
+export function pots(B, M, x, y, z, o = {}) {
+  const { n = 4, s = 1, c = [0xb0683c, 0x9a5a34, 0xc07a48], spread = 0.5 * s + 0.15, solid = true } = o;
+  for (let i = 0; i < n; i++) {
+    const a = i * 2.4, r = i ? spread * (0.6 + (i % 3) * 0.25) : 0, k = s * (0.8 + (i % 3) * 0.2), px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r, col = c[i % c.length];
+    B.cyl(M.flat, 0.2 * k, 0.11 * k, 0.34 * k, px, y, pz, { c: col, seg: 9 }); B.cyl(M.flat, 0.09 * k, 0.2 * k, 0.16 * k, px, y + 0.34 * k, pz, { c: col, seg: 9 }); B.cyl(M.flat, 0.11 * k, 0.09 * k, 0.05 * k, px, y + 0.5 * k, pz, { c: col, seg: 9 });
+    if (solid) B.world.addCyl(px, pz, 0.2 * k, y - 0.5, y + 0.55 * k);
+  }
+}
+
+/** A heap of sacks, two layers deep: the lower layer is a step, the upper one cover to crouch behind. o: { c, w (length of the heap) } */
+export function sacks(B, M, x, y, z, ry = 0, o = {}) {
+  const { c = 0xb8a47c, w = 1.8 } = o, P = local(x, z, ry), n = Math.max(2, Math.round(w / 0.6));
+  const sack = (lx, yy, lz, turn, col) => { const [px, pz] = P(lx, lz); B.geo(M.cloth, new THREE.CapsuleGeometry(0.21, 0.36, 3, 8), [px, yy + 0.19, pz], [Math.PI / 2, 0, -(ry + turn)], [1.2, 1, 0.82], col); };
+  for (let i = 0; i < n; i++) { sack(-w / 2 + (i + 0.5) * w / n, y, -0.2, 0.08 * (i % 3 - 1), c); sack(-w / 2 + (i + 0.5) * w / n, y, 0.48, 0.1 * ((i + 1) % 3 - 1), i % 2 ? c : 0xa8946c); }
+  for (let i = 0; i < n - 1; i++) sack(-w / 2 + (i + 1) * w / n, y + 0.36, -0.14, 0.12 * (i % 2 ? 1 : -1), i % 2 ? 0xa8946c : c);
+  B.world.addBox(x, z, w, 1.45, ry, y - 0.3, y + 0.4); { const [px, pz] = P(0, -0.18); B.world.addBox(px, pz, w - 0.5, 0.75, ry, y, y + 0.78); }
+}
+
+/** A rug or a mat on the floor (no collider). o: { w, d, c, border } */
+export function rug(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 2, d = 1.3, c = 0x8a3a2a, border = 0x3a2a22 } = o;
+  B.box(M.cloth, w, 0.02, d, x, y + 0.004, z, { ry, c: border }); B.box(M.cloth, w - 0.24, 0.02, d - 0.24, x, y + 0.012, z, { ry, c });
+}
+
+/** An open hearth: a ring of stones, logs, a flame. o: { r, stones (colour), pot (true = a cooking pot on a tripod) }. Returns the flame position [x, y, z] (for sparks or a light). */
+export function hearth(B, M, x, y, z, o = {}) {
+  const { r = 0.55, stones = 0x6a6a66 } = o;
+  for (let i = 0; i < 8; i++) { const a = i * 0.785; B.geo(M.rock, rockGeo(i + 3, 0), [x + Math.cos(a) * r, y + 0.08, z + Math.sin(a) * r], [0, a, 0], [0.2, 0.14, 0.16], stones); }
+  for (let i = 0; i < 3; i++) B.geo(M.wood, new THREE.CylinderGeometry(0.05, 0.06, r * 1.5, 6), [x, y + 0.08 + i * 0.03, z], [Math.PI / 2, 0, i * 1.05], 1, 0x2a1c14);
+  B.geo(M.glow, new THREE.ConeGeometry(r * 0.34, r * 0.9, 6), [x, y + 0.14 + r * 0.45, z], [0, 0, 0], 1, 0xff7a20);
+  if (o.pot) { for (let i = 0; i < 3; i++) B.cyl(M.metal, 0.02, 0.02, 1.25, x + Math.cos(i * 2.09) * r * 0.9, y, z + Math.sin(i * 2.09) * r * 0.9, { c: 0x2a2a2e, seg: 5, rz: Math.cos(i * 2.09) * 0.36, rx: Math.sin(i * 2.09) * -0.36 });
+    B.cyl(M.metal, 0.24, 0.17, 0.26, x, y + 0.62, z, { c: 0x26262a, seg: 10 }); }
+  B.world.addCyl(x, z, r + 0.1, y - 0.5, y + 0.3);
+  return [x, y + 0.35, z];
+}
+
+/**
+ * A wagon you can crawl under: its bed lies `clear` (default 1.2 m) above the ground, on four wheels; the wheels are thin colliders.
+ * It runs along local Z (the shafts point to +Z). o: { w, l, clear, c, wheel, load: 'hay' | 'crates' | 'barrels' | null, shafts (false = none) }
+ */
+export function cart(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 1.7, l = 3.2, clear = 1.2, c = 0x6a4a2e, wheel = 0x3a2a1e, load = null, shafts = true } = o, P = local(x, z, ry), R = clear - 0.42, top = y + clear + 0.14;
+  B.box(M.woodH, w, 0.14, l, x, y + clear, z, { ry, c, solid: true });
+  for (const a of [-1, 1]) { const [px, pz] = P(a * (w / 2 - 0.04), 0); B.box(M.wood, 0.07, 0.42, l, px, top, pz, { ry, c, solid: true }); }
+  for (const b of [-1, 1]) { const [px, pz] = P(0, b * (l / 2 - 0.04)); B.box(M.wood, w, 0.42, 0.07, px, top, pz, { ry, c, solid: b < 0 }); }
+  for (const b of [-1, 1]) { const [ax, az] = P(0, b * (l / 2 - 0.75)); B.geo(M.wood, new THREE.CylinderGeometry(0.06, 0.06, w + 0.5, 6), [ax, y + R, az], [Math.PI / 2, 0, -(ry + Math.PI / 2)], 1, wheel); B.box(M.wood, w * 0.7, clear - R - 0.02, 0.16, ax, y + R, az, { ry, c: wheel });
+    for (const a of [-1, 1]) { const [px, pz] = P(a * (w / 2 + 0.16), b * (l / 2 - 0.75)); B.geo(M.wood, new THREE.CylinderGeometry(R, R, 0.1, 14), [px, y + R, pz], [Math.PI / 2, 0, -(ry + Math.PI / 2)], 1, wheel);
+      B.geo(M.metal, new THREE.CylinderGeometry(0.1, 0.1, 0.16, 8), [px, y + R, pz], [Math.PI / 2, 0, -(ry + Math.PI / 2)], 1, 0x2a2a2e); B.world.addBox(px, pz, 0.14, R * 1.7, ry, y - 0.5, y + R * 2); } }
+  if (shafts) for (const a of [-1, 1]) { const [px, pz] = P(a * 0.45, l / 2 + 1.0); B.geo(M.wood, new THREE.CylinderGeometry(0.04, 0.05, 2.2, 6), [px, y + clear * 0.62, pz], [Math.PI / 2 + 0.36, 0, -ry], 1, wheel); }
+  if (load === 'hay') { B.geo(M.thatch, new THREE.SphereGeometry(1, 10, 6), [x, top + 0.2, z], [0, ry, 0], [w * 0.52, 0.75, l * 0.5], 0xc8a850); B.world.addBox(x, z, w - 0.2, l - 0.2, ry, top, top + 0.8); }
+  if (load === 'crates') for (const [lx, lz, sz] of [[-0.35, -0.8, 0.8], [0.4, -0.75, 0.7], [0, 0.2, 0.9], [-0.3, 1.0, 0.6]]) { const [px, pz] = P(lx, lz); crate(B, M, px, top, pz, sz, ry + lx); }
+  if (load === 'barrels') for (const [lx, lz] of [[-0.4, -0.9], [0.4, -0.9], [-0.4, 0], [0.4, 0], [0, 0.9]]) { const [px, pz] = P(lx, lz); barrel(B, M, px, top, pz); }
+  return { top };
+}
+
+/**
+ * A raised wooden floor on posts, open underneath: a porch, a pier, a loft, a scaffold, a fighting step behind a wall. With h = 1.3 the player can
+ * crouch under it; enemies cannot. o: { w, d, h, c, post, mat, rails: 'nsew' (sides that get a rail 1 m high), rail (its height),
+ * ladder: 'n'|'s'|'e'|'w' (a ladder on that side: the player only), steps: 'n'|'s'|'e'|'w' (a flight of stairs on that side: enemies can follow),
+ * at (where along that side the ladder or stairs stand, default the middle), stepW (width of the stairs) }. Returns P (the local frame) with P.top.
+ */
+export function deck(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 4, d = 3, h = 1.3, c = 0x7a5a3a, post = 0x5a4028, mat = M.woodH, rails = '', rail = 1.0, at = 0, stepW = 1.6 } = o, P = local(x, z, ry), cs = Math.cos(ry), sn = Math.sin(ry);
+  B.box(mat, w, 0.16, d, x, y + h - 0.16, z, { ry, c, solid: true });
+  const nx = Math.max(2, Math.round(w / 2.6) + 1), nz = Math.max(2, Math.round(d / 2.6) + 1);
+  for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { if (i > 0 && i < nx - 1 && j > 0 && j < nz - 1) continue;
+    const [px, pz] = P(-w / 2 + 0.12 + i * (w - 0.24) / (nx - 1), -d / 2 + 0.12 + j * (d - 0.24) / (nz - 1)); B.box(M.wood, 0.16, h + 0.3, 0.16, px, y - 0.3, pz, { ry, c: post }); B.world.addCyl(px, pz, 0.1, y - 1, y + h - 0.16); }
+  const side = { s: [0, d / 2, w, sn, cs, ry], n: [0, -d / 2, w, -sn, -cs, ry + Math.PI], e: [w / 2, 0, d, cs, -sn, ry + Math.PI / 2], w: [-w / 2, 0, d, -cs, sn, ry - Math.PI / 2] };
+  for (const k of rails) { const [lx, lz, len] = side[k], ns = k === 'n' || k === 's', [px, pz] = P(lx * (1 - 0.06 / (w / 2 || 1)), lz * (1 - 0.06 / (d / 2 || 1)));
+    B.box(M.woodH, ns ? len : 0.08, 0.08, ns ? 0.08 : len, px, y + h + rail - 0.08, pz, { ry, c: post }); B.box(M.woodH, ns ? len : 0.06, 0.06, ns ? 0.06 : len, px, y + h + rail * 0.5, pz, { ry, c: post });
+    for (let i = 0; i <= Math.round(len / 1.3); i++) { const t = -len / 2 + 0.05 + i * (len - 0.1) / Math.round(len / 1.3), [qx, qz] = ns ? P(t, lz * (1 - 0.06 / (d / 2))) : P(lx * (1 - 0.06 / (w / 2)), t); B.box(M.wood, 0.08, rail, 0.08, qx, y + h, qz, { ry, c: post }); }
+    B.world.addBox(px, pz, ns ? len : 0.12, ns ? 0.12 : len, ry, y + h, y + h + rail); }
+  const edge = (k) => { const [lx, lz, , ex, ez, sry] = side[k], ns = k === 'n' || k === 's', [px, pz] = ns ? P(at, lz) : P(lx, at); return [px, pz, ex, ez, sry]; };
+  if (o.ladder) { const [px, pz, ex, ez] = edge(o.ladder); ladder(B, M, px, pz, ex, ez, y, y + h, { c: post }); }
+  if (o.steps) { const [px, pz, , , sry] = edge(o.steps), n = Math.ceil(h / 0.32); steps(B, M, px, pz, sry, y + h, n, { w: stepW, rise: h / n, run: 0.42, mat: M.woodH, c }); }
+  P.top = y + h;
+  return P;
+}
+
+/** A market stall: a counter under a cloth roof on four poles, goods on the counter; behind the counter there is room to hide. o: { w, d, h, c, cloth, cloth2, goods: [colours] | false } */
+export function stall(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 3, d = 2.2, h = 2.3, c = 0x6a4a2e, cloth = 0xb83a2a, cloth2 = 0xe6dcc0, goods = [0xb83a2a, 0xd8b23a, 0x5a8a3a, 0xc86a2a, 0x8a5a8a] } = o, P = local(x, z, ry), n = Math.max(2, Math.round(w / 0.5));
+  { const [px, pz] = P(0, d / 2 - 0.3); B.box(M.woodH, w, 0.9, 0.6, px, y, pz, { ry, c, solid: true }); }
+  for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const [px, pz] = P(a * (w / 2 - 0.06), b * (d / 2 - 0.06)); B.box(M.wood, 0.1, h, 0.1, px, y, pz, { ry, c }); B.world.addCyl(px, pz, 0.08, y - 0.5, y + h); }
+  for (let i = 0; i < n; i++) { const [px, pz] = P(-w / 2 - 0.15 + (i + 0.5) * (w + 0.3) / n, 0); B.box(M.cloth, (w + 0.3) / n, 0.04, d + 0.5, px, y + h, pz, { ry, c: i % 2 ? cloth2 : cloth }); }
+  { const [px, pz] = P(0, d / 2 + 0.24); B.box(M.cloth, w + 0.3, 0.3, 0.03, px, y + h - 0.3, pz, { ry, c: cloth }); }
+  if (goods) for (let i = 0; i < Math.floor(w / 0.42); i++) { const [px, pz] = P(-w / 2 + 0.3 + i * 0.42, d / 2 - 0.3 + (i % 2 ? 0.1 : -0.08)), col = goods[i % goods.length];
+    if (i % 3 === 0) B.box(M.flat, 0.3, 0.14, 0.3, px, y + 0.9, pz, { ry: ry + i, c: col }); else if (i % 3 === 1) B.geo(M.flat, new THREE.SphereGeometry(0.13, 7, 5), [px, y + 1.0, pz], [0, 0, 0], [1, 0.8, 1], col); else B.cyl(M.flat, 0.1, 0.13, 0.24, px, y + 0.9, pz, { c: col, seg: 8 }); }
+}
+
+/** A low passage that can only be crawled through: two walls and a roof, open at both ends, running along local Z. Its roof can be walked on. o: { len, w, h (clear height, 1.2), t, mat, c, top (thickness of the roof) } */
+export function crawlway(B, M, x, y, z, ry = 0, o = {}) {
+  const { len = 4, w = 1.3, h = 1.2, t = 0.3, mat = M.stone, c = 0x8a8478, top = 0.3 } = o, P = local(x, z, ry);
+  for (const a of [-1, 1]) { const [px, pz] = P(a * (w / 2 + t / 2), 0); B.box(mat, t, h + 0.5, len, px, y - 0.5, pz, { ry, c, solid: true }); }
+  B.box(mat, w + 2 * t, top, len, x, y + h, z, { ry, c, solid: true });
+}
+
+/** A stack of firewood or timber: cover as high as h, logs lying along local Z. o: { w, h, d, c } */
+export function woodpile(B, M, x, y, z, ry = 0, o = {}) {
+  const { w = 2.4, h = 1.1, d = 0.9, c = 0x7a5a3a } = o, P = local(x, z, ry), r = 0.13, cols = Math.max(2, Math.floor(w / (r * 2))), rows = Math.max(1, Math.floor(h / (r * 1.75)));
+  for (let k = 0; k < rows; k++) for (let i = 0; i < cols - (k % 2); i++) { const [px, pz] = P(-w / 2 + r + (i + (k % 2) * 0.5) * (w - 2 * r) / (cols - 1), 0);
+    B.geo(M.wood, new THREE.CylinderGeometry(r, r, d, 6), [px, y + r + k * r * 1.75, pz], [Math.PI / 2, 0, -ry], 1, (i + k) % 3 ? c : 0x8a6a48); }
+  for (const a of [-1, 1]) { const [px, pz] = P(a * (w / 2 + 0.05), 0); B.box(M.wood, 0.1, h + 0.2, 0.1, px, y, pz, { ry, c: 0x4a3420 }); }
+  B.world.addBox(x, z, w + 0.1, d, ry, y - 0.3, y + rows * r * 1.75 + 0.05);
+}
+
+/** A haystack. o: { r, h, c } */
+export function haystack(B, M, x, y, z, o = {}) {
+  const { r = 1.5, h = 2.3, c = 0xc8a850 } = o;
+  B.cyl(M.thatch, r * 0.86, r, h * 0.45, x, y - 0.1, z, { c, seg: 12 }); B.geo(M.thatch, new THREE.ConeGeometry(r * 0.92, h * 0.65, 12), [x, y + h * 0.45 - 0.1 + h * 0.325, z], [0, 0, 0], 1, c);
+  B.world.addCyl(x, z, r * 0.88, y - 1, y + h * 0.8);
+}
+
+const POSES = {
+  stand: () => {},
+  talk: (f) => { f.armR.rotation.x = -1.1; f.armR.rotation.z = 0.3; f.armL.rotation.x = -0.25; },
+  point: (f) => { f.armR.rotation.x = -1.5; f.armL.rotation.x = 0.1; },
+  carry: (f) => { f.armR.rotation.x = -1.2; f.armL.rotation.x = -1.2; f.armR.rotation.z = 0.25; f.armL.rotation.z = -0.25; },
+  work: (f) => { f.hips.rotation.x = 0.5; f.armR.rotation.x = -0.9; f.armL.rotation.x = -0.6; },
+  pray: (f) => { f.hips.rotation.x = 0.16; f.armR.rotation.x = -1.3; f.armL.rotation.x = -1.3; f.armR.rotation.z = 0.5; f.armL.rotation.z = -0.5; },
+  cheer: (f) => { f.armR.rotation.x = -2.8; f.armL.rotation.x = -2.8; f.armR.rotation.z = -0.3; f.armL.rotation.z = 0.3; },
+  hips: (f) => { f.armR.rotation.z = -0.5; f.armL.rotation.z = 0.5; f.armR.rotation.x = 0.2; f.armL.rotation.x = 0.2; },
+};
+
+/**
+ * Somebody who takes no part in the fight. look = a name known to `lookFor` in actors.js (for instance 'westWoman', 'norseWoman', 'monk').
+ * o: { pose: 'stand' | 'talk' | 'point' | 'carry' | 'work' | 'pray' | 'cheer' | 'hips' | 'sit' | 'lie', or a function (f) => {...} that turns the joints
+ *      (f.hips, f.armL, f.armR, f.legL, f.legR; negative rotation.x lifts a limb forward, positive hips.rotation.x bows),
+ *      seat: height of what the figure sits or lies on (pose 'sit': 0 = on the ground, 0.45 = a bench; pose 'lie': the top of the bed),
+ *      over: { ... } changes to the look (colours, hat: null, weapon: null ...), rand: a random function (default: the same sequence every time),
+ *      solid: false = no collider, arms: [xR, xL] quick override of the two arm angles }
+ * Returns the figure (f.group is the THREE.Group). Pass the figures of a level to `idle` in its update() so that they breathe and look about.
+ */
+let _pq = 0.17;
+export function person(B, M, root, look, x, y, z, yaw = 0, o = {}) {
+  const rq = o.rand || (() => (_pq = (_pq + 0.381966) % 1));
+  const spec = { ...lookFor(look, rq), weapon: null, weapon2: null, ...o.over }, f = makeHumanoid(M, spec), s = f.scale || 1, pose = o.pose || 'stand', seat = o.seat ?? 0;
+  f.group.position.set(x, y, z); f.group.rotation.y = yaw;
+  if (pose === 'sit') { const up = seat + 0.1, a = Math.acos(Math.min(1, up / (0.92 * s))); f.group.position.y = y + up - 0.92 * s; f.legL.rotation.x = -a; f.legR.rotation.x = -a + 0.08; f.armR.rotation.x = -0.5; f.armL.rotation.x = -0.45; }
+  else if (pose === 'lie') { f.group.rotation.x = -Math.PI / 2; f.group.position.y = y + seat + 0.13; }
+  else if (typeof pose === 'function') pose(f); else (POSES[pose] || POSES.stand)(f);
+  if (o.arms) { f.armR.rotation.x = o.arms[0]; f.armL.rotation.x = o.arms[1]; }
+  if ((spec.extras || []).some((e) => e === 'dress' || e === 'robe' || e === 'kosode' || e === 'chuba' || e === 'hakama') && f.hips.rotation.x > 0.24) f.hips.rotation.x = 0.24;   // a long skirt is one piece with the body: bowing deeply would swing it up
+  root.add(f.group);
+  if (o.solid !== false && pose !== 'lie') B.world.addCyl(x, z, 0.36, y - 1, y + (pose === 'sit' ? seat + 1.0 : 1.8));
+  f.base = { hy: f.hips.rotation.y, hz: f.hips.rotation.z, ar: f.armR.rotation.x, al: f.armL.rotation.x, ph: rq() * 20, still: pose === 'lie' };
+  return f;
+}
+
+/** Let bystanders breathe, shift their weight and look about. Call it from the level's update(dt, t, g) with the list of figures made by `person`. */
+export function idle(people, t) {
+  for (const f of people) { const b = f.base; if (!b || b.still) continue;
+    f.hips.rotation.y = b.hy + Math.sin(t * 0.37 + b.ph) * 0.22 + Math.sin(t * 0.9 + b.ph * 2) * 0.05; f.hips.rotation.z = b.hz + Math.sin(t * 0.6 + b.ph) * 0.02;
+    f.armR.rotation.x = b.ar + Math.sin(t * 0.8 + b.ph) * 0.05; f.armL.rotation.x = b.al + Math.sin(t * 0.7 + b.ph * 1.3) * 0.05; }
 }
