@@ -1,5 +1,10 @@
 # Lone Hand — Claude version
 
+> [!WARNING]
+> **Development continues in a fork.** [raphfleury](https://github.com/raphfleury) has made a fork of the Claude game (*Lone Hand*) to pursue its development: **<https://github.com/raphfleury/Outlaws>**.
+> His version already offers major features such as a collaborative mode (including by microphone), a map and improved gameplay.
+> Go to his GitHub for the current game: this repository will probably see no further changes.
+
 **Version 1.5.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
