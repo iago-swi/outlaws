@@ -1,9 +1,11 @@
 # Outlaws
 
 > [!WARNING]
-> **Development continues in a fork.** [raphfleury](https://github.com/raphfleury) has made a fork of the Claude game (*Lone Hand*) to pursue its development: **<https://github.com/raphfleury/Outlaws>**.
+> **Development continues in a fork.** [raphfleury](https://github.com/raphfleury), a real gamer (unlike me), has made a fork of the Claude game (*Lone Hand*) to pursue its development: **<https://github.com/raphfleury/Outlaws>**.
 > His version already offers major features such as a collaborative mode (including by microphone), a map and improved gameplay.
-> Go to his GitHub for the current game: this repository will probably see no further changes.
+> Go to his GitHub for the current game.
+>
+> This repository will probably see no further changes: it was meant as an exercise and a showcase of my vibe coding experiments.
 
 Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to compare what different AI assistants produce from the same brief. Both take you through eight frontiers: the American West, feudal Japan, central Switzerland, ancient Greece, Viking Scandinavia, Normandy on 6 June 1944, a Soviet city in the winter of 1974, and the Tibetan plateau in March 1959. The Claude version adds a ninth: Tenochtitlan, the Aztec capital, on 30 June 1520.
 
