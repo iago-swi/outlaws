@@ -93,6 +93,21 @@ function weaponParts(kind, flat, metal) {
   }
 }
 
+/** A weapon lying on the ground, to be picked up: the same shapes the enemies carry, laid flat and centred. */
+const DROP_PARTS = { revolver: 'revolver', carbine: 'rifle', rifle: 'rifle', sten: 'smg', bow: 'bow', crossbow: 'crossbow', javelin: 'javelin', axe: 'axe', dart: 'javelin', sword: 'sword', sabre: 'katana', halberd: 'halberd', knife: 'xiphos', blowgun: 'spear' };
+export function dropMesh(kind, M) {
+  const flat = [], metal = [], g = new THREE.Group();
+  if (DROP_PARTS[kind]) weaponParts(DROP_PARTS[kind], flat, metal);
+  else if (kind === 'shuriken') for (let i = 0; i < 3; i++) metal.push(gStar(0.1, [i * 0.05 - 0.05, -0.6 + i * 0.012, 0], [0, i * 0.7, Math.PI / 2]));
+  else flat.push(xf(new THREE.IcosahedronGeometry(0.11, 0), [0, -0.6, 0], [0.4, 0.2, 0], [1, 0.8, 1.1], 0x8a8478));
+  const geos = [flat.length && merge(flat), metal.length && merge(metal)].filter(Boolean);
+  const box = new THREE.Box3(); for (const q of geos) { q.rotateX(Math.PI / 2); q.computeBoundingBox(); box.union(q.boundingBox); }
+  const c = box.getCenter(new THREE.Vector3());
+  geos.forEach((q, i) => { q.translate(-c.x, -c.y, -c.z); const m = new THREE.Mesh(q, geos.length === 2 && i === 1 || !flat.length ? M.metal : M.flat); m.castShadow = true; g.add(m); });
+  g.scale.setScalar(1.25);
+  return g;
+}
+
 /**
  * Build an articulated figure from simple coloured shapes.
  * The result faces +Z; its origin is between the feet.
@@ -100,7 +115,7 @@ function weaponParts(kind, flat, metal) {
 export function makeHumanoid(M, sp) {
   const S = { skin: 0xd6a37c, hair: 0x2a1a10, shirt: 0x8a3a2a, pants: 0x34425c, boots: 0x2a1c12, belt: 0x1c120a, legR: 0.085, ...sp };
   S.sleeve ??= S.shirt;
-  const T = [], AL = [], AR = [], LL = [], LR = [], WM = [], TM = [];
+  const T = [], AL = [], AR = [], LL = [], LR = [], SL = [], SR = [], WM = [], TM = [];
   // torso + head (pivot = hips)
   T.push(gCyl(0.205, 0.165, 0.56, S.shirt, [0, 0.28, 0], [0, 0, 0], [1, 1, 0.64]));
   T.push(gCyl(0.172, 0.172, 0.07, S.belt, [0, 0.02, 0], [0, 0, 0], [1, 1, 0.66]));
@@ -119,8 +134,6 @@ export function makeHumanoid(M, sp) {
     if (f === 'moustache') T.push(gBox(0.1, 0.022, 0.02, S.hair, [0, HY - 0.045, 0.125]), gBox(0.02, 0.05, 0.02, S.hair, [0.055, HY - 0.07, 0.118]), gBox(0.02, 0.05, 0.02, S.hair, [-0.055, HY - 0.07, 0.118]));
     if (f === 'beard') T.push(gSph(0.105, S.hair, [0, HY - 0.075, 0.045], [1.1, 1.05, 0.95]), gBox(0.1, 0.02, 0.02, S.hair, [0, HY - 0.04, 0.127]));
     if (f === 'longbeard') T.push(gSph(0.11, S.hair, [0, HY - 0.08, 0.045], [1.12, 1.1, 0.95]), gCone(0.09, 0.2, S.hair, [0, HY - 0.2, 0.09], [Math.PI, 0, 0], [1, 1, 0.6]), gBox(0.1, 0.02, 0.02, S.hair, [0, HY - 0.04, 0.127]));
-    if (f === 'greatbeard') T.push(gSph(0.115, S.hair, [0, HY - 0.085, 0.045], [1.18, 1.1, 0.95]), gCone(0.125, 0.56, S.hair, [0, HY - 0.37, 0.108], [Math.PI, 0, 0], [1.12, 1, 0.5], 9),                 // a beard to the waist,
-      gSph(0.07, S.hair, [0, HY - 0.16, 0.1], [1.5, 1.3, 0.7]), gBox(0.125, 0.026, 0.024, S.hair, [0, HY - 0.042, 0.127]), gBox(0.026, 0.07, 0.022, S.hair, [0.066, HY - 0.075, 0.118]), gBox(0.026, 0.07, 0.022, S.hair, [-0.066, HY - 0.075, 0.118]));   // full at the chin, with a heavy moustache
     if (f === 'bandana') T.push(gBox(0.21, 0.09, 0.13, S.accent ?? 0x8a1c1c, [0, HY - 0.06, 0.06]), gCone(0.07, 0.12, S.accent ?? 0x8a1c1c, [0, HY - 0.16, 0.1], [Math.PI, 0, 0], [1, 1, 0.4]));
     if (f === 'headband') T.push(gCyl(0.132, 0.132, 0.03, S.accent ?? 0xffffff, [0, HY + 0.05, 0]));
     if (f === 'topknot') T.push(gSph(0.045, S.hair, [0, HY + 0.17, -0.04]));
@@ -250,17 +263,18 @@ export function makeHumanoid(M, sp) {
       T.push(gCyl(0.152, 0.146, 0.09, 0xf0ece0, [0, HT - 0.01, 0], [0, 0, 0], [1, 1, 1.05], 12), gCyl(0.095, 0.135, 0.15, S.hatC ?? 0xb01c1c, [0, HT + 0.1, 0], [0, 0, 0], 1, 10),
         gCyl(0.155, 0.155, 0.025, 0xd9b23a, [0, HT - 0.05, 0], [0, 0, 0], [1, 1, 1.05], 12), gSph(0.03, 0xd9b23a, [0, HT + 0.19, 0]));
       break;
-    case 'skufia': { // the black cap of an Orthodox monk or priest, a small cross sewn on its front
-      const wc = S.trim ?? 0xe8e4d8;
-      T.push(gCyl(0.122, 0.133, 0.15, S.hatC ?? 0x121216, [0, HT + 0.035, -0.005], [0, 0, 0], 1, 12), gCyl(0.1, 0.122, 0.03, S.hatC ?? 0x121216, [0, HT + 0.125, -0.005], [0, 0, 0], 1, 12),
-        gBox(0.012, 0.062, 0.008, wc, [0, HT + 0.045, 0.126]), gBox(0.042, 0.012, 0.008, wc, [0, HT + 0.055, 0.126]));
+    case 'kamilavka':   // an Orthodox priest's tall black hat, wider at the top
+      T.push(gCyl(0.15, 0.125, 0.2, S.hatC ?? 0x0e0e12, [0, HT + 0.06, 0], [0, 0, 0], 1, 14), gCyl(0.152, 0.152, 0.012, 0x1c1c22, [0, HT + 0.16, 0], [0, 0, 0], 1, 14));
       break;
-    }
     case 'fez':     // black fez with a tassel
       T.push(gCyl(0.1, 0.128, 0.15, S.hatC ?? 0x15151a, [0, HT + 0.045, 0], [0, 0, 0], 1, 12), gBox(0.012, 0.11, 0.012, 0xd9b23a, [0.07, HT + 0.07, 0.07]), gCyl(0.02, 0.02, 0.012, 0xd9b23a, [0, HT + 0.125, 0], [0, 0, 0], 1, 6));
       break;
     case 'stahl':   // steel helmet with a flared rim
       T.push(gSph(0.15, S.hatC ?? 0x4a5248, [0, HT - 0.045, -0.005], [1.02, 0.84, 1.1]), gCyl(0.165, 0.175, 0.05, S.hatC ?? 0x4a5248, [0, HY + 0.035, -0.02], [0.08, 0, 0], [1, 1, 1.1], 14));
+      break;
+    case 'm1':      // the round steel helmet of the American soldier, its strap hanging
+      T.push(gSph(0.158, S.hatC ?? 0x4a4e3a, [0, HT - 0.04, -0.005], [1.04, 0.9, 1.12]), gCyl(0.168, 0.172, 0.022, S.hatC ?? 0x4a4e3a, [0, HY + 0.05, -0.01], [0.05, 0, 0], [1, 1, 1.1], 14),
+        gBox(0.012, 0.12, 0.012, 0x3a3020, [0.15, HY - 0.02, 0.02]), gBox(0.012, 0.12, 0.012, 0x3a3020, [-0.15, HY - 0.02, 0.02]));
       break;
     case 'peaked':  // officer's peaked cap
       T.push(gCyl(0.165, 0.14, 0.07, S.hatC ?? 0x5a6258, [0, HT + 0.03, 0], [0.12, 0, 0], 1, 14), gCyl(0.138, 0.136, 0.05, S.hatBand ?? 0x2a3a2e, [0, HT - 0.025, 0], [0, 0, 0], 1, 14),
@@ -312,6 +326,10 @@ export function makeHumanoid(M, sp) {
     }
     if (e === 'bandolier') T.push(gBox(0.5, 0.05, 0.3, 0x3a2414, [0, 0.32, 0], [0, 0, 0.9]));
     if (e === 'coat') T.push(gCyl(0.215, 0.26, 0.62, S.coat ?? 0x15120f, [0, -0.2, -0.03], [0, 0, 0], [1, 1, 0.6], 10), gCyl(0.215, 0.215, 0.56, S.coat ?? 0x15120f, [0, 0.29, -0.012], [0, 0, 0], [1.03, 1, 0.66]));
+    if (e === 'pectoral') {                     // a priest's silver cross on a chain, on the chest
+      const C = 0xd8dce0; T.push(gBox(0.012, 0.13, 0.012, C, [0, 0.36, 0.16]), gBox(0.08, 0.012, 0.012, C, [0, 0.4, 0.16]), gBox(0.05, 0.01, 0.012, C, [0, 0.425, 0.16]), gBox(0.05, 0.01, 0.012, C, [0, 0.32, 0.16], [0, 0, 0.35]));
+      for (const s of [-1, 1]) T.push(gBox(0.006, 0.2, 0.006, 0xb8bcc0, [s * 0.05, 0.5, 0.15], [0, 0, s * 0.45]));
+    }
     if (e === 'star') T.push(gCyl(0.03, 0.03, 0.01, 0xd9b23a, [0.09, 0.4, 0.125], [Math.PI / 2, 0, 0], 1, 5));
     if (e === 'obi') T.push(gCyl(0.19, 0.185, 0.1, S.accent ?? 0x1a1a1a, [0, 0.07, 0], [0, 0, 0], [1, 1, 0.68]));
     if (e === 'kimono') T.push(gBox(0.05, 0.5, 0.02, S.trim ?? 0xe8e0d0, [0.05, 0.36, 0.125], [0, 0, 0.32]), gBox(0.05, 0.5, 0.02, S.trim ?? 0xe8e0d0, [-0.05, 0.36, 0.125], [0, 0, -0.32]));
@@ -357,14 +375,6 @@ export function makeHumanoid(M, sp) {
     if (e === 'brooches') { const bc = S.brooch ?? 0xc9a050, sc = S.strap ?? S.dress ?? S.shirt;                                                            // shoulder straps pinned by two brooches, a string of beads between them
       T.push(gBox(0.035, 0.24, 0.02, sc, [0.085, 0.4, 0.12], [-0.25, 0, 0]), gBox(0.035, 0.24, 0.02, sc, [-0.085, 0.4, 0.12], [-0.25, 0, 0]), gSph(0.03, bc, [0.085, 0.42, 0.135], [1, 1.3, 0.5]), gSph(0.03, bc, [-0.085, 0.42, 0.135], [1, 1.3, 0.5]),
         gBox(0.15, 0.016, 0.014, S.beads ?? bc, [0, 0.395, 0.14])); }
-    if (e === 'analav') {                                                                 // the long front panel of a monk's habit, embroidered in white: two three-barred crosses, one above the other, between two borders
-      const wc = S.trim ?? 0xe8e4d8, pc = S.panel ?? 0x1c1c22, tilt = -0.092, at = (yy) => 0.196 - (yy + 0.39) * 0.092;
-      const P = [gBox(0.25, 0.8, 0.014, pc, [0, -0.39, 0.166], [tilt, 0, 0])];
-      for (const sx of [-1, 1]) P.push(gBox(0.012, 0.78, 0.008, wc, [sx * 0.112, -0.39, 0.176], [tilt, 0, 0]));
-      for (const cy of [-0.2, -0.58]) P.push(gBox(0.016, 0.3, 0.008, wc, [0, cy, at(cy) - 0.02], [tilt, 0, 0]), gBox(0.11, 0.016, 0.008, wc, [0, cy + 0.06, at(cy + 0.06) - 0.02], [tilt, 0, 0]),
-        gBox(0.056, 0.014, 0.008, wc, [0, cy + 0.115, at(cy + 0.115) - 0.02], [tilt, 0, 0]), gBox(0.07, 0.014, 0.008, wc, [0, cy - 0.07, at(cy - 0.07) - 0.02], [tilt, 0, 0.42]));
-      T.push(...P);
-    }
     if (e === 'shawl') T.push(gCyl(0.15, 0.262, 0.2, S.shawl ?? 0x6a4a3a, [0, 0.45, -0.005], [0, 0, 0], [1, 1, 0.7], 12), gCyl(0.262, 0.25, 0.1, S.shawl ?? 0x6a4a3a, [0, 0.3, -0.005], [0, 0, 0], [1, 1, 0.7], 12));      // a shawl over the shoulders
     if (e === 'robe') T.push(gCyl(0.185, 0.3, 0.8, S.robe ?? S.pants, [0, -0.39, 0], [0, 0, 0], [1, 1, 0.64], 10), gBox(0.52, 0.1, 0.32, S.sash ?? S.robe ?? S.pants, [0, 0.34, 0], [0, 0, 0.78]),
       gCyl(0.2, 0.19, 0.12, S.robe ?? S.pants, [0, 0.06, 0], [0, 0, 0], [1, 1, 0.68], 10));
@@ -399,11 +409,14 @@ export function makeHumanoid(M, sp) {
     A.push(gCap(S.armR ?? 0.062, 0.5, S.sleeve, [0, -0.27, 0]), gSph(0.06, S.glove ?? S.skin, [0, -0.6, 0]));
     if (S.wideSleeve) A.push(gBox(0.11, 0.3, 0.2, S.sleeve, [0, -0.36, -0.03]));
     if (S.cuff) A.push(gCyl(0.07, 0.066, 0.1, S.cuff, [0, -0.5, 0]));
+    if (S.handBoards) A.push(gBox(0.12, 0.25, 0.03, S.handBoards, [0, -0.6, -0.075]), gBox(0.135, 0.045, 0.1, 0x3a2616, [0, -0.6, -0.03]));      // a pilgrim's boards: a slab of wood under each palm, held by a strap
   }
   if (S.armband) AL.push(gCyl(0.07, 0.07, 0.08, S.armband, [0, -0.16, 0]));
-  for (const L of [LL, LR]) {
-    L.push(gCap(S.legR, 0.72, S.pants, [0, -0.41, 0]), gBox(0.13, 0.13, 0.28, S.boots, [0, -0.855, 0.045]));
-    if (S.bootTop) L.push(gCyl(0.1, 0.09, 0.3, S.boots, [0, -0.66, 0]));
+  // each leg in two parts, thigh and shin, jointed at the knee (0.45 below the hip): the walk bends the knee
+  for (const L of [LL, LR]) L.push(gCap(S.legR, 0.32, S.pants, [0, -0.205, 0]));
+  for (const L of [SL, SR]) {
+    L.push(gCap(S.legR * 0.94, 0.25, S.pants, [0, -0.2, 0]), gBox(0.13, 0.13, 0.28, S.boots, [0, -0.405, 0.045]));
+    if (S.bootTop) L.push(gCyl(0.1, 0.09, 0.3, S.boots, [0, -0.21, 0]));
   }
   weaponParts(S.weapon, AR, WM);
   if (S.weapon2 === 'revolver') { const f = [], m = []; weaponParts('revolver', f, m); AL.push(...f, ...m); }
@@ -420,24 +433,56 @@ export function makeHumanoid(M, sp) {
   const hips = new THREE.Group(); hips.position.y = 0.92; group.add(hips);
   hips.add(mk(T));
   if (TM.length) hips.add(mk(TM, M.metal));
-  const armL = mk(AL), armR = mk(AR), legL = mk(LL), legR = mk(LR);
+  const armL = mk(AL), armR = mk(AR), legL = mk(LL), legR = mk(LR), shinL = mk(SL), shinR = mk(SR);
   armL.position.set(0.275, 0.5, 0); armR.position.set(-0.275, 0.5, 0);
   legL.position.set(0.1, 0.92, 0); legR.position.set(-0.1, 0.92, 0);
+  shinL.position.y = shinR.position.y = -0.45; legL.add(shinL); legR.add(shinR);
   hips.add(armL, armR); group.add(legL, legR);
   if (WM.length) armR.add(mk(WM, M.metal));
   group.scale.setScalar(S.scale || 1);
-  return { group, hips, armL, armR, legL, legR, mat, scale: S.scale || 1 };
+  return { group, hips, armL, armR, legL, legR, shinL, shinR, mat, scale: S.scale || 1 };
 }
 
 /**
  * A horseman: a figure lifted into the saddle of a horse. The rig's two "legs" are the horse's fore and hind pairs, so the walk cycle
  * moves the horse; the rider's own legs hang astride and stay still. Faces +Z.
  */
+/**
+ * The legs of a walking or running figure. phase: the stride (advances 2.6 per metre walked), moving: 0..1, run: 0..1 (longer strides, higher
+ * knees), limp: 0..1 (the left leg is hurt: a short, stiff step on it). Swinging forward the knee bends, as the foot comes through; on the
+ * ground the leg is nearly straight. Returns the arm swing that goes with it (each arm opposite its leg).
+ */
+export function stride(rig, phase, moving, run = 0, limp = 0) {
+  const A = (0.5 + 0.28 * run) * moving, K = (0.55 + 0.75 * run) * moving, sn = Math.sin(phase), cs = Math.cos(phase);
+  rig.legL.rotation.x = -A * sn * (1 - 0.5 * limp); rig.legR.rotation.x = A * sn;
+  if (rig.shinL) {
+    rig.shinL.rotation.x = (K * Math.max(0, cs) ** 1.3 + 0.08 * moving) * (1 - 0.7 * limp);
+    rig.shinR.rotation.x = K * Math.max(0, -cs) ** 1.3 + 0.08 * moving;
+  }
+  return A * sn * (1 + 0.4 * run);
+}
+
+const WOUND = new THREE.SphereGeometry(1, 7, 5), WOUND_MAT = new THREE.MeshStandardMaterial({ color: 0x4a0606, roughness: 0.45 });
+/** A wound where a shot went in: a dark red mark on the body part at that point (at most seven on a figure). */
+export function wound(rig, x, y, z) {
+  if (!rig || !rig.hips || (rig.wounds = (rig.wounds || 0) + 1) > 7) return;
+  const p = new THREE.Vector3(x, y, z), g = rig.group;
+  g.updateMatrixWorld(true);
+  const lp = g.worldToLocal(p.clone()), part = lp.y > 0.9 || !rig.legL.isMesh ? rig.hips : lp.x > 0 ? rig.legL : rig.legR;
+  const q = part.worldToLocal(p.clone()), m = new THREE.Mesh(WOUND, WOUND_MAT), axis = new THREE.Vector3(q.x, 0, q.z);
+  if (axis.lengthSq() < 1e-6) axis.set(0, 0, 1);
+  axis.normalize(); m.position.copy(q).addScaledVector(axis, 0.01);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), axis);
+  const k = 0.035 + Math.random() * 0.02; m.scale.set(k, k * 1.3, k * 0.35); m.userData.wound = true;
+  part.add(m);
+}
+
 export function makeRider(M, sp) {
   const man = makeHumanoid(M, sp), g = man.group, mat = man.mat, X = Math.PI / 2, coat = sp.horse ?? 0x5a3a22, dark = 0x1a120c, UP = 0.8;
   const mk = (list) => { const o = new THREE.Mesh(merge(list), mat); o.castShadow = true; o.receiveShadow = true; return o; };
   man.hips.position.y += UP;
   for (const [L, e] of [[man.legL, 1], [man.legR, -1]]) { L.position.set(e * 0.3, 0.92 + UP, 0.02); L.rotation.set(-0.5, 0, e * 0.55); }
+  man.shinL.rotation.x = man.shinR.rotation.x = 0.55;
   g.add(mk([gCap(0.36, 1.1, coat, [0, 1.35, 0], [X, 0, 0], [1, 1, 1.1]), gCap(0.17, 0.75, coat, [0, 1.95, 0.85], [0.75, 0, 0]), gCap(0.14, 0.36, coat, [0, 2.28, 1.3], [1.85, 0, 0]), gBox(0.2, 0.2, 0.2, dark, [0, 2.17, 1.55]),
     gCone(0.05, 0.14, coat, [0.09, 2.5, 1.12]), gCone(0.05, 0.14, coat, [-0.09, 2.5, 1.12]), gBox(0.06, 0.7, 0.12, dark, [0, 2.1, 0.72], [0.75, 0, 0]), gCone(0.1, 0.9, dark, [0, 1.1, -1.0], [-2.7, 0, 0]),
     gBox(0.5, 0.07, 0.62, 0x7a1c1c, [0, 1.73, -0.05]), gBox(0.78, 0.46, 0.05, 0x7a1c1c, [0, 1.47, -0.05], [0, X, 0])]));                      // the horse, with a red saddle cloth
@@ -459,6 +504,42 @@ export function makeDog(M) {
   const hips = new THREE.Group(); group.add(hips); hips.add(mk(body));
   const armL = new THREE.Object3D(), armR = new THREE.Object3D(); hips.add(armL, armR);
   const legL = mk(legs()), legR = mk(legs()); legL.position.set(0, 0.48, 0.3); legR.position.set(0, 0.48, -0.3); group.add(legL, legR);
+  return { group, hips, armL, armR, legL, legR, mat, scale: 1 };
+}
+
+/**
+ * An animal that has turned on the player (see fauna.js): the same rig interface as the dog (hips with the body, legL the front legs,
+ * legR the hind legs), so the enemy code drives it like a dog. Faces +Z. kind: 'horse' | 'cow' | 'yak' | 'goat' | 'pig'; coat: its colour.
+ */
+const BEASTS = {
+  horse: { coat: 0x6a4428, hoof: 0x1a120c, hip: 1.0, legX: 0.2, front: 0.6, back: -0.65, legR: 0.075,
+    body: (c) => [gCap(0.36, 1.1, c, [0, 1.35, 0], [Math.PI / 2, 0, 0], [1, 1, 1.1]), gCap(0.17, 0.75, c, [0, 1.95, 0.85], [0.75, 0, 0]), gCap(0.14, 0.36, c, [0, 2.28, 1.3], [1.85, 0, 0]),
+      gBox(0.2, 0.2, 0.2, 0x2a1c14, [0, 2.17, 1.55]), gCone(0.05, 0.14, c, [0.09, 2.5, 1.12]), gCone(0.05, 0.14, c, [-0.09, 2.5, 1.12]), gBox(0.06, 0.7, 0.12, 0x1c120c, [0, 2.1, 0.72], [0.75, 0, 0]),
+      gCone(0.1, 0.9, 0x1c120c, [0, 1.1, -1.0], [-2.7, 0, 0])] },
+  cow: { coat: 0x7a4a2c, hoof: 0x2a2018, hip: 0.8, legX: 0.24, front: 0.6, back: -0.6, legR: 0.085,
+    body: (c) => [gCap(0.44, 1.15, c, [0, 1.12, 0], [Math.PI / 2, 0, 0], [1, 1, 1.1]), gSph(0.3, 0xf2ece0, [0.22, 1.3, 0.25], [1, 1, 1.5]), gCap(0.19, 0.3, c, [0, 1.2, 1.05], [1.3, 0, 0]),
+      gBox(0.26, 0.2, 0.2, 0xe8c8b8, [0, 1.02, 1.36]), gCone(0.045, 0.2, 0xf0ece0, [0.17, 1.42, 1.05], [0, 0, -0.6]), gCone(0.045, 0.2, 0xf0ece0, [-0.17, 1.42, 1.05], [0, 0, 0.6]),
+      gCap(0.03, 0.7, c, [0, 0.95, -0.98], [0.15, 0, 0])] },
+  yak: { coat: 0x1a1410, hoof: 0x1a1410, hip: 0.62, legX: 0.28, front: 0.55, back: -0.55, legR: 0.1,
+    body: (c) => [gCap(0.5, 1.2, c, [0, 1.05, 0], [Math.PI / 2, 0, 0], [1, 1, 1.1]), gBox(0.96, 0.5, 1.6, c, [0, 0.66, 0]), gSph(0.4, c, [0, 1.52, 0.45], [1, 1, 1.3]), gCap(0.23, 0.3, c, [0, 1.0, 1.15], [1.2, 0, 0]),
+      gBox(0.3, 0.22, 0.24, 0x4a3c30, [0, 0.8, 1.42]), gCone(0.05, 0.4, 0xd8d0c0, [0.3, 1.32, 1.12], [0, 0, -0.9]), gCone(0.05, 0.4, 0xd8d0c0, [-0.3, 1.32, 1.12], [0, 0, 0.9]), gBox(0.16, 0.75, 0.16, c, [0, 0.78, -0.98])] },
+  goat: { coat: 0xe8e0d0, hoof: 0x3a342c, hip: 0.42, legX: 0.09, front: 0.26, back: -0.26, legR: 0.032,
+    body: (c) => [gCap(0.16, 0.48, c, [0, 0.55, 0], [Math.PI / 2, 0, 0]), gCap(0.07, 0.2, c, [0, 0.75, 0.38], [0.7, 0, 0]), gSph(0.1, c, [0, 0.88, 0.5], [0.85, 0.95, 1.35]),
+      gCone(0.025, 0.22, 0x8a8478, [0.05, 1.03, 0.44], [-0.6, 0, 0], 1, 5), gCone(0.025, 0.22, 0x8a8478, [-0.05, 1.03, 0.44], [-0.6, 0, 0], 1, 5), gCone(0.03, 0.12, 0xe0e0e0, [0, 0.76, 0.58], [Math.PI, 0, 0], 1, 5),
+      gCap(0.025, 0.1, c, [0, 0.62, -0.36], [-0.8, 0, 0])] },
+  pig: { coat: 0xd8a898, hoof: 0x6a5048, hip: 0.22, legX: 0.12, front: 0.25, back: -0.25, legR: 0.045,
+    body: (c) => [gCap(0.24, 0.5, c, [0, 0.42, 0], [Math.PI / 2, 0, 0]), gSph(0.17, c, [0, 0.42, 0.5], [1, 1, 1.2]), gCyl(0.07, 0.085, 0.12, 0xd8b0a0, [0, 0.38, 0.72], [Math.PI / 2, 0, 0], 1, 8),
+      gCone(0.05, 0.1, c, [0.1, 0.58, 0.46]), gCone(0.05, 0.1, c, [-0.1, 0.58, 0.46])] },
+};
+export function makeBeast(M, kind, coat) {
+  const S = BEASTS[kind] || BEASTS.horse, c = coat ?? S.coat, h = S.hip;
+  const mat = M.flat.clone(); mat.userData.keep = false;
+  const mk = (g) => { const o = new THREE.Mesh(g, mat); o.castShadow = true; o.receiveShadow = true; return o; };
+  const legs = () => merge([-1, 1].flatMap((k) => [gCap(S.legR, Math.max(0.05, h - S.legR * 2 - 0.08), c, [k * S.legX, -h / 2 + 0.02, 0]), gBox(S.legR * 1.9, 0.09, S.legR * 2.2, S.hoof, [k * S.legX, -h + 0.045, 0.01])]));
+  const group = new THREE.Group(); group.rotation.order = 'YXZ';
+  const hips = new THREE.Group(); group.add(hips); hips.add(mk(merge(S.body(c))));
+  const armL = new THREE.Object3D(), armR = new THREE.Object3D(); hips.add(armL, armR);
+  const legL = mk(legs()), legR = mk(legs()); legL.position.set(0, h, S.front); legR.position.set(0, h, S.back); group.add(legL, legR);
   return { group, hips, armL, armR, legL, legR, mat, scale: 1 };
 }
 
@@ -692,9 +773,8 @@ export function lookFor(type, r) {
         face: [r() < 0.5 ? 'kerchief' : 'bun'], kerchief: pick([0x3a4a6a, 0xd8cdb0, 0x8a3a2a]), extras: r() < 0.6 ? ['dress', 'apron'] : ['dress', 'shawl'], apron: pick([0xd8d0c0, 0x8a9ab0]), bib: true, shawl: 0x3a3a3a, scale: 0.94 }; }
     case 'frenchMan': return { skin: pick([0xe0b89a, 0xd6a88a]), hair: pick([0x2a1c12, 0x5a3a1c, 0x9a9a90]), shirt: pick([0xd8d0c0, 0xb8c0c8, 0xa8a090]), pants: pick([0x3a3a44, 0x4a4034, 0x33415c]), boots: 0x2a1c12,
       hat: 'beret', hatC: pick([0x22222a, 0x3a2a22]), face: [pick(['moustache', 'bigmoustache', 'pipe'])], extras: ['vest'], vest: pick([0x2a2a30, 0x4a3a2a, 0x3a3a3a]) };
+    case 'orthodoxPriest': return { skin: 0xe0bca0, hair: 0x8a8a84, brow: 0x6a6a64, shirt: 0x0e0e12, sleeve: 0x0e0e12, pants: 0x0e0e12, boots: 0x0c0c0c, belt: 0x0e0e12, hat: 'kamilavka', face: ['longbeard', 'longhair'], extras: ['robe', 'pectoral'], robe: 0x0e0e12, sash: 0x0e0e12 };
     case 'cure': return { skin: 0xe0b89a, hair: 0x9a9a90, shirt: 0x15151a, sleeve: 0x15151a, pants: 0x15151a, boots: 0x0c0c0c, belt: 0x15151a, hat: null, face: ['glasses'], extras: ['robe'], robe: 0x15151a, sash: 0x15151a };
-    case 'orthodoxPriest': return { skin: 0xe2c4ac, hair: 0xe0e0d8, brow: 0xb4b4ac, shirt: 0x15151a, sleeve: 0x15151a, pants: 0x15151a, boots: 0x0c0c0c, belt: 0x15151a, hat: 'skufia', hatC: 0x121216,     // an old monk-priest: black habit, a white beard to the waist
-      face: ['longhair', 'greatbeard'], extras: ['robe', 'analav'], robe: 0x15151a, sash: 0x15151a, wideSleeve: true };
     case 'russianWoman': { const d = pick([0x4a4a52, 0x5a4a3a, 0x3a4a5a, 0x5a3a3a]);
       return { skin: pick([0xe6c8b0, 0xe0bca0]), hair: pick([0x8a6a3a, 0x5a3a1c, 0xc8a050, 0x9a9a90]), shirt: d, sleeve: d, pants: d, dress: pick([0x3a3a44, 0x4a3a30, 0x2a3a4a]), boots: pick([0x8a8478, 0x1a1410]), hat: null, lip: 0xa8483c,
         face: ['kerchief'], kerchief: pick([0xb83a2a, 0xe6e0d0, 0x3a5a8a, 0xc8a84a]), extras: ['dress', 'coat'], coat: d, scale: 0.94 }; }
@@ -704,6 +784,8 @@ export function lookFor(type, r) {
       return { skin: nep ? pick([0xb8845c, 0xa87048, 0xc0875c]) : pick([0xc89468, 0xb8845c, 0xd0a078]), hair: 0x0c0c0c, shirt: d, sleeve: b, pants: d, dress: nep && r() < 0.4 ? pick([0x1c5a6a, 0x5a1c3a]) : d, hem: 0x15151a, boots: 0x4a2c14, belt: 0xe0c060, hat: null,
         lip: 0xa8483c, face: [r() < 0.5 ? 'plaits' : 'longhair'], tie: 0x2ac8c0, collar: b, extras: ['dress', 'apron', 'collar'], apron: 0xd8d0c0, scale: 0.94,
         stripes: pick([[0xb83a2a, 0x2a5a8a, 0xe0a82a, 0x3a7a4a, 0xd85a8a, 0x2a5a8a, 0xe0a82a, 0xb83a2a], [0x3a7a4a, 0xe0a82a, 0xb83a2a, 0x2a5a8a, 0xd8d0c0, 0xb83a2a, 0x3a7a4a, 0x9a4ab0], [0x2a5a8a, 0xd85a8a, 0xe0a82a, 0x15151a, 0xb83a2a, 0x3a7a4a, 0xe0a82a, 0x2a5a8a]]) }; }
+    case 'pilgrimWoman': return { skin: pick([0xb8845c, 0xa87048]), hair: 0x0c0c0c, shirt: 0x3a2420, sleeve: 0x7a2a26, pants: 0x3a2420, dress: 0x3a2420, hem: 0x15151a, boots: 0x4a2c14, belt: 0x3a2616, hat: null,      // a pilgrim on her way by prostrations:
+      lip: 0xa8483c, face: ['plaits'], tie: 0x2ac8c0, collar: 0x7a2a26, extras: ['dress', 'apron', 'collar'], apron: 0x664428, bib: true, handBoards: 0xa8845a, scale: 0.94 };                                          // a dusty dress, a leather apron from chest to shin, boards under the hands
     case 'tibetMan': return { skin: pick([0xc0875c, 0xb07a52]), hair: 0x0c0c0c, shirt: 0xb82a22, sleeve: pick([0xb82a22, 0x6a1c22]), pants: pick([0x3a4a5a, 0x3a2a20]), boots: 0x4a2c14, bootTop: true,                                   // a Khampa: wine-red chuba, red shirt, a broad felt hat
       hat: r() < 0.7 ? 'cowboy' : null, hatC: pick([0xb89a70, 0x8a7a6a, 0xd8c8a8]), hatBand: 0x3a2a20, face: r() < 0.4 ? ['longhair', 'moustache'] : ['longhair'], extras: ['chuba'], coat: pick([0x6a1c22, 0x5a1a24, 0x4a2a2a]), fur2: 0x4a1418, accent: pick([0xb01c1c, 0xd9a020]) };
     case 'nun': return { skin: pick([0xc89468, 0xd0a078, 0xe0b890]), hair: null, shirt: pick([0xe0a82a, 0xb82a22, 0x7a1c22]), sleeve: 0x7a1c22, pants: 0x7a1c22, boots: 0x4a2c14, hat: null, lip: 0xa8483c, face: r() < 0.3 ? ['glasses'] : [],
@@ -731,6 +813,12 @@ export const TYPES = {
   officer: { hp: 60, speed: 3.8, ranged: true, range: 40, rMin: 7, rMax: 18, dmg: 9, cool: [0.8, 1.6], windup: 0.4, spread: 0.04, proj: 'bullet', pspeed: 80, sight: 46 },
   gunner: { hp: 80, speed: 3.0, ranged: true, range: 70, rMin: 10, rMax: 40, dmg: 8, cool: [2.2, 3.2], windup: 0.7, spread: 0.055, proj: 'bullet', pspeed: 95, sight: 62, burst: 5, twoHand: true },
   dog: { hp: 35, speed: 7.6, melee: true, reach: 1.7, dmg: 12, windup: 0.22, recover: 0.6, sight: 44, dog: true, hit: [[0.55, 0.42, false], [0.72, 0.3, true]] },
+  // animals that turned on the player (fauna.js): as strong as the chapters' enemies, no more; driven like a dog. hit: [height, radius, head, forward]
+  horseBeast: { hp: 90, speed: 7.2, melee: true, reach: 2.4, dmg: 20, windup: 0.32, recover: 0.8, sight: 50, dog: true, beast: 'horse', hit: [[1.35, 0.42, false, 0.45], [1.35, 0.42, false, -0.45], [2.15, 0.24, true, 1.25]] },
+  cowBeast: { hp: 110, speed: 5.8, melee: true, reach: 2.3, dmg: 22, windup: 0.4, recover: 0.9, sight: 40, dog: true, beast: 'cow', hit: [[1.12, 0.48, false, 0.4], [1.12, 0.48, false, -0.4], [1.2, 0.24, true, 1.1]] },
+  yakBeast: { hp: 120, speed: 5.6, melee: true, reach: 2.4, dmg: 24, windup: 0.4, recover: 0.9, sight: 40, dog: true, beast: 'yak', hit: [[1.05, 0.55, false, 0.4], [1.05, 0.55, false, -0.4], [1.0, 0.28, true, 1.2]] },
+  goatBeast: { hp: 40, speed: 6.4, melee: true, reach: 1.5, dmg: 12, windup: 0.25, recover: 0.6, sight: 36, dog: true, beast: 'goat', hit: [[0.55, 0.22, false, 0], [0.88, 0.13, true, 0.5]] },
+  pigBeast: { hp: 45, speed: 5.4, melee: true, reach: 1.4, dmg: 12, windup: 0.25, recover: 0.6, sight: 30, dog: true, beast: 'pig', hit: [[0.42, 0.28, false, 0], [0.44, 0.18, true, 0.5]] },
   warBoss: { hp: 460, speed: 3.9, ranged: true, range: 50, rMin: 8, rMax: 22, dmg: 9, cool: [1.2, 1.9], windup: 0.45, spread: 0.045, proj: 'bullet', pspeed: 85, sight: 60, burst: 4, boss: true, twoHand: true },
   hoplite: { hp: 100, speed: 3.8, melee: true, reach: 2.8, dmg: 22, windup: 0.5, recover: 0.8, sight: 40, thrust: true },
   peltast: { hp: 60, speed: 3.4, ranged: true, range: 40, rMin: 9, rMax: 22, dmg: 14, cool: [2.0, 3.0], windup: 0.7, spread: 0.03, proj: 'javelin', pspeed: 34, sight: 46, thrower: true },
@@ -762,11 +850,31 @@ export const TYPES = {
 const _o = { x: 0, y: 0, z: 0 }, _d = { x: 0, y: 0, z: 0 };
 let _uid = 1;
 
+/**
+ * How the enemies think: the level of their wits is chosen before the game (and by the host in a game for two).
+ *  - low: they fight back when they see the player or are hurt, but hear nothing, never climb or crawl after him, and give up as
+ *    soon as he is out of sight for a moment, going back to where they stood;
+ *  - medium: they take up places with a view and something to hide behind, hear what goes on near them, go after the player where
+ *    they last saw or heard him (up ladders, crouching into a hiding place), search a while, and give up if they find nothing;
+ *  - genius: they hear from much further, tell each other where the player is, fight from cover (crouched, rising to shoot), move
+ *    to a new place after a few shots, come round the sides, creep up unseen, throw their bombs at a player who hides, fall back
+ *    when badly hurt, and their marksmen take to the roofs.
+ */
+export const WITS = {
+  low: { sight: 0.85, react: 1.4, spread: 1.35, share: 8, search: 0, giveUp: 2.5, far: 45, climb: false },
+  medium: { sight: 1, react: 1, spread: 1, share: 20, search: 12, giveUp: 25, far: 70, climb: true },
+  genius: { sight: 1.15, react: 0.6, spread: 0.65, share: 60, search: 20, giveUp: 40, far: 90, climb: true },
+};
+/** The sound of each gunman's gun. */
+const ENEMY_GUN = { cowboy: 'revolver', westBoss: 'revolver', officer: 'pistol', agent: 'pistol', russiaBoss: 'pistol', bandit: 'carbine', soldier: 'rifle', pla: 'rifle', gunner: 'mg', plaGunner: 'mg', tibetBoss: 'mg', militia: 'sten', warBoss: 'sten', arcabucero: 'musket', cannoneer: 'cannon' };
+const BOMB_OF = { west: 'dynamite', japan: 'hbomb', war: 'grenade', russia: 'grenade', tibet: 'grenade' };
+const BOMBERS = { bandit: 1, cowboy: 1, ninja: 1, soldier: 1, gunner: 1, officer: 1, militia: 1, agent: 1, pla: 1, plaGunner: 1 };
+
 export class Enemy {
   constructor(game, type, x, z, o = {}) {
     this.game = game; this.type = type; this.cfg = TYPES[type]; this.id = _uid++;
     const r = game.rand;
-    this.rig = this.cfg.dog ? makeDog(game.M) : this.cfg.rider ? makeRider(game.M, lookFor(o.look ?? type, r)) : makeHumanoid(game.M, lookFor(o.look ?? type, r));
+    this.rig = this.cfg.beast ? makeBeast(game.M, this.cfg.beast, o.coat) : this.cfg.dog ? makeDog(game.M) : this.cfg.rider ? makeRider(game.M, lookFor(o.look ?? type, r)) : makeHumanoid(game.M, { ...lookFor(o.look ?? type, r), ...o.over });   // o.over: a bystander who fights back keeps his look, with a weapon
     this.scale = this.rig.scale;
     this.pos = new THREE.Vector3(x, game.world.groundAt(x, z, o.up !== undefined ? game.world.height(x, z) + o.up : o.y ?? 2), z);   // o.up: floor of a building on a slope
     this.home = this.pos.clone();
@@ -780,24 +888,58 @@ export class Enemy {
     this.walk = r() * 6; this.moving = 0; this.flinch = 0; this.flash = 0; this.stuck = 0; this.detour = 0; this.detourDir = 1;
     this.wanderT = 2 + r() * 4; this.wander = null; this.throwT = 2 + r() * 2; this.deathT = 0; this.react = 0;
     this.armPose = 0; this.name = o.name; this.path = null; this.pathI = 0; this.pathT = r() * 0.6; this.slump = false;
+    this.maxHp = this.cfg.hp; this.hurtT = 99; this.runK = 0;      // hurtT: seconds since the last hit (the health bar shows for a while after one)
+    // what he knows and means to do: where the target was last seen or heard, how long ago, and what he is about
+    this.know = null; this.lostT = 0; this.mode = null; this.duckK = 0; this.duckWant = 0; this.climb = null; this.cover = null; this.coverT = 0;
+    this.shotsHere = 0; this.hitsHere = 0; this.bombT = 5 + (this.id % 7); this.fleeT = 0; this.homeYaw = this.yaw; this.flank = this.id % 2 ? 1 : -1; this.searchT = 0; this.seek = null;
     game.gfx.root.add(this.rig.group);
     this.rig.group.visible = this.state !== 'hidden';
     this.sync();
   }
   get alive() { return this.state !== 'dead'; }
-  get eyeY() { return this.pos.y + 1.6 * this.scale; }
+  get eyeY() { return this.pos.y + (1.6 - 0.7 * this.duckK) * this.scale; }
+  get wit() { return WITS[this.game.wits] || WITS.medium; }
 
   sync() {
     const g = this.rig.group;
     g.position.copy(this.pos); g.rotation.y = this.yaw;
   }
 
-  alert(delay = 0) {
+  /** He has seen (or been told of, or heard) the target: to arms. know: where the target is thought to be (by default, where it is). */
+  alert(delay = 0, know) {
     if (this.state !== 'idle') return;
-    this.state = 'combat'; this.react = delay + 0.35 + this.game.rand() * 0.5;
-    if (delay === 0) { if (this.cfg.dog) this.game.sound.bark(); else this.game.sound.shout(); }
-    for (const e of this.game.enemies) if (e !== this && e.state === 'idle' && e.pos.distanceToSquared(this.pos) < 11 * 11) e.alert(0.3 + this.game.rand() * 0.6);
+    const G = this.game, P = this.tgt || G.player;
+    this.state = 'combat'; this.mode = 'fight'; this.lostT = 0; this.react = (delay + 0.35 + G.rand() * 0.5) * this.wit.react;
+    this.know = know ? { ...know } : { x: P.pos.x, y: P.pos.y, z: P.pos.z, t: G.time };
+    if (delay === 0) { if (G.voices) G.voices.shout(this); else if (this.cfg.beast) G.sound.beast(this.cfg.beast); else if (this.cfg.dog) G.sound.bark(); else G.sound.shout(); }
+    const R = Math.min(11, this.wit.share);
+    for (const e of G.enemies) if (e !== this && e.state === 'idle' && !e.puppet && !e.remote && e.pos.distanceToSquared(this.pos) < R * R) e.alert(0.3 + G.rand() * 0.6, this.know);
   }
+  /** He sees the target: the others near enough are told (a clever band passes it on far, and keeps each other up to date). */
+  share() {
+    const G = this.game, R = this.wit.share, genius = G.wits === 'genius'; this.sharedT = G.time;
+    for (const e of G.enemies) {
+      if (e === this || !e.alive || e.puppet || e.remote || e.state === 'hidden' || e.cfg.sight === 0) continue;
+      if (e.pos.distanceToSquared(this.pos) > R * R) continue;
+      if (e.state === 'idle') e.alert(0.4 + G.rand() * 0.8, this.know);
+      else if (genius && !e.los) { e.know = { ...this.know }; e.lostT = Math.min(e.lostT, 1); if (e.mode === 'search' || e.mode === 'home') e.mode = 'chase'; }
+    }
+  }
+  /** A noise heard at (x, z); near = 0 right by him, 1 at the edge of his hearing. byPlayer: it came from the player (a shot, a throw, his feet). */
+  hear(x, z, near, byPlayer) {
+    const G = this.game; if (!this.alive || this.puppet) return;
+    const P = this.tgt || G.player, y = Math.abs(x - P.pos.x) + Math.abs(z - P.pos.z) < 1.5 ? P.pos.y : G.world.groundAt(x, z, this.pos.y + 1);
+    if (byPlayer) {
+      if (this.state === 'idle') { this.alert(0.3 + near * 0.8, { x, y, z, t: G.time }); this.mode = 'chase'; this.lostT = 0.7; }
+      else if (this.state === 'combat' && !this.los) { this.know = { x, y, z, t: G.time }; this.lostT = Math.min(this.lostT, 1); if (this.mode === 'search' || this.mode === 'home') this.mode = 'chase'; }
+    } else if (this.state === 'idle') {
+      this.look = { x, z, t: 2.5 };                                                // something broke: he looks that way
+      if (G.wits === 'genius' && !this.static) { this.wander = { x: x + (G.rand() - 0.5) * 3, z: z + (G.rand() - 0.5) * 3 }; this.wanderT = 0; this.patrolK = 1; }   // and a clever one goes to see
+    }
+  }
+  /** Out of a fire, at once. */
+  flee(x, z) { this.fleeT = 1.6; this.fleeFrom = { x, z }; }
+  goHome() { this.mode = 'home'; this.path = null; this.cover = null; this.seek = null; this.duckWant = 0; }
 
   /** True if every navigation cell on the straight line to (x, z) is walkable. */
   straightFree(x, z) {
@@ -805,44 +947,153 @@ export class Enemy {
     for (let i = 1; i <= n; i++) { const k = nav.idx(this.pos.x + dx * i / n, this.pos.z + dz * i / n); if (k < 0 || !nav.free[k]) return false; }
     return true;
   }
-  /** Unit direction of the next step toward the player: straight if the way is open, otherwise along a route. */
-  toward(dx, dz, dist, dt) {
-    const G = this.game, P = this.tgt || G.player, nav = G.nav;
+  /**
+   * Unit direction of the next step toward (tx, ty, tz): straight if the way is open, otherwise along a route; up or down a ladder
+   * when the place is on another floor (not for the dull, nor for dogs and riders). Off the walking grid (on a roof, a deck), straight on.
+   */
+  toward(tx, tz, ty, dt) {
+    const G = this.game, nav = G.nav, dx = tx - this.pos.x, dz = tz - this.pos.z, dist = Math.hypot(dx, dz) || 0.001;
     if (!nav) return [dx / dist, dz / dist];
     this.pathT -= dt;
-    if (this.los && dist < 16 && this.straightFree(P.pos.x, P.pos.z)) { this.path = null; return [dx / dist, dz / dist]; }
-    if (!this.path || this.pathT <= 0) { this.pathT = 0.7 + G.rand() * 0.6; this.path = nav.path(this.pos.x, this.pos.z, P.pos.x, P.pos.z, 30000, this.pos.y, P.pos.y); this.pathI = 0; }
+    if (this.climb) return this.climb.ph === 'go' ? this.toLadder(dt) : [0, 0];      // on the rungs, the climb moves him
+    if (this.wit.climb && ty !== undefined && Math.abs(ty - this.pos.y) > 1.8 && !this.cfg.dog && !this.cfg.rider && !this.static && dist < 60) {
+      const L = this.ladderTo(tx, ty, tz);
+      if (L) { this.climb = { L, up: ty > this.pos.y, ph: 'go', t: 0, T: 0 }; this.path = null; return this.toLadder(dt); }
+    }
+    const k = nav.near(this.pos.x, this.pos.z, this.pos.y), onNav = k >= 0 && Math.abs(nav.hgt[k] - this.pos.y) < 0.9;
+    if (!onNav) return [dx / dist, dz / dist];
+    return this.route(tx, tz, ty, dist, dt);
+  }
+  route(tx, tz, ty, dist, dt) {
+    const G = this.game, nav = G.nav, dx = tx - this.pos.x, dz = tz - this.pos.z;
+    if (dist < 16 && (ty === undefined || Math.abs(ty - this.pos.y) < 1.2) && this.straightFree(tx, tz)) { this.path = null; return [dx / dist, dz / dist]; }
+    if (!this.path || this.pathT <= 0 || Math.hypot(this.pathTo[0] - tx, this.pathTo[1] - tz) > 2.5) { this.pathT = 0.7 + G.rand() * 0.6; this.path = nav.path(this.pos.x, this.pos.z, tx, tz, 30000, this.pos.y, ty); this.pathI = 0; this.pathTo = [tx, tz]; }
     const path = this.path;
     if (!path) return [dx / dist, dz / dist];
     while (this.pathI < path.length - 1 && Math.hypot(path[this.pathI][0] - this.pos.x, path[this.pathI][1] - this.pos.z) < 0.75) this.pathI++;
     const n = path[this.pathI], ex = n[0] - this.pos.x, ez = n[1] - this.pos.z, el = Math.hypot(ex, ez) || 1;
     return [ex / el, ez / el];
   }
+  /**
+   * The ladder (or flight of stairs) that leads from his floor toward the floor of (tx, ty, tz): straight to it if one does,
+   * otherwise the one that brings him nearest (up a stairwell, one floor at a time). Null if none.
+   */
+  ladderTo(tx, ty, tz) {
+    const up = ty > this.pos.y; let best = null, bd = 1e9;
+    for (const L of this.game.world.ladders) {
+      const f = this.foot(L), o = this.ladTop(L);
+      const [ax, az, ay, bx, bz, by] = up ? [f[0], f[1], L.y0, o[0], o[1], L.y1] : [o[0], o[1], L.y1, f[0], f[1], L.y0];
+      if (Math.abs(ay - this.pos.y) > 1.6 || (up ? by < this.pos.y + 1 : by > this.pos.y - 1)) continue;      // from this floor, the right way
+      const d = Math.hypot(ax - this.pos.x, az - this.pos.z) + Math.hypot(bx - tx, bz - tz) * 1.2 + Math.max(0, Math.abs(by - ty) - 2.2) * 6;
+      if (d < bd && d < 80) { bd = d; best = L; }
+    }
+    return best;
+  }
+  foot(L) { if (L.stair) return [L.pts[0][0], L.pts[0][2]]; const out = 0.5 + (L.lean || 0) * (L.y1 - L.y0); return [L.x + L.nx * out, L.z + L.nz * out]; }
+  ladTop(L) { if (L.stair) { const p = L.pts[L.pts.length - 1]; return [p[0], p[2]]; } return [L.x - L.nx * 0.55, L.z - L.nz * 0.55]; }
+  /** On the way to a ladder: to its foot (going up) or to the edge at its top (going down). When there, the climb itself begins. */
+  toLadder(dt) {
+    const c = this.climb, L = c.L, [px, pz] = c.up ? this.foot(L) : this.ladTop(L);
+    c.T += dt; if (c.T > 25) { this.climb = null; return [0, 0]; }                // could not get there: forget it
+    const dx = px - this.pos.x, dz = pz - this.pos.z, d = Math.hypot(dx, dz) || 0.001;
+    if (d < 0.5) {
+      if (L.stair) { c.ph = 'stair'; c.s = 0; c.path = c.up ? L.pts : L.pts.slice().reverse(); return [0, 0]; }   // up or down the flights, step by step
+      c.ph = c.up ? 'up' : 'on'; c.t = 0; c.x0 = this.pos.x; c.z0 = this.pos.z; return [0, 0];
+    }
+    if (c.up) return this.route(px, pz, L.y0, d, dt);
+    return [dx / d, dz / d];
+  }
+  /** On the rungs: up, off at the top, or onto the ladder and down. Returns true while it goes on. */
+  climbStep(dt) {
+    const c = this.climb, L = c.L, lean = L.lean || 0, out = () => 0.47 + lean * Math.max(0, L.y1 - this.pos.y);
+    if (c.ph === 'stair') {                                  // along the flights of a stairwell, at a walk
+      c.s += dt * 2.4; let s = c.s, i = 0;
+      for (; i < c.path.length - 1; i++) { const a = c.path[i], b = c.path[i + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]); if (s <= l) { const k = s / l; this.pos.set(a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k); this.yawTo = Math.atan2(b[0] - a[0], b[2] - a[2]); break; } s -= l; }
+      this.walk += dt * 6; this.moving = 1;
+      if (i >= c.path.length - 1) { const e = c.path[c.path.length - 1]; this.pos.set(e[0], e[1], e[2]); this.climb = null; this.path = null; return false; }
+      return true;
+    }
+    this.yawTo = Math.atan2(-L.nx, -L.nz); this.walk += dt * 6;
+    if (c.ph === 'up') {
+      this.pos.y = Math.min(L.y1 + 0.02, this.pos.y + 2.4 * dt); this.pos.x = L.x + L.nx * out(); this.pos.z = L.z + L.nz * out();
+      if (this.pos.y >= L.y1) { c.ph = 'off'; c.t = 0; c.x0 = this.pos.x; c.z0 = this.pos.z; }
+    } else if (c.ph === 'off') {
+      c.t = Math.min(1, c.t + dt / 0.3); this.pos.x = c.x0 + (L.x - L.nx * 0.55 - c.x0) * c.t; this.pos.z = c.z0 + (L.z - L.nz * 0.55 - c.z0) * c.t;
+      if (c.t >= 1) { this.climb = null; this.path = null; return false; }
+    } else if (c.ph === 'on') {
+      c.t = Math.min(1, c.t + dt / 0.3); this.pos.x = c.x0 + (L.x + L.nx * out() - c.x0) * c.t; this.pos.z = c.z0 + (L.z + L.nz * out() - c.z0) * c.t;
+      if (c.t >= 1) c.ph = 'down';
+    } else if (c.ph === 'down') {
+      this.pos.y = Math.max(L.y0, this.pos.y - 2.6 * dt); this.pos.x = L.x + L.nx * out(); this.pos.z = L.z + L.nz * out();
+      if (this.pos.y <= L.y0 + 0.05) { const f = this.foot(L); this.pos.x = f[0]; this.pos.z = f[1]; this.climb = null; this.path = null; return false; }
+    } else return false;
+    return true;
+  }
+  /** (Clever ones) a place within a dozen metres where, crouched, he is hidden from the target and, standing, sees it. far: well away from it. */
+  findCover(tx, ty, tz, far) {
+    const G = this.game, W = G.world, nav = G.nav, cfg = this.cfg, r = G.rand; if (!nav) return null;
+    const want = far ? cfg.rMax * 1.2 : (cfg.rMin + cfg.rMax) / 2;
+    let best = null, bs = -1e9;
+    for (let i = 0; i < 22; i++) {
+      const a = r() * TAU, d = 2 + r() * 12, x = this.pos.x + Math.sin(a) * d, z = this.pos.z + Math.cos(a) * d;
+      const k = nav.idx(x, z); if (k < 0 || !nav.free[k]) continue;
+      const y = nav.hgt[k]; if (Math.abs(y - this.pos.y) > 1.2) continue;
+      const dp = Math.hypot(tx - x, tz - z); if (dp < cfg.rMin * 0.7 || dp > cfg.range * 0.9) continue;
+      if (W.clear(x, y + 0.85, z, tx, ty + 1.1, tz)) continue;                         // crouched: hidden
+      if (!W.clear(x, y + 1.62, z, tx, ty + 1.4, tz)) continue;                        // standing: in sight
+      let sc = -Math.abs(dp - want) * 0.25 - d * 0.35 + r() * 0.5;
+      for (const e of G.enemies) if (e !== this && e.cover && Math.hypot(e.cover.x - x, e.cover.z - z) < 3) sc -= 6;   // not where another one hides
+      if (this.cover && Math.hypot(this.cover.x - x, this.cover.z - z) < 4) sc -= 5;                                     // somewhere new
+      if (sc > bs) { bs = sc; best = { x, y, z }; }
+    }
+    return best;
+  }
+  /** (Clever bombers) a bomb lobbed at where the target hides. */
+  throwBomb(k) {
+    const G = this.game, kind = BOMB_OF[G.def && G.def.id]; if (!kind) return;
+    const x = this.pos.x, y = this.pos.y + 1.6 * this.scale, z = this.pos.z, dx = k.x - x, dz = k.z - z, dy = k.y + 0.3 - y, d = Math.hypot(dx, dz);
+    const t = clamp(d / 13, 0.6, 1.7), vx = dx / t, vz = dz / t, vy = (dy + 0.5 * 9.8 * t * t) / t, sp = Math.hypot(vx, vy, vz);
+    G.shots.spawn(kind, x, y, z, vx / sp, vy / sp, vz / sp, sp, false, 0, 9.8);
+    if (G.duel) G.duel.enemyShot(kind, x, y, z, vx / sp, vy / sp, vz / sp, sp, 9.8);
+    this.shotAt = G.time; this.throwPose = 0.5; G.sound.whiz();
+  }
 
   /** Ray vs. the body's hit spheres. Returns {t, head} or null. */
   rayHit(o, d, max) {
     if (this.state === 'dead' || this.state === 'hidden') return null;
-    const s = this.scale, P = this.pos;
+    const s = this.scale, P = this.pos, low = 0.5 * this.duckK;                  // crouched behind cover, the body is half a metre lower
     let best = null;
-    const test = (cy, r, head) => {
-      const ox = o.x - P.x, oy = o.y - (P.y + cy * s), oz = o.z - P.z, rr = r * s;
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    const test = (cy, r, head, fwd = 0) => {                                     // fwd: along the body (a horse is long)
+      const ox = o.x - P.x - fx * fwd * s, oy = o.y - (P.y + (cy - low) * s), oz = o.z - P.z - fz * fwd * s, rr = r * s;
       const b = ox * d.x + oy * d.y + oz * d.z, c = ox * ox + oy * oy + oz * oz - rr * rr;
       const disc = b * b - c;
       if (disc < 0) return;
       const t = -b - Math.sqrt(disc);
       if (t > 0 && t < max && (!best || t < best.t)) best = { t, head };
     };
-    if (this.cfg.hit) for (const h of this.cfg.hit) test(h[0], h[1], h[2]);
+    if (this.cfg.hit) for (const h of this.cfg.hit) test(h[0], h[1], h[2], h[3]);
     else { test(1.68, 0.2, true); test(1.28, 0.31, false); test(0.92, 0.29, false); test(0.52, 0.25, false); test(0.18, 0.2, false); }
     return best;
   }
 
   damage(amount, head, fromX, fromZ) {
     if (!this.alive || this.state === 'hidden') return false;
-    if (this.puppet) { this.flinch = 1; this.flash = 1; this.game.duel.send({ t: 'ehit', i: this.idx, d: amount, h: head ? 1 : 0, x: fromX, z: fromZ }); return false; }   // duel guest: the host decides
+    if (this.puppet) { this.flinch = 1; this.flash = 1; this.hurtT = 0; this.game.duel.send({ t: 'ehit', i: this.idx, d: amount, h: head ? 1 : 0, x: fromX, z: fromZ }); return false; }   // duel guest: the host decides
     this.hp -= amount * (head ? 2.5 : 1);
-    this.flinch = 1; this.flash = 1;
-    if (this.state === 'idle') { this.state = 'combat'; this.react = 0.25; for (const e of this.game.enemies) if (e.state === 'idle' && e.pos.distanceToSquared(this.pos) < 144) e.alert(0.4); }
+    this.flinch = 1; this.flash = 1; this.hurtT = 0;
+    if (this.hp > 0 && !this.cfg.boss && !this.cfg.rider && !this.static) {            // the blow pushes him back a little
+      const dx = this.pos.x - fromX, dz = this.pos.z - fromZ, d = Math.hypot(dx, dz) || 1, k = Math.min(0.25, amount / 250);
+      this.pos.x += dx / d * k; this.pos.z += dz / d * k; this.game.world.collide(this.pos, 0.38, 1.7);
+    }
+    const G = this.game, T = this.tgt || G.player, ky = Math.abs(T.pos.x - fromX) + Math.abs(T.pos.z - fromZ) < 2 ? T.pos.y : this.pos.y;
+    if (this.state === 'idle') {                                   // hurt: he turns on whoever did it (and, if he lives, his cry is heard around)
+      this.state = 'combat'; this.mode = 'fight'; this.react = 0.25; this.lostT = 0; this.know = { x: fromX, y: ky, z: fromZ, t: G.time };
+      if (this.hp > 0) for (const e of G.enemies) if (e.state === 'idle' && !e.puppet && !e.remote && e.pos.distanceToSquared(this.pos) < 144) e.alert(0.4, this.know);
+    } else if (this.state === 'combat') {
+      if (!this.los) { this.know = { x: fromX, y: ky, z: fromZ, t: G.time }; this.lostT = Math.min(this.lostT, 1); if (this.mode === 'search' || this.mode === 'home') this.mode = 'chase'; }
+      if (this.cover) this.hitsHere++;
+    }
     if (this.hp <= 0) {
       this.state = 'dead'; this.deathT = 0;
       this.yaw = Math.atan2(fromX - this.pos.x, fromZ - this.pos.z);   // face the shot, fall away from it
@@ -850,6 +1101,8 @@ export class Enemy {
       const W = this.game.world, fx = Math.sin(this.yaw), fz = Math.cos(this.yaw), y = this.pos.y + 0.7;
       const room = (s) => W.clear(this.pos.x, y, this.pos.z, this.pos.x + fx * s * 1.9, y, this.pos.z + fz * s * 1.9);
       if (!room(this.fallDir)) { if (room(-this.fallDir)) this.fallDir = -this.fallDir; else this.slump = true; }   // against a wall: fall the other way, or sink down
+      if (this.game.enemyDown) this.game.enemyDown(this);
+      if (this.game.voices && !this.remote) this.game.voices.cry(this);
       return true;
     }
     return false;
@@ -857,7 +1110,7 @@ export class Enemy {
 
   update(dt) {
     const G = this.game, P = (this.tgt = G.duel ? G.duel.targetFor(this) : G.player), cfg = this.cfg, rig = this.rig, r = G.rand;
-    this.flash = Math.max(0, this.flash - dt * 7); this.flinch = Math.max(0, this.flinch - dt * 5);
+    this.flash = Math.max(0, this.flash - dt * 7); this.flinch = Math.max(0, this.flinch - dt * 5); this.hurtT += dt;
     rig.mat.emissive.setScalar(this.flash * 0.7);
 
     if (this.poison > 0 && this.alive && !this.puppet) {                       // poison: it goes on working for five seconds, and turns the skin green
@@ -875,6 +1128,7 @@ export class Enemy {
       rig.armL.rotation.x = damp(rig.armL.rotation.x, -0.6, 6, dt); rig.armR.rotation.x = damp(rig.armR.rotation.x, 0.5, 6, dt);
       rig.armL.rotation.z = damp(rig.armL.rotation.z, 0.9, 6, dt); rig.armR.rotation.z = damp(rig.armR.rotation.z, -0.7, 6, dt);
       rig.legL.rotation.x = damp(rig.legL.rotation.x, 0.25, 6, dt); rig.legR.rotation.x = damp(rig.legR.rotation.x, -0.2, 6, dt);
+      if (rig.shinL) { rig.shinL.rotation.x = damp(rig.shinL.rotation.x, this.slump ? 2.2 : 0.35, 6, dt); rig.shinR.rotation.x = damp(rig.shinR.rotation.x, this.slump ? 2.2 : 0.1, 6, dt); }
       return;
     }
     if (this.puppet) { this.puppetUpdate(dt); return; }
@@ -896,76 +1150,170 @@ export class Enemy {
     }
 
     let mvx = 0, mvz = 0, speed = 0, wantYaw = this.yaw, pose = 0;   // pose: 0 rest, 1 aim/ready
-    if (this.state === 'idle') {
-      if (!P.dead && !G.peace) {
-        const facing = Math.cos(this.yaw - Math.atan2(dx, dz));
-        const st = (P.mods.stealth ?? 1) * (1 - 0.4 * duck);               // a spy is noticed later, and so is anyone who crouches
-        if (this.los && dist < cfg.sight * st && (facing > -0.2 || dist < 10 * st)) this.alert();
-        else if (G.noise > 0 && dist < (cfg.sight * 0.55 + 8) * st) this.alert(0.2);
-      }
-      if (this.patrol) {
+    const wit = this.wit, genius = G.wits === 'genius', smart = G.wits !== 'low';
+    this.duckWant = 0; this.yawTo = null;
+    if (P.cloak) this.los = false;                                          // the Vanish skill: he is not to be seen
+    /** Head for (tx, ty, tz) at k times his speed. */
+    const go = (tx, tz, ty, k = 1) => { const v = this.toward(tx, tz, ty, dt); mvx = v[0]; mvz = v[1]; speed = cfg.speed * k; if (v[0] || v[1]) wantYaw = Math.atan2(v[0], v[1]); };
+    /** Does he see the target? A spy is noticed later, and so is anyone who crouches or sneaks; the clever see further. */
+    const detect = () => {
+      if (P.dead || G.peace || !this.los) return false;
+      const facing = Math.cos(this.yaw - Math.atan2(dx, dz));
+      const sneak = !!P.sneaking, st = (P.mods.stealth ?? 1) * (1 - 0.4 * duck) * (sneak ? 0.65 : 1) * wit.sight;
+      if (!(dist < cfg.sight * st && (facing > -0.2 || dist < (sneak ? 3 : 10) * st))) return false;
+      if (this.state === 'idle') this.alert(); else { this.mode = 'fight'; this.lostT = 0; }
+      return true;
+    };
+    if (this.fleeT > 0) {                                                    // out of a fire, first of all
+      this.fleeT -= dt; const fx = this.pos.x - this.fleeFrom.x, fz = this.pos.z - this.fleeFrom.z, fl = Math.hypot(fx, fz) || 1;
+      mvx = fx / fl; mvz = fz / fl; speed = cfg.speed * 1.3; wantYaw = Math.atan2(mvx, mvz);
+    } else if (this.state === 'idle') {
+      detect();
+      if (this.look) { this.look.t -= dt; wantYaw = Math.atan2(this.look.x - this.pos.x, this.look.z - this.pos.z); if (this.look.t <= 0) this.look = null; }
+      if ((this.patrol || this.wander) && !this.static) {
         this.wanderT -= dt;
         if (this.wander) {
           const wx = this.wander.x - this.pos.x, wz = this.wander.z - this.pos.z, wd = Math.hypot(wx, wz);
           if (wd < 0.4 || this.wanderT < -6) { this.wander = null; this.wanderT = 2 + r() * 5; }
           else { mvx = wx / wd; mvz = wz / wd; speed = 1.2; wantYaw = Math.atan2(wx, wz); }
-        } else if (this.wanderT <= 0) this.wander = { x: this.home.x + (r() - 0.5) * 7, z: this.home.z + (r() - 0.5) * 7 };
-      }
+        } else if (this.wanderT <= 0 && this.patrol) this.wander = { x: this.home.x + (r() - 0.5) * 7, z: this.home.z + (r() - 0.5) * 7 };
+      } else if (!this.look && this.post) wantYaw = this.homeYaw;
     } else if (!P.dead) {
       // ---- combat ----
-      wantYaw = Math.atan2(dx, dz);
       this.react -= dt;
-      const tx = dx / dist, tz = dz / dist, px = -tz, pz = tx;
-      if (cfg.ranged) {
-        pose = this.aim > 0 || this.burst > 0 ? 1 : 0.35;
-        this.strafeT -= dt;
-        if (this.strafeT <= 0) { this.strafeT = 0.8 + r() * 2.2; this.strafe = r() < 0.25 ? 0 : r.sign(); }
-        if (!this.static && this.aim <= 0) {
-          let fwd = 0;
-          if (!this.los || dist > cfg.rMax) fwd = 1; else if (dist < cfg.rMin) fwd = -0.8;
-          const go = fwd > 0 ? this.toward(dx, dz, dist, dt) : [tx, tz];
-          const side = fwd > 0 && this.path ? 0 : this.strafe * 0.8;            // no side-stepping while following a route
-          mvx = go[0] * fwd + px * side; mvz = go[1] * fwd + pz * side;
-          speed = cfg.speed * (fwd > 0 && !this.los ? 1.25 : 1);
+      const seen = this.los && (this.mode !== 'home' || dist < cfg.sight * wit.sight);   // on his way back, only what is near enough brings him round
+      if (seen) {
+        this.know = { x: P.pos.x, y: P.pos.y, z: P.pos.z, t: G.time }; this.lostT = 0;
+        if (this.mode !== 'fight') this.mode = 'fight';
+        if (G.time - (this.sharedT ?? -9) > 1.2) this.share();
+      } else this.lostT += dt;
+      if (!this.know) this.know = { x: P.pos.x, y: P.pos.y, z: P.pos.z, t: G.time };
+      const K = this.know, kx = K.x - this.pos.x, kz = K.z - this.pos.z, kd = Math.hypot(kx, kz) || 0.001;
+      // out of reach for the dull: up a ladder, on a roof
+      this.unreachT = !smart && P.pos.y - this.pos.y > 1.8 && !(cfg.ranged && this.los) ? (this.unreachT || 0) + dt : 0;
+      // giving up, or going after him
+      if (this.mode !== 'home') {
+        const lostFor = this.cover ? Math.max(0, this.lostT - 5) : this.lostT;      // crouched behind cover he does not see the target, and does not mind
+        if (this.static) { if (this.lostT > wit.giveUp + 6) { this.state = 'idle'; this.mode = null; this.know = null; } else this.mode = 'fight'; }
+        else if (!smart && (lostFor > wit.giveUp || (dist > wit.far && !this.los) || this.unreachT > 2.5)) this.goHome();
+        else if (smart && !this.los && (this.lostT > wit.giveUp || (dist > wit.far && this.lostT > 2))) this.goHome();
+        else if (smart && this.mode === 'fight' && lostFor > (cfg.ranged ? 1.2 : 0.5)) { this.mode = 'chase'; this.cover = null; }
+      }
+      if (this.state !== 'combat') { /* gave up where he stands */ }
+      else if (this.mode === 'home') {
+        if (!detect()) {
+          const hx = this.home.x - this.pos.x, hz = this.home.z - this.pos.z;
+          if (Math.hypot(hx, hz) < 0.9 && Math.abs(this.home.y - this.pos.y) < 1.5) { this.state = 'idle'; this.mode = null; this.know = null; this.wander = null; this.climb = null; }
+          else go(this.home.x, this.home.z, this.home.y, 0.55);
         }
-        if (this.react <= 0) {
-          this.cool -= dt;
-          if (this.aim > 0) {
-            this.aim -= dt;
-            if (this.aim <= 0) { this.fire(dx, dy, dz, dist); if (cfg.burst) { this.burst = cfg.burst - 1; this.burstT = 0.16; } }
-          } else if (this.burst > 0) {
-            this.burstT -= dt;
-            if (this.burstT <= 0) { this.fire(dx, dy, dz, dist); this.burst--; this.burstT = 0.16; }
-          } else if (this.cool <= 0 && this.los && dist < cfg.range) {
-            this.aim = cfg.windup; this.cool = cfg.cool[0] + r() * (cfg.cool[1] - cfg.cool[0]);
+      } else if (this.mode === 'chase' || this.mode === 'search') {
+        pose = cfg.melee ? 1 : 0.35;
+        if (this.mode === 'chase') {
+          if (kd < 1.6 && Math.abs(K.y - this.pos.y) < 1.6) { this.mode = 'search'; this.searchT = wit.search; this.seek = null; }
+          else {
+            go(K.x, K.z, K.y, genius && kd < 35 ? 0.8 : 1.15);
+            if (kd < 6 && !this.climb && Math.abs(K.y - this.pos.y) < 1 && !this.straightFree(K.x, K.z)) this.duckWant = 1;   // into a low hiding place: crouching
+          }
+        }
+        if (this.mode === 'search') {                     // where the target was: he looks about, here and there
+          this.searchT -= dt;
+          if (this.searchT <= 0) this.goHome();
+          else {
+            if (!this.seek || Math.hypot(this.seek.x - this.pos.x, this.seek.z - this.pos.z) < 0.8 || (this.seek.t -= dt) <= 0) {
+              const nav = G.nav, a = r() * TAU, d = 2 + r() * 7;
+              let x = K.x + Math.sin(a) * d, z = K.z + Math.cos(a) * d;
+              if (nav) { const q = nav.near(x, z, K.y); if (q >= 0) { x = nav.x0 + ((q % nav.nx) + 0.5) * nav.cell; z = nav.z0 + (((q / nav.nx) | 0) + 0.5) * nav.cell; } }
+              this.seek = { x, z, t: 5 };
+            }
+            go(this.seek.x, this.seek.z, K.y, 0.6);
           }
         }
       } else {
-        // melee: close in, wind up, strike
-        pose = 1;
-        if (this.strike > 0) {
-          this.strike -= dt;
-          if (this.strike <= 0) {
-            if (cfg.dog) G.sound.bark(); else G.sound.slash();
-            if (dist < cfg.reach + 0.5 && Math.abs(P.pos.y - this.pos.y) < 2 && G.world.clear(this.pos.x, this.pos.y + (cfg.dog ? 0.6 : 1.2), this.pos.z, P.pos.x, P.pos.y + 1.1, P.pos.z)) G.hurtTarget(P, cfg.dmg, this.pos, true);   // no blows through walls
-            this.recover = cfg.recover;
+        // ---- fight: he sees the target, or has only just lost sight of it ----
+        wantYaw = Math.atan2(dx, dz);
+        const tx = dx / dist, tz = dz / dist, px = -tz, pz = tx;
+        if (cfg.ranged) {
+          pose = this.aim > 0 || this.burst > 0 ? 1 : 0.35;
+          this.strafeT -= dt;
+          if (this.strafeT <= 0) { this.strafeT = 0.8 + r() * 2.2; this.strafe = r() < 0.25 ? 0 : r.sign(); }
+          const hurt = genius && this.hp < this.maxHp * 0.35 && !cfg.boss;
+          if (genius && !this.static && !cfg.boss) {               // from cover: crouched, up to shoot, and somewhere new after a few shots
+            this.coverT -= dt;
+            const stale = !this.cover || this.coverT <= 0 || this.shotsHere >= 3 + (this.id % 3) || this.hitsHere >= 2 || Math.hypot(this.cover.x - P.pos.x, this.cover.z - P.pos.z) < cfg.rMin * 0.6;
+            if (stale && this.aim <= 0 && this.burst <= 0 && (this.coverLookT = (this.coverLookT || 0) - dt) <= 0) {
+              this.cover = this.findCover(K.x, K.y, K.z, hurt); this.coverT = 7 + r() * 5; this.shotsHere = 0; this.hitsHere = 0; this.atCover = false; this.coverLookT = this.cover ? 0 : 1.5;
+            }
+          } else this.cover = null;
+          if (this.cover && this.aim <= 0 && this.burst <= 0) {
+            const cd = Math.hypot(this.cover.x - this.pos.x, this.cover.z - this.pos.z);
+            if (cd > 0.45) { go(this.cover.x, this.cover.z, this.cover.y, 1.25); this.atCover = false; if (cd < 3) wantYaw = Math.atan2(kx, kz); }
+            else { this.atCover = true; wantYaw = Math.atan2(kx, kz); }
+          } else if (!this.cover && !this.static && this.aim <= 0) {
+            let fwd = 0;
+            if (!this.los || dist > cfg.rMax) fwd = 1; else if (dist < cfg.rMin) fwd = -0.8;
+            if (hurt) fwd = this.los && dist < cfg.rMax ? -0.9 : 0;                     // badly hurt: he keeps his distance
+            if (!smart && !this.los) fwd = 0;                                           // the dull do not go looking: they wait, then give up
+            const v = fwd > 0 ? (this.los ? this.toward(P.pos.x, P.pos.z, P.pos.y, dt) : this.toward(K.x, K.z, K.y, dt)) : [tx, tz];
+            const side = fwd > 0 && this.path ? 0 : this.strafe * 0.8;            // no side-stepping while following a route
+            mvx = v[0] * fwd + px * side; mvz = v[1] * fwd + pz * side;
+            speed = cfg.speed * (fwd > 0 && !this.los ? 1.25 : 1);
+            if (!smart && fwd > 0 && Math.hypot(this.pos.x - this.home.x, this.pos.z - this.home.z) > 25) speed = 0;   // the dull keep to their ground
           }
-        } else if (this.recover > 0) this.recover -= dt;
-        else if (dist < cfg.reach * 0.85 && this.react <= 0) this.strike = cfg.windup;
-        else {
-          let zig = 0;
-          if (cfg.zigzag && dist > 5) zig = Math.sin(G.time * 3.1 + this.id * 1.7) * 0.9;
-          const go = this.toward(dx, dz, dist, dt); if (this.path) zig = 0;
-          mvx = go[0] + px * zig; mvz = go[1] + pz * zig; speed = cfg.speed * (dist > 4 ? 1 : 0.75);
-          if (cfg.throws && this.los && dist > 7 && dist < 26 && this.react <= 0) {
-            this.throwT -= dt;
-            if (this.throwT <= 0) { this.throwT = (cfg.boss ? 1.6 : 2.6) + r() * 2; this.throwStar(dx, dy, dz, dist); }
+          if (this.cover && this.atCover) this.duckWant = this.aim > 0 || this.burst > 0 || this.cool < 0.35 ? 0 : 1;   // up to shoot, down again
+          if (this.sniper && genius) this.duckWant = this.aim > 0 || this.burst > 0 || this.cool < 0.5 ? 0 : 0.7;
+          if (this.react <= 0) {
+            this.cool -= dt;
+            if (this.aim > 0) {
+              this.aim -= dt;
+              if (this.aim <= 0) { this.fire(dx, dy, dz, dist); this.shotsHere++; if (this.atCover) this.cool += 0.6; if (cfg.burst) { this.burst = cfg.burst - 1; this.burstT = 0.16; } }   // from cover: longer down between shots
+            } else if (this.burst > 0) {
+              this.burstT -= dt;
+              if (this.burstT <= 0) { this.fire(dx, dy, dz, dist); this.burst--; this.burstT = 0.16; }
+            } else if (this.cool <= 0 && this.los && dist < cfg.range && this.duckK < 0.4) {
+              this.aim = cfg.windup; this.cool = cfg.cool[0] + r() * (cfg.cool[1] - cfg.cool[0]);
+            }
+          }
+        } else {
+          // melee: close in, wind up, strike
+          pose = 1;
+          if (this.strike > 0) {
+            this.strike -= dt;
+            if (this.strike <= 0) {
+              if (cfg.beast) G.sound.beast(cfg.beast); else if (cfg.dog) G.sound.bark(); else G.sound.slash();
+              if (dist < cfg.reach + 0.5 && Math.abs(P.pos.y - this.pos.y) < 2 && G.world.clear(this.pos.x, this.pos.y + (cfg.dog ? 0.6 : 1.2), this.pos.z, P.pos.x, P.pos.y + 1.1, P.pos.z)) G.hurtTarget(P, cfg.dmg, this.pos, true);   // no blows through walls
+              this.recover = cfg.recover;
+            }
+          } else if (this.recover > 0) this.recover -= dt;
+          else if (dist < cfg.reach * 0.85 && this.react <= 0 && this.los) this.strike = cfg.windup;
+          else {
+            let zig = 0, ax = this.los ? P.pos.x : K.x, az = this.los ? P.pos.z : K.z;
+            if (cfg.zigzag && dist > 5) zig = Math.sin(G.time * 3.1 + this.id * 1.7) * 0.9;
+            if (genius && this.los && dist > 8 && !cfg.boss) { const off = Math.min(7, dist * 0.45) * this.flank; ax += px * off; az += pz * off; zig = 0; }   // round the side
+            const v = this.toward(ax, az, this.los ? P.pos.y : K.y, dt); if (this.path) zig = 0;
+            mvx = v[0] + px * zig; mvz = v[1] + pz * zig; speed = cfg.speed * (dist > 4 ? 1 : 0.75);
+            if (!smart && Math.hypot(this.pos.x - this.home.x, this.pos.z - this.home.z) > 30 && dist > 6) speed = 0;   // the dull keep to their ground
+            if (cfg.throws && this.los && dist > 7 && dist < 26 && this.react <= 0) {
+              this.throwT -= dt;
+              if (this.throwT <= 0) { this.throwT = (cfg.boss ? 1.6 : 2.6) + r() * 2; this.throwStar(dx, dy, dz, dist); }
+            }
           }
         }
       }
+      // a clever one with a bomb throws it where the target hides
+      if (genius && this.state === 'combat' && BOMBERS[this.type] && BOMB_OF[G.def && G.def.id] && !this.los && this.lostT > 2 && this.lostT < 15 && kd > 7 && kd < 28 && this.mode !== 'home' && !G.peace) {
+        this.bombT -= dt; if (this.bombT <= 0) { this.bombT = 12 + r() * 8; this.throwBomb(K); }
+      }
     }
 
+    // closing in on a target that cannot see him, an enemy goes slowly and quietly: then he does not show on the player's map (a clever one crouches)
+    const knowD = this.know ? Math.hypot(this.know.x - this.pos.x, this.know.z - this.pos.z) : dist;
+    this.sneaking = this.state === 'combat' && !cfg.dog && !cfg.rider && !this.los && speed > 0 && this.mode !== 'home' && (genius ? knowD < 35 : dist < 28);
+    if (this.sneaking) { speed *= genius ? 0.7 : 0.6; if (genius) this.duckWant = Math.max(this.duckWant, 0.45); }
+    const limp = this.hp < this.maxHp * 0.4 && !cfg.dog && !cfg.rider ? 1 : 0;       // badly hurt: he limps, and goes slower
+    if (limp) speed *= 0.78;
     // ---- movement ----
+    const climbing = !!this.climb && this.climb.ph !== 'go' && this.climbStep(dt), bh = this.duckK > 0.6 ? 1.05 : 1.7;   // crouched, he fits under lower things
+    if (climbing) { speed = 0; wantYaw = this.yawTo; }
     if (speed > 0) {
       const ml = Math.hypot(mvx, mvz) || 1; mvx /= ml; mvz /= ml;
       if (this.detour > 0) { this.detour -= dt; const ox = mvx; mvx = -mvz * this.detourDir * 0.9 + ox * 0.3; mvz = ox * this.detourDir * 0.9 + mvz * 0.3; }
@@ -974,7 +1322,7 @@ export class Enemy {
       for (let q = 0; q < steps; q++) {
         const sx = this.pos.x, sz = this.pos.z, nx = sx + mvx * speed * dt / steps, nz = sz + mvz * speed * dt / steps;
         if (G.world.walkable(sx, sz, nx, nz, this.pos.y)) { this.pos.x = nx; this.pos.z = nz; }
-        G.world.collide(this.pos, 0.38, 1.7);
+        G.world.collide(this.pos, 0.38, bh);
       }
       for (const e of G.enemies) {            // keep some distance from each other
         if (e === this || !e.alive || e.state === 'hidden') continue;
@@ -985,26 +1333,26 @@ export class Enemy {
         const ex = this.pos.x - P.pos.x, ez = this.pos.z - P.pos.z, d2 = ex * ex + ez * ez, rr = cfg.dog ? 0.7 : 0.8;
         if (d2 < rr * rr && d2 > 1e-6 && Math.abs(P.pos.y - this.pos.y) < 1.6) { const d = Math.sqrt(d2); this.pos.x = P.pos.x + ex / d * rr; this.pos.z = P.pos.z + ez / d * rr; }
       }
-      G.world.collide(this.pos, 0.38, 1.7);
+      G.world.collide(this.pos, 0.38, bh);
       const moved = Math.hypot(this.pos.x - bx, this.pos.z - bz);
       if (moved < speed * dt * 0.35) this.stuck += dt; else this.stuck = Math.max(0, this.stuck - dt * 2);
       if (this.stuck > 0.35) { this.stuck = 0; this.detour = 0.7 + r() * 0.6; this.detourDir = r.sign(); if (this.wander) this.wander = null; }
-      this.moving = damp(this.moving, Math.min(1, moved / dt / 3), 10, dt);
+      this.moving = damp(this.moving, Math.min(1, moved / dt / 3), 10, dt); this.runK = damp(this.runK, clamp((moved / dt - 2.4) / 3, 0, 1), 6, dt);
       this.walk += moved * 2.6;
-    } else this.moving = damp(this.moving, 0, 10, dt);
-    const gy = G.world.groundAt(this.pos.x, this.pos.z, this.pos.y);
-    this.pos.y = gy > this.pos.y ? gy : Math.max(gy, this.pos.y - 12 * dt);
+    } else { this.moving = damp(this.moving, 0, 10, dt); this.runK = damp(this.runK, 0, 6, dt); }
+    if (!climbing) { const gy = G.world.groundAt(this.pos.x, this.pos.z, this.pos.y); this.pos.y = gy > this.pos.y ? gy : Math.max(gy, this.pos.y - 12 * dt); }
     if (this.pos.y < G.world.waterY - 1.2) { this.wetT = (this.wetT || 0) + dt; if (this.wetT > 1.5) { this.pos.copy(this.home); this.path = null; this.wetT = 0; } } else this.wetT = 0;   // fallen into deep water: back to where he started
 
     // ---- pose / animation ----
     let dYaw = wantYaw - this.yaw; dYaw = Math.atan2(Math.sin(dYaw), Math.cos(dYaw));
     this.yaw += dYaw * Math.min(1, dt * (this.state === 'combat' ? 9 : 4));
     this.sync();
-    const sw = Math.sin(this.walk) * 0.75 * this.moving;
-    rig.legL.rotation.x = sw; rig.legR.rotation.x = -sw;
-    rig.group.position.y = this.pos.y + Math.abs(Math.cos(this.walk)) * 0.04 * this.moving;
-    rig.hips.rotation.x = this.moving * 0.08 - this.flinch * 0.35 + (cfg.melee && pose ? 0.12 : 0);
-    rig.hips.rotation.y = Math.sin(this.walk) * 0.08 * this.moving;
+    const sw = cfg.dog || cfg.rider ? Math.sin(this.walk) * 0.75 * this.moving : -stride(rig, this.walk, this.moving, this.runK, limp);
+    if (cfg.dog || cfg.rider) { rig.legL.rotation.x = sw; rig.legR.rotation.x = -sw; }
+    rig.group.position.y = this.pos.y + Math.abs(Math.cos(this.walk)) * (0.04 + 0.03 * this.runK) * this.moving - limp * Math.max(0, Math.sin(this.walk)) * 0.05 * this.moving;
+    rig.hips.rotation.x = this.moving * (0.08 + 0.14 * this.runK) - this.flinch * 0.35 + (cfg.melee && pose ? 0.12 : 0);
+    rig.hips.rotation.y = Math.sin(this.walk) * (0.08 + 0.06 * this.runK) * this.moving;
+    rig.hips.rotation.z = limp * Math.sin(this.walk) * 0.1 * this.moving;
     this.armPose = damp(this.armPose, pose, 12, dt);
     const pitch = Math.atan2(dy, dist);
     let ax, lx = sw * -0.7, lz = 0.08, az = -0.08;
@@ -1024,28 +1372,48 @@ export class Enemy {
     }
     rig.armR.rotation.x = ax; rig.armR.rotation.z = az;
     rig.armL.rotation.x = lx; rig.armL.rotation.z = lz;
+    this.duckK = damp(this.duckK, cfg.dog || cfg.rider ? 0 : this.duckWant, 7, dt);
+    this.crouchPose(this.duckK);
+    if (climbing && !(this.climb && this.climb.L.stair)) {   // hand over hand on the rungs
+      const c = Math.sin(this.walk * 1.3);
+      rig.armR.rotation.x = -2.5 + c * 0.35; rig.armL.rotation.x = -2.5 - c * 0.35; rig.armR.rotation.z = -0.1; rig.armL.rotation.z = 0.1;
+      rig.legL.rotation.x = -0.5 + c * 0.45; rig.legR.rotation.x = -0.5 - c * 0.45;
+    }
+  }
+  /** Down on his heels behind cover (dk from 0, standing, to 1). */
+  crouchPose(dk) {
+    if (dk < 0.01) return;
+    const rig = this.rig;
+    rig.group.position.y -= 0.5 * dk * this.scale; rig.hips.rotation.x += 0.25 * dk;
+    rig.legL.rotation.x = rig.legL.rotation.x * (1 - dk) - 1.35 * dk; rig.legR.rotation.x = rig.legR.rotation.x * (1 - dk) + 0.9 * dk;
+    if (rig.shinL) { rig.shinL.rotation.x = rig.shinL.rotation.x * (1 - dk) + 1.35 * dk; rig.shinR.rotation.x = rig.shinR.rotation.x * (1 - dk) + 1.6 * dk; }
   }
 
   /** Duel guest: this enemy is simulated on the host; here it only follows the host's reports. */
   puppetUpdate(dt) {
     const n = this.net, rig = this.rig; if (!n) return;
-    if (n.st === 2) { if (this.state !== 'dead') { this.hp = 0; this.state = 'dead'; this.deathT = 0; this.fallDir = -1; } return; }
-    this.state = n.st === 1 ? 'combat' : 'idle';
+    if (n.st === 2) { if (this.state !== 'dead') { this.hp = 0; this.state = 'dead'; this.deathT = 0; this.fallDir = -1; if (this.game.enemyDown) this.game.enemyDown(this); } return; }
+    this.state = n.st === 1 ? 'combat' : n.st === 3 ? 'hidden' : 'idle'; this.sneaking = !!n.sn;
+    rig.group.visible = n.st !== 3;                          // one lying in ambush shows when he springs out
     const bx = this.pos.x, bz = this.pos.z, k = Math.min(1, dt * 12);
     this.pos.x += (n.x - bx) * k; this.pos.y += (n.y - this.pos.y) * k; this.pos.z += (n.z - bz) * k;
     let dy = n.yaw - this.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); this.yaw += dy * k;
     const moved = Math.hypot(this.pos.x - bx, this.pos.z - bz);
     this.moving = damp(this.moving, Math.min(1, moved / Math.max(dt, 1e-3) / 3), 10, dt); this.walk += moved * 2.6;
+    this.runK = damp(this.runK, clamp((moved / Math.max(dt, 1e-3) - 2.4) / 3, 0, 1), 6, dt); this.hurtT += dt;
+    if (n.hp !== undefined) this.hp = n.hp * this.maxHp;
     this.sync();
-    const sw = Math.sin(this.walk) * 0.75 * this.moving;
-    rig.legL.rotation.x = sw; rig.legR.rotation.x = -sw;
+    const sw = this.cfg.dog || this.cfg.rider ? Math.sin(this.walk) * 0.75 * this.moving : -stride(rig, this.walk, this.moving, this.runK, this.hp < this.maxHp * 0.4 ? 1 : 0);
+    if (this.cfg.dog || this.cfg.rider) { rig.legL.rotation.x = sw; rig.legR.rotation.x = -sw; }
     this.armPose = damp(this.armPose, n.pose, 12, dt);
     rig.armR.rotation.x = (this.cfg.melee ? -1.25 : -Math.PI / 2) * this.armPose + sw * 0.5 * (1 - this.armPose);
     rig.armL.rotation.x = this.cfg.twoHand ? -1.25 * this.armPose : sw * -0.7;
+    this.duckK = damp(this.duckK, n.dk || 0, 8, dt); this.crouchPose(this.duckK);
   }
 
   fire(dx, dy, dz, dist) {
     const G = this.game, cfg = this.cfg, r = G.rand, P = this.tgt || G.player;
+    this.shotAt = G.time;                                    // a shot gives him away on the map
     const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
     const mx = this.pos.x + fx * 0.75 - fz * 0.2 * this.scale, my = this.pos.y + 1.42 * this.scale, mz = this.pos.z + fz * 0.75 + fx * 0.2 * this.scale;
     // aim at the chest, with a little lead and a random error
@@ -1053,15 +1421,17 @@ export class Enemy {
     let ax = P.pos.x + P.vel.x * tt - mx, ay = P.pos.y + 1.15 - 0.5 * (P.duck || 0) - my, az = P.pos.z + P.vel.z * tt - mz;
     if (cfg.proj !== 'bullet') ay += dist * dist / (cfg.pspeed * cfg.pspeed) * 4.5;   // arc compensation
     const l = Math.hypot(ax, ay, az); ax /= l; ay /= l; az /= l;
-    const sp = cfg.spread * (0.6 + r());
+    const sp = cfg.spread * (0.6 + r()) * this.wit.spread;
     ax += (r() - 0.5) * 2 * sp; ay += (r() - 0.5) * 1.4 * sp; az += (r() - 0.5) * 2 * sp;
     G.shots.spawn(cfg.proj, mx, my, mz, ax, ay, az, cfg.pspeed, false, cfg.dmg);
     if (G.duel) G.duel.enemyShot(cfg.proj, mx, my, mz, ax, ay, az, cfg.pspeed);
-    if (cfg.proj === 'bullet' || cfg.proj === 'ball') { G.muzzle(mx + ax * 0.3, my + ay * 0.3, mz + az * 0.3, ax, ay, az, cfg.proj === 'ball' ? 2.2 : 0.7); G.sound.gun(cfg.proj === 'ball' ? 1 : Math.max(0.15, 0.8 - dist / 90), Math.min(1, dist / 70)); }
+    if (cfg.proj === 'bullet' || cfg.proj === 'ball') G.crowd.alarm(mx, mz, cfg.proj === 'ball' ? 45 : 24, mx, mz);
+    if (cfg.proj === 'bullet' || cfg.proj === 'ball') { G.muzzle(mx + ax * 0.3, my + ay * 0.3, mz + az * 0.3, ax, ay, az, cfg.proj === 'ball' ? 2.2 : 0.7); G.sound.gun(cfg.proj === 'ball' ? 1 : Math.max(0.15, 0.8 - dist / 90), Math.min(1, dist / 70), ENEMY_GUN[this.type] || 'rifle'); }
     else G.sound.bow();
   }
   throwStar(dx, dy, dz, dist) {
     const G = this.game, P = this.tgt || G.player;
+    this.shotAt = G.time;
     const my = this.pos.y + 1.4 * this.scale, tt = dist / 30 * 0.5;
     let ax = P.pos.x + P.vel.x * tt - this.pos.x, ay = P.pos.y + 1.2 - 0.5 * (P.duck || 0) - my + dist * 0.02, az = P.pos.z + P.vel.z * tt - this.pos.z;
     const l = Math.hypot(ax, ay, az);
@@ -1088,8 +1458,17 @@ export class Shots {
     const ball = gSph(0.13, 0x2a2c30, [0, 0, 0]), stone = xf(new THREE.IcosahedronGeometry(0.12, 0), [0, 0, 0], [0.4, 0.2, 0], [1, 0.8, 1.1], 0x8a8478);
     const dart = merge([gCyl(0.008, 0.008, 0.95, 0x8a6a3a, [0, 0, -0.42], [Math.PI / 2, 0, 0], 1, 5), gCone(0.02, 0.1, 0x15161a, [0, 0, 0.1], [Math.PI / 2, 0, 0], 1, 5),
       gBox(0.07, 0.004, 0.16, 0x1f9a5a, [0, 0, -0.84]), gBox(0.004, 0.07, 0.16, 0x2ac8c0, [0, 0, -0.84])]);
-    this.geo = { arrow, bolt, star, bullet: streak, javelin, axe, ball, dart, stone };
-    this.mat = { arrow: M.flat, bolt: M.flat, star: M.metal, bullet: M.glow, javelin: M.flat, axe: M.flat, ball: M.metal, dart: M.flat, stone: M.flat };
+    // bombs, thrown by the player: a bundle of dynamite, a stick grenade, a clay fire bomb
+    const dynamite = merge([0, 1, 2].map((i) => gCyl(0.019, 0.019, 0.2, 0xb02a1c, [(i - 1) * 0.036, 0, 0], [Math.PI / 2, 0, 0], 1, 8)).concat([gBox(0.11, 0.045, 0.025, 0xd8c8a0, [0, 0, 0])]));
+    const grenade = merge([gCyl(0.017, 0.017, 0.24, 0x6a4a2a, [0, 0, -0.06], [Math.PI / 2, 0, 0], 1, 8), gCyl(0.04, 0.04, 0.09, 0x4a5236, [0, 0, 0.1], [Math.PI / 2, 0, 0], 1, 10)]);
+    const hbomb = merge([gSph(0.075, 0x1c1a18, [0, 0, 0]), gCyl(0.03, 0.03, 0.03, 0x5a3a22, [0, 0.075, 0], [0, 0, 0], 1, 8)]);
+    // the sling's stone, the blowgun's dart, a big stone, a Molotov cocktail
+    const sstone = xf(new THREE.IcosahedronGeometry(0.035, 0), [0, 0, 0], [0.3, 0.2, 0], 1, 0x9a948a);
+    const bdart = merge([gCyl(0.004, 0.004, 0.32, 0xe8dcc0, [0, 0, -0.12], [Math.PI / 2, 0, 0], 1, 4), gCone(0.008, 0.05, 0x2a2a2a, [0, 0, 0.05], [Math.PI / 2, 0, 0], 1, 4), gSph(0.022, 0xf0ece0, [0, 0, -0.28])]);
+    const boulder = xf(new THREE.IcosahedronGeometry(0.17, 0), [0, 0, 0], [0.4, 0.2, 0], [1, 0.85, 1.1], 0x8a8478);
+    const molotov = merge([gCyl(0.035, 0.04, 0.18, 0x3a6a3a, [0, 0, 0], [Math.PI / 2, 0, 0], 1, 8), gCyl(0.014, 0.022, 0.07, 0x3a6a3a, [0, 0, 0.12], [Math.PI / 2, 0, 0], 1, 6), gSph(0.022, 0xffa030, [0, 0, 0.18])]);
+    this.geo = { arrow, bolt, star, bullet: streak, javelin, axe, ball, dart, stone, dynamite, grenade, hbomb, sstone, bdart, boulder, molotov };
+    this.mat = { arrow: M.flat, bolt: M.flat, star: M.metal, bullet: M.glow, javelin: M.flat, axe: M.flat, ball: M.metal, dart: M.flat, stone: M.flat, dynamite: M.flat, grenade: M.flat, hbomb: M.flat, sstone: M.flat, bdart: M.flat, boulder: M.flat, molotov: M.flat };
     this.tracerGeo = merge([gBox(1, 1, 1, 0xffe2a0, [0, 0, 0.5])]);
     this.tracerMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false });
     this.tracers = [];
@@ -1105,6 +1484,7 @@ export class Shots {
     const g = grav ?? (kind === 'bullet' ? 0 : kind === 'star' ? 3 : 9);
     const spin = kind === 'axe' ? 22 : kind === 'stone' ? 9 : 0;
     const s = { kind, mesh, x, y, z, vx: dx * speed, vy: dy * speed, vz: dz * speed, g, fromPlayer, dmg, life: 5, near: false, stuck: 0, spin };
+    if (BOMB_KINDS[kind]) { s.bomb = true; s.fuse = BOMB_KINDS[kind]; s.life = 99; }
     this.list.push(s);
     return s;
   }
@@ -1127,8 +1507,10 @@ export class Shots {
     }
     for (let i = this.list.length - 1; i >= 0; i--) {
       const s = this.list[i];
-      if (s.stuck > 0) {                       // arrow lodged somewhere: fade out later
-        s.stuck -= dt;
+      if (s.bomb) { if (this.bomb(s, dt)) { s.mesh.removeFromParent(); this.list.splice(i, 1); } continue; }
+      if (s.stuck > 0) {                       // arrow lodged somewhere: fade out later (the player's own stay, to be taken back: see Game.keep)
+        if (s.taken) { s.mesh.removeFromParent(); this.list.splice(i, 1); continue; }
+        if (!s.ret) s.stuck -= dt;
         if (s.stuck <= 0) { s.mesh.removeFromParent(); this.list.splice(i, 1); }
         continue;
       }
@@ -1136,40 +1518,100 @@ export class Shots {
       const sp = Math.hypot(s.vx, s.vy, s.vz), len = sp * dt;
       _o.x = s.x; _o.y = s.y; _o.z = s.z; _d.x = s.vx / sp; _d.y = s.vy / sp; _d.z = s.vz / sp;
       const wh = W.raycast(_o, _d, len);
-      let tMax = wh ? wh.t : len, hitEnemy = null, head = false, hitPlayer = false, hitRemote = false;
+      let tMax = wh ? wh.t : len, hitEnemy = null, head = false, hitPlayer = false, hitRemote = null;
       if (s.fromPlayer) {
-        for (const e of G.enemies) { const h = e.rayHit(_o, _d, tMax); if (h) { tMax = h.t; hitEnemy = e; head = h.head; } }
-      } else if (!s.ghost) {                    // a ghost only shows what the other side of a duel fired; it hits nothing here
-        const R = G.duel && G.duel.isHost && G.duel.remote;                     // in a duel the host's enemies can also hit the other player
-        if (R) { const h = R.rayHit(_o, _d, tMax); if (h) { tMax = h.t; hitRemote = true; } }
+        for (const e of G.enemies) { if (G.friend(e)) continue; const h = e.rayHit(_o, _d, tMax); if (h) { tMax = h.t; hitEnemy = e; head = h.head; } }
+      } else if (!s.ghost) {                    // a ghost only shows what another player (or the host's enemy) fired; it hits nothing here
+        if (G.duel && G.duel.isHost) for (const R of G.duel.remotes.values()) {     // online the host's enemies can also hit the other players
+          if (!R.alive) continue; const h = R.rayHit(_o, _d, tMax); if (h) { tMax = h.t; hitRemote = R; }
+        }
         // closest approach of this step's segment to the player's body axis
         if (!P.dead) for (const [cy, rr] of [[1.45, 0.34], [0.95, 0.42], [0.4, 0.36]]) {
           const ox = s.x - P.pos.x, oy = s.y - (P.pos.y + cy * (1 - 0.4 * P.duck)), oz = s.z - P.pos.z;
           const b = ox * _d.x + oy * _d.y + oz * _d.z, t = clamp(-b, 0, tMax);
           const qx = ox + _d.x * t, qy = oy + _d.y * t, qz = oz + _d.z * t, d2 = qx * qx + qy * qy + qz * qz;
-          if (d2 < rr * rr) { hitPlayer = true; hitRemote = false; tMax = t; break; }
+          if (d2 < rr * rr) { hitPlayer = true; hitRemote = null; tMax = t; break; }
           if (d2 < 2.2 && !s.near && s.kind === 'bullet') { s.near = true; G.sound.whiz(); }
         }
       }
+      if (!s.ghost) G.havoc.trinketsAlong(_o, _d, tMax);         // small things on the way break
       s.x += _d.x * tMax; s.y += _d.y * tMax; s.z += _d.z * tMax;
       s.mesh.position.set(s.x, s.y, s.z);
       if (s.kind === 'star') { s.mesh.rotation.y += dt * 30; } else { s.mesh.lookAt(s.x + _d.x, s.y + _d.y, s.z + _d.z); if (s.spin) s.mesh.rotateX((5 - s.life) * s.spin); }
       if (hitPlayer) { G.hurtPlayer(s.dmg, this._v.set(s.x - _d.x * 5, s.y, s.z - _d.z * 5), false); s.mesh.removeFromParent(); this.list.splice(i, 1); continue; }
-      if (hitRemote) { G.duel.send({ t: 'hit', d: s.dmg, x: s.x - _d.x * 5, z: s.z - _d.z * 5 }); s.mesh.removeFromParent(); this.list.splice(i, 1); continue; }
+      if (hitRemote) { G.duel.send({ t: 'hit', to: hitRemote.pid, ai: 1, d: s.dmg, x: s.x - _d.x * 5, z: s.z - _d.z * 5 }); s.mesh.removeFromParent(); this.list.splice(i, 1); continue; }
+      if (s.kind === 'molotov' && (hitEnemy || hitPlayer || wh || s.life <= 0)) { G.havoc.fire(s.x - _d.x * 0.2, s.y, s.z - _d.z * 0.2, { ghost: s.ghost, from: s.from }); s.mesh.removeFromParent(); this.list.splice(i, 1); continue; }
       if (hitEnemy) {
         G.hitEnemy(hitEnemy, s.dmg, head, s.x, s.y, s.z, P.pos.x, P.pos.z);
-        if (s.kind === 'dart' && hitEnemy.alive) hitEnemy.poison = 5;                       // the dart was poisoned
+        if ((s.kind === 'dart' || s.kind === 'bdart') && hitEnemy.alive) hitEnemy.poison = s.kind === 'bdart' ? 4 : 5;     // the dart was poisoned
         if (s.kind === 'bullet') { s.mesh.removeFromParent(); this.list.splice(i, 1); }
-        else { hitEnemy.rig.hips.attach(s.mesh); s.stuck = 30; }
+        else if (HEAVY[s.kind]) this.drop(s);
+        else { hitEnemy.rig.hips.attach(s.mesh); s.stuck = 30; if (s.ret) G.keep(s); }
+        continue;
+      }
+      if (wh && wh.person && !s.ghost) {                                             // a bystander in the way
+        G.crowd.hit(wh.person, s.dmg, s.x, s.y, s.z, s.fromPlayer);
+        if (s.kind === 'bullet' || !wh.person.f) { s.mesh.removeFromParent(); this.list.splice(i, 1); }
+        else if (HEAVY[s.kind]) this.drop(s);
+        else { wh.person.f.hips.attach(s.mesh); s.stuck = 30; if (s.ret) G.keep(s); }
+        continue;
+      }
+      if (wh && wh.animal && !s.ghost) {                                             // an animal in the way
+        const a = wh.animal; G.fauna.hit(a, s.dmg, s.x, s.y, s.z, s.fromPlayer);
+        if (s.kind === 'bullet') { s.mesh.removeFromParent(); this.list.splice(i, 1); }
+        else if (HEAVY[s.kind] || a.gone) this.drop(s);
+        else { a.mesh.attach(s.mesh); s.stuck = 30; if (s.ret) G.keep(s); }
         continue;
       }
       if (wh) {
+        if (s.fromPlayer && !s.ghost) G.crowd.alarm(s.x, s.z, 6, s.x - _d.x * 20, s.z - _d.z * 20);   // a missile landing near people frightens them
+        if (wh.piece && !s.ghost) G.havoc.damage(wh.piece, s.dmg * (s.kind === 'ball' ? 3 : 1), s.x, s.y, s.z);   // crates, barrels and jars are shot to pieces
         G.impact(s.x, s.y, s.z, wh.nx, wh.ny, wh.nz, s.kind);
-        if (s.kind === 'bullet') { s.mesh.removeFromParent(); this.list.splice(i, 1); }
-        else { s.stuck = s.fromPlayer ? 40 : 12; s.mesh.position.set(s.x - _d.x * 0.05, s.y - _d.y * 0.05, s.z - _d.z * 0.05); }
+        if (s.kind === 'bullet' || (wh.piece && wh.piece.broken && !s.ret)) { s.mesh.removeFromParent(); this.list.splice(i, 1); }
+        else if (HEAVY[s.kind] || (wh.piece && wh.piece.broken)) this.drop(s);
+        else { s.stuck = s.fromPlayer ? 40 : 12; s.mesh.position.set(s.x - _d.x * 0.05, s.y - _d.y * 0.05, s.z - _d.z * 0.05); if (s.ret) G.keep(s); }
         continue;
       }
       if (s.life <= 0) { s.mesh.removeFromParent(); this.list.splice(i, 1); }
     }
   }
+  /** A stone (or anything whose support has gone) falls to the ground where it struck, and lies there to be taken back. */
+  drop(s) {
+    const G = this.game, y = G.world.groundAt(s.x, s.z, s.y + 0.2);
+    s.y = y + (s.kind === 'boulder' ? 0.15 : 0.04); s.mesh.position.set(s.x, s.y, s.z); s.stuck = s.fromPlayer ? 40 : 12;
+    if (s.ret) G.keep(s);
+  }
+  /** A thrown bomb: it flies, bounces off whatever it meets, rolls to a stop, and goes off when its fuse has burnt down. Returns true when it is gone. */
+  bomb(s, dt) {
+    const G = this.game, W = G.world;
+    s.fuse -= dt;
+    if (s.fuse <= 0) { G.havoc.explode(s.x, s.y + 0.15, s.z, { ghost: s.ghost && !s.foe, from: s.foe ? undefined : s.from }); return true; }
+    if (Math.random() < dt * 40) G.gfx.glow.spawn(s.x, s.y + 0.08, s.z, (Math.random() - 0.5) * 1.5, 1 + Math.random(), (Math.random() - 0.5) * 1.5, { life: 0.25, s0: 0.03, s1: 0.005, r: 3, g: 1.8, b: 0.6, a: 1, grav: 4 });   // the burning fuse
+    if (!s.rest) {
+      s.vy -= s.g * dt;
+      const sp = Math.hypot(s.vx, s.vy, s.vz), len = sp * dt;
+      if (sp > 1e-4) {
+        _o.x = s.x; _o.y = s.y; _o.z = s.z; _d.x = s.vx / sp; _d.y = s.vy / sp; _d.z = s.vz / sp;
+        const wh = W.raycast(_o, _d, len + 0.06);
+        if (wh) {
+          const t = Math.max(0, wh.t - 0.06); s.x += _d.x * t; s.y += _d.y * t; s.z += _d.z * t;
+          const dn = s.vx * wh.nx + s.vy * wh.ny + s.vz * wh.nz;
+          s.vx = (s.vx - 2 * dn * wh.nx) * 0.4; s.vy = (s.vy - 2 * dn * wh.ny) * 0.3; s.vz = (s.vz - 2 * dn * wh.nz) * 0.4;
+          if (Math.abs(dn) > 3) G.sound.tick();
+          if (wh.ny > 0.6 && Math.hypot(s.vx, s.vy, s.vz) < 1.4) s.rest = true;
+        } else { s.x += s.vx * dt; s.y += s.vy * dt; s.z += s.vz * dt; }
+      }
+      const gy = W.groundAt(s.x, s.z, s.y);
+      if (s.y < gy + 0.05) { s.y = gy + 0.05; if (s.vy < 0) s.vy = -s.vy * 0.3; s.vx *= 0.6; s.vz *= 0.6; if (Math.hypot(s.vx, s.vy, s.vz) < 1.4) s.rest = true; }
+      s.mesh.rotation.x += dt * 9; s.mesh.rotation.z += dt * 4;
+    }
+    s.mesh.position.set(s.x, s.y, s.z);
+    return false;
+  }
 }
+/** The bombs, and how long their fuse burns (seconds). */
+const BOMB_KINDS = { dynamite: 2.4, grenade: 2.2, hbomb: 2.0 };
+/** Missiles that drop where they strike rather than stick in it. */
+const HEAVY = { stone: 1, sstone: 1, boulder: 1 };
+/** What the player throws or shoots can be picked up again where it lies: missile -> the weapon (or bag item) it goes back to. */
+export const RETURNS = { arrow: 'bow', bolt: 'crossbow', star: 'shuriken', javelin: 'javelin', axe: 'axe', dart: 'dart', stone: 'stone', sstone: 'sling', bdart: 'blowgun', boulder: 'boulder' };

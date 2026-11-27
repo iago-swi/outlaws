@@ -16,19 +16,359 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
-## [1.5.1] - 2026-11-22
+## [2.5.0] - 2026-11-23
 
 ### Added
 
-- **An old priest in the closed church of Stalnogorsk** (chapter VII). He has come back to
-  the church that was turned into a store: an old man with a white beard down to his
-  waist, in a black habit embroidered with two white crosses and a black cap with a small
-  cross, standing before the frame of the old icon screen with a lit taper in one hand and
-  the other raised in blessing. Like the other bystanders he takes no part in the fight.
+- **A place of its culture or its time in every chapter**, named on the map once found:
+  - Dry Gulch: **the Mission**, a white church of the Spanish missions with two bell towers,
+    a carved portal and a dome; its door is open, a friar and a woman pray inside.
+  - Kagemori: **Kagemori Castle**, a keep of three storeys under curved roofs on a base of
+    battered stone, on the eastern hillside; its base can be reached from the hill behind.
+  - Uri: **the Devil's Bridge**, a timber span over a new gorge of bare rock below the
+    waterfall, wet with spray, and the goat that crossed first.
+  - Ithaca: **the contest of the bow** in the court of the House of Odysseus (as the villa is
+    now called on the map): twelve axes in a row and the great bow on its stand.
+  - Jarnvik: **the Thing Field**, a ring of standing stones round the law rock, the lawspeaker
+    and the first to come.
+  - Sainte-Aubine: **a paratrooper hanging from the church tower** by his canopy, kicking.
+  - Stalnogorsk: **the kvas tanker** with its seller and its line, and two soda-water machines.
+  - Che La: **the Iron Bridge**, iron chains and prayer flags between two whitewashed gates,
+    in place of the log bridge, over a deeper bed.
+  - Tenochtitlan: **the House of Birds**, a great cage of cane full of macaws, parrots and
+    quetzals, some always on the wing, with a pool for the water birds and their keepers.
+
+## [2.4.0] - 2026-11-23
+
+### Added
+
+- **Kagemori (chapter II): a bamboo deer scarer** (*shishi-odoshi*) in the tea garden, between
+  the tea house and the pond. Water runs from a bamboo spout into a pivoting bamboo tube; it
+  fills, tips, empties into a basin of stones, swings back, and its tail knocks on a stone
+  about every six seconds. The knock is heard up to about 34 m, from the side it comes from.
+- **Che La (chapter VIII): a pilgrim going round the chorten by prostrations**, beside the
+  place where you start: joined hands to the crown, the face and the heart, down on her
+  knees, the hands slide out on wooden boards until she lies flat, up again, a body length
+  further, and again. She answers you, raises her hands when aimed at, runs from shots and
+  comes back to her round; she never takes up arms.
+
+## [2.3.0] - 2026-11-23
+
+### Added
+
+- **Animals can be hurt and killed.** Horses, mules, ponies, cows, the ox, yaks, goats, pigs,
+  sheep, hens and the old dog Argos bleed when hit, fall on their side when killed, and run
+  a little way from shots and blasts. Left in peace they breathe and graze.
+- **Some animals fight back.** Hurt and still standing, about half the horses, oxen and
+  yaks, a third of the cows, mules and goats, a quarter of the pigs and nearly always the dog
+  turn on you: they charge and strike like an enemy fighting hand to hand, as strong as the
+  chapter's enemies and no more, and count among the foes that remain.
+- **Some bystanders fight back.** About one in four, hurt by you and still standing, draws
+  the weapon of the chapter's commonest enemy and becomes one of them, with his own looks.
+  Not in games online.
 
 ### Changed
 
-- The agent posted inside that church now stands nearer the door, away from the priest.
+- **No more bystanders standing still like statues**: the flute monks and geisha of
+  Kagemori and the monks of Che La walk, talk and can be hurt like the others; everyone who
+  stood idle now talks or looks about; those on the boats paddle or pole, can be hit, and
+  crouch where they are when frightened.
+- **The flight line of thrown weapons** is a fine line of small dots with a small ring, pale
+  while the throw would land on nothing in particular, and red when it would strike an enemy
+  or an animal (for a bomb: when one stands within its blast).
+
+### Fixed
+
+- **Games online reach the game server.** Version 2.2.0 looked for it at an address where it
+  was not, so no game could be created or joined.
+
+## [2.2.0] - 2026-11-23
+
+### Added
+
+- **Up to four players online.** The host creates the game and sends the link or the code;
+  up to three others join. The Online screen lists who is in, and the host starts when
+  everyone is there. Others may join between two games.
+- **Two against two.** In the duels and in capture the flag the players form two sides: in
+  the order they joined, the first and the third against the second and the fourth (with
+  three players, two against one). A round ends when everyone on one side has fallen; in the
+  timed game each fall scores for the other side; each side has its flag. Nothing fired on
+  your side can hurt your team-mate, every team-mate's name and health show over his head,
+  and the map, the places found and the marks are shared within a side.
+- **Together, up to four** against the chapter's enemies; each counts his own kills, and the
+  enemies go after whichever player is nearest.
+- The end screen gives each side's score and, with more than two players, each player's kills.
+
+### Changed
+
+- **Games online go through a game server.** Each player connects to it as to a website, so
+  a game now connects from any network. Before, the two browsers connected directly, and
+  between some networks the game stayed on "Connecting…" for ever. If the server cannot be
+  reached, the Online screen says so after twelve seconds at most, and it says why when a
+  game cannot be joined (no such code, full, already started).
+- **The voice chat goes through the server too**, in telephone quality, between all the
+  players of a game; nothing is sent while you are silent.
+- The *Two players online* button is now *Online*.
+
+## [2.1.0] - 2026-11-23
+
+### Added
+
+- **Named places.** Every chapter's landmarks get their name on the map and the mini-map once
+  you have been near them (Boot Hill, Kagemori Shrine, the Rütli, the Cave of the Nymphs,
+  Revolution Square Station...), and the first time a name is announced on the screen. The
+  hamlets of a large map have names of their own, in the chapter's language.
+- **Together, the map is shared**: the ground your partner passes near is uncovered on your
+  map too, and the places he finds are named for you as well.
+- **Stalnogorsk (chapter VII) goes below ground and upstairs**: a metro station 10 m down,
+  reached by the escalator hall of the pavilion, with marble columns, chandeliers, a train
+  standing at the platform with its doors open, passengers and the Committee's men; a block
+  with a stairwell up five floors and a furnished flat on every landing; and the church of
+  St Nicholas, still open, with five onion domes, a bell tower, a screen of icons, an Orthodox
+  priest and old women at prayer.
+- **Voices.** Enemies shout when they see you, in their own language (English, Japanese,
+  German, Greek, Norwegian, Russian, Chinese or Spanish) when your computer has a voice for it,
+  and cry out when they fall; bystanders greet you, and chatter among themselves.
+- **Bystanders at their work**: the smith hammers, the women at work scrub and churn, those who
+  talk talk with their hands, those who sit take a drink now and then, some go for a stroll
+  and come back.
+- **A car** drives up the prospekt of Stalnogorsk to the checkpoint, turns and drives off again.
+- **Buttons in every menu**: Resume, Sound settings, Graphics and Main menu in the pause; Try
+  again, Another hero and Main menu after a death; Next chapter, Play this chapter again and
+  Main menu at the end of a chapter; Main menu on the hero screen. `Esc` goes back to the main
+  menu from the hero, death and end screens.
+
+### Changed
+
+- **One mark at a time**: a new mark replaces the one you had. Together, your partner sees
+  your mark (in his game, in your colour, with your name) and hears a ping when you set it;
+  his marks show in green in yours.
+- **Shots and lines of sight stop at what is drawn**: roofs, rocks, carts, stalls, the sides of
+  things, not only at walls; windows, paper screens, cloth and leaves still let them through.
+  Enemies no longer see you through a roof.
+- **Gunshots** are deeper and fuller, and every gun has its own: six-shooter, pistol, lever
+  rifle, rifle, scoped rifle, submachine gun, machine gun, arquebus, cannon.
+- **The sky**: clouds that billow and tear, lit from the sun's side, high thin cirrus, a haze
+  over the horizon and a warm glow on the side of a low sun.
+- **Textures**: finer wood, stone, plaster, roofs and ground, with stains, rain streaks, cracks
+  and wear.
+
+### Fixed
+
+- **Jumping onto a roof** lands you on the roof, not in the loft under it.
+- **Enemies walked through open or closed wooden doors and screens, and into rocks**: doors and
+  wooden panels are now solid (and break like wooden walls), and rocks have something to bump
+  into.
+- The covered wagon of Dry Gulch has a canvas bonnet over its bows, as the wagons of the time
+  had, instead of a sail.
+- Hidden menu buttons no longer catch clicks meant for the screen in front.
+
+## [2.0.0] - 2026-11-23
+
+### Added
+
+- **The enemies' wits**, chosen on the hero screen beside the number of enemies (and by the
+  host in a game for two): *Low*, *Medium* or *Genius*.
+  - *Low*: they fight back when they see you or are hurt, but hear nothing, never climb a
+    ladder or crawl after you, and give up as soon as you are out of sight for a moment.
+  - *Medium*: those with a gun or a bow take up places with a view and something to hide
+    behind; they hear shots and fighting near them, go after you where they last saw or
+    heard you, up ladders and crouching into hiding places, search a while, and give up if
+    they find nothing or you got far away.
+  - *Genius*: they hear from almost twice as far, tell each other where you are, fight from
+    cover (crouched, rising to shoot), move to a new place after a few shots, come round
+    the sides, creep up unseen, throw their bombs at a hiding player, keep their distance
+    when badly hurt, and their marksmen take to the roofs.
+- **Noise.** Gunshots are heard about 35 m away, bows, slings and throws about 10 m,
+  running feet 11 m, walking feet 4 m; things breaking make those near look round. Blades,
+  fists and the blowgun are silent, and so is sneaking or crouching.
+- **The size of the map**, chosen on the hero screen (and by the host in a game for two):
+  *Small* keeps only the heart of the chapter, from where you come in to where the boss
+  stands, and ropes off the edge; *Medium* is the chapter as it was; *Large* makes it half
+  as wide again, with outskirts in the chapter's own style: hamlets of houses you can walk
+  into, furnished, with yards, fences, trees, people at work, horses and smoking chimneys,
+  boats at anchor where the new ground is water, and more enemies (up to 45).
+- **Every hero sets out with two weapons**: his own and a second one of the chapter (a
+  cavalry sabre in Dry Gulch, a blowgun at Kagemori and in Tenochtitlan, a sword in Uri, a
+  sling on Ithaca and at Che La, a seax at Jarnvik, a pistol or a rifle in chapters VI and
+  VII), and some with things in the bag: big stones to throw in Uri and Jarnvik, Molotov
+  cocktails in chapters VI and VII.
+- **New weapons**: knife, sword, sabre and halberd in hand (left button strikes, silent, no
+  ammunition); a sling; a blowgun with poisoned darts and a close view to aim like a
+  sniper (silent); big stones to throw; Molotov cocktails, which burst into a pool of fire
+  that burns for about seven seconds. Halberdiers, knights, swordsmen, rōnin and Red
+  Guards leave their blade when they fall.
+- **What you throw or shoot with a string can be picked up again**: arrows, bolts, stars,
+  javelins, axes, darts, stones and big stones lie where they fell or stick where they
+  struck, in a wall or in a body. You set out with fewer of them.
+- **A special skill for every hero**, used with `E`, shown under the health bar and on the
+  hero cards: Dash, Stand fast (wounds hurt five times less), Dead eye (every shot true and
+  80% harder), Second wind (50 health back), Vanish (the enemies lose sight of you), Fury
+  (blows twice as hard and quicker) or Eagle eye (every enemy within 90 m shown through
+  walls). Each lasts a few seconds and comes back after half a minute or so.
+- **Drop what you hold** with `G`: a weapon with the shots it has left, or one thing from the
+  bag. In a game for two the other player sees it and can take it.
+- **Two players online**: each player gives a name before playing; it shows in the scores
+  and the messages, and, together against the enemy, over your partner's head with his
+  distance and health, seen through walls and kept at the edge of the screen when he is out
+  of view.
+
+### Changed
+
+- **Everything breaks except stone.** Small things (bottles, lamps, pots, ornaments) break at
+  one shot or blow, furniture after two to four, wooden walls and doors after several;
+  stone and plaster walls stand.
+- **The fists** reach and break things, and hit bystanders and enemies within reach.
+- `G` drops what you hold during play; the graphics level is now changed with `G` in the
+  pause screen only (or in the *Graphics* list of the title screen).
+- The fists are the last of your weapons in the arsenal (no longer always `2`).
+- The enemy list on the hero screen goes up to 45 on a large map.
+
+## [1.9.0] - 2026-11-22
+
+### Added
+
+- **Capture the flag**, a new game for two players online: each player's flag stands at
+  his end of the map; take the other's and bring it to yours while yours is there. First
+  to three captures, or the most after seven minutes.
+- **Together against the enemy**: two players online side by side against 3 to 24 of the
+  chapter's enemies, with no harm between them; each counts his own kills, and the mission
+  is over when the last enemy falls.
+- **Enemies at new places every game**, and a different choice of them: those who walk the
+  ground start at random free places (in a game for two, the same in both browsers).
+- **Ammunition runs out for every weapon**, the hero's own included. Boxes of ammunition are
+  found on the fallen and in crates, chests and barrels, which may also hold something
+  that heals. With nothing left to fire, the fists come to hand.
+- **Healing food and drink lie on tables, chests, market counters and shelves**, at other
+  places each game, instead of floating in the open.
+- **The map starts dark** and uncovers the ground the player passes near. Enemies show on it
+  only where it is uncovered, and only while they move, after they have fired, or once
+  they have seen the player.
+- **Life around**: flocks of birds that take wing at shots and footsteps, gusts of dust or
+  snow, dust devils on the dry plains, a train that comes and goes in chapter I and a
+  tank that crosses the town in chapter VII.
+
+### Changed
+
+- Duels: first to **5** rounds (was 3); the timed duel lasts **7** minutes (was 5).
+- The number of computer enemies in a game for two goes from 3 to 24 by threes (was 1 to 9).
+- The title screen's button reads *Two players online*, and its screen offers the four games.
+- The web site opens straight onto the game.
+
+### Removed
+
+- The duel with one life (replaced by capture the flag).
+- The Gemini version (*Eight Horizons*) and the landing page that chose between the two.
+
+## [1.8.0] - 2026-11-22
+
+### Added
+
+- **Bystanders come alive.** Shots, blasts and missiles landing near them frighten them:
+  they cry out, run from the danger with their arms over their heads, crouch with their
+  hands over their heads, and when all has been quiet for a while walk back and take up
+  their work again. Stand near one for a moment without fighting and he turns to you and
+  talks, waves, nods, shrugs or points; aim at him and he raises his hands. They can be
+  hurt and killed; the end of the chapter counts the bystanders you killed.
+- **Damage shows before things break.** Every hit dents and blackens a crate, a fence, a
+  table or a cart where it struck, and the weaker it gets, the more it leans over, until it
+  gives way.
+- **Damage shows on people.** A wound marks the body where a shot went in, the figure is
+  pushed back a little, and a small health bar shows over an enemy for a few seconds after
+  each hit (over the other player of a duel while hurt). A badly hurt enemy limps and goes
+  slower.
+- **Fists**, always in the arsenal in second place (`2`): left button a quick jab with
+  either hand, right button a heavier hook. No ammunition: they break things and can fell
+  an enemy.
+- **Aimed throws with the line of their flight.** With a thrown weapon (throwing stars,
+  javelins, axes, darts, stones, dynamite, grenades, fire bombs) the right button aims, and
+  a line of dots shows the flight to where it will land, with a ring on the spot; a bomb's
+  line follows its bounces, and a red ring shows how far its blast reaches. The left button
+  throws. The blade of chapters II, IV, V and IX (katana, sword, flail, club) moves to `F`.
+
+### Changed
+
+- **Better walks.** Legs now bend at the knee: the knee bends as the foot comes through,
+  strides are longer and knees higher when running, the body leans forward and bobs, and the
+  arms swing against the legs. Seated people sit with their shins hanging.
+
+## [1.7.0] - 2026-11-22
+
+### Added
+
+- **Much more of the scenery breaks**: fences bay by bay, tables and chests (with whatever
+  lay on them), sacks, carts, woodpiles, haystacks, market stalls and shelves, besides the
+  crates, barrels and jars. Bigger things take more hits. Chips in the thing's colour fly
+  off at every hit, so you can see what will give way; straw and grain burst in a cloud of
+  their own colour.
+
+### Removed
+
+- **The compass at the top of the screen.** The map in the top-right corner shows where
+  the enemies are. The count of enemies left and the boss's health stay where they were.
+
+## [1.6.0] - 2026-11-22
+
+Weapons taken from the enemy, a bag, a map of every chapter, places you can mark, things
+that break and kegs that blow up, a silent walk, and in a duel the voices of the two
+players.
+
+### Added
+
+- **Things that break.** Crates, barrels and jars break under shots, blows, thrown
+  weapons and blasts, in splinters or shards and a puff of dust; whatever stood on them
+  comes down with them, and the enemies' routes open up where they stood. Enemy fire
+  breaks your cover too.
+- **Powder kegs.** In the chapters where there is gunpowder or fuel (I, II, VI, VII, VIII
+  and IX) one barrel in three is a red keg with a pale lid. Shot or caught in a blast, it
+  explodes: it hurts everyone near it, you included, less through a wall, and sets off the
+  kegs around it.
+- **Weapons taken from the enemy.** A fallen gunman, archer, crossbowman, javelin thrower,
+  axeman or ninja leaves his weapon on the ground. Walk over it to take it, with a number
+  of shots; another of the same kind adds to them. Up to six weapons are carried, the
+  hero's own first. A taken weapon runs out and then leaves the arsenal; the hero's own
+  never does.
+- **The bag.** The chapter's healing food or drink (tonic, rice cake, alp cheese...) now
+  goes into the bag instead of being used at once, up to nine of each. Some enemies also
+  leave one, and in chapters I, II, VI, VII and VIII some leave a bomb: dynamite, a clay
+  fire bomb or a grenade. Take the item in hand like a weapon and press the left button
+  to drink, eat or throw it; `H` uses a healing item without taking it in hand. A bomb
+  bounces, rolls, and goes off about two seconds after the throw.
+- **Changing weapons.** The mouse wheel goes through the arsenal and the bag; the number
+  keys `1` to `9` take a place directly. The list shows on the right above the weapon's
+  name, with the shots left.
+- **A map.** A round mini-map in the top-right corner turns with you; hold `Tab` for the
+  whole chapter. It is drawn from the world itself: terrain, water, walls, houses, fences,
+  rocks and trees. Enemies show on it while they move about, but not one who stands still
+  or creeps up unseen; in a duel the same holds for the other player.
+- **Marked places.** Press the mouse wheel (the middle button) to mark the place the
+  cross-hair points at, and press it again on a mark to take it away. Up to nine marks,
+  numbered, show on both maps and as pins in the world with their distance.
+- **Sneaking.** `X` switches a silent walk on and off: half speed, no footsteps, noticed
+  later and only from closer, and not shown on the other player's map. Running ends it for
+  as long as you run. It goes with crouching. Enemies closing in on you unseen sneak too,
+  and running feet are now heard through walls by enemies close by.
+- **Voice chat in a duel.** The two players speak to each other through microphone and
+  speakers, directly from browser to browser. The microphone can be always on (`T` mutes
+  it), push to talk (hold `T`) or off. Two small lights at the top left show when you
+  transmit and when the other player speaks.
+- **Sound settings.** A panel with four volumes, General, Effects, Voices (the enemies'
+  shouts and the other player's voice) and Music, with music on or off and the
+  microphone. It opens from the title screen, the pause screen (`O`) and the duel screen,
+  and the settings are remembered.
+- **A safeguard against closing the game by accident.** While a chapter or a duel is on,
+  closing the tab or the browser (for example `Ctrl`+`W` or `Ctrl`+`Q`) first asks whether
+  to leave the page.
+
+### Changed
+
+- `M` now switches the music only, no longer every sound.
+- Healing items are kept in the bag rather than used on contact.
+
+### Fixed
+
+- After joining a duel with the Join button, pressing `Enter` to choose the hero pressed
+  Join again and started a new connection.
 
 ## [1.5.0] - 2026-11-22
 
@@ -276,7 +616,6 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
-[1.5.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.1
 [1.5.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.0
 [1.4.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.4.0
 [1.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.3.0

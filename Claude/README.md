@@ -1,13 +1,6 @@
 # Lone Hand — Claude version
 
-> [!WARNING]
-> **Development continues in a fork.** [raphfleury](https://github.com/raphfleury), a real gamer (unlike me), has made a fork of the Claude game (*Lone Hand*) to pursue its development: **<https://github.com/raphfleury/Outlaws>**.
-> His version already offers major features such as a collaborative mode (including by microphone), a map and improved gameplay.
-> Go to his GitHub for the current game.
->
-> This repository will probably see no further changes: it was meant as an exercise and a showcase of my vibe coding experiments.
-
-**Version 1.5.1** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 2.5.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -18,35 +11,37 @@ Jarnvik can be boarded, and every chapter has several ways to the enemy, places 
 low places to crawl through or into for an ambush. About 130 people who take no part in the fight, half of them women, go
 about their work in the nine worlds: a woman keeps the bar in Dry Gulch, Penelope weaves in Ithaca, nuns turn the prayer
 wheels of Che La. Twenty-seven heroes from history and legend are playable, three per
-chapter. In Duel mode two players fight each other online, as a hero or as one of
-thirty villains.
+chapter. Online, two to four players fight each other, one against one or two against two,
+as a hero or as one of thirty villains, or play a chapter together against its enemies.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
 files.
 
-**[Play it in your browser](https://iago-swi.github.io/outlaws/Claude/)**
+**[Play it in your browser](https://outlaws.kaiseregg.com/)**
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
 | :---: | :---: | :---: |
-| <img src="screenshot.jpg" width="280" alt="The railroad depot north of Dry Gulch at golden hour: the station house on the right, a loading dock on posts with sacks and crates, a red boxcar with a ladder to its roof on the track, a gang man in a black hat, banded mesas behind, the six-shooter in the foreground"> | <img src="screenshot-japan.jpg" width="280" alt="The hamlet green of Kagemori at dusk: a woman drawing water at a roofed well, the granary on stilts behind her, an open cow shed on the left, cherry trees, stone lanterns and a red bridge beyond; in the foreground the samurai's hands with throwing stars"> | <img src="screenshot-uri.jpg" width="280" alt="The Rütli meadow on the Lake of Uri: three men stand by a boulder and a spring with their right hands raised for the oath, pine forest and snow peaks behind, the lake on the right, the crossbow in the foreground"> |
+| <img src="screenshot.jpg" width="280" alt="Main Street of Dry Gulch at sunset, looking west: the telegraph office on the left and the jail on the right, false-fronted houses with lit windows along both sides, the sun low over the mesa at the end of the street, the six-shooter in the foreground; in the top right corner the mini-map names Main Street"> | <img src="screenshot-japan.jpg" width="280" alt="The hamlet of Kagemori at dusk: thatched houses, cherry trees in bloom, a red torii and the pagoda on the hill behind, lanterns and fireflies, the throwing stars in the foreground; the mini-map names the Hamlet Green"> | <img src="screenshot-uri.jpg" width="280" alt="The Rütli meadow on the Lake of Uri: three men raise their right hands for the oath beside a boulder and a spring, the lake and the pines behind, the crossbow in the foreground"> |
 | **Chapter IV · Ithaca** | **Chapter V · Jarnvik** | **Chapter VI · Sainte-Aubine** |
-| <img src="screenshot-greece.jpg" width="280" alt="The village well of Ithaca in bright sun: one woman draws water, another carries her jar home on her head, a third stands by with a jar at her feet; a Spartan with a round shield on the left, white houses with red tile roofs, a mosaic floor, the temple on its hill, a javelin in the foreground"> | <img src="screenshot-north.jpg" width="280" alt="The farm of Jarnvik on a snowy night: a shepherd with long fair hair beside a haystack, a blonde woman in a red dress carrying a pail between two dark log houses, sheep in a pen, a pony, snow-laden pines, a throwing axe in the foreground"> | <img src="screenshot-normandy.jpg" width="280" alt="The railway halt of Sainte-Aubine before dawn: a stone station house with a lamp, the platform, the track with an open goods wagon and its end ladder, searchlight beams crossing the sky, a scoped rifle in the foreground"> |
+| <img src="screenshot-greece.jpg" width="280" alt="The village of Ithaca in bright sun: women in white at the well, a mosaic floor, olive trees and white houses, the javelin in the foreground"> | <img src="screenshot-north.jpg" width="280" alt="The village of Jarnvik on a snowy night: a bonfire burning between the log houses, a watch platform and a sledge, snow-laden pines under the stars, a throwing axe in the foreground"> | <img src="screenshot-normandy.jpg" width="280" alt="The street of Sainte-Aubine before dawn: stone houses, cobbles, a lit street lamp, a barrier, searchlight beams crossing the sky, the scoped rifle in the foreground"> |
 | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** | **Chapter IX · Tenochtitlan** |
-| <img src="screenshot-russia.jpg" width="280" alt="Outside the food shop of Stalnogorsk in falling snow: the sign Gastronom in Cyrillic letters over an open door with a saleswoman at the counter inside, two women in headscarves and long coats talking, a man on a bench, panel blocks with lit windows, a submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="280" alt="A field barn above the barley terraces of Che La: a woman in a dark dress with a red blouse and a striped apron works a tall tea churn beside a cooking fire, a herdsman and two yaks behind, snow peaks under a deep blue sky, a rifle in the foreground"> | <img src="screenshot-aztec.jpg" width="280" alt="The lake of Tenochtitlan at sunset seen from the causeway: a canoe with a man poling and a woman paddling, garden plots joined by plank bridges, a reed lookout on stilts, wooded shores and mountains in the haze, the dart-thrower in the foreground"> |
+| <img src="screenshot-russia.jpg" width="280" alt="The church of St Nicholas in Stalnogorsk in falling snow: white walls under onion domes in blue and gold with gold crosses, panel blocks with lit windows behind, bare birches, the submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="280" alt="The gateway chorten at the foot of the great stair of Che La: prayer flags, a white stupa with a gilded spire beyond, snow peaks under a deep blue sky, the rifle in the foreground"> | <img src="screenshot-aztec.jpg" width="280" alt="The Great Temple of Tenochtitlan at sunset seen from the sacred precinct: its steep stair between the terraces, the two shrines on top, gardens on the walls, the dart-thrower in the foreground"> |
 
 | Duel · choose your fighter | Duel · face to face |
 | :---: | :---: |
-| <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Stalnogorsk: a row of three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above a row of four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), with Solzhenitsyn standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="400" alt="A duel on the main avenue of Stalnogorsk in falling snow: the other player, as Joseph Stalin in a white tunic, stands in the road in front of the statue and the tower; the score line reads You 0–0 Joseph Stalin, round 1; the submachine gun is in the foreground"> |
+| <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Stalnogorsk: three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), each card with its strength and special skill, and Andrei Sakharov standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="400" alt="A duel on Revolution Square in falling snow: the other player, named Cousin, as Joseph Stalin in a white tunic, stands before the red plinth of the monument; the score line reads You 0 · 0 Cousin, round 1; the pistol in the foreground; the microphone and the other player's voice at the top left"> |
+| **Online · four players in the lobby** | **Online · two against two** |
+| <img src="screenshot-online.jpg" width="400" alt="The Online screen of the host: the game set to Stalnogorsk, capture the flag, the code TPNLC and the invite link, the Start the game button, and the list of players, four of four: Raph (host, you) and Max on side A, Léo and Tom on side B"> | <img src="screenshot-team.jpg" width="400" alt="Capture the flag for four in Stalnogorsk: the team-mate Max as Joseph Stalin a few metres ahead in the snowy street, his name, distance and health over his head; the score line reads Flags: You & Max 0 – 0 Léo & Tom; the microphone and the three other players' voices at the top left; the submachine gun in the foreground"> |
 
-![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Duel button, the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
+![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Online button, the Sound button and the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
 
 ## Run it
 
 Play online with the link above. To play offline, download the folder and open
 `index.html` in a current version of Chrome or Edge, or double-click `Play.bat` on
 Windows. No installation, build step, web server or internet
-connection is needed, except for Duel mode. A mouse and keyboard are required; there are
+connection is needed, except for games online. A mouse and keyboard are required; there are
 no touch controls.
 
 The title screen shows a different chapter behind it on every visit, and takes that
@@ -54,22 +49,23 @@ chapter's accent colour and lettering.
 
 ## How to play
 
-Clear every enemy to finish a chapter. The dots on the compass at the top of the screen
-show where the remaining enemies are; the last three come looking for you. Health items
-(tonic, rice cake, alp cheese, ambrosia, mead, calvados, hot tea, butter tea) restore
-35 points.
+Clear every enemy to finish a chapter. The map in the top-right corner shows the enemies
+who are on the move; the last three come looking for you. Health items
+(tonic, rice cake, alp cheese, ambrosia, mead, calvados, hot tea, butter tea, cacao) go
+into the bag and restore 35 points when used (`H`, or take one in hand and press the left
+button).
 
-| Chapter | Weapons | Enemies (at most 30, see *Choose your hero*) |
+| Chapter | Weapons (the second one of the chapter, and the bag at the start, in brackets) | Enemies (at most 30, 45 on a large map, see *Choose your hero*) |
 | --- | --- | --- |
-| I · Dry Gulch, Arizona Territory, 1881 | six-shooter | cowboys, sombrero bandits, the gang boss Silas Crowe |
-| II · Kagemori, Japan, 1600 | throwing stars (shuriken) and katana | ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
-| III · Uri, the Waldstätten, 1307 | crossbow and halberd | Habsburg halberdiers, crossbowmen, knights, the bailiff |
-| IV · Ithaca, Greece, the age of heroes | javelins and short sword | Spartan hoplites, javelin throwers, their captain |
-| V · Jarnvik, Norway, winter of 985 | throwing axes and a flail | rival Vikings in animal skins, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
-| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife | German riflemen, officers, machine-gunners, guard dogs, the battery commander |
-| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife | KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
-| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword | Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
-| IX · Tenochtitlan, Mexico, 30 June 1520 | poisoned dart-thrower, stones or bow, and an obsidian-edged club | Spanish swordsmen, crossbowmen, arquebusiers, horsemen, a cannon and its gunner, Captain Luján of the rear guard |
+| I · Dry Gulch, Arizona Territory, 1881 | six-shooter (cavalry sabre) | cowboys, sombrero bandits, the gang boss Silas Crowe |
+| II · Kagemori, Japan, 1600 | throwing stars (shuriken) and katana (blowgun) | ninja who ambush from smoke, rōnin, archers, the Iron Rōnin |
+| III · Uri, the Waldstätten, 1307 | crossbow and halberd (sword; three big stones) | Habsburg halberdiers, crossbowmen, knights, the bailiff |
+| IV · Ithaca, Greece, the age of heroes | javelins and short sword (sling) | Spartan hoplites, javelin throwers, their captain |
+| V · Jarnvik, Norway, winter of 985 | throwing axes and a flail (seax; three big stones) | rival Vikings in animal skins, berserkers, bowmen, chieftains in horned helmets, the grey jarl |
+| VI · Sainte-Aubine, Normandy, 6 June 1944 | scoped rifle, Sten gun or pistol, and a knife (a pistol, or a rifle for the hero with a pistol; two Molotov cocktails) | German riflemen, officers, machine-gunners, guard dogs, the battery commander |
+| VII · Stalnogorsk, Soviet Union, winter of 1974 | submachine gun or pistol, and a knife (a rifle; three Molotov cocktails) | KGB agents, militia with submachine guns, guard dogs, Colonel Voronin |
+| VIII · Che La, Tibet, March 1959 | rifle or pistol and a knife, or bow and sword (herder's sling) | Chinese riflemen, machine-gunners, Red Guards, Commander Zhao |
+| IX · Tenochtitlan, Mexico, 30 June 1520 | poisoned dart-thrower, stones or bow, and an obsidian-edged club (blowgun) | Spanish swordsmen, crossbowmen, arquebusiers, horsemen, a cannon and its gunner, Captain Luján of the rear guard |
 
 ### Places you can go into, onto and behind
 
@@ -81,12 +77,16 @@ and some enemies wait indoors, on deck or behind the waterfall.
 | I | saloon with its upper floor and balcony, the Grand Hotel with lobby, stairs, bedrooms and balcony, barber's, doctor's, jail with two barred cells, bank with its safe, general store, sheriff's office with a cell, livery stable, blacksmith's forge, undertaker's, telegraph office, most with a back door onto the lots behind the street; the church, with its nave, a choir gallery and a stair inside the tower up to the bell; a barn with a hayloft, a homestead, the crypt on Boot Hill; the railroad station, a boxcar to walk through, the stage station, the Silver Queen mine |
 | II | every house, each furnished differently (walk-through, with open screens), the shrine hall with a back door and an inner sanctuary behind it, the dojo in its walled compound, a hermitage; two storeys of the pagoda, a storehouse, the bell tower; a granary on stilts, a cow shed, a barn by the rice paddies; the arched bridge over the pond, a jetty with a boat |
 | III | the chalets, two of them with an upper room reached by an outside stair, the chapel, a Habsburg watchtower with a fighting gallery; the keep under construction (a masons' store below, a scaffold to the top), the bailiff's pavilion and a soldiers' tent; the barns on their stone stilts and a drive-through hay barn with a loft; a mill with a turning wheel, the Sust (goods store) at the lake landing and a lake boat to board; the ledge behind the waterfall |
-| IV | every house, each with its trade (potter, smith, baker, weaver, fishermen), the temple's inner room with a golden Athena, a treasury on the hill, the round temple, the beacon tower on the fishermen's cape up to its fire platform; a villa with a colonnaded court and a pool, the market under the colonnade, the theatre with its stage house, the olive grove with its press; two tents in the harbour, the Cave of the Nymphs, a swineherd's farm |
+| IV | every house, each with its trade (potter, smith, baker, weaver, fishermen), the temple's inner room with a golden Athena, a treasury on the hill, the round temple, the beacon tower on the fishermen's cape up to its fire platform; the House of Odysseus, with a colonnaded court and a pool, the market under the colonnade, the theatre with its stage house, the olive grove with its press; two tents in the harbour, the Cave of the Nymphs, a swineherd's farm |
 | V | every longhouse, each with its trade (weaver, cook, mead store, fisherman), two of them with a second door and window openings, the jarl's great hall with a back door, a small temple of the old gods; a boat shed, an open smithy, a byre with a hay loft, a shipyard with a hull on the stocks; four longships to board by gangplank: two at the jetty, your own on the beach and the jarl's great ship with a tent on deck |
 | VI | the ground floor of every house (a café, a bakery, a school and a forge among them) and the upper room of the café, the command bunker, both gun casemates, the manor, the windmill with its milling floor; the church, now a roofless ruin after the bombing, and its tower up to the belfry; a farm barn with a hayloft, a cider farm, a railway station |
-| VII | the food shop with its store room, two garages, the Palace of Culture with its stage, the works with a gallery, and the Committee building: lobby, cells, archive, records room and the colonel's office; a block of flats with a stairwell to walk through and a furnished flat, a tram, a goods wagon, a boiler house, a church closed and used as a store; a metro pavilion with turnstiles, the district library, a building site with a concrete slab to climb and the builders' hut |
+| VII | the food shop with its store room, two garages, the Palace of Culture with its stage, the works with a gallery, and the Committee building: lobby, cells, archive, records room and the colonel's office; a block of flats with a stairwell to walk through and a furnished flat, a tram, a goods wagon, a boiler house, a church closed and used as a store; the metro pavilion with its turnstiles and the escalator hall down to Revolution Square Station, 10 m below ground (a platform between two tracks, marble columns, chandeliers, a train standing with its doors open); Entrance 2 of the long block on the courtyard, a stairwell up five floors with a furnished flat on every landing (hall, kitchen, living room); the church of St Nicholas, still open (refectory, bell tower, the screen of icons); the district library, a building site with a concrete slab to climb and the builders' hut |
 | VIII | the village houses, each furnished differently, the old fort, the monks' houses and the monastery's assembly hall with its gallery, side doors and kitchen; the village temple, the chapel of the great prayer wheel, a nomad tent of black yak hair; two army tents, the bed of a lorry, a field barn with a hay loft |
 | IX | the two shrines on top of the Great Temple, each with an altar heaped with gold; the palace of Axayacatl with its rooms round a patio, the market, the temple of the wind god, the House of the Eagles, the ball court; the white houses of the city and of the landing village; a steam bath |
+
+| Below Stalnogorsk · the metro | Inside the church of St Nicholas |
+| :---: | :---: |
+| <img src="screenshot-metro.jpg" width="400" alt="Revolution Square Station, 10 m under Stalnogorsk: a vaulted hall of white columns and arches with a chandelier, the station's name on the walls, the blue train at the platform on the left, the Committee's men on the platform, a red banner at the far end, the submachine gun in the foreground"> | <img src="screenshot-church.jpg" width="400" alt="Inside the church of St Nicholas: the gilded screen of icons with its royal doors open, the priest in black with his tall hat behind the lectern, two old women at prayer before the candle stands, the chandelier above"> |
 
 Things to find on the way: mosaic floors and a bronze Athena in Ithaca; the hammer and
 sickle on the flags, the monument, the palace and the tower of Stalnogorsk; a gilded
@@ -94,20 +94,67 @@ Buddha in each of the three temples of Che La; bomb craters in Sainte-Aubine.
 
 ### People who take no part in the fight
 
-Every chapter has ten to eighteen bystanders, about half of them women, dressed for the
-place and the time and busy with something. They breathe, shift their weight and look
-about; they are solid, they do not move from their place, and they are not targets.
+Every chapter has ten to eighteen bystanders (more on a large map, and more in chapter VII),
+about half of them women, dressed for the place and the time and busy with something. They
+breathe, shift their weight and look about; those at work keep working (hammering,
+scrubbing, churning), those talking talk with their hands, those seated take a drink now and
+then, those at prayer bow, and some of those standing about go for a stroll and come back;
+nobody stands still like a statue. Those on the boats of chapter IX and of the outskirts
+paddle or pole and stay aboard. They greet you when you stand by them, and chatter among
+themselves. About one in four, hurt by you and still standing, fights back: he draws the
+weapon of the chapter's commonest enemy and becomes one of them, as strong as they are and
+no more, with his own looks (not in a game online).
+
+In the tea garden of Kagemori a bamboo deer scarer (*shishi-odoshi*) fills from a spout, tips,
+empties into its stone basin and knocks on its stone about every six seconds; the knock is
+heard up to about 34 metres away, from the side it comes from.
+
+### One place for each world
+
+Each chapter has a place that belongs to its culture or its time:
+
+| Chapter | Place |
+| --- | --- |
+| I · Dry Gulch | **The Mission**, south-west of town: a white church in the manner of the Spanish missions of the Sonoran desert (such as San Xavier del Bac near Tucson, finished in 1797), two bell towers with their bells, a carved portal of red-brown plaster between them, a dome over the sanctuary. The door stands open: pews, a gilded altarpiece, candles, a friar and a woman at prayer. |
+| II · Kagemori | **Kagemori Castle**, on the eastern hillside: a keep of three storeys, white plaster and black boards under curved roofs of grey tile, gilded fish on the ridge, on a battered base of stone. From the valley its walls are out of reach; from the hillside behind, one walks onto its base, up to the keep. |
+| III · Uri | **The Devil's Bridge**: below the waterfall the stream runs in a gorge of bare rock, and a span of timber on struts crosses it, wet with spray. The first bridge over the Reuss in the Schöllenen gorge is usually dated to about 1230, and in 1306 it was called the *stiebende Brugge*, the spraying bridge; the legend says the Devil built it for the first soul to cross, and the men of Uri sent a goat. A goat grazes at the far end. |
+| IV · Ithaca | **The contest of the bow** (*Odyssey*, book XXI), in the court of the House of Odysseus: twelve axes set up in a row, a ring at the top of each, and at the end of the row the great bow on a stand, with its quiver. |
+| V · Jarnvik | **The Thing Field**: a ring of twelve standing stones round a low mound with the law rock on it, where the lawspeaker speaks to the free men of the district; a staff with a shield. |
+| VI · Sainte-Aubine | **The paratrooper on the church tower**: dropped in the night, his canopy caught on the highest stump of the broken tower, he hangs against its wall, kicking and reaching up to the risers, as John Steele of the 82nd Airborne hung from the church of Sainte-Mère-Église on 6 June 1944. |
+| VII · Stalnogorsk | **The kvas tanker** at the corner of the market: a yellow tank on two wheels with КВАС on its side, the seller in her white coat at the tap with her glasses, a line waiting; against the flats, two soda-water machines with one glass each. |
+| VIII · Che La | **The Iron Bridge** over the dry stream bed, which is deeper there: two whitewashed gates with a small chorten on each, iron chains slung between them, a walk of planks hung from the chains, prayer flags along them, in the manner of the chain bridges Thangtong Gyalpo built in Tibet in the fifteenth century. |
+| IX · Tenochtitlan | **The House of Birds** (*Totocalli*), at the north end of the west quarter: a great cage of cane with a lattice roof, macaws, parrots and quetzals on perches and on the wing, a spoonbill and herons at the pool before it, and the keepers. Moctezuma's aviary was described by Cortés and destroyed during the conquest. |
+
+### Animals
+
+| Chapter | Animals |
+| --- | --- |
+| I | horses in the corral, at the livery and at the hitching rail, a mule, hens |
+| II | an ox in its shed |
+| III | cows on the pasture, two pack mules at the Sust |
+| IV | goats, pigs, and the old dog Argos lying by the door of Odysseus' house |
+| V | ponies, sheep |
+| VIII | yaks, horses |
+| Large maps | a horse tied up by some of the hamlets |
+
+The animals breathe, shift and lower their heads to graze. A shot or a blast near them sends
+them running a little way. They can be hurt and killed, and fall on their side. Some of
+them, hurt and still standing, turn on you: about half the horses, oxen and yaks, a third of
+the cows, mules and goats, a quarter of the pigs, the dog almost always; sheep and hens never.
+One that turns charges and strikes like an enemy fighting hand to hand, as strong as the
+chapter's enemies and no more (a horse: 90 health, a kick of 20), and counts among the foes
+that remain.
 
 | Chapter | Who is there |
 | --- | --- |
 | I | the woman who keeps the bar, the pianist, the storekeeper, the telegraph operator, the hotel keeper, the barber, the doctor, the undertaker, the preacher, a deputy locked in his own cell, a woman hanging out washing, a homesteader's wife, a gravedigger |
 | II | three flute monks (komusō) under basket hats and four geisha under oil-paper umbrellas; a woman at the well, two planters in the rice paddies, an old man on the tea-house veranda, an angler, a woodcutter, a pilgrim, a weaver |
 | III | three confederates by the flags at the start; the Senn and the dairywoman, a woman spinning with distaff and spindle, the miller's wife, a priest, a boatman, a woman mending nets, masons; on the Rütli meadow three men raise their hands for the oath |
-| IV | three women at the well, Penelope at her upright loom, the swineherd Eumaeus, the old dog Argos by the villa's door, a baker at her oven, a market woman, a priestess, a potter, an old fisherman, a bard with a lyre, a shepherd with goats |
+| IV | three women at the well, Penelope at her upright loom, the swineherd Eumaeus, the old dog Argos by the door of Odysseus' house, a baker at her oven, a market woman, a priestess, a potter, an old fisherman, a bard with a lyre, a shepherd with goats |
 | V | Norse women at the loom, the cauldron, the mead casks and the cod racks, one in a doorway looking out to sea; a skald, a priest of the old gods, a boat builder, a shepherd, two of your crew aboard your ship; two captives at a post in the raiders' yard |
 | VI | the baker and his wife, a woman at the café window, the schoolmistress, an old woman in the churchyard, a farm woman, the curé, a farmer, a railwayman, a man of the Resistance, a wounded glider pilot by the wreck |
-| VII | a saleswoman and the people waiting outside the food shop, two men at chess, a yard-keeper, a librarian, two stallholders, an ice fisherman, a lathe worker, two prisoners in the Committee's cells; in the closed church an old priest with a white beard to his waist, a lit taper in his hand |
-| VIII | the Dalai Lama with two monks and three Khampa riders at the start; nuns at the prayer wheels, women in striped aprons at the loom, the tea churn and on the terraces, two Nepalese traders with their bales, a Khampa herder with his yaks, an old hermit in his cell |
+| VII | a saleswoman and the people waiting outside the food shop, two men at chess, a yard-keeper, a librarian, two stallholders, an ice fisherman, a lathe worker, two prisoners in the Committee's cells; passengers and a cleaner in the metro; people at home in the flats; an Orthodox priest and old women at prayer in the church of St Nicholas |
+| VIII | the Dalai Lama with two monks and three Khampa riders at the start, and a pilgrim going round the chorten beside them by prostrations, boards strapped under her hands (she never takes up arms); nuns at the prayer wheels, women in striped aprons at the loom, the tea churn and on the terraces, two Nepalese traders with their bales, a Khampa herder with his yaks, an old hermit in his cell |
 | IX | a drummer at the great drum on the Great Temple, market women, a woman at the grinding stone, a weaver, an old man in a doorway, a conch-blower on the palace roof, men and women in canoes on the lake |
 
 ### Climb, jump and hide
@@ -117,9 +164,9 @@ from 40% less far, is hidden by anything about a metre high, and fits through lo
 Ladders need no key: face one and walk into it, and you climb; at the top you step onto
 the roof or the deck. A jump clears about 1.3 m.
 
-![The view from the top of Lookout Butte in Dry Gulch: a boulder to crouch behind, the roofs of the town below, the saloon, the jail, the sheriff's office and the bank along the main street, the church on the right, mesas on the horizon, the six-shooter in the foreground](screenshot-butte.jpg)
+![The view from the top of Lookout Butte in Dry Gulch: red rocks in the foreground, the roofs of the town below with the saloon and the jail along the main street, mesas on the horizon, the six-shooter in the foreground](screenshot-butte.jpg)
 
-![The great boulder of Uri in a flowering meadow: a tall grey rock with a flat grassy top and a slim iron cross at its rim, a wooden ladder leaning against its flank, pines, the lake and snow peaks behind](screenshot-boulder.jpg)
+![The great boulder of Uri in a flowering meadow: a tall grey rock with a grassy top, a wooden ladder leaning against its flank, pines, the lake and the mountains behind, the crossbow in the foreground](screenshot-boulder.jpg)
 
 | Chapter | Places for an ambush, a sniper or a way round |
 | --- | --- |
@@ -130,14 +177,15 @@ the roof or the deck. A jump clears about 1.3 m.
 | V | a fighting step behind the palisade on both sides of the gate, with stairs; a hole under the palisade; a beacon crag with a ladder; the byre's loft; a watch platform in the village; an earth cellar; a tunnel of cod racks, an upturned boat and the keel of the ship being built to crawl under; firewood stacks behind the houses; ice floes from the beach to the jetty; the decks of the longships |
 | VI | fourteen holes to crawl through the hedgerows, and a sunken lane between two of them; a trench through a gap in the wire to a lookout on the cliff; the belfry of the church tower, by two ladders; the roof of a gun casemate under a camouflage net; the barn's hayloft; three hollow hayricks; two railway wagons to crawl under; a hunter's stand among the hedgerows; a dugout; the churchyard with its gravestones |
 | VII | three ways into the Committee building beside the front steps: a side door, a service door and a drain under the wall; the roofs of the garages, the food shop and the works, by ladder; the gallery in the works; the top slab of the building site and a perch on its crane; an ice slide, a snow fort and snowbanks on the square; a boxcar and the heating pipes to duck under; a cellar hatch |
-| VIII | a gully from the frozen lake to the foot of the monastery hill, with a log bridge over it; the flat roofs of three houses and of the fort, by ladder; a boulder with a ladder beside the monastery court; a breach in the fort's wall to crawl through; two lorries to crawl under; dry-stone walls on the barley terraces; a lookout beside the road; a hermit's cell |
+| VIII | a gully from the frozen lake to the foot of the monastery hill, with an iron chain bridge over it; the flat roofs of three houses and of the fort, by ladder; a boulder with a ladder beside the monastery court; a breach in the fort's wall to crawl through; two lorries to crawl under; dry-stone walls on the barley terraces; a lookout beside the road; a hermit's cell |
 | IX | the top of the Great Temple, 17 m up, reached by its stair, with two shrines for cover; two ways to the shore beside the causeway: over the garden plots on planks, and along an aqueduct; a row of four house roofs to cross on planks; the roof of the palace; a drain through the precinct wall; raised market floors and upturned canoes to crawl under; a reed watchtower and a reed lookout with ladders; a rock with a ladder at the landing; a steam bath to crawl into |
 
 Every watch platform, lookout, high seat and hunter's stand has a ladder too.
 Enemies can follow you up anything that has steps and stands in the open: the butte can be
-stormed. Both the butte and the boulder are held by a marksman when you arrive. Enemies cannot climb ladders, crouch or jump, so roofs,
-platforms and high seats are safe from blades, though not from bullets, and they cannot
-get through a crawl space at all. Upper floors are an exception among the stairs: the
+stormed. Both the butte and the boulder are held by a marksman when you arrive. Enemies of
+*Medium* and *Genius* wits (see *Choose your hero*) climb ladders after you and crouch into
+low hiding places; dull ones (*Low*) do neither, so for them roofs, platforms and high seats
+are safe from blades, though not from bullets. Upper floors are an exception among the stairs: the
 route grid knows one floor per spot, so where a stair leads to a room or a roof above
 another room (the saloon and the hotel in chapter I, the church towers, the house roofs of
 chapters IV and IX) enemies stay below, and whoever is posted up there holds the post.
@@ -150,42 +198,81 @@ card to see the figure in the opening shot, then click it, or press `1` to `3` a
 also carry different weapons.
 
 Above the cards, the **Enemies** list sets how many enemies the chapter holds: 5, 10, 15,
-20, 25 or 30. It starts at 15, and no chapter ever holds more than 30. The boss always
+20, 25 or 30 (up to 45 on a large map). It starts at 15. The boss always
 stays and every kind of enemy is kept as long as the number allows; the others are taken
 away where they stand thickest, so the whole map remains guarded. The choice is kept for
 the next chapter and when you retry.
 
-![The hero selection for Dry Gulch: the keys W A S D, Shift, Space and C, the Enemies list set to 15, and cards for Wyatt Earp, Calamity Jane and Billy the Kid, with Wyatt Earp in his black coat standing in the desert](screenshot-heroes.jpg)
+Beside it, two more lists, also remembered:
 
-| Chapter | Hero | Who | Strength |
+- **Wits**: how the enemies think. *Low*: they fight back when they see you or are hurt,
+  but hear nothing, never climb or crawl after you, stay near their post and give up as
+  soon as you are out of sight for a moment. *Medium* (the default): those with a gun or a
+  bow take up places with a view and something to hide behind; they hear what goes on
+  near them, go after you where they last saw or heard you (up ladders, crouching into
+  hiding places), search for about twelve seconds and walk back if they find nothing or you
+  got far away. *Genius*: they hear from almost twice as far and see a little further,
+  tell each other where you are (within 60 m), fight from cover, crouched and rising to
+  shoot, move to a new place after a few shots or hits, come round the sides, creep up
+  crouched where you cannot see them, throw their bombs at where you hide, keep their
+  distance when badly hurt, and half of their marksmen start on a roof, a deck or a
+  balcony. They also shoot straighter and react faster.
+- **Map**: *Small* keeps only the heart of the chapter, from where you come in to where the
+  boss stands, with a rope and little red and white flags along the edge; enemies who stood
+  outside are not there. *Medium* is the chapter as it was made. *Large* makes it half as
+  wide again, with outskirts in the chapter's own style: up to nine hamlets of two or three
+  houses you can walk into, each furnished (table and bench, a bed or a chest, jars), with
+  things in the yard, a fence, trees, two to four people at work, a horse in some chapters
+  and smoke from the chimneys; the ground of a hamlet on a hillside is levelled for it, and
+  where the new ground is water there are boats at anchor with their crews. Two or three
+  enemies are about each hamlet.
+
+**Two weapons and a skill.** Every hero sets out with his own weapon and the second weapon
+of the chapter (see the table below), and presses `E` for his **special skill**, shown
+under the health bar (ready, at work, or how many seconds until it is back) and on his
+card:
+
+| Skill | What it does | Lasts | Back after |
 | --- | --- | --- | --- |
-| I | Wyatt Earp | Lawman of Tombstone, 1881 | Iron nerve: takes 25% less damage |
-| I | Calamity Jane | Scout and sharpshooter of Deadwood | Frontier scout: moves 18% faster |
-| I | Billy the Kid | The fastest gun in New Mexico | Quick draw: fires and reloads much faster |
-| II | Miyamoto Musashi | Undefeated duellist, master of two swords | Two swords: faster katana cuts with longer reach |
-| II | Tomoe Gozen | Woman warrior of the Genpei War | Swift hands: throws her stars almost twice as fast |
-| II | Date Masamune | The One-Eyed Dragon of Sendai | Black armour: takes 30% less damage |
-| III | Wilhelm Tell | The crossbowman of Bürglen, Uri | Master shot: reloads the crossbow 40% faster |
-| III | Arnold von Winkelried | Hero of Sempach, from Nidwalden | Breaks the line: starts with 150 health |
-| III | Werner Stauffacher | Man of Schwyz, of the Rütli oath | Steadfast: slowly recovers health out of danger |
-| IV | Ulysses | King of Ithaca, the man of many wiles | Sure aim: javelins fly faster and hit harder |
-| IV | Achilles | Greatest warrior of the Trojan War | Nearly invulnerable: takes 35% less damage |
-| IV | Heracles | Strongest of heroes, of the twelve labours | Strength of ten: starts with 170 health |
-| V | Erik the Red | Outlaw and founder of Greenland | Hot temper: throws axes much faster |
-| V | Leif Erikson | Leif the Lucky, who sailed to Vinland | The Lucky: takes 30% less damage |
-| V | Ragnar Lothbrok | Legendary sea-king and raider | Raider: faster, harder blows with the flail |
-| VI | Lyudmila Pavlichenko | Soviet sniper, 309 confirmed kills | Sniper: scoped rifle, one shot fells a soldier |
-| VI | Virginia Hall | American spy, “the limping lady” | Spy: Sten gun; sentries notice her much later |
-| VI | Maurice Bavaud | Of Neuchâtel, who set out to shoot Hitler in 1938 | Sure hand: pistol whose shots hit 60% harder |
-| VII | Aleksandr Solzhenitsyn | Artillery captain, prisoner, writer | Frontline officer: submachine gun; takes 15% less damage |
-| VII | Andrei Sakharov | Physicist, and the conscience of a country | Precision: pistol whose shots hit 60% harder |
-| VII | Rudolf Nureyev | The dancer who leapt to freedom in 1961 | The leap: moves 25% faster; agents notice him later |
-| VIII | Gompo Tashi Andrugtsang | Khampa leader of the Chushi Gangdruk | Marksman: rifle, one shot fells a soldier |
-| VIII | Ani Pachen | The warrior nun who led her clan on horseback | Rider: pistol; moves 20% faster |
-| VIII | Songtsen Gampo | The king who founded the Tibetan empire | King of old: bow and sword; takes 20% less damage |
-| IX | Cuauhtémoc | The Descending Eagle, last ruler of the Mexica | Descending Eagle: poisoned darts that fly faster and hit harder |
-| IX | Tzilacatzin | Warrior of Tlatelolco, who felled Spaniards with stones | Stone thrower: hurls heavy stones; starts with 130 health |
-| IX | Nezahualcóyotl | The Fasting Coyote, poet-king of Texcoco | Fasting Coyote: bow and club; moves 15% faster |
+| Dash | a burst of speed, 80% faster | 3 s | 16 s |
+| Stand fast | wounds hurt five times less | 5 s | 28 s |
+| Dead eye | every shot flies true and hits 80% harder | 6 s | 28 s |
+| Second wind | 50 health back over four seconds | 4 s | 36 s |
+| Vanish | the enemies lose sight of you and go where they saw you last; in a duel the other player sees only a faint shape | 6 s | 32 s |
+| Fury | blows strike twice as hard and 60% quicker, and you move 20% faster | 7 s | 26 s |
+| Eagle eye | every enemy within 90 m is marked through walls and shows on the map | 9 s | 30 s |
+
+![The hero selection for Dry Gulch: the story, the keys, the Enemies, Wits and Map lists, and cards for Wyatt Earp, Calamity Jane and Billy the Kid with their strength and special skill, Wyatt Earp in his black coat standing in the desert, a Main menu button in the top right corner](screenshot-heroes.jpg)
+
+| Chapter | Hero | Who | Strength | Skill (`E`) |
+| --- | --- | --- | --- | --- |
+| I | Wyatt Earp | Lawman of Tombstone, 1881 | Iron nerve: takes 25% less damage | Stand fast |
+| I | Calamity Jane | Scout and sharpshooter of Deadwood | Frontier scout: moves 18% faster | Dash |
+| I | Billy the Kid | The fastest gun in New Mexico | Quick draw: fires and reloads much faster | Dead eye |
+| II | Miyamoto Musashi | Undefeated duellist, master of two swords | Two swords: faster katana cuts with longer reach | Fury |
+| II | Tomoe Gozen | Woman warrior of the Genpei War | Swift hands: throws her stars almost twice as fast | Dead eye |
+| II | Date Masamune | The One-Eyed Dragon of Sendai | Black armour: takes 30% less damage | Stand fast |
+| III | Wilhelm Tell | The crossbowman of Bürglen, Uri | Master shot: reloads the crossbow 40% faster | Dead eye |
+| III | Arnold von Winkelried | Hero of Sempach, from Nidwalden | Breaks the line: starts with 150 health | Second wind |
+| III | Werner Stauffacher | Man of Schwyz, of the Rütli oath | Steadfast: slowly recovers health out of danger | Second wind |
+| IV | Ulysses | King of Ithaca, the man of many wiles | Sure aim: javelins fly faster and hit harder | Dead eye |
+| IV | Achilles | Greatest warrior of the Trojan War | Nearly invulnerable: takes 35% less damage | Stand fast |
+| IV | Heracles | Strongest of heroes, of the twelve labours | Strength of ten: starts with 170 health | Second wind |
+| V | Erik the Red | Outlaw and founder of Greenland | Hot temper: throws axes much faster | Dead eye |
+| V | Leif Erikson | Leif the Lucky, who sailed to Vinland | The Lucky: takes 30% less damage | Stand fast |
+| V | Ragnar Lothbrok | Legendary sea-king and raider | Raider: faster, harder blows with the flail | Fury |
+| VI | Lyudmila Pavlichenko | Soviet sniper, 309 confirmed kills | Sniper: scoped rifle, one shot fells a soldier | Eagle eye |
+| VI | Virginia Hall | American spy, “the limping lady” | Spy: Sten gun; sentries notice her much later | Vanish |
+| VI | Maurice Bavaud | Of Neuchâtel, who set out to shoot Hitler in 1938 | Sure hand: pistol whose shots hit 60% harder | Dead eye |
+| VII | Aleksandr Solzhenitsyn | Artillery captain, prisoner, writer | Frontline officer: submachine gun; takes 15% less damage | Stand fast |
+| VII | Andrei Sakharov | Physicist, and the conscience of a country | Precision: pistol whose shots hit 60% harder | Dead eye |
+| VII | Rudolf Nureyev | The dancer who leapt to freedom in 1961 | The leap: moves 25% faster; agents notice him later | Vanish |
+| VIII | Gompo Tashi Andrugtsang | Khampa leader of the Chushi Gangdruk | Marksman: rifle, one shot fells a soldier | Eagle eye |
+| VIII | Ani Pachen | The warrior nun who led her clan on horseback | Rider: pistol; moves 20% faster | Dash |
+| VIII | Songtsen Gampo | The king who founded the Tibetan empire | King of old: bow and sword; takes 20% less damage | Stand fast |
+| IX | Cuauhtémoc | The Descending Eagle, last ruler of the Mexica | Descending Eagle: poisoned darts that fly faster and hit harder | Dead eye |
+| IX | Tzilacatzin | Warrior of Tlatelolco, who felled Spaniards with stones | Stone thrower: hurls heavy stones; starts with 130 health | Second wind |
+| IX | Nezahualcóyotl | The Fasting Coyote, poet-king of Texcoco | Fasting Coyote: bow and club; moves 15% faster | Dash |
 
 The heroes are drawn from history, myth and saga, not from any film, series or comic.
 Several do not belong to their chapter's year or place (Winkelried is of 1386, Tomoe
@@ -210,25 +297,45 @@ fighting; the player clears the road ahead of him. Gompo Tashi Andrugtsang and A
 did fight in those years; Songtsen Gampo is a king of the seventh century. The Red Guards
 belong to the years after 1966 and are in the chapter by request, not by the calendar.
 
-### Duel: two players online
+### Online: two to four players — duel, capture the flag, together
 
-Click **Duel** on the title screen. Two players, each on their own computer, hunt each
-other in one of the nine chapters; the goal is to kill the other player.
+Click **Online** on the title screen. Two to four players, each on their own computer,
+play one of the nine chapters against each other, or together against its enemies.
 
-1. One player chooses the chapter, the rules and how many computer enemies stay in
-   the world (none, or one to nine), then clicks *Create and get the invite link*.
-2. They send the link, or its code of five characters, to the other player, who opens
-   the link or types the code.
-3. Both choose a fighter. The duel starts when both have chosen.
-4. After a duel the two players stay connected. A click on the end screen leads back to
-   the Duel screen, where the host picks the next chapter and rules and starts again.
-   No new link or code is needed until one of the players leaves.
+1. Each player writes a name at the top of the screen (it is remembered): the others see
+   it in the scores, in the messages and, on your side, over your head. One player, the
+   host, clicks *Create and get the invite link*.
+2. The host sends the link, or its code of five characters, to the others, who open the
+   link or type the code. Up to three can join. The *Players* list shows who is in, and
+   on which side.
+3. Meanwhile the host chooses the chapter, the game, how many computer enemies are in the
+   world (none, or 3 to 24 by threes; at least 3 together), their wits and the size of the
+   map; the others see the choice. When everyone is in, the host clicks *Start the game*.
+4. Everyone chooses a fighter. The game starts when all have chosen.
+5. After a game everyone stays connected. A click on the end screen leads back to the
+   Online screen, where the host picks the next chapter and rules and starts again; others
+   may join between two games. No new link or code is needed until the host leaves.
 
-| Rule | How it ends |
+**Sides.** In the duels and in capture the flag the players form two sides: in the order
+they joined, the host first, they take turns, so the first and the third play against the
+second and the fourth. With two players it is one against one; with three, two against one.
+Nothing fired or thrown on your side can hurt your team-mate.
+
+| Game | How it is played, and how it ends |
 | --- | --- |
-| First to 3 rounds | Each kill ends a round. Both players start again with full health, at opposite ends of the map, and change ends every round. |
-| One life | The first kill decides. |
-| 5 minutes, most kills | A player comes back three seconds after dying, at the end of the map farther from the opponent. |
+| Duel · first to 5 rounds | A round ends when everyone on one side has fallen; a player who falls waits for the end of the round. Everyone starts the next round with full health, the two sides at opposite ends of the map, and the sides change ends every round. The first side to win five rounds wins. |
+| Duel · 7 minutes, most kills | Each fall scores a point for the other side. A player comes back three seconds after falling, at the end of the map farther from the other side. After seven minutes, the side with more points wins. |
+| Capture the flag | Each side's flag stands at its end of the map: blue is your side's, red the other's, on the maps too. Walk into the red flag to take it, and into yours, at home, to score a capture. A carrier who falls drops the flag where he fell; walk into your own lying out there to send it home (it goes home by itself after 25 seconds). A carrier shows on the other side's maps even when sneaking. First side to three captures, or the most after seven minutes. A fallen player comes back at his end after four seconds. |
+| Together against the enemy | All the players start side by side against 3 to 24 of the chapter's enemies, the boss among them. Nothing one fires or swings can hurt another. Each counts his own kills (the host's browser decides who struck the last blow). A fallen player is back at the start five seconds later. The mission is over when the last enemy falls. |
+
+In every game the enemies stand at places drawn at random for that game, the same in every
+browser (the host's browser draws a number that all use); the outskirts of a large map
+and the posts the enemies take up are the same everywhere too. Each team-mate's name,
+distance and health show over his head, through walls, and at the edge of the screen when
+he is out of view; the ground a team-mate passes near is uncovered on your map, a place
+you mark with the middle button shows on his screen, and what one of you puts down with
+`G`, another can take. The end screen gives each side's score and, with more than two
+players, each player's kills.
 
 In a duel each chapter offers its villains beside its three heroes. Heroes stand in a
 row marked with a gold star, villains in a row marked with a red skull, and every card
@@ -274,21 +381,163 @@ villains, like several heroes, do not belong to their chapter's year.
 
 Things to know in a duel:
 
-- The whole map is used. The larger dot on the compass is your opponent.
-- Weapons do 60% of their usual damage against the other player, so a duel is not over
+- The whole map is used. Your team-mate always shows on the map as a larger green dot;
+  a player of the other side shows as a larger white dot while moving, unless sneaking.
+- Weapons do 60% of their usual damage against another player, so a duel is not over
   in one hit. A hit to the head still counts two and a half times.
-- If computer enemies are in the world, there are as many as the host chose, one to
-  nine; they attack whichever player is nearer, and being killed by one counts for your opponent.
-- A duel cannot be paused, and practice mode is switched off.
+- If computer enemies are in the world, there are as many as the host chose, 3 to 24;
+  they attack whichever player is nearest, and a fall to one of them scores for the other side.
+- A game online cannot be paused, and practice mode is switched off.
 
-**Connecting.** The two browsers talk to each other directly. A free public service
-(PeerJS) only introduces them under the code; nothing of the game passes through it. Each
-player can see the other's network address, as in any direct connection. The code is shown
-in plain upright letters and never contains characters that are easily taken for one
-another (no 0, O or Q; no 1 or I; no 2 or Z; no 5 or S; no 8 or B; no G; neither U nor V);
-it may be typed in small letters or with spaces. On some company or mobile networks the
-connection does not get through, because the game has no relay server; try from another
-network.
+**Connecting.** Every player's browser connects to the game server, the same way it
+connects to a website, and the server passes the game on between the players of each game.
+So it works whatever network each player is on, behind any box or firewall that lets web
+pages through. The server is a small program on Cloudflare's network
+([server/](server/)): it keeps no record of the games, and the players do not see each
+other's network address. The code is shown in plain upright letters and never contains
+characters that are easily taken for one another (no 0, O or Q; no 1 or I; no 2 or Z; no 5
+or S; no 8 or B; no G; neither U nor V); it may be typed in small letters or with spaces.
+If the server cannot be reached, the Online screen says so after twelve seconds at most.
+
+### Arsenal, bag, map and things that break
+
+- **Every weapon runs out** except the blades and the fists. The hero sets out with a
+  limited supply (42 rounds for the six-shooter or a pistol, 128 for a submachine gun, 40
+  for a rifle, 25 for the scoped rifle, 20 arrows, 14 bolts, 12 throws of stars, 6
+  javelins or axes, 12 darts, 8 stones, 20 sling stones, 10 blowgun darts) and can carry at
+  most twice that. More is found on the fallen and in crates, chests and barrels, as boxes
+  of ammunition: a box fills the weapon in hand if it can take more, otherwise the hero's
+  own. With nothing left to fire, the hands go to the fists, which never run out.
+- **Take back what you threw.** Arrows, bolts, stars, javelins, axes, darts, sling stones,
+  blowgun darts and big stones lie where they fell or stick where they struck, in a wall,
+  a tree or a body, and glow faintly: walk over one to take it back (the forty most recent
+  are kept).
+- **Blades** (knife, seax, sword, sabre, katana, halberd) are held in hand: the left button
+  strikes. They need no ammunition and make no sound that enemies hear. The **sling** is
+  whirled once overhead and lets a stone fly; the **blowgun** is brought to the eye with
+  the right button (a narrow, sniper's view) and shoots silent poisoned darts. **Big
+  stones** are thrown from the bag and picked up again; a **Molotov cocktail** bursts into a
+  pool of fire three metres wide that burns for about seven seconds, hurting whoever stands
+  in it (you too), setting bystanders running and burning wooden things.
+- **Put down what you hold** with `G`: a weapon with the shots it has left, or one thing from
+  the bag. It lies in front of you; you take it again once you have stepped away and come
+  back, and in a game for two the other player can take it.
+- **Weapons taken from the enemy.** Gunmen, archers, crossbowmen, javelin throwers,
+  axemen and ninjas leave their weapon where they fall, glowing on the ground; walk over
+  it to take it. It comes with a number of shots (12 for a revolver, 16 for a rifle, 64
+  for a submachine gun, 10 arrows, 8 bolts, 5 javelins, 6 axes, 12 throws of stars);
+  another of the same kind, the hero's own included, adds as many. Up to six weapons are
+  carried. A taken weapon leaves the arsenal when it is empty. Enemies who fight hand to
+  hand often leave a box of ammunition.
+- **Enemies at new places every game.** The chapter's enemies are a different choice each
+  time (the boss always among them), and those who walk the ground start at random free
+  places, most within thirty metres of their usual post, some anywhere, always far from
+  the start. Those posted on roofs, towers and perches, and those lying in ambush, keep
+  their places.
+- **Healing food and drink lie where one would put them**: on tables, chests, market
+  counters and shelves, at other places each game. Broken, a table drops what lay on it.
+- **The bag** holds up to nine of each thing: the chapter's healing food or drink (35
+  health each), and in chapters I, II, VI, VII and VIII the bombs some enemies leave
+  (dynamite, a clay fire bomb, grenades). Take one in hand with the wheel and press the
+  left button to use it, or press `H` to heal without changing weapons. A bomb bounces,
+  rolls to a stop and goes off two seconds or so after the throw.
+- **The map.** The mini-map in the top-right corner shows 55 m around you and turns with
+  you (N marks north on its rim); `Tab` shows the whole chapter, north up. It starts dark:
+  only the ground you have passed within about thirty metres of is uncovered. Enemies show
+  as red dots (the boss larger) where the map is uncovered, while they move about, after
+  they have fired, and once they have seen you; one who stands still or creeps up unseen
+  does not. Online, a player of the other side shows while he moves openly; your
+  team-mates always show, in green.
+- **Life around.** Small flocks of birds peck on open ground and take wing at a shot, a
+  blast or someone coming too near. Gusts lift the dust (in the snow chapters, the snow)
+  and drive it along the ground; on the dry plains of chapters I and VIII a dust devil
+  wanders across now and then. In chapter I a train comes in along the line from the
+  west, stops short of the depot with its bell ringing and backs out again; in chapter
+  VII a tank crosses the town along the street over the prospekt. Both push aside
+  whoever is in their way, and a knock hurts.
+- **Marked places.** The middle button marks the place under the cross-hair; a new mark
+  replaces the one before, and pressed again on a mark, it takes it away. A mark is a pin in
+  the world, a label with its distance seen through walls, and a dot on both maps with your
+  initial; a mark beyond the rim of the mini-map sits on the rim, in its direction. Together,
+  your partner sees your mark in his game, with your name, and hears a ping when you set it;
+  his mark shows in green in yours.
+- **Named places.** Each chapter's landmarks get their name on both maps once you (or,
+  together, your partner) have been near them, and the first time it is announced on the
+  screen; the hamlets of a large map have names of their own. Together, the ground either of
+  you passes near is uncovered on both maps.
+- **Things that break.** Everything breaks under shots, blows, thrown weapons, fire and
+  blasts except stone, plaster, rock and trees. Small things (bottles, lamps, pots, bowls,
+  ornaments) go at one shot or blow, and a bullet goes on through them; furniture, crates,
+  barrels, fences (bay by bay), carts, woodpiles, haystacks, stalls, shelves, benches and
+  beds after two to four; wooden and paper walls and doors after several, and the
+  enemies' routes are worked out again through the gap. Chips fly off at every hit. What
+  stood on a thing falls with it, and whoever sat on a bench or a bed jumps up. In chapters I, II, VI, VII, VIII and IX
+  one barrel in three is a red powder keg with a pale lid: it explodes, hurting everyone
+  within about six metres (you too; a wall between softens the blast), breaking what is
+  around it and setting off other kegs.
+- **Sneaking** (`X`) halves your speed and silences your steps. Enemies see a sneaking
+  hero at two thirds of the usual distance, and from behind only within three metres.
+- **Noise.** Enemies of *Medium* wits hear a gunshot about 35 m away, a bow, a sling or a
+  throw about 10 m, running feet 11 m, walking feet 4 m, even through walls, and come to see
+  where it was; *Genius* ones hear 80% further, *Low* ones nothing. Blades, fists and the
+  blowgun are silent, and so are sneaking and crouching. A thing breaking makes those near
+  look round. Enemies who close in on you while you cannot see them sneak as well (clever
+  ones crouch).
+
+![The map of Dry Gulch, held open with Tab over the street: the ground found so far uncovered, the names of the places found (Main Street, the Railroad Depot, the Water Tower, the Church, the Corral, the Homestead, Boot Hill, Lookout Butte, the Stage Station, the Silver Queen Mine) and a mark on Boot Hill](screenshot-map.jpg)
+
+### Bystanders, fists, wounds and aimed throws
+
+- **Bystanders** take fright at shots, blasts and missiles landing near them: they run from
+  the danger, crouch with their hands over their heads, and walk back to their work once
+  it has been quiet for a while (if the way back is blocked, they stay where they are).
+  Stand still near one for a moment, without fighting, and he turns to you and talks,
+  waves, nods, shrugs or points; aim at one and he raises his hands. A shot or two kills
+  one; the end of the chapter shows how many bystanders you killed.
+- **Fists** are always the last weapon of the arsenal: the left button jabs with either hand
+  in turn (28 damage), the right button throws a hook (55). They reach about a metre and a
+  half, strike the bystanders and enemies within reach and the nearest breakable thing
+  (a small thing, furniture, a wooden wall), need no ammunition and make no noise.
+- **Wounds.** A shot leaves a dark mark on the body where it went in, pushes the figure back
+  a little, and shows a small health bar over the enemy for four seconds (over the other
+  player online as long as he is hurt). Below 40% of his strength an enemy limps.
+- **Things wear before they break.** Each hit dents and blackens a breakable thing where it
+  struck, and it leans further over the weaker it gets.
+- **Aimed throws.** With a thrown weapon the right button aims (the view narrows a little)
+  and draws the flight as a fine line of small dots, from the hand to a small ring where it
+  will land. The line is pale while the throw would land on nothing in particular, and turns
+  red when it would strike an enemy or an animal (for a bomb: when one stands within its
+  blast). For a bomb the line follows the bounces and a red circle shows the reach of the
+  blast. The line is worked out with the same steps as the throw itself, so it is exact for
+  walls, roofs and the ground, and for the enemies standing where they are now.
+
+### Voices and gunshots
+
+Every gun has its own report (six-shooter, pistol, lever rifle, rifle, scoped rifle,
+submachine gun, machine gun, arquebus, cannon), deep near by and a dull thud with a rolling
+echo far away. Enemies who see you shout at you in their own language: English in Dry
+Gulch, Japanese at Kagemori, German in Uri and in Normandy, Greek on Ithaca, Norwegian at
+Jarnvik, Russian in Stalnogorsk, Chinese at Che La, Spanish in Tenochtitlan. The words are
+spoken by the speech synthesis of your browser and computer, when it has a voice for that
+language (most computers have English; others can be added in the system's language
+settings); otherwise, and for every cry and every bit of chatter, a voice is synthesised in
+the game from a buzzing tone shaped like the vowels of speech. Fallen enemies cry out;
+bystanders greet you in their language (French in Normandy, Swiss German in Uri) and
+chatter. All of this is on the *Voices* volume.
+
+### Sound settings and voice chat
+
+The *Sound* button on the title screen, *Sound settings* on the pause screen (or `O`) and
+*Sound and microphone* on the Online screen open the same panel: four volumes (General,
+Effects, Voices, Music), music on or off (`M` during play), and the microphone for games
+online: always on (`T` mutes it), push to talk (hold `T`), or off. The choices are remembered.
+
+Online, all the players of a game hear each other, from the moment they are connected. The
+browser asks once for the microphone. The voice goes through the game server with the rest
+of the game, in telephone quality (16 000 samples a second, 8 bits each), and nothing is
+sent while you are silent. The others' voices play on the *Voices* volume. Headphones avoid
+an echo. Small lines at the top left show your microphone (green while you transmit) and
+each other player (green while they speak).
 
 ### Controls
 
@@ -299,16 +548,31 @@ network.
 | `Space` | Jump (about 1.3 m). Also stands you up from a crouch |
 | `W`, facing a ladder | Climb it (no extra key) |
 | `C` | Crouch on and off |
-| Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow, throw a poisoned dart or a stone |
-| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle); katana or sword cut in chapters II and IV and with the bow of chapter VIII; the flail in chapter V; the obsidian-edged club in chapter IX |
-| `F` | Halberd thrust in chapter III, knife in chapters VI to VIII (also the katana, the swords and the flail) |
+| `X` | Sneak on and off: half speed, no footsteps, harder to notice, not shown on the other side's maps. Running ends it while you run |
+| Left mouse button | Fire, throw stars, shoot a bolt, throw a javelin or an axe, loose an arrow, throw a poisoned dart or a stone; with an item from the bag in hand, use it (drink, eat, throw a bomb) |
+| Right mouse button | Aim (six-shooter, crossbow, the guns of chapters VI to VIII; through the scope with the sniper rifle). With a thrown weapon (stars, javelins, axes, darts, stones, bombs) it aims too and shows the flight to where it will land. With the bow, the sword or katana cut; with the fists, a hook |
+| `F` | Halberd thrust in chapter III, knife in chapters VI to VIII, katana in chapter II, sword in chapter IV, flail in chapter V, club in chapter IX |
 | `R` | Reload the six-shooter and the guns of chapters VI to VIII |
+| Mouse wheel | Change weapon: through the arsenal (the hero's weapon, the second weapon, the weapons taken from the enemy, the fists) and the bag. `1` to `9` take a place directly |
+| Middle mouse button (press the wheel) | Mark the place the cross-hair points at; again on a mark, take it away |
+| `Tab` (hold) | The map of the whole chapter |
+| `H` | Use a healing item from the bag without taking it in hand |
+| `E` | The hero's special skill (see *Choose your hero*) |
+| `G` | Put down what you hold: the weapon in hand, or one thing from the bag |
+| `T` | Online: mute and unmute the microphone, or hold to speak (see *Sound settings*) |
 | `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
-| `M` | Sound on/off |
-| `G` | Graphics: steps through Automatic, High, Medium and Low (also while paused) |
+| `M` | Music on/off |
+| `O` | Sound settings (on the title screen, the Online screen and while paused) |
+| `G` (while paused) | Graphics: steps through Automatic, High, Medium and Low |
+| `Esc` on the hero, death or end screen | Back to the main menu (every menu also has a *Main menu* button) |
+
+**Sneaking is on `X`, not on `Ctrl`.** Browsers keep the `Ctrl` combinations for
+themselves, and a page cannot stop them: `Ctrl`+`W` closes the tab and `Ctrl`+`Q` can close
+the browser, so holding `Ctrl` while walking would end the game. As a safeguard, while a
+chapter or a game online is on, the browser asks before the page is closed.
 
 **If the game runs slowly.** The *Graphics* list at the bottom left of the title screen
-offers four choices, and `G` steps through them during a chapter. *High* is the full
+offers four choices, and `G` steps through them in the pause screen. *High* is the full
 picture. *Medium* draws three quarters of the resolution. *Low* draws half of it, with
 fewer grass tufts and far trees, shorter shadows and no glow. *Automatic*, the default,
 starts on High and steps down by itself while the game runs below about 42 frames a
@@ -340,7 +604,7 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | Source | About 10,900 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
-| Network | Duel mode only: a WebRTC data channel straight between the two browsers. [PeerJS](https://peerjs.com/) 1.5 and its public broker make the introduction for the invite link. |
+| Network | Online games only: a WebSocket from each browser to the game server, a Cloudflare Worker with one Durable Object per game ([server/](server/)), which passes the messages on. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
 | Type | Rye, Pirata One, IM Fell English and Cinzel (SIL Open Font License), bundled through Fontsource. |
 | Storage | None. Progress is not saved; all nine chapters are open from the start. |
@@ -359,8 +623,22 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [audio.js](source/src/audio.js) | Sound effects, ambience and generative music. |
 | [props.js](source/src/props.js) | Instancing helper, fences, barrels, grass, trees, horses, ships, fire bowls, and the builders for enterable rooms, flights of steps, iron bars, shelves, rubble, the longship you can board, the climbable butte with its zigzag stair, the great boulder with its leaning ladder and summit cross; furniture (tables, benches, beds, chests, jars, sacks, hearths, market stalls, woodpiles, haystacks), wagons to crawl under, raised floors with ladders or stairs, crawl passages, and the bystanders with their poses, ladders, raised hides and crawl-in dens. |
 | [levels/](source/src/levels/) | One file per chapter: terrain, buildings, vegetation, enemy and item placement, lighting mood. |
-| [duel.js](source/src/duel.js) | Duel mode: the other player's figure, rounds and scores, the messages between the two games, the lobby. |
-| [net.js](source/src/net.js) | The connection between the two browsers: the introduction through PeerJS under a short code, then a direct channel. |
+| [havoc.js](source/src/havoc.js) | Things that break (crates, barrels, jars) and explosions: splinters, the blast, kegs that set each other off. |
+| [map.js](source/src/map.js) | The chapter's map drawn from the world, the mini-map, the whole map on `Tab`, and the marked places with their pins. |
+| [loot.js](source/src/loot.js) | What each kind of enemy leaves behind, the shots that come with a weapon, and the names shown in the arsenal and the bag. |
+| [life.js](source/src/life.js) | Life around: birds, gusts and dust devils, the train of chapter I and the tank of chapter VII. |
+| [crowd.js](source/src/crowd.js) | The bystanders: what each does while left in peace, fright and flight, crouching, the way back, talking to the player, hands up, wounds and death, and those who fight back. |
+| [fauna.js](source/src/fauna.js) | The animals: grazing, running away, wounds, death, and those that turn on the player (they become enemies of the kinds `horseBeast`, `cowBeast`, `yakBeast`, `goatBeast`, `pigBeast` or `dog`). |
+| [places.js](source/src/places.js) | The named places of each chapter, and the names of the hamlets of a large map. |
+| [bvh.js](source/src/bvh.js) | A bounding volume hierarchy over the triangles of the merged meshes: shots and lines of sight stop at what is drawn, and roofs can be stood on. |
+| [voices.js](source/src/voices.js) | Enemies' shouts in their languages, greetings and chatter of the bystanders (speech synthesis, or a voice synthesised in the game). |
+| [skills.js](source/src/skills.js) | The heroes' special skills (`E`): what each does, how long it lasts, and which hero has which. |
+| [outskirts.js](source/src/outskirts.js) | The size of the map: the roped-off heart of a small one; the outskirts of a large one (hamlets in each chapter's style, levelled hillsides, boats, trees, people, horses, chimneys, enemies). |
+| [arc.js](source/src/arc.js) | The line of dots that shows where a thrown weapon will land, red when it would strike. |
+| [voice.js](source/src/voice.js) | Voice chat online: the microphone read and coded in µ-law, sent with the game's messages; the other players' voices played as they come. |
+| [duel.js](source/src/duel.js) | Games online: the other players' figures, the sides, rounds, scores and flags, the messages between the games, the lobby. |
+| [net.js](source/src/net.js) | The connection to the game server: creating or joining a game under a short code, the messages of one moment sent together twenty times a second. |
+| [server/](server/) | The game server, for Cloudflare Workers: one Durable Object per game passes each player's messages to the others ([room.js](server/room.js), [worker.js](server/worker.js)). |
 | [villains.js](source/src/villains.js) | The thirty villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
@@ -530,6 +808,20 @@ an enemy standing beside a crate does not plan from the top of it.
 
 ### Characters and behaviour
 
+**Wits.** Each enemy keeps what he knows: where the target was last seen or heard, and
+when. With the target in sight he fights; out of sight, a *Low* enemy waits two and a half
+seconds and walks back to his post, while *Medium* and *Genius* ones go to the last known
+place (by the route grid, and by a ladder when that place is on another floor: the ladder
+whose foot is on his floor and whose top is nearest the place), crouch into low gaps, then
+search at random points around it before going home. Noises are events with a loudness in
+metres, multiplied by the hearing of the level (0, 1 or 1.8). A clever gunman picks cover
+from twenty-two points within twelve metres: a point where a ray from crouching height to
+the target is blocked and one from standing height is clear. The posts at the start are
+picked the same way in both browsers, from the game's number: a ground cell next to one or
+two blocked cells with the widest view, or, for a clever marksman, a flat surface 2.6 to 14
+m above the ground with room to stand.
+
+
 Characters are built from capsules, cylinders, spheres and boxes, merged into five
 meshes: torso and head, two arms and two legs, plus a metal mesh for blades and gun
 barrels. A description object selects skin, clothes, hat, beard, extras such as a
@@ -540,7 +832,7 @@ animated by rotating those five parts; there are no skeletons or animation files
 The same builder makes the twenty-seven playable heroes, the thirty duel villains
 (the one-eyed Cyclops, Medusa with her snakes and the bull-headed Minotaur included),
 the human enemy types, the bystanders and the
-statues of chapters IV and VII. The bystanders have twenty-three looks of their own, a man's and a woman's for each chapter and the old priest of chapter VII (a beard to the waist, a black cap with a cross and a habit with embroidered crosses were added for him)
+statues of chapters IV and VII. The bystanders have twenty-two looks of their own, a man's and a woman's for each chapter
 (long skirts, aprons, shawls, brooches, plaits, buns and headscarves were added to the builder for them), beside the monks,
 nuns, flute monks and geisha. One function places a bystander in a pose (standing, talking, carrying, working, praying,
 sitting, lying, or any turn of the five parts) and another lets them breathe and look about. There are thirty-one enemy types in all. The guard dogs of chapter VI are one of them: a four-legged rig that exposes the
@@ -602,42 +894,83 @@ which returns at once while the flag is set, so enemy behaviour is untouched. Th
 is detected by keeping the last few typed characters and testing whether they end in
 `pax`.
 
-### Duel mode
+### Games online
 
 Each browser runs its own copy of the chosen chapter and simulates only its own player.
-Twenty times a second it tells the other browser where that player is, where they look
-and whether they aim or swing, in a small JSON message over a WebRTC data channel.
+Twenty times a second it tells the others where that player is, where they look and
+whether they aim or swing, in a small JSON message sent through the game server.
 
-- **The opponent's figure.** The other player appears as a figure built by the character
-  builder and moved toward the latest report. It is placed in the same list as the
-  computer enemies. That one decision makes every existing weapon work against it
-  (bullets, arrows, thrown weapons, blades), puts it on the compass and makes it solid,
-  without a second set of combat code.
+- **The server.** A Cloudflare Worker ([server/worker.js](server/worker.js)) with one
+  Durable Object per game code. Every player of a game holds a WebSocket to that object,
+  which passes each message to the other players, with the sender's number in front
+  ([server/room.js](server/room.js)); it lets in at most four, refuses newcomers once the
+  host has started a game, and tells everyone when a player comes or goes. It uses the
+  WebSocket Hibernation API, and answers the browsers' keep-alive (`ping`, every 20
+  seconds) without waking up. It does not look into the game.
+- **One message per moment.** Everything a browser has to say between two of its twenty
+  beats a second (its state, its shots, its hits, a piece of voice) leaves as one message,
+  because the server's plan counts the messages it receives. With four players that is
+  about 70 messages a second for a game. When a connection falls behind, the next state
+  reports are dropped rather than queued.
+- **The other players' figures.** Each other player appears as a figure built by the
+  character builder and moved toward the latest report. It is placed in the same list as
+  the computer enemies. That one decision makes every existing weapon work against it
+  (bullets, arrows, thrown weapons, blades), puts it on the map and makes it solid,
+  without a second set of combat code. A team-mate's figure lets this player's shots pass.
 - **Who decides a hit.** The shooter does. When my shot hits your figure on my screen, my
-  browser sends the damage and yours applies it, with your fighter's own strengths. This
-  favours the shooter slightly when the connection is slow, which feels fairer than shots
-  that visibly hit and do nothing. A player's own browser decides when that player is
-  dead and announces it; both sides then count the score by the same rule.
-- **What you see of the other's fire.** Tracers and projectiles are sent as "ghosts":
-  they are drawn and heard, but hit nothing on the receiving side.
-- **Shared computer enemies.** If the host asked for them, six of the chapter's enemies
-  stay. They are simulated on the host only and turn on whichever player is nearer. The
-  guest receives their positions ten times a second and shows them as puppets; a guest's
-  hit on a puppet is sent to the host, which applies it.
-- **Crouching.** One bit of the position report says whether the player crouches. The
-  opponent's figure then goes down on one knee, and its hit spheres are lowered with it.
-- **Between duels.** The data channel is kept open when a duel ends. Starting the next
-  duel is the same message that started the first one (the host's settings), so a
-  rematch needs no new handshake; the level, the figures and the scores are rebuilt on
-  both sides.
+  browser sends the damage to yours, which applies it with your fighter's own strengths.
+  This favours the shooter slightly when the connection is slow, which feels fairer than
+  shots that visibly hit and do nothing. A player's own browser decides when that player
+  has fallen and announces it, naming the player who last hurt him in the six seconds before.
+- **The host decides for all.** The host's browser keeps the score, ends the rounds (when a
+  side has nobody standing) and the clock, holds the flags, and counts the kills together.
+- **What you see of the others' fire.** Tracers and projectiles are sent as "ghosts":
+  they are drawn and heard, but hit nothing on the receiving side, except that the blast
+  and the fire of a bomb thrown by a player of the other side hurt you.
+- **Shared computer enemies.** If the host asked for them, 3 to 24 of the chapter's enemies
+  are in the world, chosen and placed from the host's random number in every browser. They
+  are simulated on the host only and turn on whichever player is nearest. The others
+  receive their positions ten times a second and show them as puppets; a hit on a puppet
+  is sent to the host, which applies it.
+- **Voice.** The microphone is read in the audio thread (an AudioWorklet), averaged down to
+  16 000 samples a second, coded in 8-bit µ-law and added to the next message as Base64.
+  Nothing is sent while the sound stays under a threshold. The receiving browser decodes
+  each piece, brings it back to the sound card's rate and schedules it 0.12 s ahead, one
+  piece after the other, which evens out the network's hiccups.
+- **Sneaking and crouching.** Two bits of the position report say whether the player
+  sneaks (the map then leaves him out for the other side) and whether he crouches (his
+  figure goes down on one knee, and its hit spheres are lowered with it).
+- **Between games.** The connections are kept when a game ends. Starting the next game is
+  the same message that started the first one (the host's settings); the level, the
+  figures and the scores are rebuilt everywhere.
 - **Spawn points.** The two ends of the map are the chapter's own start and the place
-  where its boss stands.
-- **The handshake.** A WebRTC connection needs a first exchange of addresses. The PeerJS
-  broker carries it under a random code of five characters, drawn from 22 letters and
-  digits that cannot be taken for one another. There is no relay (TURN) server, so two
-  players behind strict network address translation cannot connect. An earlier backup,
-  in which the players pasted the connection offer to each other by hand, was removed in
-  version 1.4.0: the code had proved reliable.
+  where its boss stands; team-mates start side by side, 2.6 m apart.
+- **The code.** Five characters drawn from 22 letters and digits that cannot be taken for
+  one another. It names the game's Durable Object; a code already in use gets another.
+- **Before version 2.2.0** the two browsers connected directly (WebRTC, introduced by the
+  public PeerJS broker). Between some networks the direct connection never opened and the
+  game stayed on "Connecting…"; the server replaced it.
+
+### Breakable things, explosions and the map
+
+- **Pieces in merged meshes.** The world is drawn as a few big merged meshes, one per
+  material. A breakable thing (a crate, a fence bay, a table...) is still merged into them, but the `Builder` notes
+  which vertices belong to it (`Builder.piece`), and its colliders carry a reference to
+  it. A ray that hits such a collider reports the piece. When the piece breaks, its
+  vertices are collapsed to one point in the merged buffers (only that range is sent to
+  the graphics card again), its colliders are removed, and the navigation cells under it
+  are worked out again from the colliders nearby. No draw call is added. A table or a
+  chest also takes with it every triangle that lies wholly in the space just above its top
+  (the plates, bottles and books a level laid on it), found by a pass over the merged
+  buffers that takes a few milliseconds.
+- **Explosions** are worked out in each browser of a duel for its own player and, on the
+  host, for the computer enemies. A piece broken by a shot is reported to the other
+  browser by its number (both browsers build the chapter in the same order); pieces broken
+  by a blast are not, since the blast happens in both browsers.
+- **The map** is drawn once per chapter on a 512 × 512 canvas: the height field shaded by
+  its slopes, water below the water line, then every solid box seen from above (sorted by
+  height, taller ones darker) and every tall cylinder. The mini-map draws that picture
+  turned and scaled around the player each frame.
 
 ### Weapons
 
@@ -679,6 +1012,11 @@ tap shorter than one frame still fires.
 
 ### Sound
 
+- **Four channels.** Effects (with the ambience), Voices (the enemies' shouts and the
+  other player of a duel) and Music each have their own gain, under a general one; the
+  music has its own reverb, so that turning the music off silences its echo too. The
+  other player's voice plays through an HTML audio element rather than Web Audio, so that
+  the browser's echo cancellation can work; its volume is General times Voices.
 - **Effects** are shaped noise bursts and pitched tones: a gunshot is a low-pass noise
   sweep, a band-pass crack and a sine thump.
 - **Reverb** is a convolution with 2.4 s of decaying noise generated at start-up.
@@ -777,7 +1115,7 @@ new to play raises the middle one, a rebuilt game the first. The number lives in
 `package.json`; the build writes it onto the title screen. Every published version has an
 entry in [CHANGELOG.md](CHANGELOG.md), a Git tag `lone-hand-vX.Y.Z`, and a
 [release on GitHub](https://github.com/iago-swi/outlaws/releases) that carries the notes and
-the game as one HTML file. The Gemini version in this repository keeps its own numbering.
+the game as one HTML file.
 
 ### Build from source
 
@@ -809,6 +1147,35 @@ The game was checked with scripted runs in an automated browser: loading each ch
 firing each weapon with simulated clicks, selecting heroes and measuring their
 strengths, enemy attacks, practice mode, death and retry, and the end-of-chapter screen
 (reached by removing the enemies in a script, not by playing through).
+
+Version 2.1.0 was checked the same way: with all enemies alerted at *Genius* wits on large
+maps, all nine chapters ran thirty seconds of game time with no script error (0.6 to 1.7 ms
+of simulation per frame); the triangle tree is built in 45 to 120 ms per chapter (33,000 to
+70,000 triangles) and a line of sight costs about 25 microseconds. A player dropped onto
+roofs in chapters I, II and V stays on them. A script that follows every enemy for sixty
+seconds and reports any step through something solid found open door leaves and screens
+being walked through; they are solid now, and the area enemies can reach from the start
+changed by less than one part in a thousand. In Stalnogorsk an enemy sent after a player on
+the third floor climbed the stairwell to him, and one sent after a player on the metro
+platform went down the escalator hall. Two tabs played together: the partner's way uncovered
+the map and named Boot Hill, and a mark set in one tab appeared, with its ping, in the other.
+
+Version 2.0.0 was checked the same way. The enemies' wits: a gunshot out of sight brings
+*Medium* and *Genius* enemies to where it was fired and leaves *Low* ones idle; a player who
+hides 16 m away is searched for and found by a medium enemy, while a dull one waits and
+gives up; melee enemies of *Medium* and *Genius* wits sent after a player on a roof walked to
+the ladder, climbed it and struck, in chapters II and V; a *Genius* gunman took three
+different covers in twenty seconds and crouched between shots. All nine chapters were run
+for thirty seconds of game time with every enemy alerted, at each level of wits and each
+size of map, with no script error and under 1.5 ms of simulation per frame on average. The
+sizes: a small map keeps the spawn and the boss and roughly halves the area; a large one
+gets two to nine hamlets, or boats where the new ground is water (chapters III and IV).
+The weapons: the second weapon and the bag of every chapter, a strike with each blade, a
+shot with the sling and the blowgun, a Molotov cocktail burning an enemy, a big stone
+thrown and lying to be taken back, a javelin taken back. The skills were each switched on
+and their effects measured. A game together was played between two tabs: the names reached
+both sides, the large map and the enemies' posts were the same in both browsers, a weapon
+put down by one player appeared for the other, and the partner's tag showed.
 
 Collisions and route finding were checked the same way in all eight chapters. A script
 asks for a route from every enemy to the player and reports any that has none; this
@@ -888,6 +1255,36 @@ and a guest's hit kills one on the host). It has not been tried between two comp
 different networks, only guns were fired at the other player in these tests, and the
 effect of real network delay is unknown.
 
+Version 2.2.0 (the game server, up to four players) was tested with four tabs of one
+automated browser and the server running on the same computer in Cloudflare's own runtime
+(`wrangler dev`): the lobby filling up to four, a fifth player refused, the sides, a
+two-against-two duel in rounds (a fall, a team-mate's shot doing nothing, the round won when
+both players of a side are down, the next round, players leaving, the end screen, back to
+the lobby), the timed game, capture the flag (taken, dropped, brought home), four players
+together (a guest's kill counted for him, an enemy of the host going after a guest and
+hurting him, a mark seen by the team-mates, the end of the mission), a duel of two, and the
+host leaving. Each browser sent about 17 messages a second, 22 KB/s with the microphone on
+(a test tone). The same test of four players in rounds was then run through the server on
+Cloudflare's network, with the same results; from the cloud computer that ran the browsers,
+behind its proxy, a message took about a quarter of a second from one browser to another
+through the server, and forty messages sent at twenty a second all arrived. Not tested:
+players on different networks, the delay between players in Switzerland, Safari.
+
+Version 2.3.0 was checked in a browser without a window: all nine chapters load without
+an error, every bystander has something to do, the animals are where they were (seven
+horses, a mule and four hens in chapter I, an ox, five cows and two mules, five goats, six
+pigs and the dog, two ponies and seven sheep, ten yaks and three horses); a horse shot once
+turns on the player, reaches him and kicks him (100 to 40 health in five seconds), and falls
+to six shots; a hen shot dies and its collider goes; a horse shot that does not fight runs
+12 metres; a bystander shot who fights back becomes a cowboy with a gun; the throw line of
+the shuriken turns red on an enemy nine metres away and stays pale two metres beside him.
+
+Version 2.5.0 was checked the same way: all nine chapters load without an error with the new
+places, and each place was looked at in a picture taken in the game (the mission from the
+town, the castle from the valley, the bridge from the bank of the gorge, the axes from inside
+the court, the thing field, the paratrooper from below the tower, the kvas tanker and its
+line, the iron bridge from the bank, the house of birds from the street).
+
 Version 1.5.0 enlarged all nine chapters at once. Each chapter was first checked with the
 `&check` flag in a browser without a window: every enemy that walks has a route to the
 player's start, in all nine, with 5, 15 and 30 enemies. A scripted player then climbed all
@@ -916,8 +1313,9 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - Rooms away from a fire or a window are dim: the chapters are at their limit of lights,
   and the new interiors got none.
   The route grid does not know about other enemies, so several can crowd one doorway.
-- The longships lie at fixed moorings and cannot be sailed. The bystanders stay in their place
-  and do not react to the fight.
+- The longships lie at fixed moorings and cannot be sailed.
+- An animal running away glides on stiff legs (only those that attack move their legs), and
+  one that has run away stays where it stopped.
 - With five villains and three heroes, the fighter selection of chapter IV uses smaller
   cards than the other chapters.
 - Enemies cannot jump, crouch or climb ladders. A player on a roof or in a den can only be shot at, or
@@ -925,8 +1323,12 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - The climbable butte of chapter I is built from layered blocks and is more angular than
   the rounded mesas on the horizon. (The boulder of chapter III was rebuilt as one irregular rock.)
 - Wind moves plants but not their shadows.
-- Duel mode has no relay server and no chat; if one player switches
-  to another browser tab, their game stops sending until they come back.
+- Games online have no text chat; if a player switches to another browser tab, their
+  game stops sending until they come back.
+- The game server runs on Cloudflare's free plan, which counts the messages it receives:
+  about eight hours of play a day with four players, or sixteen with two, by the rates
+  measured below (the limit is shared by all the games of a day). Past it, games stop
+  connecting until midnight UTC. See [server/README.md](server/README.md).
 - On the title screen the chapter behind the cards is loaded without its route grid;
   entering a chapter loads it again in full.
 

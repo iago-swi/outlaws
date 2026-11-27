@@ -5,7 +5,7 @@ import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { drawTexture } from '../tex.js';
 import { makeHumanoid, lookFor } from '../actors.js';
 import { instanced, fence, barrel, crate, room, steps, tuftGeo, pineGeo, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, boulder, beast, ladder, rod, horseGeo,
-  local, table, bench, bed, chest, pots, sacks, rug, hearth, woodpile, cart, deck, person, idle } from '../props.js';
+  local, table, bench, bed, chest, pots, sacks, rug, hearth, woodpile, cart, deck, person, idle, animal } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const swiss = {
@@ -61,6 +61,9 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   const STREAM = [[96, 22], [62, 15], [36, 4], [14, -14], [0, -36], [-4, -60]];
   const PATH = [[-32, 60], [-22, 48], [-6, 34], [10, 18], [21, 1], [29, -11], [38, -20], [44, -30]];
   const LANE = [[70, 8], [72, -6], [69, -18], [68, -30]];        // the sunken lane east of the camp
+  const GORGE = [[94, 21.7], [72, 16.6]];                          // below the waterfall the stream has cut a gorge: the Devil's Bridge spans it
+  const gorge = (x, z, w = 5.2) => { const [ax, az] = GORGE[0], vx = GORGE[1][0] - ax, vz = GORGE[1][1] - az, t = Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / (vx * vx + vz * vz))), d = Math.hypot(x - ax - vx * t, z - az - vz * t);
+    return (1 - smooth(2.4, w, d)) * smooth(0, 0.2, t) * smooth(1, 0.8, t); };          // 1 in the bed of the gorge, 0 outside it
   // ---- terrain: valley, lake basin, ring of mountains -------------------------------
   const hf = new Heightfield(1200, 400, (x, z) => {
     let base = 4.2 + (z + 50) * 0.07 + (fbm(x * 0.02, z * 0.02, 4, 2) - 0.5) * 4.5;
@@ -69,6 +72,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     base -= (1 - smooth(1.5, 5.5, dPoly(STREAM, x, z))) * 1.4 * (1 - lake);
     base -= (1 - smooth(1.5, 6.5, dPoly(LANE, x, z))) * 1.3;
     base -= (1 - smooth(2.5, 6.5, Math.hypot(x - 101, z - 22.5))) * 0.8;                   // the basin the waterfall drops into
+    base -= gorge(x, z) * 5.4;                                                               // the gorge, deepest in the middle
     const r = Math.hypot(x * 0.95, z < 0 ? z * 0.4 : z * 0.92);
     const m = smooth(124, 340, r);
     return base + m * (36 + ridged(x * 0.0042 + 3, z * 0.0042 + 7, 5, 4) * 340) + smooth(108, 168, r) * 16 * fbm(x * 0.02 + 7, z * 0.02, 3, 9);
@@ -85,7 +89,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     tmp.lerp(cPath, Math.max((1 - smooth(0.8, 2.6, dPoly(PATH, x, z))) * 0.85, (1 - smooth(0.6, 2.6, dPoly(LANE, x, z))) * 0.7));
     tmp.lerp(cShore, 1 - smooth(0.3, 1.6, h));
     const steep = 1 - smooth(0.66, 0.84, ny), high = smooth(80, 125, h + (n - 0.5) * 40);
-    tmp.lerp(tmp.clone().copy(cRock).lerp(cRock2, n), Math.max(steep, high));
+    tmp.lerp(tmp.clone().copy(cRock).lerp(cRock2, n), Math.max(steep, high, Math.min(1, gorge(x, z, 8.5) * 1.6)));   // the walls of the gorge are bare rock
     tmp.lerp(cSnow, smooth(112, 150, h + (n - 0.5) * 50) * (1 - steep * 0.45));
     return tmp;
   }));
@@ -117,7 +121,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const dz of [-6.5, 3, 11]) rock(115, 25.5, dz, 5.5, 6, 6, 2);
     for (const k of [-1, 1]) { rock(108.5, 25, k * 7.2, 4.6, 8, 4.4, k); rock(117.5, 31.5, k * 5, 5, 5, 6, 3); }
     for (const dz of [-3.3, -1.4, 1.6, 3.4]) rock(101.5, 0.75, dz, 0.75, 0.55, 0.95, dz);                  // small rocks on the lip of the ledge
-    root.add(instanced(rockGeo(9, 1), M.rock, crag));
+    root.add(instanced(rockGeo(9, 1), M.rock, crag, { solid: true }));
     B.box(M.rock, 6.6, 3, 15, 104.7, ledgeY - 3, fallZ, { c: 0x6a6866, solid: true });                     // the ledge behind the water
     for (const k of [-1, 1]) {
       steps(B, M, 101.4, fallZ + k * 5.7, -Math.PI / 2, ledgeY, 3, { w: 3.4, rise: 0.3, run: 0.65, mat: M.rock, c: 0x7c7a76 });
@@ -308,7 +312,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     ...[[0.24, 0.6], [-0.24, 0.6], [0.24, -0.6], [-0.24, -0.6]].flatMap(([x, z]) => [gCap(0.085, 0.6, c1, [x, 0.42, z]), gBox(0.14, 0.1, 0.16, 0x2a2018, [x, 0.05, z])]),
     gSph(0.17, 0xf0b8b8, [0, 0.72, -0.4]), gCap(0.03, 0.7, c1, [0, 0.95, -0.98], [0.15, 0, 0]), gCyl(0.07, 0.1, 0.13, 0xd9b23a, [0, 0.84, 0.9])]);
   for (const [x, z, ry, a, b] of [[-16, 46, 0.5, 0x7a4a2c, 0xf2ece0], [-11, 50, 2.6, 0xf2ece0, 0x3a2a20], [-18, 50.5, -1.2, 0x8a5a36, 0xf2ece0], [24, 22, 1.9, 0x7a4a2c, 0xf2ece0], [-28, 30, 0.2, 0x3a2a20, 0xf2ece0]]) {
-    B.geo(M.flat, cow(a, b), [x, world.height(x, z), z], [0, ry, 0]); beast(world, x, z, ry, 1.0, 2.7, -5, world.height(x, z) + 1.55, 0.15);
+    animal(B, M, root, 'cow', cow(a, b), x, world.height(x, z), z, ry, { coat: a, box: [1.0, 2.7, 1.55, 0.15] });
   }
   { const x = 1, z = 35, y = world.height(x, z); B.box(M.woodH, 3.2, 0.6, 0.9, x, y, z, { ry: 0.4, c: 0x5a4028, solid: true }); B.box(M.glow, 2.8, 0.02, 0.55, x, y + 0.6, z, { ry: 0.4, c: 0x1c4450 }); B.box(M.wood, 0.22, 1.5, 0.22, x - 1.6, y, z + 0.7, { c: 0x5a4028 }); }
   for (const [x, z] of [[-27, 44], [5, 23], [-2, 52]]) { const y = world.height(x, z); B.geo(M.thatch, new THREE.ConeGeometry(1.5, 2.6, 9), [x, y + 1.2, z], [0, 0, 0], 1, 0xd8bc68); B.box(M.wood, 0.1, 3.2, 0.1, x, y, z, { c: 0x5a4028 }); world.addCyl(x, z, 1.1, y - 1, y + 2.4); }
@@ -318,6 +322,32 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.woodH, 11, 0.28, 3, x, y - 0.28, z, { ry, c: 0x7a5a3a, solid: true });
     for (const s of [-1, 1]) { const [rx, rz] = P(0, s * 1.4); B.box(M.woodH, 11, 0.1, 0.1, rx, y + 0.95, rz, { ry, c: 0x5a4028 }); world.addBox(rx, rz, 11, 0.2, ry, y - 1, y + 1.1);
       for (let i = 0; i <= 5; i++) { const [px, pz] = P(-5.4 + i * 2.16, s * 1.4); B.box(M.wood, 0.14, 1.9, 0.14, px, y - 0.9, pz, { ry, c: 0x5a4028 }); } }
+  }
+
+  // the Devil's Bridge: a span of timber across the gorge, on struts from its walls, wet with the spray of the stream below. The story goes
+  // that the men of Uri could not build it, that the Devil built it for the first soul to cross, and that they sent a goat across first.
+  const devil = { x: 83, z: 19.15, spray: 0 };
+  {
+    const { x, z } = devil, ry = Math.atan2(0.226, -0.974), P = frame(x, z, ry), T = Math.max(world.height(...P(0, 6)), world.height(...P(0, -6))) + 0.15, WD = 0x5a4228, OLD = 0x4a3826;
+    const at = (lx, ly, lz) => { const [a, b] = P(lx, lz); return [a, ly, b]; };
+    B.box(M.woodH, 2.4, 0.3, 13, x, T - 0.3, z, { ry, c: WD, solid: true });
+    for (const lx of [-1.0, 0, 1.0]) B.box(M.wood, 0.3, 0.3, 13.2, ...at(lx, T - 0.6, 0), { ry, c: OLD });                            // the beams under the planks
+    for (const s of [-1, 1]) {
+      const [rx, rz] = P(s * 1.15, 0); B.box(M.woodH, 0.12, 0.1, 13, rx, T + 0.95, rz, { ry, c: OLD }); world.addBox(rx, rz, 0.2, 13, ry, T - 1, T + 1.05);   // the rails
+      for (let i = 0; i <= 6; i++) { const [px, pz] = P(s * 1.15, -6.3 + i * 2.1); B.box(M.wood, 0.14, 1.0, 0.14, px, T - 0.05, pz, { ry, c: OLD }); }
+      for (const e of [-1, 1]) {                                                              // struts from the walls of the gorge up to the beams
+        const lz0 = e * 4.6, lz1 = e * 1.6, y0 = world.height(...P(s * 0.9, lz0)) - 0.2, y1 = T - 0.6, len = Math.hypot(lz1 - lz0, y1 - y0);
+        B.geo(M.wood, new THREE.CylinderGeometry(0.13, 0.15, len, 6), at(s * 0.9, (y0 + y1) / 2, (lz0 + lz1) / 2), [Math.atan2(lz1 - lz0, y1 - y0), ry, 0], 1, OLD);
+      }
+    }
+    devil.y = T; devil.floor = world.height(x, z);
+    // stones in the bed of the gorge, and the goat that crossed first, grazing at the far end
+    const stones = [[-0.8, -1.6, 1.1], [1.2, 2.1, 0.9], [0.2, 4.0, 1.3], [-1.1, -4.4, 1.0], [0.9, -3.0, 0.7]].map(([lx, lz, sc]) => { const [a, b] = P(lx, lz); return { x: a, y: world.height(a, b) + 0.2, z: b, ry: lx * 3, s: [sc * 1.2, sc * 0.7, sc], c: [0x8a8680, 0x7a7670, 0x969088][Math.round(sc * 10) % 3] }; });
+    root.add(instanced(rockGeo(3, 1), M.rock, stones, { solid: true }));
+    const goat = merge([gCap(0.16, 0.48, 0xffffff, [0, 0.55, 0], [Math.PI / 2, 0, 0]), gCap(0.07, 0.2, 0xffffff, [0, 0.75, 0.38], [0.7, 0, 0]), gSph(0.1, 0xffffff, [0, 0.88, 0.5], [0.85, 0.95, 1.35]),
+      gCone(0.025, 0.22, 0x8a8478, [0.05, 1.03, 0.44], [-0.6, 0, 0], 1, 5), gCone(0.025, 0.22, 0x8a8478, [-0.05, 1.03, 0.44], [-0.6, 0, 0], 1, 5), gCone(0.03, 0.12, 0xe0e0e0, [0, 0.76, 0.58], [Math.PI, 0, 0], 1, 5),
+      ...[[0.09, 0.26], [-0.09, 0.26], [0.09, -0.26], [-0.09, -0.26]].map(([a, b]) => gCap(0.032, 0.36, 0xb0a898, [a, 0.21, b]))]);
+    { const [a, b] = P(1.6, 8.2); animal(B, M, root, 'goat', goat, a, world.height(a, b), b, ry + 2.2, { c: 0x3a3632, box: [0.4, 1.0, 1.0, 0] }); }
   }
 
   let wheel = null;
@@ -397,8 +427,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     at(-4.2, 1.0, (px, pz) => { const top = table(B, M, px, f, pz, ry + Math.PI / 2, { w: 1.5, d: 0.75, c: 0x6a4c30 });                                       // the keeper's table with the scales
       B.box(M.metal, 0.03, 0.5, 0.03, px, top, pz, { c: 0x5a5e66 }); B.box(M.metal, 0.03, 0.03, 0.6, px, top + 0.5, pz, { ry, c: 0x5a5e66 }); for (const k of [-0.28, 0.28]) B.cyl(M.metal, 0.1, 0.07, 0.03, px, top + 0.18, pz + k, { c: 0xb8923a, seg: 10 }); });
     // the mules, packed for the road up the valley
-    for (const [mz, coat] of [[-42.9, 0x6a5e52], [-46.3, 0x7a6248]]) { const mx = -13.3, y = world.height(mx, mz); B.geo(M.flat, horseGeo(coat, 0x2a2018), [mx, y, mz], [0, -Math.PI / 2, 0], 0.85); beast(world, mx, mz, -Math.PI / 2, 0.9, 2.4, y - 1, y + 1.45);
-      for (const k of [-1, 1]) B.box(M.cloth, 0.7, 0.45, 0.3, mx + 0.05, y + 1.0, mz + k * 0.42, { c: k > 0 ? 0xb8a47c : 0xcfc6ae }); B.box(M.cloth, 0.8, 0.06, 1.0, mx + 0.05, y + 1.42, mz, { c: 0x7a3a2a }); }
+    for (const [mz, coat] of [[-42.9, 0x6a5e52], [-46.3, 0x7a6248]]) {             // the packs are part of the mule: they go where it goes
+      const mx = -13.3, y = world.height(mx, mz), k = 1 / 0.85;
+      const geo = merge([horseGeo(coat, 0x2a2018), ...[-1, 1].map((q) => gBox(0.3 * k, 0.45 * k, 0.7 * k, q > 0 ? 0xb8a47c : 0xcfc6ae, [q * 0.42 * k, (1.0 + 0.225) * k, -0.05 * k])), gBox(1.0 * k, 0.06 * k, 0.8 * k, 0x7a3a2a, [0, 1.45 * k, -0.05 * k])]);
+      animal(B, M, root, 'mule', geo, mx, y, mz, -Math.PI / 2, { s: 0.85, coat, box: [1.05, 2.8, 1.7, 0.1] });
+    }
     B.box(M.wood, 0.1, 0.1, 6.2, -14.9, world.height(-14.9, -44.6) + 1.05, -44.6, { c: 0x5a4028 }); for (const pz of [-47.5, -44.6, -41.7]) B.box(M.wood, 0.14, 1.4, 0.14, -14.9, world.height(-14.9, pz) - 0.25, pz, { c: 0x5a4028 });
     world.addBox(-14.9, -44.6, 0.2, 6.2, 0, world.height(-14.9, -44.6) - 1, world.height(-14.9, -44.6) + 1.15);
     at(-3.2, 1.2, (px, pz) => people.push(person(B, M, root, 'swissMan', px, f, pz, ry - Math.PI / 2, { pose: 'talk', over: { hat: 'felt', hatC: 0x4a3a2a, shirt: 0x6a5a40 } })));
@@ -620,7 +653,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     rocks.push({ x, y: h + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: R.pick([0x8a8882, 0x9a968e, 0x7a7a76]) });
     if (s > 1 && Math.hypot(x - 6, z - 2) < 140) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
   }
-  root.add(instanced(rockGeo(4, 1), M.rock, rocks));
+  root.add(instanced(rockGeo(4, 1), M.rock, rocks, { solid: true }));
 
   // ---- atmosphere ------------------------------------------------------------------------------
   root.add(makeAmbient(shared, { count: 420, box: 40, boxY: 14, size: 0.045, colorA: 0xffffff, colorB: 0xfff8d0, alpha: 0.7, fall: -0.03, wind: [0.5, 0, 0.3], flutter: 0.9 }));
@@ -663,6 +696,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
       eagle.position.set(20 + Math.cos(t * 0.12) * 70, 85 + Math.sin(t * 0.3) * 4, -10 + Math.sin(t * 0.12) * 70); eagle.rotation.set(0, -t * 0.12, 0.25);
       fl.intensity = 34 + Math.sin(t * 17) * 6 + Math.sin(t * 7.3) * 5;
       idle(people, t); wheel.rotation.x = t * 0.8;
+      { const P = g.player.pos, D = devil; if ((P.x - D.x) ** 2 + (P.z - D.z) ** 2 < 70 * 70) { D.spray -= dt; if (D.spray <= 0) { D.spray = 0.05;      // the spray that rises from the gorge under the bridge
+        for (let i = 0; i < 2; i++) g.gfx.soft.spawn(D.x + (Math.random() - 0.5) * 6, D.floor + 0.6, D.z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 0.6, 1.4 + Math.random() * 1.6, (Math.random() - 0.5) * 0.6, { life: 1.6 + Math.random(), s0: 0.25, s1: 1.3, r: 0.92, g: 0.95, b: 0.98, a: 0.12, grav: -0.2, drag: 0.8 }); } } }
       ft -= dt;
       if (ft <= 0) {
         ft = 0.05;

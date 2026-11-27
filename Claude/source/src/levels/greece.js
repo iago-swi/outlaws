@@ -4,7 +4,7 @@ import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
 import { makeHumanoid } from '../actors.js';
 import { drawTexture } from '../tex.js';
-import { instanced, room, steps, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, ladder, boulder, rod, shelf, local, table, bench, bed, chest, pots, sacks, rug, hearth, woodpile, haystack, deck, stall, crawlway, person, idle, beast, rubble } from '../props.js';
+import { instanced, room, steps, tuftGeo, blobTreeGeo, ship, brazier, gBox, gCyl, gCone, gSph, gCap, xf, merge, stand, ladder, boulder, rod, shelf, local, table, bench, bed, chest, pots, sacks, rug, hearth, woodpile, haystack, deck, stall, crawlway, person, idle, beast, rubble, animal } from '../props.js';
 import { fbm, smooth } from '../util.js';
 
 export const greece = {
@@ -16,7 +16,7 @@ export const greece = {
     { look: 'achilles', name: 'Achilles', who: 'Greatest warrior of the Trojan War', trait: 'Nearly invulnerable', effect: 'takes 35% less damage', mods: { armor: 0.65 }, sleeve: 0xd8a882, cuff: 0xd9b23a },
     { look: 'heracles', name: 'Heracles', who: 'Strongest of heroes, of the twelve labours', trait: 'Strength of ten', effect: 'starts with 170 health', mods: { hp: 170 }, sleeve: 0xc0875c, cuff: 0xc9963a },
   ],
-  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw a javelin &nbsp; <kbd>Right mouse</kbd> sword cut',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw a javelin &nbsp; <kbd>Right mouse</kbd> aim (the line shows where it lands) &nbsp; <kbd>F</kbd> sword cut',
   foes: 'Spartans remain', foesNone: 'The island is yours again', bossName: 'Lykos, captain of Sparta', bossDown: 'The Spartan captain has fallen', pickupText: 'Ambrosia  +35',
   deadTitle: 'To the shades', deadSub: 'The ferryman takes his coin.', clearTitle: 'Ithaca is home again',
   build,
@@ -315,8 +315,16 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     loom(x - 1.6, f, z + 5.9, 0); basket(x - 3.2, f, z + 5.6, 0x7a3a8a); basket(x - 0.25, f, z + 5.7, 0xf0ece0);
     folk('greekWoman', x - 1.6, z + 5.05, 0, { y: f, arms: [-1.45, -1.2], over: { dress: 0x6a3a8a, shirt: 0x6a3a8a, hem: 0xd9b23a, accent: 0xd9b23a, belt: 0xd9b23a, extras: ['dress', 'brooches'] } });
     pithos(x + 0.9, f, z + 5.5); pithos(x + 2.0, f, z + 5.5);
+    // the contest of the bow (Odyssey, book XXI): twelve axes set up in a row in the floor, a ring at the top of each, and on a stand at the end
+    // of the row Odysseus' great bow, unstrung, with its quiver; whoever strings it and shoots through all twelve rings wins Penelope's hand
+    { const axe = merge([gCyl(0.035, 0.04, 0.78, 0x6a4a2e, [0, 0.39, 0]), gBox(0.2, 0.17, 0.03, 0x6a6e72, [0.14, 0.7, 0]), gBox(0.2, 0.17, 0.03, 0x6a6e72, [-0.14, 0.7, 0]),
+        gBox(0.06, 0.24, 0.05, 0x5a5e62, [0, 0.7, 0]), xf(new THREE.TorusGeometry(0.05, 0.014, 6, 14), [0, 0.86, 0], [0, Math.PI / 2, 0], 1, 0x6a6e72)]);
+      for (let i = 0; i < 12; i++) B.geo(M.metal, axe.clone(), [x - 5.7 + i * 0.5, f, z + 2.05], [0, Math.PI / 2, 0], 1, 0xffffff);   // (a copy each: placing moves the geometry itself)
+      table(B, M, x + 0.95, f, z + 2.05, 0, { w: 0.6, d: 1.9, h: 0.75, c: 0x5a3e26 });
+      B.geo(M.wood, merge([xf(new THREE.TorusGeometry(0.85, 0.03, 6, 22, 2.3), [0, 0, 0], [0, 0, 0], 1, 0x4a2e1a), gBox(0.05, 0.05, 0.12, 0xd9b23a, [0, 0.85, 0])]), [x + 0.95, f + 0.8, z + 2.05 - 0.37], [Math.PI / 2, Math.PI / 2 + 0.05, 0], 1, 0xffffff);   // the bow, laid on its side
+      B.geo(M.flat, merge([gCyl(0.07, 0.06, 0.6, 0x6a3a1c, [0, 0.3, 0]), ...[-0.03, 0, 0.03].map((dx) => gCyl(0.006, 0.006, 0.3, 0xc8b890, [dx, 0.72, 0]))]), [x + 1.05, f + 0.75, z + 2.7], [0.0, 0, -1.3], 1, 0xffffff); }   // the quiver
     // Argos, Odysseus' old grey dog, lies by the door and still listens for his master
-    B.geo(M.flat, dogGeo, [x - 7.7, world.height(x - 7.7, z + 2.4), z + 2.4], [0, -2.4, 0], 1); world.addBox(x - 7.7, z + 2.4, 0.5, 1.2, -2.4, world.height(x - 7.7, z + 2.4) - 1, world.height(x - 7.7, z + 2.4) + 0.3);
+    animal(B, M, root, 'dog', dogGeo, x - 7.7, world.height(x - 7.7, z + 2.4), z + 2.4, -2.4, { lying: true, coat: 0x8a8780, box: [0.5, 1.2, 0.35, 0.05] });
     extraFoes.push(['hoplite', x - 4.6, z + 1.2, { up: 1.8, patrol: false, yaw: -1.57 }], ['peltast', x + 4.8, z + 3.6, { up: 1.8, patrol: false, yaw: -1.57 }]); extraPicks.push([x + 4.6, z - 3.4, 0, 1.8]);
   }
   { // theatre: five rows of marble seats round a mosaic floor, and a stage house with three doors
@@ -430,9 +438,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     ...[[0.09, 0.26], [-0.09, 0.26], [0.09, -0.26], [-0.09, -0.26]].map(([a, b]) => gCap(0.032, 0.36, 0xb0a898, [a, 0.21, b]))]);
   const pigGeo = merge([gCap(0.24, 0.5, 0xffffff, [0, 0.42, 0], [X, 0, 0]), gSph(0.17, 0xffffff, [0, 0.42, 0.5], [1, 1, 1.2]), gCyl(0.07, 0.085, 0.12, 0xd8b0a0, [0, 0.38, 0.72], [X, 0, 0], 1, 8), gCone(0.05, 0.1, 0xffffff, [0.1, 0.58, 0.46]), gCone(0.05, 0.1, 0xffffff, [-0.1, 0.58, 0.46]),
     ...[[0.12, 0.25], [-0.12, 0.25], [0.12, -0.25], [-0.12, -0.25]].map(([a, b]) => gCap(0.045, 0.14, 0xe0d0c8, [a, 0.11, b]))]);
-  const flock = (geo, list, tints, wide, long, high) => {                                    // animals standing about: [x, z, ry, size]
-    root.add(instanced(geo, M.flat, list.map(([x, z, ry, s = 1], i) => ({ x, y: world.groundAt(x, z, world.height(x, z) + 0.3), z, ry, s, c: tints[i % tints.length] }))));
-    for (const [x, z, ry] of list) beast(world, x, z, ry, wide, long, world.height(x, z) - 1, world.height(x, z) + high);
+  const flock = (kind, geo, list, tints, wide, long, high) => {                              // animals standing about: [x, z, ry, size]
+    list.forEach(([x, z, ry, s = 1], i) => animal(B, M, root, kind, geo, x, world.groundAt(x, z, world.height(x, z) + 0.3), z, ry, { s, c: tints[i % tints.length], box: [wide / s, long / s, high / s, 0] }));
   };
   { // the goat path up the west flank of the hill: rocks along its edges for cover, and a small treasury where it reaches the top
     for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const x = -43 + i * 4.4 + (s > 0 ? 2 : 0), z = -53.1 + s * 3.0, y = world.height(x, z), k = 0.8 + (i % 3) * 0.3; B.geo(M.rock, rockGeo(i + 3, 1), [x, y + k * 0.25, z], [0, i * 1.3, 0], [k, k * 0.85, k * 0.9], i % 2 ? 0xd8cfb8 : 0xc8bea6); world.addCyl(x, z, k * 0.7, y - 1, y + k * 0.8); }
@@ -459,7 +466,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     extraPicks.push([cx + 1.3, cz - 0.8, 0, 0.9]); extraFoes.push(['peltast', -52, -42, {}]);
   }
   { // a shepherd with his crook, and his goats, on the meadow above the cave
-    flock(goatGeo, [[-50.5, -37, 0.4, 1], [-48.2, -38.4, 2.1, 0.9], [-52.6, -35.2, -1.2, 1.05], [-47.4, -35.6, 3.0, 0.85], [-51.2, -33.2, 1.5, 0.95]], [0xe8e0d0, 0x8a7458, 0xf0ece0, 0x5a4a3c, 0xc8b898], 0.4, 1.1, 1.0);
+    flock('goat', goatGeo, [[-50.5, -37, 0.4, 1], [-48.2, -38.4, 2.1, 0.9], [-52.6, -35.2, -1.2, 1.05], [-47.4, -35.6, 3.0, 0.85], [-51.2, -33.2, 1.5, 0.95]], [0xe8e0d0, 0x8a7458, 0xf0ece0, 0x5a4a3c, 0xc8b898], 0.4, 1.1, 1.0);
     const s = folk('greekMan', -49.2, -34.2, -2.6, { arms: [-1.0, 0.05], over: { hat: 'pilos', hatC: 0xc8b890, shirt: 0xd8c8a0 } }); inHand(s, staffParts(s, 1.9, true));
   }
   { // the swineherd's farm (Odyssey XIV): a hut, a walled yard, sties with roofs so low that only a crouching man gets under them.
@@ -467,7 +474,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     house(-51, 61, X, 6, 5, 3.1, { fit: (P, f) => { const [hx, hz] = P(1.7, 1.2); hearth(B, M, hx, f, hz, { pot: true }); const [rx, rz] = P(-0.4, 0.9); rug(B, M, rx, f, rz, X, { w: 1.8, d: 1.1, c: 0xb8a070, border: 0x6a5a40 }); } });
     wall(-45, 55, -33, 55); wall(-45, 69, -33, 69); wall(-33, 55, -33, 60.3); wall(-33, 63.7, -33, 69);
     for (const dx of [-42.2, -36.8]) { const y = world.height(dx, 57); deck(B, M, dx, y, 57, 0, { w: 4.4, d: 2.8, h: 1.3, c: 0xb89a5a, mat: M.thatch }); rug(B, M, dx, y + 0.03, 57, 0, { w: 3.6, d: 2.2, c: 0xc8a850, border: 0xb89a4a }); }
-    flock(pigGeo, [[-42.4, 57.1, 1.2, 1], [-37.0, 56.9, -0.7, 0.9], [-39.9, 63.6, 0, 1.05], [-38.9, 65.7, Math.PI, 0.95], [-36.2, 61, -2.0, 1], [-41.5, 61.4, 1.0, 0.8]], [0x6a5448, 0x8a6a5a, 0x4a3c34, 0xb89080], 0.5, 1.1, 0.75);
+    flock('pig', pigGeo, [[-42.4, 57.1, 1.2, 1], [-37.0, 56.9, -0.7, 0.9], [-39.9, 63.6, 0, 1.05], [-38.9, 65.7, Math.PI, 0.95], [-36.2, 61, -2.0, 1], [-41.5, 61.4, 1.0, 0.8]], [0x6a5448, 0x8a6a5a, 0x4a3c34, 0xb89080], 0.5, 1.1, 0.75);
     { const y = world.height(-39.5, 64.6); B.box(M.wood, 2.2, 0.32, 0.5, -39.5, y, 64.6, { c: 0x5a4028, solid: true }); B.box(M.flat, 2.0, 0.03, 0.34, -39.5, y + 0.3, 64.6, { c: 0x8a7a52 }); }
     haystack(B, M, -35.3, world.height(-35.3, 66.7), 66.7); haystack(B, M, -43.3, world.height(-43.3, 67), 67, { r: 1.2, h: 1.9 });
     const e = folk('greekMan', -40.4, 60.0, 0.5, { arms: [-1.0, 0.05], over: { hair: 0x9a9a90, hat: null, face: ['beard'], shirt: 0xb8a888 } }); inHand(e, staffParts(e, 1.8));
@@ -538,7 +545,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   root.add(instanced(merge([gCyl(0.14, 0.2, 1.4, 0x4a3a2c, [0, 0.7, 0], [0, 0, 0], 1, 6), gCone(0.95, 8.6, 0x2f4d30, [0, 5.4, 0], [0, 0, 0], 1, 8), gCone(0.7, 4, 0x3a5a38, [0, 4.2, 0], [0, 1, 0], 1, 7)]), windify(M.rock.clone(), shared, 0.12, 9, 1.0), cypress));
   for (let i = 0; i < 300; i++) { const a = R() * 6.283, d = 80 + R() * 26, x = Math.cos(a) * d, z = Math.sin(a) * d * 1.25, h = world.height(x, z); if (h < -2.5 || h > 3) continue; const s = 0.4 + R() * R() * 2.6; rocks.push({ x, y: h + s * 0.2, z, ry: R() * 6, s: [s, s * 0.8, s], c: R.pick([0xd8cfb8, 0xc8bea6, 0xb8ae98]) }); if (s > 1 && h > -0.5) world.addCyl(x, z, s * 0.8, h - 2, h + s * 0.7); }
   for (const [ix, iz, r] of ISLETS) for (let k = 0; k < 6; k++) { const a = R() * 6.28, x = ix + Math.cos(a) * r * 0.9, z = iz + Math.sin(a) * r * 0.9, s = 2 + R() * 5; rocks.push({ x, y: world.height(x, z) + s * 0.3, z, ry: R() * 6, s: [s, s * 1.3, s], c: 0xc8bea6 }); }
-  root.add(instanced(rockGeo(6, 1), M.rock, rocks));
+  root.add(instanced(rockGeo(6, 1), M.rock, rocks, { solid: true }));
   for (let i = 0; i < 60000 && tufts.length < 16000; i++) {
     const x = (R() - 0.5) * 200, z = -88 + R() * 200, h = world.height(x, z);
     if (h < 3.2 || dPoly(PATH, x, z) < 1.4 || Math.hypot(x - HILL.x, z - HILL.z) < 25 || (Math.abs(x) < 8.5 && z < 32 && z > 16) || dPoly(GOAT, x, z) < 3.4 || (x > 20.3 && x < 27.7 && z > -0.7 && z < 24.7) || indoors.some(([hx, hz, r = 4]) => Math.hypot(x - hx, z - hz) < r)) continue;
