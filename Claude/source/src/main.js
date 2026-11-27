@@ -10,9 +10,20 @@ import * as K from './props.js';
 import { Gfx } from './gfx.js';
 import { Sound } from './audio.js';
 import { makeMaterials } from './tex.js';
-import { World, Builder, Nav } from './build.js';
+import { World, Builder, Nav, merge } from './build.js';
 import { Player, Input } from './player.js';
-import { Enemy, Shots, makeHumanoid, lookFor, TYPES } from './actors.js';
+import { Enemy, Shots, makeHumanoid, lookFor, TYPES, dropMesh, wound, gBox, RETURNS } from './actors.js';
+import { Crowd } from './crowd.js';
+import { Arc } from './arc.js';
+import { Life } from './life.js';
+import { Havoc } from './havoc.js';
+import { MapView } from './map.js';
+import { Voice } from './voice.js';
+import { dropsOf, lootOf, weaponName, weaponAlt, itemName, itemAlt, THROWN, NOISE } from './loot.js';
+import { SKILLS, skillOf } from './skills.js';
+import { resize } from './outskirts.js';
+import { Voices } from './voices.js';
+import { Fauna } from './fauna.js';
 import { rng, clamp, damp } from './util.js';
 import { west } from './levels/west.js';
 import { japan } from './levels/japan.js';
@@ -21,12 +32,13 @@ import { greece } from './levels/greece.js';
 import { north } from './levels/north.js';
 import { war } from './levels/war.js';
 import { russia } from './levels/russia.js';
-import { Duel, bindDuelUI, RULES } from './duel.js';
+import { Duel, bindDuelUI, RULES, MAX_PLAYERS } from './duel.js';
 import { VILLAINS } from './villains.js';
 import { tibet } from './levels/tibet.js';
 import { aztec } from './levels/aztec.js';
 
 const LEVELS = [west, japan, swiss, greece, north, war, russia, tibet, aztec];
+const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 const $ = (s) => document.querySelector(s);
 const MAX_FOES = 30;
 /**
@@ -34,6 +46,8 @@ const MAX_FOES = 30;
  * time: never the boss, a kind of which only two are left as late as possible (variety comes first), and otherwise the one who stands closest
  * to a comrade, of the commonest kind, and is not posted on a perch. So crowds are thinned and the lone guards of far places stay.
  */
+/** Shuffle a list in place with a seeded random function (Fisher-Yates). */
+function shuffle(a, rand) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function capFoes(list, max = MAX_FOES) {
   const keep = list.slice();
   let floor = 2;                                            // how many of a kind are left alone; it gives way only when nothing else can go
@@ -54,11 +68,16 @@ function capFoes(list, max = MAX_FOES) {
 const params = new URLSearchParams(location.search);
 const GFX_KEY = 'lonehand-graphics', GFX_NAMES = { auto: 'Automatic', high: 'High', medium: 'Medium', low: 'Low' }, GFX_ORDER = ['high', 'medium', 'low'];
 
+/** How far the enemies hear, by their wits: dull ones not at all (they fight back only when they see), clever ones from much further. */
+const HEAR = { low: 0, medium: 1, genius: 1.8 };
+/** The sizes of map: how much of the chapter's ground is used (medium: as it was made). */
+const SIZES = { small: 1, medium: 1, large: 1 };
+
 class Game {
   constructor() {
     this.canvas = $('#view');
     this.gfx = new Gfx(this.canvas);
-    this.sound = new Sound();
+    this.sound = new Sound(); this.voices = new Voices(this);
     this.input = new Input(this.canvas);
     this.input.free = params.has('free'); this.peace = params.has('peace');
     this.M = makeMaterials();
@@ -69,6 +88,10 @@ class Game {
     this.enemies = []; this.pickups = []; this.rand = rng(1); this.heroPick = {}; this.heroIndex = 0; this.practice = false; this.typed = '';
     this.foeWant = params.has('foes') ? +params.get('foes') || 0 : params.has('check') ? 0 : 15;   // how many enemies a chapter holds: 15 unless chosen otherwise on the hero screen; 0 = all of them
     { let w = params.get('gfx'); if (!w) try { w = localStorage.getItem(GFX_KEY); } catch (e) { /* no storage: the default */ } this.gfxWant = GFX_NAMES[w] ? w : 'auto'; }
+    // the enemies' wits and the size of the map, as chosen on the hero screen (kept for the next visit)
+    { const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+      const w = params.get('wits') || get('outlaws.wits'), z = params.get('size') || get('outlaws.size');
+      this.wits = HEAR[w] !== undefined ? w : 'medium'; this.mapSize = SIZES[z] ? z : 'medium'; }
     this.gfx.setQuality(this.gfxWant === 'auto' ? 'high' : this.gfxWant);
     this.time = 0; this.noise = 0; this.state = 'boot'; this.index = 0; this.timeScale = 1; this.slow = 0;
     this.flashLight = new THREE.PointLight(0xffb060, 0, 16, 2);
@@ -77,16 +100,29 @@ class Game {
     this.gfx.scene.add(this.heroLight);
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.ui = {
-      hp: $('#vital .num'), hpbar: $('#hpbar i'), pips: $('#pips'), wname: $('#arms .name'), alt: $('#arms .alt'), foes: $('#foes'),
-      compass: $('#compass'), boss: $('#boss'), bossName: $('#boss span'), bossBar: $('#boss i'), msg: $('#msg'), hit: $('#hit'),
-      dmg: $('#dmg b'), place: $('#place'), cross: [...document.querySelectorAll('#cross i[data-s]')], dots: [],
+      hp: $('#vital .num'), hpbar: $('#hpbar i'), mate: $('#mate'), placeBan: $('#placeban'), skill: $('#skill'), skillName: $('#skill .sn'), skillBar: $('#skill i'), skillFx: $('#skillfx'), pips: $('#pips'), wname: $('#arms .name'), alt: $('#arms .alt'), foes: $('#foes'),
+      boss: $('#boss'), bossName: $('#boss span'), bossBar: $('#boss i'), msg: $('#msg'), hit: $('#hit'),
+      dmg: $('#dmg b'), place: $('#place'), cross: [...document.querySelectorAll('#cross i[data-s]')], bag: $('#bag'), bars: $('#bars'),
     };
     this.cache = {}; this.msgT = 0; this.hitT = 0; this.dmgT = 0; this.crossGap = 6;
     this._v = new THREE.Vector3(); this._v2 = new THREE.Vector3(); this._o = { x: 0, y: 0, z: 0 }; this._d = { x: 0, y: 0, z: 0 };
     this.duel = null;
+    this.havoc = new Havoc(this); this.map = new MapView(this); this.voice = new Voice(this); this.bagShown = 0;
+    this.crowd = new Crowd(this); this.fauna = new Fauna(this); this.arc = new Arc(this); this.bars = []; this.life = new Life(this);
+    this.sound.onchange = () => { this.voice.settings(); this.soundLabel(); };
     this.bindUI();
   }
 
+  /** Online, another player on this player's side: nothing this player fires or swings can hurt him. */
+  friend(e) { return !!(e.remote && this.duel && this.duel.cfg && this.duel.mateOf(e.pid)); }
+  /** The chapter's commonest kind of enemy on foot (no boss, dog, rider or gunner at a fixed post): what a bystander who fights back becomes. */
+  footType() {
+    if (this._foot && this._foot.level === this.level) return this._foot.type;
+    const n = {};
+    for (const [t, , , o] of this.level.enemies) { const c = TYPES[t]; if (!c || c.boss || c.dog || c.rider || (o && o.static) || /gunner|cannoneer/i.test(t)) continue; n[t] = (n[t] || 0) + 1; }
+    const type = Object.keys(n).sort((a, b) => n[b] - n[a])[0] || null;
+    this._foot = { level: this.level, type }; return type;
+  }
   /** The characters on offer: three heroes, and in a duel the chapter's villains as well. */
   roster() { const d = this.def; return this.duel && this.duel.active ? d.heroes.concat(VILLAINS[d.id] || []) : d.heroes; }
 
@@ -100,10 +136,27 @@ class Game {
     if (params.has('fps')) { this.fpsEl = document.createElement('div'); this.fpsEl.id = 'fps'; document.body.appendChild(this.fpsEl); }
     this.gfxLabel();
     $('#foesel').addEventListener('change', (e) => { this.foeWant = +e.target.value; e.target.blur(); if (this.state === 'intro' && !(this.duel && this.duel.active)) this.spawnEnemies(); });
+    $('#witsel').addEventListener('change', (e) => { this.wits = e.target.value; e.target.blur(); try { localStorage.setItem('outlaws.wits', this.wits); } catch (er) { /* for this visit */ } if (this.state === 'intro' && !(this.duel && this.duel.active)) this.spawnEnemies(); });
+    $('#sizesel').addEventListener('change', (e) => { this.mapSize = e.target.value; e.target.blur(); try { localStorage.setItem('outlaws.size', this.mapSize); } catch (er) { /* for this visit */ } if (this.state === 'intro' && !(this.duel && this.duel.active)) this.reloadLevel(); });
     $('#heroes').addEventListener('click', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && !(this.duel && this.duel.myPick >= 0)) { this.applyHero(k); this.begin(); } });
     bindDuelUI(this);
     this.canvas.addEventListener('mousedown', () => { if (this.state === 'play' && !this.input.locked && !this.input.free) this.input.lock(); });   // a click captures the mouse again
-    $('#pause').addEventListener('click', () => { if (this.state === 'pause') { this.setState('play'); this.input.lock(); } });
+    // Closing the tab or the browser by accident while playing (Ctrl+W, Ctrl+Q...) asks first: the browser shows its "Leave the page?" question.
+    addEventListener('beforeunload', (e) => { if (this.state === 'play' || this.state === 'pause' || this.state === 'dead' || (this.duel && this.duel.link.open)) { e.preventDefault(); e.returnValue = ''; } });
+    this.bindSound();
+    addEventListener('resize', () => this.map.resize()); this.map.resize();
+    // the menu buttons of the pause, death and end screens, and the way back from the hero screen
+    const act = (a) => {
+      if (a === 'title') { this.toTitle(); return true; }
+      if (a === 'resume' && this.state === 'pause') { this.setState('play'); this.input.lock(); return true; }
+      if (a === 'gfx') { const all = ['auto', ...GFX_ORDER]; this.setGraphics(all[(all.indexOf(this.gfxWant) + 1) % all.length]); return true; }
+      if (a === 'retry' && this.state === 'dead') { this.openLevel(this.index, true); return true; }
+      if (a === 'heroes' && this.state === 'dead') { this.openLevel(this.index); return true; }
+      if (a === 'again' && this.state === 'clear' && !this.duel) { this.openLevel(this.index); return true; }
+      return false;
+    };
+    for (const id of ['#pause', '#dead', '#clear', '#intro']) $(id).addEventListener('click', (e) => { const b = e.target.closest('.menubtn'); if (b && b.dataset.act && b.dataset.act !== 'sound' && b.dataset.act !== 'next') { e.stopPropagation(); b.blur(); act(b.dataset.act); } }, true);
+    $('#pause').addEventListener('click', (e) => { if (e.target.closest('.soundbtn')) return; if (this.state === 'pause') { this.setState('play'); this.input.lock(); } });
     $('#dead').addEventListener('click', () => { if (this.state === 'dead' && this.player.deadT > 1) this.openLevel(this.index, true); });
     $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.duel) { if (this.duel.link.open) this.duel.again(); else this.toTitle(); return; } if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
     this.input.onLock = (locked) => {
@@ -112,8 +165,9 @@ class Game {
     };
     addEventListener('keydown', (e) => {
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;             // typing a duel code is not playing
-      if (e.code === 'KeyM') { this.muted = !this.muted; this.sound.setMuted(this.muted); }
-      if (e.code === 'KeyG' && (this.state === 'play' || this.state === 'pause')) {         // G steps through the graphics levels without leaving the chapter
+      if (e.code === 'KeyM') { this.sound.init(); const on = this.sound.toggleMusic(); if (this.state === 'play') this.say(on ? 'Music on' : 'Music off'); }   // M: the music only; the other sounds stay
+      if (e.code === 'KeyO' && (this.state === 'pause' || this.state === 'title' || this.state === 'duel')) this.soundPanel(!this.soundOpen);
+      if (e.code === 'KeyG' && this.state === 'pause') {         // in the pause, G steps through the graphics levels without leaving the chapter (in play, G drops what is in hand)
         const all = ['auto', ...GFX_ORDER]; this.setGraphics(all[(all.indexOf(this.gfxWant) + 1) % all.length]);
         if (this.state === 'play') this.say('Graphics: ' + GFX_NAMES[this.gfxWant]);
       }
@@ -125,7 +179,10 @@ class Game {
           if (this.state === 'pause' && this.pausedByP) { this.setState('play'); this.say(this.practice ? 'Practice mode — they cannot hurt you' : 'Practice mode off'); }   // the P of PAX had paused the game
         }
       }
-      if (e.code === 'KeyQ' && this.state === 'pause') this.toTitle();
+      if (e.code === 'KeyQ' && this.state === 'pause' && !this.soundOpen) this.toTitle();
+      if (e.code === 'Escape' && !this.soundOpen && (this.state === 'intro' || this.state === 'dead' || this.state === 'clear')) { this.toTitle(); return; }   // Esc: back to the main menu
+      if (e.code === 'Escape' && this.state === 'pause' && !this.soundOpen) { this.setState('play'); this.input.lock(); return; }
+      if (e.code === 'Escape' && this.soundOpen) this.soundPanel(false);
       if (this.state === 'intro') {
         const k = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].indexOf(e.code);  // hero keys
         if (k >= 0 && k < this.roster().length && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k);
@@ -146,8 +203,31 @@ class Game {
   gfxLabel() {
     const sel = $('#gfxsel'), now = GFX_NAMES[this.gfx.quality];
     sel.value = this.gfxWant; sel.options[0].textContent = this.gfxWant === 'auto' ? 'Automatic (now ' + now + ')' : 'Automatic';
-    $('#gfxnow').textContent = 'Graphics: ' + (this.gfxWant === 'auto' ? 'Automatic, now ' + now : now);
+    $('#gfxnow').textContent = 'Graphics: ' + (this.gfxWant === 'auto' ? 'Automatic, now ' + now : now); $('#gfxbtn').textContent = 'Graphics: ' + (this.gfxWant === 'auto' ? 'Automatic' : now);
   }
+  // ---- the sound settings: four volumes, the music on or off, the microphone of the duel ----
+  bindSound() {
+    const S = this.sound, panel = $('#sound');
+    for (const k of ['master', 'effects', 'voice', 'music']) {
+      const el = $('#snd-' + k);
+      el.value = Math.round(S.set[k] * 100);
+      el.addEventListener('input', () => { S.init(); S.change({ [k]: el.value / 100, ...(k === 'music' && +el.value > 0 ? { musicOn: true } : {}) }); });
+    }
+    $('#snd-musicOn').addEventListener('change', (e) => { S.init(); S.change({ musicOn: e.target.checked }); });
+    $('#snd-mic').addEventListener('change', (e) => { S.change({ mic: e.target.value }); e.target.blur(); });
+    $('#snd-close').addEventListener('click', () => this.soundPanel(false));
+    panel.addEventListener('click', (e) => { e.stopPropagation(); if (e.target === panel) this.soundPanel(false); });
+    panel.addEventListener('mousedown', (e) => e.stopPropagation());
+    document.querySelectorAll('.soundbtn').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); S.init(); this.soundPanel(true); }));
+    this.soundLabel();
+  }
+  soundPanel(on) { this.soundOpen = on; $('#sound').classList.toggle('on', on); if (on) this.soundLabel(); }
+  soundLabel() {
+    const S = this.sound.set;
+    for (const k of ['master', 'effects', 'voice', 'music']) { $('#snd-' + k).value = Math.round(S[k] * 100); $('#snv-' + k).textContent = Math.round(S[k] * 100) + '%'; }
+    $('#snd-musicOn').checked = S.musicOn; $('#snd-mic').value = S.mic;
+  }
+
   /**
    * Automatic graphics, called with the mean frame time of the last 80 frames. Below about 42 frames a second it
    * steps one level down. If a step brought nothing (a display or a processor that sets the pace, not the picture),
@@ -176,12 +256,13 @@ class Game {
     if (this.state === 'play') this.say(this.practice ? 'Practice mode — they cannot hurt you' : 'Practice mode off');
   }
 
-  show(id) { for (const s of ['title', 'intro', 'pause', 'dead', 'clear', 'duel']) $('#' + s).classList.toggle('on', s === id); }
+  show(id) { for (const s of ['title', 'intro', 'pause', 'dead', 'clear', 'duel']) $('#' + s).classList.toggle('on', s === id); if (id && id !== 'pause' && this.soundOpen) this.soundPanel(false); }
 
   setState(s) {
     this.state = s; this.input.active = s === 'play'; if (s === 'play') this.pausedByP = false;
     document.body.classList.toggle('playing', s === 'play'); if (s !== 'play') document.body.classList.remove('scoped');
     document.body.classList.toggle('cine', s === 'title' || s === 'intro' || s === 'duel');
+    if (s !== 'play') this.map.big.classList.remove('on');
     this.show(s === 'play' ? null : s);
     if (this.hero) this.hero.visible = s === 'intro';
   }
@@ -190,23 +271,32 @@ class Game {
   loadLevel(i, backdrop = false) {
     const def = LEVELS[i];
     this.index = i; this.def = def;
-    this.gfx.clearLevel(); this.shots.reset(); this.enemies = []; this.pickups = [];
-    this.world = new World(); this.rand = rng(4242 + i * 977);
+    // what changes from one game to the next (where the enemies stand, where things lie): random, or in a duel the host's number, the same in both browsers
+    this.seed = this.duel && this.duel.active && this.duel.cfg && this.duel.cfg.seed != null ? this.duel.cfg.seed : (Math.random() * 2 ** 31) | 0;
+    if (this.duel && this.duel.active && this.duel.cfg) { this.wits = this.duel.cfg.wits || 'medium'; this.mapSize = this.duel.cfg.size || 'medium'; }   // a game for two: the host's choice, in both browsers
+    this.gfx.clearLevel(); this.shots.reset(); this.havoc.reset(); this.enemies = []; this.pickups = [];
+    this.world = new World(); this.world.chapter = def.id; this.rand = rng(4242 + i * 977);
     const B = new Builder(this.world);
     const L = (this.level = def.build({ game: this, gfx: this.gfx, world: this.world, B, M: this.M, root: this.gfx.root, rand: this.rand, shared: this.gfx.shared }));
-    L.enemies = capFoes(L.enemies);
-    B.build(this.gfx.root);
+    if (!backdrop) this.rockColliders();
+    this.sized = backdrop ? null : resize({ game: this, world: this.world, level: L, B, M: this.M, root: this.gfx.root, def, index: i }, this.mapSize);   // small, medium or large
+    L.enemies = capFoes(L.enemies, this.sized && this.sized.large ? 45 : MAX_FOES);
+    this.world.meshes = B.build(this.gfx.root);                 // the merged meshes: a broken table takes what lies on it out of them
+    if (!backdrop) { const t0 = performance.now(); this.world.setVisual(this.world.meshes, this.M); this.bvhMs = performance.now() - t0; }   // shots and sight stop at what is drawn; roofs can be stood on
     if (backdrop) this.nav = null;                         // the title screen only shows the world; nobody has to find a way
-    else { const t0 = performance.now(); this.nav = new Nav(this.world); this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding
+    else { const t0 = performance.now(); this.world.roofsOn = false; this.nav = new Nav(this.world); this.world.roofsOn = true; this.navMs = performance.now() - t0; }   // walkable-area grid for enemy route finding (on the ground and floors, not on roofs)
     this.gfx.setEnvironment(L.env); this.gfx.applyDetail();
     this.spawnEnemies();
-    for (const p of L.pickups || []) this.addPickup(p[0], p[1], L, p[3] !== undefined ? this.world.height(p[0], p[1]) + p[3] : p[2]);
+    this.crowd.setup(this.world.people); this.fauna.setup(this.world.animals); this._foot = null;
+    this.placeHeals(L);
     this.player.spawn(L.spawn.x, L.spawn.z, L.spawn.yaw, def.weapon);
     this.hero = null;
     const want = params.has('hero') ? +params.get('hero') - 1 : 0;
     this.applyHero(clamp(this.heroPick[def.id] ?? want, 0, this.roster().length - 1));
     for (const c of [...document.body.classList]) if (c.startsWith('theme-')) document.body.classList.remove(c);
     document.body.classList.add(def.theme);
+    if (!backdrop) this.map.build(); else this.map.clearMarks();      // the map of this chapter (after its colours are set)
+    this.life.setup();                                                // birds, wind, and in some chapters a train or a tank
     this.stats = { shots: 0, hits: 0, heads: 0, t: 0 };
     this.timeScale = 1; this.slow = 0; this.noise = 0; this.cache = {};
     this.ui.boss.classList.remove('on');
@@ -217,16 +307,108 @@ class Game {
   }
 
   /** The chapter's enemies as chosen on the hero screen: that many of them, thinned the same way as the cap (crowds first, every kind kept as long as possible, the boss always). */
-  foeList(list) {
+  foeList(list, rand) {
     const n = Math.round(this.foeWant);
-    return !n || n >= list.length ? list : capFoes(list, n);
+    if (!n || n >= list.length) return list.slice();
+    const boss = list.filter(([t]) => TYPES[t].boss), rest = shuffle(list.filter(([t]) => !TYPES[t].boss), rand);     // a different choice every time; the boss always
+    return boss.concat(rest.slice(0, Math.max(0, n - boss.length)));
+  }
+  /**
+   * Enemies who walk the ground go to a random free place on open ground, from which the start can be reached on foot: most of them
+   * within thirty metres of where the chapter put them (so the chapter keeps its shape), some anywhere. Those posted on a roof, a tower or
+   * a perch, those lying in ambush, and the boss keep their places. avoid: [x, z, r] circles to keep clear (the start, a duel's bases).
+   */
+  scatter(list, rand, avoid) {
+    const nav = this.nav, used = [];
+    if (!nav) return list;
+    const clear = (x, z) => avoid.every(([ax, az, r]) => (x - ax) ** 2 + (z - az) ** 2 > r * r) && used.every(([ux, uz]) => (x - ux) ** 2 + (z - uz) ** 2 > 16);
+    const S = this.level.spawn, sy = this.world.groundAt(S.x, S.z, 100);
+    return list.map(([type, x, z, o = {}]) => {
+      if (TYPES[type].boss || o.static || o.ambush || o.y !== undefined || o.up !== undefined) { used.push([x, z]); return [type, x, z, o]; }
+      for (let i = 0; i < 50; i++) {
+        let cx, cz;
+        if (rand() < 0.3) { cx = nav.x0 + rand() * nav.nx * nav.cell; cz = nav.z0 + rand() * nav.nz * nav.cell; }
+        else { const a = rand() * 6.283, r = 5 + rand() * 25; cx = x + Math.cos(a) * r; cz = z + Math.sin(a) * r; }
+        const k = nav.idx(cx, cz);
+        if (k < 0 || !nav.free[k] || !nav.onT[k] || !clear(cx, cz)) continue;
+        if (!nav.path(cx, cz, S.x, S.z, 15000, nav.hgt[k], sy)) continue;
+        used.push([cx, cz]); return [type, cx, cz, { ...o, y: nav.hgt[k] + 0.4, moved: true }];
+      }
+      used.push([x, z]); return [type, x, z, o];
+    });
   }
   /** Put the enemies into the loaded chapter (again, when the number is changed on the hero screen). */
   spawnEnemies() {
     for (const e of this.enemies) { e.rig.group.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); e.rig.group.removeFromParent(); }
     this.enemies = []; this.cache = {};
-    const L = this.level, duel = this.duel && this.duel.active;
-    for (const [type, x, z, o] of (duel ? this.duel.enemyList(L.enemies) : this.foeList(L.enemies))) this.enemies.push(new Enemy(this, type, x, z, o));
+    const L = this.level, duel = this.duel && this.duel.active, rand = rng(this.seed ^ 0x51ed), S = L.spawn;
+    const avoid = duel ? this.duel.spawnPoints().map((p) => [p.x, p.z, 26]) : [[S.x, S.z, 28]];
+    const list = this.scatter(duel ? this.duel.enemyList(L.enemies, rand) : this.foeList(L.enemies, rand), rand, avoid);
+    for (const [type, x, z, o] of list) this.enemies.push(new Enemy(this, type, x, z, o));
+    this.posts();
+  }
+  /**
+   * Enemies of medium or clever wits do not stand just anywhere: each one with a gun or a bow takes up a place near his own with a view
+   * and something to hide behind (a wall, a crate, a cart); clever marksmen climb to a roof, a deck or a balcony and stay there.
+   * Worked out the same way in both browsers of a game for two.
+   */
+  posts() {
+    if (this.wits === 'low' || !this.nav) return;
+    const W = this.world, nav = this.nav, rand = rng(this.seed ^ 0x9057), genius = this.wits === 'genius', taken = [];
+    const open = (x, y, z, R = 22) => { let n = 0; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; if (W.clear(x, y, z, x + Math.sin(a) * R, y, z + Math.cos(a) * R)) n++; } return n; };
+    for (const e of this.enemies) {
+      if (e.remote || e.static || e.state === 'hidden' || !e.cfg.ranged || e.cfg.boss || !e.cfg.sight) continue;
+      const sniper = genius && e.cfg.range >= 55 && rand() < 0.5;
+      let best = null, bs = -1e9;
+      for (let i = 0; i < (sniper ? 40 : 26); i++) {
+        const a = rand() * Math.PI * 2, d = 1.5 + rand() * (sniper ? 22 : 11), x = e.pos.x + Math.sin(a) * d, z = e.pos.z + Math.cos(a) * d;
+        if (taken.some((t) => (t[0] - x) ** 2 + (t[1] - z) ** 2 < 9)) continue;
+        let y, sc;
+        if (sniper) {                                            // up high, on something flat with room to stand
+          const g0 = W.height(x, z); y = W.groundAt(x, z, g0 + 16);
+          if (y - g0 < 2.6 || y - g0 > 14 || y < W.waterY + 1) continue;
+          if ([[0.5, 0], [-0.5, 0], [0, 0.5], [0, -0.5]].some(([ox, oz]) => Math.abs(W.groundAt(x + ox, z + oz, y + 0.3) - y) > 0.12)) continue;
+          const p = { x, y, z }; W.collide(p, 0.3, 1.7); if (Math.abs(p.x - x) + Math.abs(p.z - z) > 0.03 || W.inBox(x, z, y, 1.7)) continue;
+          sc = (y - g0) * 0.8 + open(x, y + 1.6, z, 30) - d * 0.08;
+        } else {                                                 // on the ground, against something
+          const k = nav.idx(x, z); if (k < 0 || !nav.free[k]) continue;
+          y = nav.hgt[k]; if (Math.abs(y - e.pos.y) > 1.2) continue;
+          let cover = 0; for (const [ox, oz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const q = nav.idx(x + ox * 0.9, z + oz * 0.9); if (q >= 0 && !nav.free[q]) cover++; }
+          if (!cover || cover > 2) continue;
+          sc = open(x, y + 1.6, z) + cover * 1.5 - d * 0.12;
+        }
+        if (sc > bs) { bs = sc; best = { x, y, z }; }
+      }
+      if (!best) continue;
+      taken.push([best.x, best.z]);
+      e.pos.set(best.x, best.y, best.z); e.home.copy(e.pos); e.patrol = false; e.post = true;
+      if (sniper) { e.static = true; e.sniper = true; }
+      let ba = e.yaw, bn = -1;                                   // he faces the way he sees furthest
+      for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; let n = 0; for (let r = 6; r <= 24; r += 6) if (W.clear(best.x, best.y + 1.6, best.z, best.x + Math.sin(a) * r, best.y + 1.6, best.z + Math.cos(a) * r)) n++; if (n > bn) { bn = n; ba = a; } }
+      e.yaw = e.homeYaw = ba; e.sync();
+    }
+  }
+
+  /**
+   * The rocks and boulders that the chapters scatter as instanced shapes had nothing to bump into: each one of any size gets a
+   * collider now (unless one stands there already), so that nobody walks into a rock or vanishes inside it, and shots stop at it.
+   */
+  rockColliders() {
+    const W = this.world, m4 = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+    let n = 0;
+    for (const o of this.gfx.root.children) {
+      if (!o.isInstancedMesh || !o.userData.solid) continue;
+      const g = o.geometry; if (!g.boundingSphere) g.computeBoundingSphere();
+      const bs = g.boundingSphere;
+      for (let i = 0; i < o.count; i++) {
+        o.getMatrixAt(i, m4); m4.decompose(p, q, sc);
+        const s = Math.max(sc.x, sc.z), r = bs.radius * s * 0.8, top = p.y + (bs.center.y + bs.radius) * sc.y;
+        if (r < 0.45 || top - W.height(p.x, p.z) < 0.5) continue;
+        if (W.cyls.some((c) => Math.abs(c.x - p.x) < r && Math.abs(c.z - p.z) < r)) continue;
+        W.addCyl(p.x, p.z, r, p.y - 2, top); n++;
+      }
+    }
+    this.rockCols = n;
   }
 
   /** Switch the playable character: figure in the opening shot, hands, and the hero's trait. */
@@ -242,12 +424,16 @@ class Game {
     this.gfx.root.add(rig.group); this.hero = rig.group; this.hero.visible = this.state === 'intro';
     P.mods = { hp: 100, armor: 1, speed: 1, fire: 1, reload: 1, draw: 1, melee: 1, reach: 0, regen: 0, power: 1, meleeDmg: 1, gun: 1, stealth: 1, ...h.mods };
     P.maxHp = P.mods.hp; P.hp = P.maxHp;
-    P.setWeapon(h.weapon ?? d.weapon, h.sleeve, h.cuff);
-    this.ui.wname.textContent = h.weaponName ?? d.weaponName; this.ui.alt.textContent = h.alt ?? d.alt;
+    P.setWeapon(h.weapon ?? d.weapon, h.sleeve, h.cuff); P.setSkill(skillOf(h));
+    const kind = h.weapon ?? d.weapon;
+    this.ownName = h.weaponName ?? d.weaponName; this.ownAlt = THROWN[kind] ? weaponAlt(kind, d) : h.alt ?? d.alt;     // a thrown weapon is aimed with the right button, its blade is on F
+    this.ui.wname.textContent = this.ownName; this.ui.alt.textContent = this.ownAlt;
     this.ui.place.textContent = h.name + ' · ' + d.place; this.cache = {};
     document.querySelectorAll('#heroes .hero').forEach((c) => c.classList.toggle('sel', +c.dataset.hero === k));
   }
 
+  /** The same chapter again, from the hero screen (the size of the map was changed). */
+  reloadLevel() { this.openLevel(this.index); }
   openLevel(i, direct = false) {
     this.gfx.fadeTarget = 0; this.show(null);
     setTimeout(() => {
@@ -265,16 +451,25 @@ class Game {
     $('#intro .chap').textContent = d.chapter;
     $('#intro h2').innerHTML = (d.kanji ? `<span class="kanji">${d.kanji}</span>` : '') + d.title;
     $('#intro .story').textContent = d.story;
-    $('#intro .keys').innerHTML = d.keys.replace('<kbd>Space</kbd> jump', '<kbd>Space</kbd> jump &nbsp; <kbd>C</kbd> crouch');
+    $('#intro .keys').innerHTML = d.keys.replace('<kbd>Space</kbd> jump', '<kbd>Space</kbd> jump &nbsp; <kbd>C</kbd> crouch &nbsp; <kbd>X</kbd> sneak')
+      + '<br><kbd>Wheel</kbd> change weapon &nbsp; <kbd>Middle button</kbd> mark a place &nbsp; <kbd>Tab</kbd> map &nbsp; <kbd>H</kbd> heal from the bag &nbsp; <kbd>E</kbd> special skill &nbsp; <kbd>G</kbd> drop';
     const duel = this.duel && this.duel.active, n = d.heroes.length;
     if (duel) {
       const c = this.duel.cfg;
-      $('#intro .chap').textContent = 'Duel · ' + RULES[c.rules];
-      $('#intro .story').textContent = 'Two players, one world. ' + (c.rules === 'rounds' ? 'Each kill ends a round; the first to win three rounds wins.' : c.rules === 'one' ? 'One life each: the first kill decides.' : 'Five minutes: whoever has more kills at the end wins.')
-        + (c.foes ? (c.foes > 1 ? ` ${['Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][c.foes - 2]} of the chapter’s enemies are still about, and they attack you both.` : ' One of the chapter’s enemies is still about, and attacks you both.') : '') + ' The larger dot on the compass is your opponent.';
+      const D = this.duel, n = D.count, words = ['', 'One', 'Two', 'Three', 'Four'][n] || n, uneven = n % 2 === 1;
+      $('#intro .chap').textContent = words + ' players · ' + RULES[c.rules];
+      const many = c.foes ? (c.foes === 1 ? 'One of the chapter’s enemies' : c.foes + ' of the chapter’s enemies') : '';
+      $('#intro .story').textContent = c.rules === 'coop'
+        ? `${words} players together against ${c.foes} of the chapter’s enemies. Nothing any of you fires can hurt the others; each counts his own kills. One who falls is back in a moment. The mission is over when the last enemy falls.`
+        : (n > 2 ? `${words} players, two sides${uneven ? ' (one of them a player short)' : ''}: the players in the order they joined, the host first, take turns — 1 and 3 against 2 and 4. Nothing fired on your side can hurt your team-mate. ` : 'Two players, one world. ')
+        + (c.rules === 'rounds' ? (n > 2 ? 'A round ends when everyone on one side has fallen; the first side to win five rounds wins.' : 'Each kill ends a round; the first to win five rounds wins.')
+          : c.rules === 'ctf' ? 'Capture the flag: your side’s flag, blue, stands at your end of the map, the other one, red, at the other end. Take the red flag and bring it to yours while yours is there. A carrier who falls drops it; touch your own lying out there to send it home. First to three captures, or the most after seven minutes.'
+          : 'Seven minutes: each fall scores for the other side; the side with more at the end wins.')
+        + (many ? ` ${many} ${c.foes === 1 ? 'is' : 'are'} still about, and attack you all.` : '') + (n > 2 ? ' Your team-mate always shows on the map; the other side shows while moving, unless sneaking.' : ' Your opponent shows on the map while moving, unless sneaking.');
     }
     $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
-    { const all = this.level.enemies.length, sel = $('#foesel'), want = Math.round(this.foeWant), steps = [5, 10, 15, 20, 25, 30].filter((k) => k < all).concat(all);       // the list offers 5 to 30 in steps of five, as far as the chapter has that many
+    $('#witsel').value = this.wits; $('#sizesel').value = this.mapSize;
+    { const all = this.level.enemies.length, sel = $('#foesel'), want = Math.round(this.foeWant), steps = [5, 10, 15, 20, 25, 30, 35, 40, 45].filter((k) => k < all).concat(all);       // the list offers 5 to 30 in steps of five, as far as the chapter has that many
       sel.innerHTML = steps.map((k) => `<option value="${k}">${k}</option>`).join(''); sel.value = steps.includes(want) ? want : all; }
     $('#heroes').classList.toggle('many', !!duel); $('#heroes').classList.toggle('lots', !!duel && this.roster().length > 7);
     $('#intro').classList.toggle('duelpick', !!duel);
@@ -284,46 +479,68 @@ class Game {
     const label = (bad) => duel ? `<div class="hlabel ${bad ? 'bad' : 'good'}">${icon(bad, '')}${bad ? 'Villains' : 'Heroes'}</div>` : '';
     $('#heroes').innerHTML = this.roster().map((h, i) => (i === 0 ? label(false) : i === n ? label(true) : '')
       + `<div class="hero${duel ? (i >= n ? ' bad' : ' good') : ''}${i === this.heroIndex ? ' sel' : ''}" data-hero="${i}" title="${duel ? (i >= n ? 'Villain' : 'Hero') : ''}"><span class="hk">${i + 1}</span>${duel ? icon(i >= n, 'hi') : ''}`
-      + `<div class="hn">${h.name}</div><div class="hw">${h.who}</div><div class="ht"><b>${h.trait}</b> — ${h.effect}</div></div>`).join('');
+      + `<div class="hn">${h.name}</div><div class="hw">${h.who}</div><div class="ht"><b>${h.trait}</b> — ${h.effect}</div><div class="hs"><kbd>E</kbd> <b>${SKILLS[skillOf(h)].name}</b> — ${SKILLS[skillOf(h)].line}</div></div>`).join('');
   }
 
-  // ---- duel: lobby, choice of fighter, end ---------------------------------------
+  // ---- online: lobby, choice of fighter, end ---------------------------------------
   openDuel() { this.duelLobbyMode(null); this.setState('duel'); this.duelStatus(''); }
   closeDuel() { if (this.duel) { this.duel.leave(); this.duel = null; } this.duelLobbyMode(null); this.setState('title'); }
-  /** The Duel screen has two faces: looking for an opponent, or still connected to one between two duels. */
+  /** The Online screen has two faces: creating or joining a game, or connected to one (waiting for its start, or between two games). */
   duelLobbyMode(d) {
     const el = $('#duel'), linked = !!d;
     el.classList.toggle('linked', linked); el.classList.toggle('host', linked && d.isHost); el.classList.toggle('guest', linked && !d.isHost);
-    $('#dlinkbox').classList.add('hidden');
-    $('#dhosttitle').textContent = linked ? 'The next duel' : 'Create a duel';
-    $('#dback').textContent = linked ? 'Leave the duel' : 'Back to the chapters';
-    if (linked) { $('#dlevel').value = d.cfg.level; $('#drules').value = d.cfg.rules; $('#dfoes').value = d.cfg.foes; }
+    $('#dlinkbox').classList.toggle('hidden', !(linked && d.isHost));
+    if (linked && d.isHost) { $('#dlink').value = location.origin + location.pathname + '?duel=' + d.code; $('#dcodeout').textContent = d.code; }
+    $('#dhosttitle').textContent = linked ? (d.isHost ? 'The game' : 'The game, as the host sets it') : 'Create a game';
+    $('#dback').textContent = linked ? 'Leave' : 'Back to the chapters';
+    if (linked && d.cfg) { $('#dlevel').value = d.cfg.level; $('#drules').value = RULES[d.cfg.rules] ? d.cfg.rules : 'rounds'; $('#dfoes').value = String(Math.round((d.cfg.foes || 0) / 3) * 3); $('#dwits').value = d.cfg.wits || 'medium'; $('#dsize').value = d.cfg.size || 'medium'; }
+    else if (!linked) { $('#dwits').value = this.wits; $('#dsize').value = this.mapSize; }
+    if (this.duelFoesLabel) this.duelFoesLabel();
+    this.duelPlayers(d);
   }
-  duelLounge() {
-    const d = this.duel;
-    this.duelLobbyMode(d); this.setState('duel');
-    this.duelStatus(d.isHost ? 'Still connected to your opponent. Choose the next duel and start it.' : 'Still connected. Waiting for the host to start the next duel…');
+  /** Who is in the game, on the Online screen. */
+  duelPlayers(d) {
+    const el = $('#dplayers');
+    if (!d) { el.innerHTML = ''; el.classList.add('hidden'); return; }
+    const ids = d.ids(), r = d.cfg && d.cfg.rules, side = (i) => (r && r !== 'coop' && ids.length > 2 ? ` <i>side ${i % 2 ? 'B' : 'A'}</i>` : '');
+    el.classList.remove('hidden');
+    el.innerHTML = `<h3>Players · ${ids.length} of ${MAX_PLAYERS}</h3>` + ids.map((id, i) => `<div><b>${esc(d.nameOf(id))}</b>${id === 0 ? ' · host' : ''}${id === d.me ? ' · you' : ''}${side(i)}</div>`).join('');
   }
-  /** The line under the cards while the two players choose. */
+  /** Connected, waiting on the Online screen: for others to join and the host to start, or for the next game. */
+  duelLounge(note) {
+    const d = this.duel; if (!d) return;
+    this.duelLobbyMode(d); if (this.state !== 'duel') this.setState('duel');
+    const n = d.count;
+    this.duelStatus((note ? note + ' ' : '') + (d.isHost
+      ? (n < 2 ? 'Send the link or the code to the other players (up to three), then wait here.' : n < MAX_PLAYERS ? `${n} players. Start when everyone is in, or wait for more (up to ${MAX_PLAYERS}).` : 'Four players: the game is full. Start it.')
+      : 'Connected. Waiting for the host to start the game…'));
+  }
+  /** The line under the cards while the players choose. */
   duelPickInfo() {
-    const D = this.duel, r = this.roster(), mine = D.myPick >= 0, theirs = D.theirPick >= 0;
-    const n = this.def.heroes.length, as = (k) => r[k].name + (k >= n ? ', a villain' : ', a hero');
-    $('#intro .pick').textContent = (mine ? 'You are ' + as(D.myPick) + '. ' : 'Choose your fighter. ') + (theirs ? 'Your opponent is ' + as(D.theirPick) + '.' : mine ? 'Waiting for your opponent…' : 'Your opponent is still choosing.');
+    const D = this.duel, r = this.roster(), n = this.def.heroes.length, as = (k) => r[k] ? r[k].name + (k >= n ? ', a villain' : ', a hero') : '?';
+    const others = D.ids().filter((id) => id !== D.me), mine = D.myPick >= 0;
+    const said = others.map((id) => D.picks.has(id) ? esc(D.nameOf(id)) + ' is ' + as(D.picks.get(id)) : esc(D.nameOf(id)) + ' is still choosing').join('; ');
+    $('#intro .pick').innerHTML = (mine ? 'You are ' + as(D.myPick) + '. ' : 'Choose your fighter. ') + said + '.' + (mine && others.some((id) => !D.picks.has(id)) ? ' Waiting…' : '');
   }
-  duelAborted() { this.duel = null; this.duelLobbyMode(null); this.setState('duel'); this.duelStatus('Your opponent left, or the connection was lost. You can create a new duel.'); }
-  duelOver(title, a, b) {
+  duelAborted(why) {
+    this.duel = null; this.duelLobbyMode(null); this.setState('duel');
+    this.duelStatus(why === 'host' ? 'The host left the game. You can create a new one, or join another.' : why === 'left' ? 'The other players left. You can create a new game.' : 'The connection to the game server was lost. You can create a new game, or join again.');
+  }
+  /** The end of a game online: rows [who, number, unit], and a line below (each player's kills). */
+  duelOver(title, rows, line) {
     this.setState('clear');
     if (document.pointerLockElement) document.exitPointerLock();
     this.sound.stopMusic(); this.sound.fanfare(this.def.id);
-    $('#clear .kicker').textContent = 'Duel · ' + RULES[this.duel.cfg.rules];
+    const D = this.duel, r = D.cfg.rules;
+    $('#clear .kicker').textContent = D.count + ' players · ' + RULES[r];
     $('#clear .big').textContent = title;
-    $('#clear .stats').innerHTML = `<div><b>${a}</b>You</div><div><b>${b}</b>${this.duel.remote ? this.duel.remote.name : 'Opponent'}</div>`;
-    $('#clear .go').textContent = this.duel.link.open ? 'Click to play again' : 'Click to return to the chapters';
+    $('#clear .stats').innerHTML = rows.map(([who, v, unit]) => `<div><b>${v}</b>${esc(who)} · ${unit}</div>`).join('') + (line ? `<p class="each">${line}</p>` : '');
+    $('#clearnext').textContent = D.link.open ? 'Play again' : 'Back to the chapters'; $('#clear [data-act="again"]').style.display = 'none';
   }
-  /** Damage dealt by a computer enemy: to this player, or in a duel to the other one. */
+  /** Damage dealt by a computer enemy: to this player, or online to another one (in his browser). */
   hurtTarget(P, dmg, from, melee) {
     if (P === this.player) this.hurtPlayer(dmg, from, melee);
-    else if (this.duel) this.duel.send({ t: 'hit', d: dmg, x: from.x, z: from.z, m: melee ? 1 : 0 });
+    else if (this.duel && P.pid !== undefined) this.duel.send({ t: 'hit', to: P.pid, ai: 1, d: dmg, x: from.x, z: from.z, m: melee ? 1 : 0 });
   }
 
   begin() {
@@ -347,61 +564,211 @@ class Game {
     return i;
   }
 
-  addPickup(x, z, L, hint = 2) {
-    const y = this.world.groundAt(x, z, hint);
-    const mesh = L.makePickup ? L.makePickup() : new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xb8742a }));
-    mesh.position.set(x, y + 0.5, z); mesh.castShadow = true;
+  /** Something to pick up: what = { type: 'item', id: 'heal' } (the chapter's healing food or drink, the default), { type: 'item', id: bomb } or { type: 'weapon', kind }. */
+  /**
+   * Something to pick up: what = { type: 'item', id: 'heal' } (the chapter's healing food or drink, the default), { type: 'item', id: bomb },
+   * { type: 'weapon', kind } or { type: 'ammo' }. Dropped on the ground it floats and turns; o.still: it lies at height o.y on a table,
+   * a shelf, a counter or a chest (o.piece), and falls to the floor if that is broken.
+   */
+  addPickup(x, z, L, hint = 2, what = { type: 'item', id: 'heal' }, o = {}) {
+    if (!this.world.inside(x, z, 0.3)) return;                  // beyond the edge of a small map
+    const y = o.y ?? this.world.groundAt(x, z, hint);
+    let mesh;
+    if (what.type === 'weapon') mesh = dropMesh(what.kind, this.M);
+    else if (what.type === 'ammo') mesh = this.ammoMesh();
+    else if (what.id !== 'heal') { mesh = new THREE.Mesh(this.shots.geo[what.id], this.M.flat); mesh.scale.setScalar(1.6); }
+    else mesh = L.makePickup ? L.makePickup() : new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.3, 8), new THREE.MeshStandardMaterial({ color: 0xb8742a }));
+    const box = new THREE.Box3().setFromObject(mesh), lift = -box.min.y + 0.005;      // how far its origin lies above its bottom
+    mesh.position.set(x, o.still ? y + lift : y + 0.5, z); mesh.castShadow = true;
     this.gfx.root.add(mesh);
-    this.pickups.push({ mesh, x, y, z, t: this.rand() * 6 });
+    this.pickups.push({ mesh, x, y, z, t: ((x * 7.3 + z * 3.1) % 6 + 6) % 6, what, still: !!o.still, lift, piece: o.piece || null, rot: ((x * 3.7 + z) % 6.28) });
+  }
+  /** A box of ammunition: a small wooden case with a brass band. */
+  ammoMesh() {
+    if (!this.ammoGeo) this.ammoGeo = merge([gBox(0.32, 0.16, 0.2, 0x4a5236, [0, 0, 0]), gBox(0.33, 0.03, 0.21, 0xc9a050, [0, 0.02, 0]), gBox(0.08, 0.02, 0.05, 0xe8e0c8, [0.09, 0.085, 0])]);
+    return new THREE.Mesh(this.ammoGeo, this.M.flat);
+  }
+  /** A missile the player threw now lies somewhere (or sticks in a wall, a body): it can be taken back. At most forty are kept. */
+  keep(s) {
+    if (s.kept) return; s.kept = true;
+    this.pickups.push({ mesh: s.mesh, x: s.x, y: s.y, z: s.z, t: 0, what: { type: 'return', kind: s.ret }, ret: s, still: true, lift: 0 });
+    const all = this.pickups.filter((q) => q.ret);
+    if (all.length > 40) { const old = all[0]; old.ret.taken = true; this.pickups.splice(this.pickups.indexOf(old), 1); }
+  }
+  itemLabel(id) { return itemName(id, this.def); }
+  /** Which sound a gun of the player makes (the revolver of the wars is a pistol; the lever rifle of the West a carbine). */
+  gunSound(kind) { const id = this.def && this.def.id; return kind === 'revolver' ? (id === 'west' ? 'revolver' : 'pistol') : kind === 'carbine' ? (id === 'west' ? 'carbine' : 'rifle') : kind === 'rifle' ? 'scoped' : kind === 'sten' ? 'sten' : 'rifle'; }
+  /** A named place found for the first time: its name, large, for a few seconds. */
+  placeBanner(name) {
+    const el = this.ui.placeBan; if (!el || this.state !== 'play') return;
+    el.textContent = name; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); this.sound.discover && this.sound.discover();
+  }
+  pickupKey(w) { return w ? (w.type === 'weapon' ? 'w:' + w.kind : w.type === 'ammo' ? 'a' : 'i:' + w.id) : 'i:heal'; }
+  /** Something the player puts down (G): it lies in front of him, for him to take again later, or for his partner. */
+  dropPickup(what) {
+    const P = this.player, f = P.forward(this._v2), l = Math.hypot(f.x, f.z) || 1;
+    let x = P.pos.x + f.x / l * 1.1, z = P.pos.z + f.z / l * 1.1;
+    if (!this.world.clear(P.pos.x, P.pos.y + 0.5, P.pos.z, x, P.pos.y + 0.5, z)) { x = P.pos.x; z = P.pos.z; }     // against a wall: at his feet
+    this.addPickup(x, z, this.level, P.pos.y + 0.5, what);
+    const p = this.pickups[this.pickups.length - 1]; if (p && p.what === what) p.mine = true;
+    if (this.duel) this.duel.send({ t: 'drop', x: +x.toFixed(2), z: +z.toFixed(2), y: +(P.pos.y + 0.5).toFixed(2), w: what });
+    this.sound.swap();
+  }
+  /**
+   * The chapter's healing food or drink lies where one would put it down: on tables, chests, market counters and shelves, at different
+   * places each game. Where there are not enough of those, the rest lie where the chapter put them.
+   */
+  placeHeals(L) {
+    const rand = rng(this.seed ^ 0xbee), W = this.world, chosen = [];
+    const orig = shuffle((L.pickups || []).map((p) => [p[0], p[1], p[3] !== undefined ? W.height(p[0], p[1]) + p[3] : p[2]]), rand);
+    for (const q of shuffle(W.pieces.filter((q) => q.spot), rand)) {
+      if (chosen.length >= orig.length) break;
+      let x, y, z;
+      const sp = q.spot === 'top' ? { x: q.x, y: q.top, z: q.z, hw: q.sweep.hw - 0.15, hd: q.sweep.hd - 0.12, ry: q.sweep.ry || 0 } : q.spot;
+      { const lx = (rand() - 0.5) * 2 * Math.max(0, sp.hw), lz = (rand() - 0.5) * 2 * Math.max(0, sp.hd), cs = Math.cos(sp.ry), sn = Math.sin(sp.ry); x = sp.x + lx * cs + lz * sn; z = sp.z - lx * sn + lz * cs; y = sp.y; }
+      if (chosen.some((c) => (c.x - x) ** 2 + (c.z - z) ** 2 < 36)) continue;            // spread over the chapter
+      chosen.push({ x, y, z, q });
+    }
+    for (const c of chosen) this.addPickup(c.x, c.z, L, c.y, { type: 'item', id: 'heal' }, { y: c.y, still: true, piece: c.q });
+    for (const p of orig.slice(chosen.length)) this.addPickup(p[0], p[1], L, p[2]);
+  }
+  /** A breakable thing has gone: what lay on it falls to the floor, and what it held (ammunition, something that heals) comes out. */
+  pieceBroken(p) {
+    for (const q of this.pickups) if (q.piece === p) { q.piece = null; q.still = false; q.y = this.world.groundAt(q.x, q.z, p.y + 0.2); }
+    const what = lootOf(p, this.seed);
+    if (what) this.addPickup(p.x, p.z, this.level, p.y + 0.3, what);
+  }
+  /** An enemy has fallen: it leaves its weapon (and now and then a bomb or something that heals) where it fell. */
+  enemyDown(e) {
+    if (e.remote || !this.level) return;
+    if (this.duel) this.duel.enemyKilled();
+    const list = dropsOf(e, this.def.id);
+    list.forEach((what, i) => {
+      const a = e.yaw + 1.2 + i * 1.9, r = 0.7 + i * 0.35, x = e.pos.x + Math.sin(a) * r, z = e.pos.z + Math.cos(a) * r;
+      this.addPickup(x, z, this.level, e.pos.y + 0.6, what);
+    });
+  }
+  /** The player walks over something: is it taken? Returns the line to show, or null if it is of no use now. */
+  takePickup(p) {
+    const P = this.player, w = p.what || { type: 'item', id: 'heal' };
+    if (w.type === 'ammo') return P.addAmmo();
+    if (w.type === 'return') return P.takeBack(w.kind);
+    if (w.type === 'weapon') {
+      const r = P.addWeapon(w.kind, w.rounds); if (!r) return null;
+      return r === 'new' ? weaponName(w.kind, this.def) + ' taken — mouse wheel to use it' : weaponName(w.kind, this.def) + '  ' + r;
+    }
+    if (!P.addItem(w.id)) return null;
+    return itemName(w.id, this.def) + ' in the bag (' + P.count(w.id) + ')' + (w.id === 'heal' ? ' — H to use' : ' — mouse wheel to take it');
   }
 
   // ---- combat ---------------------------------------------------------------
   playerHitscan(muzzleObj, spread, dmg) {
     const P = this.player, o = this.gfx.camera.getWorldPosition(this._v), d = P.forward(this._v2);
+    if (P.skillOn('deadeye')) { spread = 0; dmg *= 1.8; }                 // the skill: every shot true, and harder
     d.x += (Math.random() - 0.5) * 2 * spread; d.y += (Math.random() - 0.5) * 2 * spread; d.z += (Math.random() - 0.5) * 2 * spread; d.normalize();
     this.noise = 0.6; this.stats.shots++; this.crossGap = 16;
     const wh = this.world.raycast(o, d, 260);
     let t = wh ? wh.t : 260, target = null, head = false;
-    for (const e of this.enemies) { const h = e.rayHit(o, d, t); if (h) { t = h.t; target = e; head = h.head; } }
+    for (const e of this.enemies) { if (this.friend(e)) continue; const h = e.rayHit(o, d, t); if (h) { t = h.t; target = e; head = h.head; } }
     const hx = o.x + d.x * t, hy = o.y + d.y * t, hz = o.z + d.z * t;
+    this.havoc.trinketsAlong(o, d, t);                            // bottles, lamps, ornaments on the way break; the shot goes on
     const m = muzzleObj.getWorldPosition(new THREE.Vector3());
     this.shots.tracer(m.x, m.y, m.z, hx, hy, hz);
-    if (this.duel) this.duel.tracer(m.x, m.y, m.z, hx, hy, hz);
+    if (this.duel) this.duel.tracer(m.x, m.y, m.z, hx, hy, hz, this.gunSound(P.weapon.kind));
     this.muzzle(m.x + d.x * 0.25, m.y + d.y * 0.25, m.z + d.z * 0.25, d.x, d.y, d.z, 1);
     if (target) this.hitEnemy(target, dmg, head, hx, hy, hz, o.x, o.z);
-    else if (wh) this.impact(hx, hy, hz, wh.nx, wh.ny, wh.nz, 'bullet');
+    else if (wh && wh.person) this.crowd.hit(wh.person, dmg * (hy > wh.person.py + 1.45 ? 2.5 : 1), hx, hy, hz, true);
+    else if (wh && wh.animal) this.fauna.hit(wh.animal, dmg, hx, hy, hz, true);
+    else if (wh) { this.impact(hx, hy, hz, wh.nx, wh.ny, wh.nz, 'bullet'); if (wh.piece) this.havoc.damage(wh.piece, dmg, hx, hy, hz); }
+    this.crowd.alarm(P.pos.x, P.pos.z, P.sneaking ? 14 : 26, P.pos.x, P.pos.z); this.crowd.alarm(hx, hz, 7, P.pos.x, P.pos.z);   // a shot frightens the people around, and more those near where it struck
+    this.makeNoise(P.pos.x, P.pos.z, 34, true); this.makeNoise(hx, hz, 8, false);                  // a gunshot gives the shooter away; where it struck, they look
   }
 
-  playerShoot(kind, speed, dmg, grav, turn = 0) {
+  /**
+   * A noise at (x, z), heard loud metres away by an enemy of medium wits (further by a clever one, not at all by a dull one).
+   * byPlayer: it gives the player away (a shot, a throw); otherwise it only makes those who hear it look (a crate breaking).
+   */
+  makeNoise(x, z, loud, byPlayer = false) {
+    if (!loud || this.peace) return;
+    const k = HEAR[this.wits] ?? 1; if (!k) return;
+    const R = loud * k;
+    for (const e of this.enemies) {
+      if (!e.alive || e.puppet || e.remote || e.state === 'hidden' || e.cfg.sight === 0) continue;
+      const d = Math.hypot(e.pos.x - x, e.pos.z - z);
+      if (d < R) e.hear(x, z, d / R, byPlayer);
+    }
+  }
+
+  playerShoot(kind, speed, dmg, grav, turn = 0, lift = 0, spread = 0) {
     const P = this.player, o = this.gfx.camera.getWorldPosition(this._v), d = P.forward(this._v2);
     if (turn) { const c = Math.cos(turn), s = Math.sin(turn), x = d.x * c - d.z * s; d.z = d.x * s + d.z * c; d.x = x; }      // one missile of a fan: turned a little to the side
     const rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
+    if (P.skillOn('deadeye')) { spread = 0; dmg *= 1.8; }
     this.stats.shots++; this.crossGap = 14;
     const sx = o.x + d.x * 0.5 + rx * 0.04, sy = o.y + d.y * 0.5 - 0.07, sz = o.z + d.z * 0.5 + rz * 0.04;
-    this.shots.spawn(kind, sx, sy, sz, d.x, d.y + 0.012, d.z, speed, true, dmg, grav);
-    if (this.duel) this.duel.shot(kind, sx, sy, sz, d.x, d.y + 0.012, d.z, speed, grav);
+    if (spread) { d.x += (Math.random() - 0.5) * 2 * spread; d.y += (Math.random() - 0.5) * 2 * spread; d.z += (Math.random() - 0.5) * 2 * spread; }
+    const shot = this.shots.spawn(kind, sx, sy, sz, d.x, d.y + 0.012 + lift, d.z, speed, true, dmg, grav);
+    if (RETURNS[kind] && !turn) shot.ret = RETURNS[kind];            // it can be taken back where it lands (of a fan of stars, the middle one)
+    this.makeNoise(P.pos.x, P.pos.z, NOISE[kind] ?? 10, true);       // a bow, a sling, a throw: heard by those near; a blowgun: by nobody
+    if (this.duel) this.duel.shot(kind, sx, sy, sz, d.x, d.y + 0.012 + lift, d.z, speed, grav);
   }
 
-  playerMelee(range, cone, dmg) {
-    const P = this.player, f = P.forward(this._v2);
+  /**
+   * A blow (fists, blade, club) of reach range in a cone in front. It lands on every enemy and bystander within reach and on the nearest
+   * breakable thing (a small thing, a piece of furniture, a wooden wall); failing those, it strikes whatever wall is in front.
+   */
+  playerMelee(range, cone, dmg, fist = false) {
+    if (this.player.skillOn('fury')) dmg *= 2;
+    const P = this.player, f = P.forward(this._v2), ex = P.pos.x, ey = P.pos.y + 1.5, ez = P.pos.z, W = this.world;
+    /** Can the blow reach something centred at (x, y, z), of radius r? Returns the distance, or -1. Close by, a thing off-centre is struck too. */
+    const reach = (x, y, z, r) => {
+      const dx = x - ex, dy = y - ey, dz = z - ez, d = Math.hypot(dx, dy, dz) || 0.01;
+      if (d - r > range) return -1;
+      if ((dx * f.x + dy * f.y + dz * f.z) / d < cone && d > r + 0.5) return -1;
+      const k = Math.max(0, (d - r - 0.08) / d);                   // stop short of the target: its own collider must not hide it
+      return W.clear(ex, ey, ez, ex + dx * k, ey + dy * k, ez + dz * k) ? d : -1;
+    };
     let any = false;
+    for (const w of this.crowd.list) {                          // a bystander within reach
+      if (w.dead || reach(w.px, w.py + 1.1, w.pz, 0.36) < 0) continue;
+      const dx = w.px - ex, dz = w.pz - ez, dl = Math.hypot(dx, dz) || 1;
+      this.crowd.hit(w, dmg, w.px - dx / dl * 0.3, w.py + 1.2, w.pz - dz / dl * 0.3, true); any = true;
+    }
+    for (const a of this.fauna.list) {                          // an animal within reach
+      if (a.dead || reach(a.px, a.py + a.high * 0.6, a.pz, Math.min(0.6, a.wide * 0.5)) < 0) continue;
+      const dx = a.px - ex, dz = a.pz - ez, dl = Math.hypot(dx, dz) || 1;
+      this.fauna.hit(a, dmg, a.px - dx / dl * 0.3, a.py + a.high * 0.6, a.pz - dz / dl * 0.3, true); any = true;
+    }
     for (const e of this.enemies) {
-      if (!e.alive || e.state === 'hidden') continue;
-      const dx = e.pos.x - P.pos.x, dy = e.pos.y + 1.1 - (P.pos.y + 1.5), dz = e.pos.z - P.pos.z, dist = Math.hypot(dx, dy, dz);
-      if (dist > range || (dx * f.x + dy * f.y + dz * f.z) / dist < cone) continue;
-      if (!this.world.clear(P.pos.x, P.pos.y + 1.5, P.pos.z, e.pos.x, e.pos.y + (e.cfg.dog ? 0.5 : 1.1), e.pos.z)) continue;   // not through walls
+      if (!e.alive || e.state === 'hidden' || this.friend(e)) continue;
+      if (reach(e.pos.x, e.pos.y + (e.cfg.dog ? 0.5 : 1.1), e.pos.z, 0.32) < 0) continue;   // not through walls
+      const dx = e.pos.x - ex, dz = e.pos.z - ez, dist = Math.hypot(dx, dz) || 1;
       this.hitEnemy(e, dmg, false, e.pos.x - dx / dist * 0.3, e.pos.y + 1.2, e.pos.z - dz / dist * 0.3, P.pos.x, P.pos.z);
       any = true;
     }
-    if (any) { this.stats.shots++; P.recoil(0.3); }
+    // the nearest breakable thing within reach: a small thing, furniture, a fence, a wooden wall
+    let best = null, bd = 1e9;
+    for (const q of W.pieces) {
+      if (q.broken) continue;
+      const cy = q.cy ?? Math.min(Math.max(ey - 0.4, q.y + 0.1), q.top - 0.05), d = reach(q.x, cy, q.z, Math.min(q.r, q.wall ? q.r : 0.9));
+      if (d >= 0 && d < bd) { bd = d; best = q; }
+    }
+    if (best) {
+      const cy = best.cy ?? Math.min(Math.max(ey - 0.4, best.y + 0.1), best.top - 0.05), dx = best.x - ex, dy = cy - ey, dz = best.z - ez, d = Math.hypot(dx, dy, dz) || 1, k = Math.max(0, d - Math.min(best.r, 0.5)) / d;
+      this.havoc.damage(best, dmg, ex + dx * k, ey + dy * k, ez + dz * k);
+      if (fist) this.sound.punch(true); else this.sound.thud();
+      any = true;
+    }
+    if (any) { this.stats.shots++; P.recoil(0.3); if (fist && !best) this.sound.punch(true); }
     else {
-      const o = this.gfx.camera.getWorldPosition(this._v), wh = this.world.raycast(o, f, range * 0.75);
-      if (wh) { this.sound.clank(); this.impact(o.x + f.x * wh.t, o.y + f.y * wh.t, o.z + f.z * wh.t, wh.nx, wh.ny, wh.nz, 'bullet'); }
+      const o = this.gfx.camera.getWorldPosition(this._v), wh = W.raycast(o, f, range);
+      if (wh) { if (fist) this.sound.punch(true); else this.sound.clank(); this.impact(o.x + f.x * wh.t, o.y + f.y * wh.t, o.z + f.z * wh.t, wh.nx, wh.ny, wh.nz, 'bullet'); }
     }
   }
 
   hitEnemy(e, dmg, head, x, y, z, fromX, fromZ, quiet) {                     // quiet = poison at work: no hit marker, no sound, not counted as a shot that hit
     const wasBoss = e.cfg.boss, killed = e.damage(dmg, head, fromX, fromZ);
+    if (!quiet && e.rig && !e.cfg.dog) wound(e.rig, x, y, z);          // the wound shows where the shot went in
     if (quiet && !killed) return;
     if (!quiet) this.stats.hits++; if (head) this.stats.heads++;
     const S = this.gfx.soft;
@@ -446,7 +813,7 @@ class Game {
   hurtPlayer(dmg, from, melee) {
     const P = this.player;
     if (P.dead || this.practice || (this.state !== 'play' && !(this.duel && this.state === 'pause'))) return;
-    dmg *= P.mods.armor; P.hp -= dmg; P.hurtT = 0; this.gfx.damage = Math.min(1.1, this.gfx.damage + 0.45 + dmg / 45);
+    dmg *= P.mods.armor * (P.skillOn('shield') ? 0.2 : 1); P.hp -= dmg; P.hurtT = 0; this.gfx.damage = Math.min(1.1, this.gfx.damage + 0.45 + dmg / 45);
     P.recoil((Math.random() - 0.3) * (melee ? 1.6 : 0.8));
     const dx = from.x - P.pos.x, dz = from.z - P.pos.z;
     const rel = Math.atan2(Math.cos(P.yaw) * dx - Math.sin(P.yaw) * dz, -Math.sin(P.yaw) * dx - Math.cos(P.yaw) * dz);
@@ -473,8 +840,8 @@ class Game {
     $('#clear .kicker').textContent = (last ? 'The last chapter is written' : d.chapter + ' complete') + (this.practice ? ' · practice mode' : '');
     $('#clear .big').textContent = d.clearTitle;
     const acc = s.shots ? Math.min(100, Math.round((s.hits / s.shots) * 100)) : 0, mm = Math.floor(s.t / 60), ss = String(Math.floor(s.t % 60)).padStart(2, '0');
-    $('#clear .stats').innerHTML = `<div><b>${mm}:${ss}</b>Time</div><div><b>${acc}%</b>Accuracy</div><div><b>${s.heads}</b>Headshots</div><div><b>${Math.round(this.player.hp)}</b>Health</div>`;
-    $('#clear .go').textContent = last ? 'Click to return to the chapters' : 'Click for the next chapter';
+    $('#clear .stats').innerHTML = `<div><b>${mm}:${ss}</b>Time</div><div><b>${acc}%</b>Accuracy</div><div><b>${s.heads}</b>Headshots</div><div><b>${Math.round(this.player.hp)}</b>Health</div>` + (s.innocents ? `<div><b>${s.innocents}</b>Bystanders killed</div>` : '');
+    $('#clearnext').textContent = last ? 'Back to the chapters' : 'Next chapter'; $('#clear [data-act="again"]').style.display = '';
   }
 
   // ---- per-frame ------------------------------------------------------------
@@ -496,16 +863,35 @@ class Game {
     this.noise = Math.max(0, this.noise - dt);
     this.stats.t += dt;
     P.update(dt, this.input, this.state === 'play');
+    if (this.sized && this.sized.chimneys) for (const c of this.sized.chimneys) {        // smoke from the chimneys of the outskirts
+      c.t -= dt; if (c.t > 0) continue; c.t = 0.35 + Math.random() * 0.3;
+      if (Math.abs(c.x - P.pos.x) + Math.abs(c.z - P.pos.z) > 220) continue;
+      this.gfx.soft.spawn(c.x, c.y, c.z, (Math.random() - 0.5) * 0.3, 0.7 + Math.random() * 0.4, (Math.random() - 0.5) * 0.3, { life: 4 + Math.random() * 2, s0: 0.35, s1: 2.2, r: 0.5, g: 0.48, b: 0.46, a: 0.45, grav: -0.15, drag: 0.3 });
+    }
+    if (this.voices) this.voices.update(dt);
+    this.stepT = (this.stepT || 0) - dt;                    // footsteps are heard: walking a little, running much further, sneaking or crouching not at all
+    if (this.stepT <= 0 && this.state === 'play') { this.stepT = 0.5; const v = Math.hypot(P.vel.x, P.vel.z); if (P.onGround && !P.dead && v > 1 && !P.sneaking && !P.crouch) this.makeNoise(P.pos.x, P.pos.z, P.sprinting && v > 6 ? 11 : 4, true); }
+    if (this.state === 'play' && this.input.mark && !P.dead) this.map.toggleMark();
     for (const e of this.enemies) e.update(dt);
+    this.crowd.update(dt); this.fauna.update(dt);
+    this.life.update(dt, this.time);
     this.shots.update(dt);
+    this.havoc.update(dt);
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const p = this.pickups[i]; p.t += dt;
-      p.mesh.rotation.y = p.t * 1.2; p.mesh.position.y = p.y + 0.55 + Math.sin(p.t * 2.2) * 0.08;
-      if (Math.random() < dt * 5) this.gfx.glow.spawn(p.x + (Math.random() - 0.5) * 0.5, p.y + 0.3, p.z + (Math.random() - 0.5) * 0.5, 0, 0.6 + Math.random() * 0.5, 0, { life: 1.2, s0: 0.05, s1: 0.0, r: 1.2, g: 2.2, b: 0.9, a: 0.9 });
-      if (!P.dead && P.hp < P.maxHp && (p.x - P.pos.x) ** 2 + (p.z - P.pos.z) ** 2 < 1.7 && Math.abs(p.y - P.pos.y) < 2) {
-        P.hp = Math.min(P.maxHp, P.hp + 35); this.gfx.heal = 1; this.sound.pickup(); this.say(this.def.pickupText);
-        if (this.duel) this.duel.send({ t: 'pk', x: p.x, z: p.z });
-        p.mesh.removeFromParent(); this.pickups.splice(i, 1);
+      if (p.ret) { p.mesh.getWorldPosition(this._v); p.x = this._v.x; p.y = this._v.y - 0.3; p.z = this._v.z; }   // a thrown weapon where it fell or stuck (it moves with a body)
+      else if (p.still) { p.mesh.rotation.y = p.rot; p.mesh.position.y = p.y + p.lift; }           // laid on a table or a shelf: it stays put, a faint glint shows it
+      else { p.mesh.rotation.y = p.t * 1.2; p.mesh.position.y = p.y + 0.55 + Math.sin(p.t * 2.2) * 0.08; }
+      if (Math.random() < dt * (p.still ? 1.5 : 5)) this.gfx.glow.spawn(p.x + (Math.random() - 0.5) * 0.5, p.y + 0.3, p.z + (Math.random() - 0.5) * 0.5, 0, 0.6 + Math.random() * 0.5, 0, { life: 1.2, s0: 0.05, s1: 0.0, r: 1.2, g: 2.2, b: 0.9, a: 0.9 });
+      const near = (p.x - P.pos.x) ** 2 + (p.z - P.pos.z) ** 2 < 1.7 && Math.abs(p.y - P.pos.y) < 2;
+      if (p.mine) { if ((p.x - P.pos.x) ** 2 + (p.z - P.pos.z) ** 2 > 6.25) p.mine = false; continue; }      // just dropped: not taken back until one has stepped away
+      if (!P.dead && near) {
+        const line = this.takePickup(p);
+        if (!line) continue;                              // of no use now (the bag is full, or it is the hero's own weapon): it stays where it lies
+        this.sound.pickup(); this.say(line);
+        if (this.duel) this.duel.send({ t: 'pk', x: p.x, z: p.z, k: this.pickupKey(p.what) });
+        if (p.ret) p.ret.taken = true; else p.mesh.removeFromParent();
+        this.pickups.splice(i, 1);
       }
     }
     if (this.slow > 0) {
@@ -518,6 +904,22 @@ class Game {
     const P = this.player, u = this.ui, c = this.cache;
     const hp = Math.ceil(P.hp);
     if (c.hp !== hp) { c.hp = hp; u.hp.textContent = hp; u.hpbar.style.width = Math.min(100, (hp / P.maxHp) * 100) + '%'; }
+    const sl = P.slots[P.slot], sig = P.slot + '|' + P.slots.map((q) => q.type === 'item' ? q.count : (q.weapon.reserve ?? '-') + '.' + (q.weapon.ammo ?? '')).join(',');
+    if (c.arms !== sig) {
+      c.arms = sig;
+      const name = sl.fists ? 'Fists' : sl.hero ? this.ownName : sl.type === 'item' ? itemName(sl.id, this.def) : weaponName(sl.kind, this.def);
+      u.wname.innerHTML = esc(name) + (sl.type === 'item' ? ` <span class="res">× ${sl.count}</span>` : P.weapon.reserve !== null ? ` <span class="res">${P.weapon.reserve} more</span>` : '');
+      u.alt.textContent = sl.fists ? weaponAlt('fists') : sl.hero ? this.ownAlt : sl.type === 'item' ? itemAlt(sl.id) : weaponAlt(sl.kind, this.def);
+      u.bag.innerHTML = P.slots.length > 1 ? P.slots.map((q, i) => `<div class="${i === P.slot ? 'sel' : ''}"><kbd>${i + 1}</kbd>${esc(q.fists ? 'Fists' : q.hero ? this.ownName.split(' & ')[0] : q.type === 'item' ? itemName(q.id, this.def) : weaponName(q.kind, this.def))}${q.type === 'item' ? ' × ' + q.count : q.fists || q.weapon.reserve === null ? '' : ' · ' + this.player.left(q.weapon)}</div>`).join('') : '';
+    }
+    this.bagShown = Math.max(0, this.bagShown - dt); u.bag.classList.toggle('lit', this.bagShown > 0);
+    { const k = SKILLS[P.skill], on = P.skillT > 0, key = P.skill + (on ? 'on' + Math.ceil(P.skillT * 4) : P.skillCd > 0 ? Math.ceil(P.skillCd) : 'ready');
+      if (k && c.skill !== key) {
+        c.skill = key; u.skill.className = on ? 'on' : P.skillCd > 0 ? 'wait' : 'ready';
+        u.skillName.textContent = k.name + (on ? '' : P.skillCd > 0 ? ' · ' + Math.ceil(P.skillCd) + ' s' : ' · ready');
+        u.skillBar.style.width = (on ? P.skillT / k.dur : 1 - P.skillCd / k.cool) * 100 + '%';
+        document.body.classList.toggle('skillfx', on); if (on) u.skillFx.style.setProperty('--tint', k.tint);
+      } }
     const h = P.weapon.hud(), key = h.ammo + '/' + h.mag + h.reloading;
     if (c.ammo !== key) {
       c.ammo = key; u.pips.className = h.mag === 1 ? 'long' : h.mag > 10 ? 'many' : '';
@@ -526,20 +928,8 @@ class Game {
     const alive = this.enemies.filter((e) => e.alive);
     if (this.duel) { const t = this.duel.hud(); if (c.foes !== t) { c.foes = t; u.foes.innerHTML = t; } }
     else if (c.foes !== alive.length) { c.foes = alive.length; u.foes.innerHTML = alive.length ? `<b>${alive.length}</b>${this.def.foes}` : this.def.foesNone; }
-    // compass
-    const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw), rx = Math.cos(P.yaw), rz = -Math.sin(P.yaw);
-    while (u.dots.length < alive.length) { const d = document.createElement('i'); u.compass.appendChild(d); u.dots.push(d); }
-    let boss = null;
-    u.dots.forEach((d, i) => {
-      const e = alive[i];
-      if (!e) { d.style.display = 'none'; return; }
-      const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z;
-      const rel = Math.atan2(rx * dx + rz * dz, fx * dx + fz * dz);
-      d.style.display = 'block'; d.style.left = 50 + clamp(rel / 1.9, -1, 1) * 50 + '%';
-      d.style.opacity = Math.abs(rel) > 1.9 ? 0.35 : clamp(1.15 - Math.hypot(dx, dz) / 140, 0.45, 1);
-      d.className = e.cfg.boss || e.remote ? 'boss' : '';
-      if (e.cfg.boss && e.state === 'combat') boss = e;
-    });
+    // the boss's health, while he fights (the enemies' positions are on the map)
+    const boss = alive.find((e) => e.cfg.boss && e.state === 'combat');
     u.boss.classList.toggle('on', !!boss);
     if (boss) { u.bossName.textContent = this.def.bossName; u.bossBar.style.width = Math.max(0, boss.hp / boss.cfg.hp) * 100 + '%'; }
     // crosshair
@@ -555,6 +945,50 @@ class Game {
     this.hitT = Math.max(0, this.hitT - dt); u.hit.style.opacity = Math.min(1, this.hitT * 8);
     this.dmgT = Math.max(0, this.dmgT - dt); u.dmg.style.opacity = Math.min(1, this.dmgT * 2);
     if (this.msgT > 0) { this.msgT -= dt; if (this.msgT <= 0) u.msg.classList.remove('on'); }
+    this.map.update(dt, this.input);
+    this.arc.update();
+    this.healthBars(alive); this.mateTag();
+  }
+  /** A small health bar over each enemy who was hit in the last few seconds (and over the other player of a duel while hurt), if in sight. */
+  /** Online: each team-mate's name, distance and health over his head, seen through walls; at the edge of the screen when he is out of view. */
+  mateTag() {
+    const D = this.duel, box = this.ui.mate, tags = (this._tags ||= new Map());
+    const mates = this.state === 'play' && D && D.cfg && D.phase === 'play' ? D.mates().filter((R) => R.net) : [];
+    for (const [id, el] of tags) if (!mates.some((R) => R.pid === id)) { el.remove(); tags.delete(id); }
+    const P = this.player;
+    for (const R of mates) {
+      let el = tags.get(R.pid); if (!el) { el = document.createElement('div'); el.className = 'matetag'; box.appendChild(el); tags.set(R.pid, el); }
+      const d = Math.hypot(R.pos.x - P.pos.x, R.pos.z - P.pos.z);
+      const v = this._v.set(R.pos.x, R.pos.y + 2.2 - 0.5 * (R.duck || 0), R.pos.z).project(this.gfx.camera);
+      let x = v.x, y = v.y, off = false;
+      if (v.z > 1) { x = -x; y = -y; off = true; if (Math.abs(x) + Math.abs(y) < 1e-3) y = -1; }   // behind: to the edge, on his side
+      const m = Math.max(Math.abs(x) / 0.93, Math.abs(y) / 0.86);
+      if (off || m > 1) { x /= Math.max(m, 1e-6); y /= Math.max(m, 1e-6); off = true; }
+      el.style.left = (x * 0.5 + 0.5) * innerWidth + 'px'; el.style.top = (-y * 0.5 + 0.5) * innerHeight + 'px';
+      el.classList.toggle('off', off); el.classList.toggle('down', !R.alive);
+      const key = R.name + '|' + Math.round(d) + '|' + Math.round(R.hp) + R.alive;
+      if (el.dataset.k !== key) { el.dataset.k = key; el.innerHTML = `<b>${esc(R.name)}</b><span>${R.alive ? Math.round(d) + ' m' : 'down'}</span><i><u style="width:${Math.max(0, Math.min(100, R.hp / (R.maxHp || 100) * 100))}%"></u></i>`; }
+    }
+  }
+  healthBars(alive) {
+    const cam = this.gfx.camera, P = this.player, W = this.world, box = this.ui.bars, w = innerWidth, h = innerHeight;
+    let n = 0;
+    const eagle = P.skillOn('eagle');                      // the skill: every enemy near enough is marked, walls or not
+    for (const e of alive) {
+      if (e.state === 'hidden') continue;
+      const top = e.pos.y + 2.05 * (e.scale || 1) + (e.cfg.rider ? 0.9 : 0), d = Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z);
+      const mark = eagle && d < 90 && !this.friend(e);
+      if (!mark && (!(e.hurtT < 4 || (e.remote && e.hp < e.maxHp)) || d > 70)) continue;
+      const v = this._v.set(e.pos.x, top, e.pos.z).project(cam);
+      if (v.z > 1 || Math.abs(v.x) > 1 || Math.abs(v.y) > 1 || (!mark && !W.clear(P.pos.x, P.pos.y + 1.6, P.pos.z, e.pos.x, top - 0.3, e.pos.z))) continue;
+      let el = this.bars[n];
+      if (!el) { el = this.bars[n] = document.createElement('div'); el.className = 'hb'; el.innerHTML = '<i></i>'; box.appendChild(el); }
+      el.style.display = 'block'; el.classList.toggle('eg', mark); el.style.left = (v.x * 0.5 + 0.5) * w + 'px'; el.style.top = (-v.y * 0.5 + 0.5) * h + 'px';
+      el.style.opacity = e.remote || mark ? 1 : Math.min(1, (4 - e.hurtT) * 2);
+      el.firstChild.style.width = Math.max(0, Math.min(1, e.hp / e.maxHp)) * 100 + '%';
+      n++;
+    }
+    for (let i = n; i < this.bars.length; i++) this.bars[i].style.display = 'none';
   }
 
   frame(now) {
@@ -574,6 +1008,8 @@ class Game {
     this.time += dt;
     this.flashLight.intensity = Math.max(0, this.flashLight.intensity - real * 700);
     if (this.duel) this.duel.tick(real);
+    this.voice.update(this.input);
+    this.map.setPinsVisible(this.state === 'play');
     if (this.state === 'title' || this.state === 'intro' || this.state === 'duel') {
       this.cineT += real;
       P.vm.visible = false;
@@ -611,7 +1047,7 @@ class Game {
   /** Debug (?kit): every shared piece of furniture and every bystander look in three rows beside the place where the player starts. */
   kitDemo() {
     const W = this.world, B = new Builder(W), M = this.M, root = this.gfx.root, P = this.player.pos, x0 = P.x - 14, z0 = P.z, y = W.height(P.x, P.z);
-    const looks = ['westWoman', 'westMan', 'japanWoman', 'japanMan', 'swissWoman', 'swissMan', 'greekWoman', 'greekMan', 'norseWoman', 'norseMan', 'frenchWoman', 'frenchMan', 'cure', 'russianWoman', 'russianMan', 'orthodoxPriest', 'tibetWoman', 'nepalWoman', 'tibetMan', 'nun', 'monk', 'mexicaWoman', 'mexicaMan'];
+    const looks = ['westWoman', 'westMan', 'japanWoman', 'japanMan', 'swissWoman', 'swissMan', 'greekWoman', 'greekMan', 'norseWoman', 'norseMan', 'frenchWoman', 'frenchMan', 'cure', 'russianWoman', 'russianMan', 'tibetWoman', 'nepalWoman', 'pilgrimWoman', 'tibetMan', 'nun', 'monk', 'mexicaWoman', 'mexicaMan'];
     looks.forEach((k, i) => { K.person(B, M, root, k, x0 + i * 1.25, y, z0 - 4, 0); K.person(B, M, root, k, x0 + i * 1.25, y, z0 - 6.5, 0.5, { pose: ['talk', 'carry', 'work', 'pray', 'point', 'hips', 'cheer'][i % 7] }); });
     let x = x0;
     K.table(B, M, x, y, z0 - 9); K.bench(B, M, x, y, z0 - 8.2); K.person(B, M, root, 'westWoman', x - 0.4, y, z0 - 8.2, 0, { pose: 'sit', seat: 0.45 }); K.person(B, M, root, 'norseMan', x + 1.6, y, z0 - 8.4, 0, { pose: 'sit', seat: 0 }); x += 3.4;

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, windify } from '../gfx.js';
 import { signTexture } from '../tex.js';
-import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, ladder, den, beast, rod, rubble, table, bench, bed, chest, sacks, rug, cart, woodpile, person, idle, local } from '../props.js';
+import { instanced, fence, barrel, crate, room, bars, steps, shelf, tuftGeo, cactusGeo, horseGeo, gBox, gCyl, gCone, gSph, xf, merge, butte, ladder, den, beast, rod, rubble, table, bench, bed, chest, sacks, rug, cart, woodpile, person, idle, local, animal } from '../props.js';
 import { fbm, vnoise, smooth } from '../util.js';
 
 export const west = {
@@ -219,7 +219,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.box(M.woodH, 1.4, 1.2, 0.12, 23.2, F + 1.0, -15.5, { c: 0x4a2c1c }); for (let i = 0; i < 3; i++) B.cyl(M.metal, 0.018, 0.018, 1.0, 22.8 + i * 0.4, F + 1.05, -15.4, { c: 0x2a2a2e, seg: 5 });
     // livery stable: stalls, hay, a horse
     for (const sz of [-11.5, -14.5, -17.5]) B.box(M.wood, 3.2, 1.35, 0.14, -43.9, F, sz, { c: 0x6a4a30, solid: true });
-    B.geo(M.flat, horseGeo(0x3a2a1c, 0x14100c), [-43.6, F, -13], [0, 1.57, 0]); beast(world, -43.6, -13, 1.57, 0.9, 2.8, F, 2.2, 0.25);
+    animal(B, M, root, 'horse', horseGeo(0x3a2a1c, 0x14100c), -43.6, F, -13, 1.57, { coat: 0x3a2a1c, box: [0.9, 2.8, 2.2 - F, 0.25] });
     for (const [hx, hz, hy] of [[-35.4, -18.6, 0], [-36.9, -18.6, 0], [-36.1, -18.6, 0.8], [-35.3, -10.2, 0]]) B.box(M.thatch, 1.5, 0.8, 0.9, hx, F + hy, hz, { c: 0xd8b860, solid: true });
     B.box(M.woodH, 0.5, 0.9, 1.6, -38.6, F, -18.8, { c: 0x5a3a24, solid: true }); B.box(M.cloth, 0.56, 0.2, 0.7, -38.6, F + 0.9, -18.8, { c: 0x6a3420 });
     // blacksmith: forge, anvil, tools
@@ -369,8 +369,16 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const [lx, lz] of [[0.92, 1.1], [-0.92, 1.1], [0.92, -1.1], [-0.92, -1.1]]) { const [wx, wz] = P(lx, lz); B.geo(M.flat, wheel(), [wx, 0.67, wz], [0, ry, 0]); }
     const [tx, tz] = P(0, 2.9); B.box(M.wood, 0.1, 0.1, 2.6, tx, 0.62, tz, { ry, rx: 0.2, c: 0x5a3a24 });
     if (cover) {
-      const g = new THREE.CylinderGeometry(0.95, 0.95, 3.3, 14, 1, true, 0, Math.PI);
-      B.geo(M.cloth, g, [x, 1.3, z], [Math.PI / 2, ry + Math.PI / 2, 0], [1, 1, 1.25], 0xe0d6c0);
+      // a prairie schooner: a canvas bonnet stretched lengthwise over five bent wooden bows, open at both ends, laced to the sides of the bed
+      const g = new THREE.CylinderGeometry(0.86, 0.86, 3.2, 18, 1, true, Math.PI / 2, Math.PI); g.rotateX(Math.PI / 2);
+      B.geo(M.cloth, g, [x, 1.38, z], [0, ry, 0], [1, 1.12, 1], 0xe8e0cc);
+      for (let i = 0; i < 5; i++) {
+        const lz = -1.55 + i * 0.775, [bx, bz] = P(0, lz), bow = new THREE.TorusGeometry(0.885, 0.028, 4, 16, Math.PI);
+        B.geo(M.wood, bow, [bx, 1.38, bz], [0, ry, 0], [1, 1.12, 1], 0x6a4a2e);
+      }
+      for (const e of [-1, 1]) { const [ex, ez] = P(0, e * 1.6), puck = new THREE.TorusGeometry(0.5, 0.05, 5, 14, Math.PI); B.geo(M.cloth, puck, [ex, 1.38, ez], [0, ry, 0], [1.6, 1.9, 1], 0xd8d0bc); }   // the drawn-in canvas at the ends
+      const [sx, sz] = P(0, 1.3); B.box(M.woodH, 1.5, 0.12, 0.5, sx, 1.42, sz, { ry, c: 0x5a3a24 });                                                   // the driver's seat under the front bow
+      for (const a of [-1, 1]) { const [rx, rz] = P(a * 0.8, 0); B.box(M.cloth, 0.04, 0.05, 3.2, rx, 1.36, rz, { ry, c: 0x8a7a5a }); }                  // the lacing along the bed
     }
     world.addBox(x, z, 2.0, 3.6, ry, 0, cover ? 2.4 : 1.4);
   };
@@ -463,7 +471,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   {
     fence(B, M, -80, 4, -54, 4); fence(B, M, -80, 22, -54, 22); fence(B, M, -80, 4, -80, 22); fence(B, M, -54, 4, -54, 9.5); fence(B, M, -54, 13.5, -54, 22);
     const horses = [[-70, 12, 0.6, 0x6a4428], [-63, 17, 2.4, 0x2a1c14], [-74, 18, -1.2, 0xb8a080], [-60, 8, 3.6, 0x8a5a36]];
-    for (const [hx, hz, ry, c] of horses) { B.geo(M.flat, horseGeo(c, c === 0xb8a080 ? 0xe8e0d0 : 0x14100c), [hx, 0, hz], [0, ry, 0]); beast(world, hx, hz, ry, 0.9, 2.8, 0, 2, 0.25); }
+    for (const [hx, hz, ry, c] of horses) animal(B, M, root, 'horse', horseGeo(c, c === 0xb8a080 ? 0xe8e0d0 : 0x14100c), hx, 0, hz, ry, { coat: c, box: [0.9, 2.8, 2, 0.25] });
     for (const [hx, hz, ry] of [[-77, 6, 0.2], [-76.4, 7.4, 1.2], [-77.2, 6.4, 0.4]]) B.box(M.thatch, 1.5, 0.8, 0.9, hx, hz === 6.4 ? 0.8 : 0, hz, { ry, c: 0xd8b860, solid: true });
     B.box(M.woodH, 2.6, 0.55, 0.8, -56, 0, 19, { c: 0x6a5038, solid: true }); B.box(M.glow, 2.3, 0.02, 0.5, -56, 0.54, 19, { c: 0x1a3a44 });
     // barn
@@ -570,8 +578,8 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
       { const [px, pz] = P(0.98, 0.95); B.box(M.wood, 0.75, 2.0, 0.06, px, 0, pz, { ry: ry + 0.6, c }); }
       { const [px, pz] = P(0, 0.68); B.box(M.wood, 1.3, 0.22, 0.08, px, 1.98, pz, { ry, c }); }
     };
-    const hen = (x, z, ry, c) => { B.geo(M.flat, new THREE.SphereGeometry(0.13, 8, 6), [x, 0.2, z], [0, ry, 0], [0.8, 0.9, 1.25], c); B.geo(M.flat, new THREE.SphereGeometry(0.06, 6, 5), [x + Math.sin(ry) * 0.15, 0.36, z + Math.cos(ry) * 0.15], [0, 0, 0], 1, c);
-      B.box(M.flat, 0.02, 0.05, 0.05, x + Math.sin(ry) * 0.15, 0.4, z + Math.cos(ry) * 0.15, { ry, c: 0xb01c1c }); B.geo(M.flat, new THREE.ConeGeometry(0.02, 0.06, 4), [x + Math.sin(ry) * 0.22, 0.35, z + Math.cos(ry) * 0.22], [Math.PI / 2, ry, 0], 1, 0xd8a030); };
+    const henGeo = merge([gSph(0.13, 0xffffff, [0, 0.2, 0], [0.8, 0.9, 1.25], 8), gSph(0.06, 0xffffff, [0, 0.36, 0.15], 1, 6), gBox(0.02, 0.05, 0.05, 0xb01c1c, [0, 0.4, 0.15]), gCone(0.02, 0.06, 0xd8a030, [0, 0.35, 0.22], [Math.PI / 2, 0, 0], 1, 4)]);
+    const hen = (x, z, ry, c) => animal(B, M, root, 'hen', henGeo, x, 0, z, ry, { c, box: [0.25, 0.4, 0.45, 0.05] });
     // north lot: washing on the line and the woman hanging it, a hay cart to crawl under, firewood, the saloon's privy, a hen house
     for (const px of [-33.5, -27]) { B.box(M.wood, 0.1, 2.1, 0.1, px, 0, -24.5, { c: 0x6a4a30 }); world.addCyl(px, -24.5, 0.1, 0, 2.1); }
     rod(B, M.flat, [-33.5, 2.0, -24.5], [-27, 2.0, -24.5], 0.012, 0xc8b890);
@@ -636,7 +644,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     { const [px, pz] = P(0, 1.2); B.box(M.woodH, 1.3, 0.4, 0.5, px, C.top + 0.5, pz, { ry: cy, c: 0x2a1c14 }); }
     for (const [lz, w, c] of [[-0.6, 0.9, 0x6a4a2e], [0.3, 0.7, 0x4a3a2a]]) { const [px, pz] = P(0, lz); B.box(M.woodH, w, 0.4, 0.55, px, C.top + 1.53, pz, { ry: cy + 0.2, c }); }
     crate(B, M, 65.6, 0, 11.4, 0.9, 0.2); crate(B, M, 66.5, 0, 11.5, 0.7, -0.2); crate(B, M, 65.8, 0.9, 11.4, 0.6, 0.5); barrel(B, M, 61.4, 0, 11.8);
-    hitch(70, 13.6); for (const [hx, c] of [[69.3, 0x6a4428], [70.8, 0x2a1c14]]) { B.geo(M.flat, horseGeo(c, 0x14100c), [hx, 0, 12], [0, 0.1, 0]); beast(world, hx, 12, 0.1, 0.9, 2.8, 0, 2, 0.25); }
+    hitch(70, 13.6); for (const [hx, c] of [[69.3, 0x6a4428], [70.8, 0x2a1c14]]) animal(B, M, root, 'horse', horseGeo(c, 0x14100c), hx, 0, 12, 0.1, { coat: c, box: [0.9, 2.8, 2, 0.25] });
   }
   // ---- the railroad north of town: the track, a freight dock high enough to crawl under, a boxcar to walk through and climb, the station house ----
   {
@@ -706,13 +714,61 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     tub(-72.5, 46); tub(-87.4, 46);
     crate(B, M, -91.2, 0, 48.2, 0.8, 0.2); barrel(B, M, -91.3, 0, 44); rubble(B, M, -87, 0, 48.2, 0.8, 0x8a8a92, 5); B.box(M.wood, 0.04, 0.9, 0.04, -91.75, 0, 45.3, { rz: 0.3, c: T }); B.box(M.metal, 0.05, 0.05, 0.44, -91.9, 0.84, 45.3, { c: 0x3a3e44 });
     rubble(B, M, -70.5, 0, 50.5, 1.8, 0x9a7a6a); rubble(B, M, -73, 0, 41, 1.3, 0x9a7a6a); woodpile(B, M, -74, 0, 49.4, Math.PI / 2, { w: 1.4, h: 0.8, d: 3 });
-    B.geo(M.flat, horseGeo(0x5a4a3a, 0x1c1410), [-68, 0, 46.5], [0, 2, 0], 0.85); beast(world, -68, 46.5, 2, 0.8, 2.4, 0, 1.8, 0.2);
+    animal(B, M, root, 'mule', horseGeo(0x5a4a3a, 0x1c1410), -68, 0, 46.5, 2, { s: 0.85, coat: 0x5a4a3a, box: [0.95, 2.8, 2.1, 0.25] });
     extraFoes.push(['bandit', -88.4, 47.2, { y: 0.5, patrol: false, yaw: Math.PI / 2 }], ['cowboy', -70, 43, {}]); extraPicks.push([-90.6, 47.2, 0.5]);
   }
   // ---- people about the edges of town: the preacher at his altar, the gravedigger at the open grave, the homesteader's wife sweeping her porch ----
   who('westMan', 62, 0.06, -31.4, Math.PI, { pose: 'pray', over: { hat: null, shirt: 0x1c1c20, pants: 0x1c1c20, extras: ['coat', 'collar'], coat: 0x1c1c20 } });
   who('westMan', 64, 0, 39.1, Math.PI, { pose: 'hips', over: { hat: 'fedora', hatC: 0x3a342c } });
   who('westWoman', -36.8, 0.14, 34, Math.PI, { pose: 'work' }); B.cyl(M.wood, 0.015, 0.015, 1.3, -36.8, 0.14, 33.52, { rx: -0.25, c: 0x8a6a44, seg: 5 }); B.box(M.thatch, 0.3, 0.2, 0.08, -36.8, 0.14, 33.35, { c: 0xc8a850 });
+
+  // ---- the mission south-west of town: a white church in the Spanish manner of the missions of the Sonoran desert, two bell towers,
+  //      a carved portal of red-brown plaster between them, a dome over the sanctuary. The door stands open: a nave with pews, a gilded
+  //      altarpiece, candles; a priest and a woman at prayer ------------------------------------------------------------------------
+  {
+    const x = -40, z = -46, ry = 0.716, y = world.height(x, z), P = local(x, z, ry), WH = 0xf2ece0, PORT = 0x9a5a3a, GOLD = 0xc8962a;
+    const at = (lx, ly, lz) => { const [a, b] = P(lx, lz); return [a, y + ly, b]; };
+    const box = (mat, w, h, d, lx, ly, lz, c, solid = true) => { const [a, , b] = at(lx, 0, lz); B.box(mat, w, h, d, a, y + ly, b, { ry, c, solid }); };
+    room(B, M, x, y, z, { w: 9, d: 20, h: 7.5, t: 0.5, ry, mat: M.plaster, c: WH, base: 0.4, doors: [{ side: 's', at: 0, w: 2.4, h: 3.6 }],
+      wins: [{ side: 'e', at: -4, w: 0.9, y: 4.2, h: 1.6 }, { side: 'e', at: 3, w: 0.9, y: 4.2, h: 1.6 }, { side: 'w', at: -4, w: 0.9, y: 4.2, h: 1.6 }, { side: 'w', at: 3, w: 0.9, y: 4.2, h: 1.6 }],
+      floor: { mat: M.stone, c: 0xc8a888 }, ceil: { mat: M.plaster, c: 0xe8dcc4 } });
+    // the front: a wide wall with the door, the two towers, a stepped crest with a cross
+    const FZ = 10.5;
+    box(M.plaster, 7.8, 10.5, 1.0, -5.1, 0, FZ, WH); box(M.plaster, 7.8, 10.5, 1.0, 5.1, 0, FZ, WH); box(M.plaster, 2.4, 6.9, 1.0, 0, 3.6, FZ, WH);
+    box(M.plaster, 5.2, 1.0, 1.0, 0, 10.5, FZ, WH); box(M.plaster, 3.0, 1.0, 1.0, 0, 11.5, FZ, WH); box(M.plaster, 1.2, 0.9, 0.9, 0, 12.5, FZ, WH);
+    box(M.flat, 0.16, 1.4, 0.16, 0, 13.4, FZ, 0x3a2a1c, false); box(M.flat, 0.8, 0.16, 0.16, 0, 14.2, FZ, 0x3a2a1c, false);
+    for (const s of [-1, 1]) {
+      box(M.plaster, 3.8, 12.2, 3.8, s * 7.4, 0, FZ - 0.9, WH);                                                   // a tower: its base
+      box(M.plaster, 4.2, 0.35, 4.2, s * 7.4, 12.2, FZ - 0.9, WH, false);                                       // the cornice
+      for (const ox of [-1.2, 1.2]) for (const oz of [-1.2, 1.2]) box(M.plaster, 0.7, 2.6, 0.7, s * 7.4 + ox, 12.55, FZ - 0.9 + oz, WH);   // the belfry: four piers, open between them
+      box(M.flat, 1.7, 2.6, 1.7, s * 7.4, 12.55, FZ - 0.9, 0x2a2218, false);                                     // and the dark within, where the bell hangs
+      box(M.plaster, 3.4, 0.3, 3.4, s * 7.4, 15.15, FZ - 0.9, WH, false);
+      B.geo(M.plaster, new THREE.SphereGeometry(1.45, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2), at(s * 7.4, 15.45, FZ - 0.9), [0, 0, 0], 1, WH);   // the dome on the tower
+      box(M.plaster, 0.5, 0.7, 0.5, s * 7.4, 16.85, FZ - 0.9, WH, false); box(M.flat, 0.09, 0.9, 0.09, s * 7.4, 17.55, FZ - 0.9, 0x3a2a1c, false); box(M.flat, 0.5, 0.09, 0.09, s * 7.4, 18.0, FZ - 0.9, 0x3a2a1c, false);
+      for (const [ox, oz] of [[0, 0.86], [0, -0.86], [0.86, 0], [-0.86, 0]]) B.cyl(M.metal, 0.26, 0.4, 0.6, ...at(s * 7.4 + ox, 13.2, FZ - 0.9 + oz), { c: 0x8a6a3a, seg: 10 });   // the bell, seen in each opening
+    }
+    // the carved portal: red-brown plaster round the door, pilasters in two storeys, niches with saints, a window for the choir
+    const PZ = FZ + 0.62;
+    box(M.plaster, 1.9, 9.2, 0.24, -2.15, 0, PZ, PORT, false); box(M.plaster, 1.9, 9.2, 0.24, 2.15, 0, PZ, PORT, false); box(M.plaster, 2.4, 5.6, 0.24, 0, 3.6, PZ, PORT, false);
+    for (const lx of [-2.8, -1.5, 1.5, 2.8]) for (const [ly, h] of [[0, 4.2], [4.6, 3.6]]) box(M.plaster, 0.3, h, 0.2, lx, ly, PZ + 0.2, 0xb87a52, false);
+    for (const ly of [4.2, 8.2]) box(M.plaster, 6.2, 0.4, 0.34, 0, ly, PZ + 0.1, 0xb87a52, false);
+    for (const s of [-1, 1]) { box(M.flat, 0.7, 1.3, 0.1, s * 2.15, 5.2, PZ + 0.13, 0x3a2418, false); box(M.flat, 0.34, 0.9, 0.1, s * 2.15, 5.3, PZ + 0.2, 0xd8c8b0, false); }   // the niches and their saints
+    box(M.flat, 1.0, 1.4, 0.1, 0, 5.6, PZ + 0.13, 0x2a1c14, false); box(M.plaster, 3.2, 0.9, 0.24, 0, 8.6, PZ, PORT, false); box(M.plaster, 1.4, 0.7, 0.24, 0, 9.5, PZ, PORT, false);
+    for (const s of [-1, 1]) { const [a, , b] = at(s * 1.75, 0, FZ + 0.9); B.box(M.woodH, 1.2, 3.5, 0.12, a, y, b, { ry: ry + s * 1.25, c: 0x5a3a22 }); }   // the doors, standing open
+    // the dome over the sanctuary, on a drum
+    B.cyl(M.plaster, 3.3, 3.3, 1.8, ...at(0, 7.6, -5.5), { c: WH, seg: 18 });
+    B.geo(M.plaster, new THREE.SphereGeometry(3.3, 18, 9, 0, Math.PI * 2, 0, Math.PI / 2), at(0, 9.4, -5.5), [0, 0, 0], 1, WH);
+    B.cyl(M.plaster, 0.55, 0.55, 0.9, ...at(0, 12.6, -5.5), { c: WH, seg: 8 }); box(M.flat, 0.1, 1.0, 0.1, 0, 13.5, -5.5, 0x3a2a1c, false); box(M.flat, 0.55, 0.1, 0.1, 0, 14.0, -5.5, 0x3a2a1c, false);
+    for (const s of [-1, 1]) for (const lz of [-9, -2, 5]) box(M.plaster, 0.7, 6.0, 1.1, s * 4.9, 0, lz, WH);       // buttresses along the sides
+    // inside: the altarpiece, the altar and its candles, pews on both sides of the aisle
+    box(M.flat, 6.6, 6.4, 0.4, 0, 0, -9.45, GOLD); box(M.flat, 5.2, 5.4, 0.12, 0, 0.6, -9.2, 0x9a2a1c, false);
+    for (const lx of [-1.8, 0, 1.8]) for (const ly of [1.3, 3.6]) { box(M.flat, 1.1, 1.6, 0.1, lx, ly, -9.12, 0x6a4a1a, false); box(M.flat, 0.4, 1.1, 0.1, lx, ly + 0.2, -9.05, 0xe8d8c0, false); }
+    box(M.stone, 2.6, 1.0, 1.0, 0, 0, -7.9, 0xe8e0d0); box(M.cloth, 2.7, 0.04, 1.1, 0, 1.0, -7.9, 0xf4f0e6, false);
+    for (const lx of [-1.0, 1.0]) { const [a, b, c2] = at(lx, 1.04, -7.9); B.cyl(M.flat, 0.03, 0.03, 0.34, a, b, c2, { c: 0xe8e0c8, seg: 5 }); B.geo(M.glow, new THREE.SphereGeometry(0.045, 5, 4), [a, b + 0.4, c2], [0, 0, 0], [1, 1.6, 1], 0xffb040); }
+    for (const s of [-1, 1]) for (let i = 0; i < 5; i++) { const [a, , b] = at(s * 2.3, 0, -4.5 + i * 2.2); bench(B, M, a, y, b, ry, { w: 2.8, c: 0x6a4a2e }); }
+    { const [a, b] = P(0.6, -7.0); who('cure', a, y, b, ry + Math.PI, { pose: 'pray', over: { shirt: 0x5a3a24, sleeve: 0x5a3a24, pants: 0x5a3a24 } }); }   // a friar in his brown habit
+    { const [a, b] = P(-2.3, -4.0); who('westWoman', a, y, b, ry + Math.PI, { pose: 'pray' }); }
+  }
 
   // ---- far mesas ----------------------------------------------------------------------
   const mesa = (x, z, rx, rz, h, ry) => {
@@ -730,7 +786,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
   mesa(-170, -60, 22, 18, 38, 0.6); mesa(190, 30, 20, 26, 34, 1.4); mesa(-140, 120, 18, 22, 30, 0.2);
 
   // ---- vegetation and rocks ----------------------------------------------------------
-  const built = (x, z) => (x > -99 && x < -64 && z > 35 && z < 58) || (x > -9 && x < 35 && z > -53 && z < -40) || (x > 58 && x < 73 && z > 5 && z < 19) || (z > -52 && z < -48);      // the mine, the depot, the stage station, the track
+  const built = (x, z) => Math.hypot(x + 40, z + 46) < 17 || (x > -99 && x < -64 && z > 35 && z < 58) || (x > -9 && x < 35 && z > -53 && z < -40) || (x > 58 && x < 73 && z > 5 && z < 19) || (z > -52 && z < -48);      // the mine, the depot, the stage station, the track
   const openLand = (x, z) => (Math.abs(z) > 27 || Math.abs(x) > 92) && !built(x, z) && !(x > 54 && x < 86 && z < -14 && z > -40) && !(x < -60 && x > -80 && z < -8 && z > -32)
     && !(x > 42 && x < 74 && z > 23 && z < 54) && !(x > -49 && x < -27 && z > 27 && z < 47);
   const cacti = [], rocks = [], sage = [], tufts = [];
@@ -748,7 +804,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     for (const L of [cacti, rocks, sage, tufts]) for (const it of L) if (inB(it.x, it.z)) it.s = 0;
     world.cyls = world.cyls.filter((c) => !inB(c.x, c.z)); }
   root.add(instanced(cactusGeo(), M.flat, cacti));
-  root.add(instanced(rockGeo(3, 1), M.rock, rocks));
+  root.add(instanced(rockGeo(3, 1), M.rock, rocks, { solid: true }));
   root.add(instanced(new THREE.IcosahedronGeometry(1, 1), M.rock, sage, { cast: true }));
   const grassMat = windify(M.flat2.clone(), shared, 0.22, 1, 2.2);
   root.add(instanced(tuftGeo(7, 0xb89a60, 0xffffff), grassMat, tufts, { cast: false, thin: true }));

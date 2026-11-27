@@ -5,6 +5,7 @@
 //              for walking, bullets and enemy line of sight.
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { TriBVH } from './bvh.js';
 import { clamp } from './util.js';
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler();
@@ -122,19 +123,67 @@ export function rockGeo(seed = 1, detail = 1) {
 // ---------------------------------------------------------------------------
 
 export class Builder {
-  constructor(world) { this.world = world; this.parts = new Map(); }
+  constructor(world) { this.world = world; this.parts = new Map(); this.cur = null; this.stack = []; this.order = []; this.noTrinkets = 0; }
 
   add(mat, geo) {
     let a = this.parts.get(mat);
     if (!a) this.parts.set(mat, (a = []));
     a.push(geo);
+    if (this.cur) geo.userData.piece = this.cur;
+    else if (!this.noTrinkets && !mat.userData.noTrinket) this.order.push({ geo, mat });     // may turn out to be a small thing that breaks at a touch (see trinkets)
     return this;
   }
+  /**
+   * Small things the levels put about (bottles, cups, lamps, books, tools, signs, ornaments), merged into the world like everything
+   * else: every shape no bigger than about 30 cm across that has no collider of its own becomes a breakable "trinket", grouped with the
+   * shapes added just before it that touch it (the parts of one lamp). A trinket has no collider: shots, blows and blasts find it by its
+   * bounding sphere (see Havoc.trinketsAlong), and it breaks at the first touch.
+   */
+  trinkets() {
+    const W = this.world, groups = [];
+    let g = null;
+    for (const { geo, mat } of this.order) {
+      if (geo.userData.piece || geo.userData.solid) { g = null; continue; }
+      geo.computeBoundingSphere(); const bs = geo.boundingSphere;
+      if (!bs || bs.radius > 0.32 || bs.radius < 0.01) { g = null; continue; }
+      if (g && g.c.distanceTo(bs.center) < g.r + bs.radius + 0.05 && g.r < 0.42) { g.list.push(geo); const d = g.c.distanceTo(bs.center); g.r = Math.max(g.r, d + bs.radius); g.wood = g.wood || mat.userData.breakable === 'wood'; }
+      else { g = { list: [geo], c: bs.center.clone(), r: bs.radius, wood: mat.userData.breakable === 'wood' }; groups.push(g); }
+    }
+    for (const t of groups) {
+      const col = t.list[0].attributes.color, cc = col ? new THREE.Color(col.array[0], col.array[1], col.array[2]) : new THREE.Color(0x888888);
+      const p = { id: W.pieces.length, hp: 1, hp0: 1, kind: t.wood ? 'wood' : 'clay', boom: false, color: cc.getHex(), x: t.c.x, y: t.c.y - t.r, z: t.c.z, r: t.r, top: t.c.y + t.r, cy: t.c.y, ranges: [], cols: [], broken: false, trinket: true };
+      W.pieces.push(p); W.trinkets.push(p);
+      for (const q of t.list) q.userData.piece = p;
+    }
+    this.order = [];
+  }
+  /**
+   * A thing that can be shot to pieces (a crate, a barrel, a jar). Everything added until endPiece() belongs to it: its shapes still go into
+   * the big merged meshes (no extra draw calls), and the piece remembers where they lie in them, so that they can be made to vanish.
+   * o: { hp, kind: 'wood' | 'clay' | 'straw' | 'cloth', boom (explodes), color, x, y, z, r (radius), top (height of its top),
+   *      sweep: { hw, hd, ry } (a table top: what lies on it, merged into the world by the level, goes when it breaks) }
+   * Pieces may nest (the crates loaded on a cart are pieces of their own): endPiece() returns to the one around it.
+   */
+  piece(o) {
+    const W = this.world, p = { id: W.pieces.length, hp: 40, kind: 'wood', boom: false, color: 0x8a623a, ...o, ranges: [], cols: [], broken: false };
+    p.hp0 = p.hp;
+    W.pieces.push(p); this.stack.push(this.cur); this.cur = W.curPiece = p;
+    return p;
+  }
+  endPiece() { this.cur = this.world.curPiece = this.stack.pop() || null; }
   /** Box with (x,y,z) = centre of its BASE. o: {ry, rx, rz, c (colour), solid} */
   box(mat, w, h, d, x, y, z, o = {}) {
-    const g = boxGeo(w, h, d, mat.userData.tile || 1);
-    this.add(mat, xf(g, [x, y + h / 2, z], [o.rx || 0, o.ry || 0, o.rz || 0], 1, o.c ?? 0xffffff));
+    // A door or a panel of wood, upright and door-sized, that a level left without a collider (a door standing open beside its
+    // opening, a closed one in a doorway, a screen): it is solid now, and can be broken like a wooden wall.
+    if (!o.solid && !this.cur && mat.userData.breakable && !o.rx && !o.rz && h >= 1.7 && h <= 3.2 && Math.min(w, d) <= 0.16 && Math.max(w, d) >= 0.55 && Math.max(w, d) <= 2.2) o = { ...o, solid: true, door: true };
+    // a wall or a door of wood, paper or bamboo (upright, thin, solid) can be broken through: it is a piece of its own. Stone and plaster stand.
+    const wall = o.solid && !this.cur && mat.userData.breakable && h >= 1.0 && Math.min(w, d) <= 0.5 && Math.max(w, d) >= 0.5 && !o.rx && !o.rz;
+    if (wall) { const paper = mat.userData.breakable === 'paper'; this.piece({ hp: paper ? 25 : o.door ? 90 : clamp(Math.max(w, d) * h * 28, 110, 230), kind: paper ? 'paper' : 'wood', color: o.c ?? 0xb08a5a, x, y, z, r: Math.max(w, d) / 2, top: y + h, wall: true, door: !!o.door }); }
+    const g = xf(boxGeo(w, h, d, mat.userData.tile || 1), [x, y + h / 2, z], [o.rx || 0, o.ry || 0, o.rz || 0], 1, o.c ?? 0xffffff);
+    if (o.solid) g.userData.solid = true;
+    this.add(mat, g);
     if (o.solid) this.world.addBox(x, z, w, d, o.ry || 0, y, y + h);
+    if (wall) this.endPiece();
     return this;
   }
   /** Vertical cylinder/cone standing on (x,y,z). */
@@ -142,17 +191,30 @@ export class Builder {
     const g = new THREE.CylinderGeometry(rt, rb, h, o.seg || 10, 1, !!o.open);
     const t = mat.userData.tile || 1, uv = g.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * Math.max(1, Math.round(6.28 * Math.max(rt, rb) / t)), uv.getY(i) * h / t);
-    this.add(mat, xf(g, [x, y + h / 2, z], [o.rx || 0, o.ry || 0, o.rz || 0], 1, o.c ?? 0xffffff));
+    const q = xf(g, [x, y + h / 2, z], [o.rx || 0, o.ry || 0, o.rz || 0], 1, o.c ?? 0xffffff);
+    if (o.solid) q.userData.solid = true;
+    this.add(mat, q);
     if (o.solid) this.world.addCyl(x, z, Math.max(rt, rb), y, y + h);
     return this;
   }
   /** Any geometry. */
-  geo(mat, g, p, r, s, c) { return this.add(mat, xf(g, p, r, s, c)); }
+  geo(mat, g, p, r, s, c) {
+    const q = xf(g, p, r, s, c);
+    if (mat.userData.rocky && !this.cur) {               // a standing stone or a small rock with nothing to bump into: it gets a collider
+      q.computeBoundingBox(); const b = q.boundingBox, cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, rad = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) / 2;
+      const W = this.world;
+      if (b.max.y - b.min.y > 0.6 && rad > 0.2 && rad < 1.0 && b.max.y - W.height(cx, cz) > 0.6 && !W.cyls.some((k) => Math.abs(k.x - cx) < rad && Math.abs(k.z - cz) < rad) && !W.inBox(cx, cz, b.min.y, b.max.y - b.min.y)) W.addCyl(cx, cz, rad * 0.75, b.min.y, b.max.y);
+    }
+    return this.add(mat, q);
+  }
 
   build(parent) {
     const out = [];
+    this.trinkets();
     for (const [mat, list] of this.parts) {
       const mesh = new THREE.Mesh(merge(list), mat);
+      let at = 0;
+      for (const g of list) { const n = g.attributes.position.count; if (g.userData.piece) g.userData.piece.ranges.push({ mesh, start: at, count: n }); at += n; }
       mesh.castShadow = !mat.userData.noShadow;
       mesh.receiveShadow = !mat.userData.noShadow;
       parent.add(mesh); out.push(mesh);
@@ -168,7 +230,7 @@ export class Builder {
 /** Regular grid of terrain heights with smooth (bilinear) lookup. */
 export class Heightfield {
   constructor(size, segs, fn) {
-    this.size = size; this.segs = segs; this.n = segs + 1; this.cell = size / segs;
+    this.size = size; this.segs = segs; this.n = segs + 1; this.cell = size / segs; Heightfield.last = this;   // the chapter's ground (how far it reaches limits how large its map can be)
     this.data = new Float32Array(this.n * this.n);
     const half = size / 2;
     for (let j = 0; j < this.n; j++) for (let i = 0; i < this.n; i++)
@@ -215,11 +277,18 @@ export class World {
     this.bounds = null;            // {x0,x1,z0,z1} or {r} hard limits
     this.maxSlope = 1.15;          // steeper terrain cannot be climbed
     this.waterY = -Infinity;       // terrain below this is too deep to enter
+    this.pieces = []; this.curPiece = null;   // things that can be shot to pieces (see Builder.piece)
+    this.trinkets = [];                        // the small ones among them, which have no collider (see Builder.trinkets)
   }
   addBox(x, z, w, d, ry, y0, y1) {
-    this.boxes.push({ x, z, hw: w / 2, hd: d / 2, c: Math.cos(ry), s: Math.sin(ry), y0, y1, r: Math.hypot(w, d) / 2 });
+    const b = { x, z, hw: w / 2, hd: d / 2, c: Math.cos(ry), s: Math.sin(ry), y0, y1, r: Math.hypot(w, d) / 2 };
+    if (this.curPiece) { b.piece = this.curPiece; this.curPiece.cols.push(b); }
+    this.boxes.push(b);
+    return b;
   }
-  addCyl(x, z, r, y0, y1) { this.cyls.push({ x, z, r, y0, y1 }); }
+  addCyl(x, z, r, y0, y1) { const c = { x, z, r, y0, y1 }; if (this.curPiece) { c.piece = this.curPiece; this.curPiece.cols.push(c); } this.cyls.push(c); return c; }
+  /** Take away the colliders of a piece that has been broken. */
+  removeCols(p) { const gone = new Set(p.cols); this.boxes = this.boxes.filter((b) => !gone.has(b)); this.cyls = this.cyls.filter((c) => !gone.has(c)); }
 
   /** Height of the floor under a point for something whose feet are at feetY. */
   groundAt(x, z, feetY) {
@@ -232,12 +301,47 @@ export class World {
       const lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c;
       if (Math.abs(lx) <= b.hw + 1e-6 && Math.abs(lz) <= b.hd + 1e-6) g = b.y1;
     }
+    if (this.roofs && this.roofsOn && lim - g > 1.2) {             // the slope of a roof carries whoever lands or walks on it
+      _ro.x = x; _ro.y = lim; _ro.z = z; _rd.x = 0; _rd.y = -1; _rd.z = 0;
+      const h = this.roofs.raycast(_ro, _rd, lim - g);
+      if (h) g = lim - h.t;
+    }
     return g;
   }
 
+  /**
+   * After the meshes are merged: shots and lines of sight are stopped by what is drawn in solid-looking materials (not glass,
+   * paper, cloth, leaves or lights, and not the small things, which a shot breaks and goes through), and roofs can be stood on.
+   * meshes: the merged meshes (Builder.build); M: the material library.
+   */
+  setVisual(meshes, M) {
+    const name = new Map(Object.entries(M).map(([k, m]) => [m, k]));
+    const BLOCK = new Set(['wood', 'woodH', 'plaster', 'stone', 'shingle', 'kawara', 'thatch', 'flat', 'rock', 'metal', 'bamboo']), ROOF = new Set(['shingle', 'kawara', 'thatch']);
+    const byMesh = new Map();
+    for (const p of this.pieces) for (const r of p.ranges) { let a = byMesh.get(r.mesh); if (!a) byMesh.set(r.mesh, (a = [])); a.push([r.start, r.start + r.count, p]); }
+    for (const a of byMesh.values()) a.sort((u, v) => u[0] - v[0]);
+    const pieceAt = (mesh, vert) => { const a = byMesh.get(mesh); if (!a) return null; let lo = 0, hi = a.length - 1; while (lo <= hi) { const m = (lo + hi) >> 1; if (vert < a[m][0]) hi = m - 1; else if (vert >= a[m][1]) lo = m + 1; else return a[m][2]; } return null; };
+    const vis = [], roofs = [];
+    for (const mesh of meshes) {
+      const k = name.get(mesh.material), pos = mesh.geometry.attributes.position;
+      if (!BLOCK.has(k) || mesh.geometry.index) continue;
+      const keep = (t) => { const p = pieceAt(mesh, t * 3); return !(p && p.trinket); };
+      vis.push({ pos: pos.array, keep, mesh });
+      if (ROOF.has(k)) roofs.push({ pos: pos.array, keep: (t) => { if (!keep(t)) return false; const a = pos.array, o = t * 9; const e1x = a[o + 3] - a[o], e1y = a[o + 4] - a[o + 1], e1z = a[o + 5] - a[o + 2], e2x = a[o + 6] - a[o], e2y = a[o + 7] - a[o + 1], e2z = a[o + 8] - a[o + 2]; const nx = e1y * e2z - e1z * e2y, ny = e1z * e2x - e1x * e2z, nz = e1x * e2y - e1y * e2x; return Math.abs(ny) > 0.3 * Math.hypot(nx, ny, nz); } });
+    }
+    this.vis = vis.length ? new TriBVH(vis) : null; this.visMeshes = vis.map((v) => v.mesh); this.pieceAt = pieceAt;
+    this.roofs = roofs.length ? new TriBVH(roofs) : null; this.roofsOn = true;
+  }
+
   /** The ladder that a body at p stands in front of and faces (fx, fz = the way it looks), or null. */
+  /** Is (x, z) within the bounds of the map, m metres in from the edge? */
+  inside(x, z, m = 0) {
+    const B = this.bounds; if (!B) return true;
+    return B.r ? Math.hypot(x - (B.x || 0), z - (B.z || 0)) < B.r - m : x > B.x0 + m && x < B.x1 - m && z > B.z0 + m && z < B.z1 - m;
+  }
   ladderFor(p, fx, fz) {
     for (const L of this.ladders) {
+      if (L.stair) continue;                                     // a flight of stairs is walked, not climbed (it is listed for the enemies' routes)
       const k = (L.lean || 0) * Math.max(0, L.y1 - p.y), dx = p.x - L.x - L.nx * k, dz = p.z - L.z - L.nz * k, out = dx * L.nx + dz * L.nz, lat = dz * L.nx - dx * L.nz;   // (a leaning ladder stands further out the lower you are)
       if (out > 0.05 && out < 1.0 && Math.abs(lat) < 0.55 && p.y > L.y0 - 0.4 && p.y < L.y1 + 0.1 && -(fx * L.nx + fz * L.nz) > 0.4) return L;
     }
@@ -275,6 +379,7 @@ export class World {
     if (d < 1e-6) return true;
     const px = x0 + (dx / d) * 0.6, pz = z0 + (dz / d) * 0.6;
     const h0 = this.height(x0, z0), h1 = this.height(px, pz);
+    if (feetY !== undefined && feetY > Math.max(h0, this.waterY) + 0.4) return this.groundAt(px, pz, feetY + 0.5) - feetY < 0.55;   // up on a deck or a roof: the slope of the ground below does not matter
     if (h1 < this.waterY) {
       if (feetY !== undefined && this.groundAt(px, pz, feetY) >= this.waterY) return true;   // a bridge, a jetty or a deck carries the walker over deep water
       if (h1 < h0) return false;
@@ -325,7 +430,7 @@ export class World {
    * {t, nx, ny, nz} within `max` metres, or null.
    */
   raycast(o, d, max = 300) {
-    let best = max, nx = 0, ny = 1, nz = 0, hit = false;
+    let best = max, nx = 0, ny = 1, nz = 0, hit = false, obj = null;
     for (const b of this.boxes) {
       const ox = o.x - b.x, oz = o.z - b.z;
       const lox = ox * b.c - oz * b.s, loz = ox * b.s + oz * b.c;
@@ -360,7 +465,7 @@ export class World {
         if (t0 > t1) continue;
       }
       if (axis < 0 || t0 >= best) continue;
-      best = t0; hit = true;
+      best = t0; hit = true; obj = b;
       if (axis === 1) { nx = 0; ny = sgn; nz = 0; }
       else if (axis === 0) { nx = sgn * b.c; ny = 0; nz = -sgn * b.s; }
       else { nx = sgn * b.s; ny = 0; nz = sgn * b.c; }
@@ -376,8 +481,13 @@ export class World {
       if (t <= 0 || t >= best) continue;
       const y = o.y + d.y * t;
       if (y < c.y0 || y > c.y1) continue;
-      best = t; hit = true;
+      best = t; hit = true; obj = c;
       nx = (ox + d.x * t) / c.r; ny = 0; nz = (oz + d.z * t) / c.r;
+    }
+    // what is drawn: roofs, rocks, the sides of carts and stalls... (see setVisual)
+    if (this.vis) {
+      const h = this.vis.raycast(o, d, best);
+      if (h) { best = h.t; hit = true; nx = h.nx; ny = h.ny; nz = h.nz; const p = this.pieceAt(this.visMeshes[h.mesh], h.tri * 3); obj = p ? { piece: p } : null; }
     }
     // terrain: march, then refine
     const step = 0.7;
@@ -392,14 +502,14 @@ export class World {
             const mid = (lo + hi) / 2;
             if (o.y + d.y * mid < this.height(o.x + d.x * mid, o.z + d.z * mid)) hi = mid; else lo = mid;
           }
-          best = lo; hit = true; nx = 0; ny = 1; nz = 0;
+          best = lo; hit = true; nx = 0; ny = 1; nz = 0; obj = null;
           break;
         }
         pt = tt;
         if (tt >= best) break;
       }
     }
-    return hit ? { t: best, nx, ny, nz } : null;
+    return hit ? { t: best, nx, ny, nz, piece: obj && obj.piece && !obj.piece.broken ? obj.piece : null, person: obj && obj.person && !obj.person.dead ? obj.person : null, animal: obj && obj.animal && !obj.animal.dead ? obj.animal : null } : null;
   }
 
   /** True if nothing solid lies between two points. */
@@ -428,7 +538,6 @@ export class Nav {
     const n = this.nx * this.nz;
     this.free = new Uint8Array(n); this.hgt = new Float32Array(n); this.onT = new Uint8Array(n); this.links = new Map();
     this.g = new Float32Array(n); this.from = new Int32Array(n); this.mark = new Uint32Array(n); this.stamp = 0;
-    const p = { x: 0, y: 0, z: 0 };
     // While the grid is built, the world's colliders are swapped for the few near each cell (buckets of 4 x 4 cells):
     // every test below then looks at a handful of boxes instead of all of them.
     const allB = world.boxes, allC = world.cyls, BS = cell * 4, bnx = Math.ceil(this.nx / 4) + 1, bnz = Math.ceil(this.nz / 4) + 1, bb = new Array(bnx * bnz), bc = new Array(bnx * bnz), none = [];
@@ -438,23 +547,41 @@ export class Nav {
     };
     for (const b of allB) put(bb, b, b.r + 0.7); for (const c of allC) put(bc, c, c.r + 0.7);
     for (let j = 0; j < this.nz; j++) for (let i = 0; i < this.nx; i++) {
-      const x = this.x0 + (i + 0.5) * cell, z = this.z0 + (j + 0.5) * cell, k = j * this.nx + i, q0 = (j >> 2) * bnx + (i >> 2);
+      const q0 = (j >> 2) * bnx + (i >> 2);
       world.boxes = bb[q0] || none; world.cyls = bc[q0] || none;
-      const gy = world.height(x, z), wet = gy < world.waterY, g0 = wet ? world.waterY : gy;   // over deep water the search starts at the surface: a bridge or a deck may cross it
-      if (wet && world.groundAt(x, z, g0 + 4) < world.waterY) { this.hgt[k] = gy; continue; }   // open water
-      // find the lowest surface here on which a body fits: the ground, or a floor / step / plinth above it
-      let y = Math.max(g0, world.groundAt(x, z, g0 + 0.05)), fits = false;
-      for (let tries = 0; tries < 8; tries++) {
-        for (let q = 0; q < 8; q++) { const up = world.groundAt(x, z, y); if (up > y + 0.01) y = up; else break; }   // a walker is lifted onto anything within step height
-        p.x = x; p.y = y; p.z = z; world.collide(p, 0.25, 1.7);
-        if (!(wet && y < world.waterY + 0.02) && Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03 && !world.inBox(x, z, y, 1.7)) { fits = true; break; }   // the water surface itself is never a place to stand
-        const y2 = world.nextUp(x, z, y);
-        if (y2 - g0 > 18) break;                            // nothing higher. (A roof is found too, but with no steps up to it nothing links it to the ground.)
-        y = y2;
-      }
-      this.hgt[k] = y; this.onT[k] = !wet && y - gy < 0.03 ? 1 : 0; if (fits && !(wet && y < world.waterY + 0.02)) this.free[k] = 1;
+      this.cellAt(i, j);
     }
     world.boxes = allB; world.cyls = allC;
+  }
+  /** Work out one cell of the grid from the world's colliders: its floor height, and whether a body fits there. */
+  cellAt(i, j) {
+    const world = this.w, cell = this.cell, p = this._p || (this._p = { x: 0, y: 0, z: 0 });
+    const x = this.x0 + (i + 0.5) * cell, z = this.z0 + (j + 0.5) * cell, k = j * this.nx + i;
+    this.free[k] = 0; this.onT[k] = 0;
+    const gy = world.height(x, z), wet = gy < world.waterY, g0 = wet ? world.waterY : gy;   // over deep water the search starts at the surface: a bridge or a deck may cross it
+    if (wet && world.groundAt(x, z, g0 + 4) < world.waterY) { this.hgt[k] = gy; return; }   // open water
+    // find the lowest surface here on which a body fits: the ground, or a floor / step / plinth above it
+    let y = Math.max(g0, world.groundAt(x, z, g0 + 0.05)), fits = false;
+    for (let tries = 0; tries < 8; tries++) {
+      for (let q = 0; q < 8; q++) { const up = world.groundAt(x, z, y); if (up > y + 0.01) y = up; else break; }   // a walker is lifted onto anything within step height
+      p.x = x; p.y = y; p.z = z; world.collide(p, 0.25, 1.7);
+      if (!(wet && y < world.waterY + 0.02) && Math.abs(p.x - x) + Math.abs(p.z - z) < 0.03 && !world.inBox(x, z, y, 1.7)) { fits = true; break; }   // the water surface itself is never a place to stand
+      const y2 = world.nextUp(x, z, y);
+      if (y2 - g0 > 18) break;                            // nothing higher. (A roof is found too, but with no steps up to it nothing links it to the ground.)
+      y = y2;
+    }
+    this.hgt[k] = y; this.onT[k] = !wet && y - gy < 0.03 ? 1 : 0; if (fits && !(wet && y < world.waterY + 0.02)) this.free[k] = 1;
+  }
+  /** Something in this square (x0..x1, z0..z1) has changed (a crate shot to pieces): work its cells out again. */
+  refresh(x0, z0, x1, z1) {
+    const i0 = Math.max(0, Math.floor((x0 - this.x0) / this.cell) - 1), i1 = Math.min(this.nx - 1, Math.floor((x1 - this.x0) / this.cell) + 1);
+    const j0 = Math.max(0, Math.floor((z0 - this.z0) / this.cell) - 1), j1 = Math.min(this.nz - 1, Math.floor((z1 - this.z0) / this.cell) + 1);
+    const W = this.w, allB = W.boxes, allC = W.cyls, m = 2.5;                   // only the colliders near the square take part: a break costs no more than a few milliseconds
+    W.boxes = allB.filter((b) => b.x + b.r > x0 - m && b.x - b.r < x1 + m && b.z + b.r > z0 - m && b.z - b.r < z1 + m);
+    W.cyls = allC.filter((c) => c.x + c.r > x0 - m && c.x - c.r < x1 + m && c.z + c.r > z0 - m && c.z - c.r < z1 + m);
+    const ro = W.roofsOn; W.roofsOn = false;
+    try { for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) this.cellAt(i, j); } finally { W.boxes = allB; W.cyls = allC; W.roofsOn = ro; }
+    this.links.clear();
   }
   idx(x, z) { const i = Math.floor((x - this.x0) / this.cell), j = Math.floor((z - this.z0) / this.cell); return i < 0 || j < 0 || i >= this.nx || j >= this.nz ? -1 : j * this.nx + i; }
   /** Nearest walkable cell to a point (searches a few rings outward). */

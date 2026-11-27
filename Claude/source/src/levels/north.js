@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { Heightfield, prismGeo, rockGeo } from '../build.js';
 import { makeAmbient, makeWater, windify } from '../gfx.js';
-import { instanced, room, steps, pineGeo, drakkar, crate, brazier, barrel, gBox, gCyl, gCone, gSph, xf, merge, stand, den, table, bench, bed, chest, pots, sacks, rug, hearth, woodpile, deck, boulder, ladder, rod, beast, horseGeo, person, idle } from '../props.js';
+import { instanced, room, steps, pineGeo, drakkar, crate, brazier, barrel, gBox, gCyl, gCone, gSph, xf, merge, stand, den, table, bench, bed, chest, pots, sacks, rug, hearth, woodpile, deck, boulder, ladder, rod, beast, horseGeo, person, idle, animal } from '../props.js';
 import { fbm, ridged, smooth } from '../util.js';
 
 export const north = {
@@ -14,7 +14,7 @@ export const north = {
     { look: 'leif', name: 'Leif Erikson', who: 'Leif the Lucky, who sailed to Vinland', trait: 'The Lucky', effect: 'takes 30% less damage', mods: { armor: 0.7 }, sleeve: 0x9a9fa6, cuff: 0x1c4a8a },
     { look: 'ragnar', name: 'Ragnar Lothbrok', who: 'Legendary sea-king and raider', trait: 'Raider', effect: 'faster, harder blows with the flail', mods: { melee: 0.75, meleeDmg: 1.7, reach: 0.4 }, sleeve: 0x4a3a2a, cuff: 0x3a3028 },
   ],
-  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw an axe &nbsp; <kbd>Right mouse</kbd> swing the flail',
+  keys: '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move &nbsp; <kbd>Shift</kbd> run &nbsp; <kbd>Space</kbd> jump<br><kbd>Left mouse</kbd> throw an axe &nbsp; <kbd>Right mouse</kbd> aim (the line shows where it lands) &nbsp; <kbd>F</kbd> swing the flail',
   foes: 'raiders remain', foesNone: 'The hall is yours', bossName: 'Jarl Hrafn the Grey', bossDown: 'The grey jarl has fallen', pickupText: 'Mead  +35',
   deadTitle: 'Valhalla', deadSub: 'The valkyries lift you from the snow.', clearTitle: 'The high seat is yours',
   build,
@@ -387,10 +387,11 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     B.geo(M.thatch, new THREE.SphereGeometry(1, 10, 6), [x - 1.7, y + 2.0, z + 1.5], [0, 0, 0], [0.85, 0.6, 1.4], 0xc8a850); world.addBox(x - 1.7, z + 1.5, 1.5, 2.4, 0, y + 1.9, y + 2.5); B.geo(M.thatch, new THREE.SphereGeometry(1, 8, 6), [x - 2.0, y + 1.95, z - 2.4], [0, 0, 0], [0.55, 0.4, 0.6], 0xb89a48);
     extraPicks.push([x - 1.4, z - 1.2, y + 1.95]);
     B.box(M.woodH, 0.5, 0.5, 6.0, x - 2.3, y + 0.3, z, { c: DARKT, solid: true }); B.box(M.thatch, 0.4, 0.12, 5.8, x - 2.3, y + 0.76, z, { c: 0xc8a850 }); for (const s of [-1, 1]) B.box(M.woodH, 2.0, 1.1, 0.1, x - 1.05, y, z + s * 1.05, { c: DARKT, solid: true });
-    const ponies = [[x + 1.3, z + 1.3, Math.PI + 0.1], [-88.4, 27.7, 2.2]].map(([a, b, ry]) => { const py = world.height(a, b); beast(world, a, b, ry, 0.6, 1.9, py - 1, py + 1.3); return { x: a, y: py, z: b, ry, s: 0.75 }; });
-    root.add(instanced(horseGeo(0xc8a878, 0x2a2018), M.flat, ponies));
-    const flock = [[-84.6, 31.4, 0.4], [-80.2, 31.0, 2.1], [-79.2, 27.2, 4.0], [-83.6, 26.3, 5.2], [-76.4, 30.6, 1.2], [-87.4, 29.6, 3.0], [-81.4, 28.9, 0.9]].map(([a, b, ry], i) => { const py = world.height(a, b); beast(world, a, b, ry, 0.5, 1.0, py - 1, py + 0.85, 0); return { x: a, y: py, z: b, ry, s: 0.9 + (i % 3) * 0.1, c: [0xffffff, 0xd8d0c0, 0x8a7a68][i % 3] }; });
-    root.add(instanced(merge([gSph(0.3, 0xe6e0d0, [0, 0.56, 0], [0.9, 0.85, 1.45]), gBox(0.15, 0.17, 0.24, 0x2a2420, [0, 0.7, 0.5], [0.3, 0, 0]), ...[[0.13, 0.28], [-0.13, 0.28], [0.13, -0.28], [-0.13, -0.28]].map(([a, b]) => gCyl(0.035, 0.03, 0.4, 0x2a2420, [a, 0.2, b], [0, 0, 0], 1, 5))]), M.flat, flock));
+    for (const [a, b, ry] of [[x + 1.3, z + 1.3, Math.PI + 0.1], [-88.4, 27.7, 2.2]]) animal(B, M, root, 'pony', horseGeo(0xc8a878, 0x2a2018), a, world.height(a, b), b, ry, { s: 0.75, coat: 0xc8a878, box: [0.8, 2.5, 1.75, 0.1] });
+    const sheepGeo = merge([gSph(0.3, 0xffffff, [0, 0.56, 0], [0.9, 0.85, 1.45]), gBox(0.15, 0.17, 0.24, 0x2a2420, [0, 0.7, 0.5], [0.3, 0, 0]), ...[[0.13, 0.28], [-0.13, 0.28], [0.13, -0.28], [-0.13, -0.28]].map(([a, b]) => gCyl(0.035, 0.03, 0.4, 0x2a2420, [a, 0.2, b], [0, 0, 0], 1, 5))]);
+    [[-84.6, 31.4, 0.4], [-80.2, 31.0, 2.1], [-79.2, 27.2, 4.0], [-83.6, 26.3, 5.2], [-76.4, 30.6, 1.2], [-87.4, 29.6, 3.0], [-81.4, 28.9, 0.9]].forEach(([a, b, ry], i) => {
+      const sz = 0.9 + (i % 3) * 0.1; animal(B, M, root, 'sheep', sheepGeo, a, world.height(a, b), b, ry, { s: sz, c: [0xffffff, 0xd8d0c0, 0x8a7a68][i % 3], box: [0.5 / sz, 1.0 / sz, 0.85 / sz, 0] });
+    });
     { const a = -80.4, b = 29.6, p = who('norseMan', a, world.height(a, b), b, -2.2, { pose: (g) => { g.armR.rotation.x = -0.35; g.armL.rotation.z = 0.3; }, over: { cape: 0x5a4632, extras: ['smock', 'cape'] } }); hold(p, p.armR, [gCyl(0.02, 0.022, 1.7, 0x6a4a2e, [0, -0.6, 0], [0.35, 0, 0], 1, 6)]); }   // the shepherd, leaning on his staff
     { const a = -82.8, b = 23.4, p = who('norseWoman', a, world.height(a, b), b, 1.3, { pose: (g) => { g.armL.rotation.z = 0.35; g.armR.rotation.x = -0.1; } }); hold(p, p.armR, [gCyl(0.13, 0.1, 0.22, 0x8a6a44, [0, -0.86, 0], [0, 0, 0], 1, 9), gBox(0.012, 0.2, 0.012, 0x3a2a1c, [0, -0.68, 0])]); }   // she carries a pail of milk to the house
   }
@@ -435,10 +436,31 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     fires.push(brazier(B, M, 60, world.height(60, 61.5), 61.5, 1).concat(1)); torch(60, world.height(60, 61.5) + 2.2, 61.5, 30, 16);
   }
 
+  // ---- the thing field: where the free men of the district meet to make law and settle quarrels. A ring of standing stones round a low
+  //      mound, the law rock on top of it, where the lawspeaker stands and speaks; a few have come early and wait --------------------------
+  {
+    const x = -58, z = -47, y = world.height(x, z), GR = [0x7a7c80, 0x8a8c8e, 0x6e7074];
+    for (let i = 0; i < 12; i++) {
+      const a = i / 12 * Math.PI * 2 + 0.13, r = 7.6 + (i % 3) * 0.3, sx = x + Math.cos(a) * r, sz = z + Math.sin(a) * r, h = 1.5 + ((i * 7) % 5) * 0.18, sy = world.height(sx, sz);
+      B.geo(M.rock, rockGeo(30 + i, 1), [sx, sy + h * 0.45, sz], [((i % 3) - 1) * 0.06, -a, 0.04], [0.42, h * 0.55, 0.26], GR[i % 3]);
+      world.addCyl(sx, sz, 0.36, sy - 1, sy + h);
+    }
+    B.geo(M.rock, new THREE.SphereGeometry(2.6, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), [x, y - 0.15, z], [0, 0, 0], [1, 0.32, 1], 0xe8eef4);   // the mound, under snow
+    world.addCyl(x, z, 2.2, y - 1, y + 0.62);
+    B.geo(M.rock, rockGeo(51, 1), [x, y + 0.75, z], [0, 0.4, 0], [0.9, 0.22, 0.7], 0x8a8c90);                                                       // the law rock
+    world.addCyl(x, z, 0.8, y - 1, y + 0.95);
+    { const px = x + 1.8, pz = z - 1.4, py = world.height(px, pz); B.cyl(M.wood, 0.06, 0.07, 2.6, px, py, pz, { c: 0x4a3626, seg: 6 }); world.addCyl(px, pz, 0.1, py - 1, py + 2.6);   // a staff with a shield hung on it
+      B.geo(M.wood, new THREE.CylinderGeometry(0.45, 0.45, 0.06, 16), [px, py + 1.7, pz + 0.1], [Math.PI / 2, 0, 0], 1, 0xb82a22); B.geo(M.metal, new THREE.SphereGeometry(0.09, 8, 6), [px, py + 1.7, pz + 0.15], [0, 0, 0], 1, 0xb0b0b0); }
+    who('norseMan', x - 0.2, y + 0.95, z + 0.1, 0.4, { pose: 'talk', over: { cape: 0x2a4a6a, extras: ['smock', 'cape'] } });                         // the lawspeaker on the law rock
+    for (const [a, look, pose] of [[0.6, 'norseMan', 'hips'], [1.1, 'norseWoman', 'stand'], [1.6, 'norseMan', 'stand'], [-0.4, 'norseMan', 'talk']]) {   // the first to come
+      const px = x + Math.sin(a) * 4.6, pz = z + Math.cos(a) * 4.6; who(look, px, world.height(px, pz), pz, a + Math.PI, { pose });
+    }
+  }
+
   // ---- forest, rocks ---------------------------------------------------------------------------
   const nearBuilt = (x, z) => dPoly(PATH, x, z) < 4.5 || (Math.abs(x) < 46 && z < 48 && z > -70 && (Math.abs(z + 3) < 2.5 || (Math.abs(x) < 19 && z > -9.5 && z < 0) || Math.hypot(x, z - 22) < 7 || Math.hypot(x, z + 56) < 20))
     || [[-19, 30], [18, 27], [-27, 9], [27, 7], [40, 38]].some(([hx, hz]) => Math.hypot(x - hx, z - hz) < 10) || Math.hypot(x - 56, z - 6) < 13 || z > 52 || Math.hypot(x + 80, z - 24) < 15 || Math.hypot(x + 20, z - 49) < 10 || Math.hypot(x - 31, z - 22) < 6 || Math.hypot(x - 74, z + 24) < 11
-    || [[80, 49, 13], [-62, -26, 10], [-28, -86, 9], [-38.5, -30, 4], [-30, -20, 3.5], [6, 34, 3.5], [-16.5, 40, 4], [11.5, -64, 5]].some(([hx, hz, r]) => Math.hypot(x - hx, z - hz) < r);   // the new places: shipyard, crag, charcoal clearing, wolf hole, the post, sledge, the steps of two doors
+    || [[80, 49, 13], [-62, -26, 10], [-28, -86, 9], [-58, -47, 13], [-38.5, -30, 4], [-30, -20, 3.5], [6, 34, 3.5], [-16.5, 40, 4], [11.5, -64, 5]].some(([hx, hz, r]) => Math.hypot(x - hx, z - hz) < r);   // the new places: shipyard, crag, charcoal clearing, wolf hole, the post, sledge, the steps of two doors
   const pines = [], rocks = [];
   for (let i = 0; i < 70000 && pines.length < 1900; i++) {
     const x = (R() - 0.5) * 900, z = (R() - 0.5) * 900, h = world.height(x, z), inPlay = Math.abs(x) < 118 && z > -100 && z < 60;
@@ -457,7 +479,7 @@ function build({ game, gfx, world, B, M, root, rand, shared }) {
     if (s > 1 && Math.abs(x) < 118 && z > -100 && z < 66) world.addCyl(x, z, s * 0.85, h - 2, h + s * 0.7);
   }
   for (const [ix, iz, rr] of SKERRIES) for (let k = 0; k < 7; k++) { const a = R() * 6.28, x = ix + Math.cos(a) * rr * 0.7, z = iz + Math.sin(a) * rr * 0.7, s = 2 + R() * 6; rocks.push({ x, y: world.height(x, z) + s * 0.3, z, ry: R() * 6, s: [s, s * 1.5, s], c: 0x565c66 }); }
-  root.add(instanced(rockGeo(4, 1), M.rock, rocks));
+  root.add(instanced(rockGeo(4, 1), M.rock, rocks, { solid: true }));
 
   // ---- atmosphere ---------------------------------------------------------------------------------
   root.add(makeAmbient(shared, { count: 1700, box: 34, boxY: 18, size: 0.05, colorA: 0xffffff, colorB: 0xdfeaff, alpha: 0.9, fall: 1.5, wind: [0.9, 0, 0.4], flutter: 0.7 }));
