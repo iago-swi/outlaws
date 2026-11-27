@@ -8,7 +8,7 @@ a Greek island, a Norwegian fjord, a village in Normandy in 1944, a Soviet city 
 the Tibetan plateau in 1959 and the Aztec capital in 1520, one hero faces many enemies alone, in a real-time 3D
 world you can walk through freely. Most buildings can be entered, the longships at
 Jarnvik can be boarded, and every chapter has several ways to the enemy, places to climb, by a ladder or by steps of rock, and
-low places to crawl through or into for an ambush. About 130 people who take no part in the fight, half of them women, go
+low places to crawl through or into for an ambush. About 160 people who take no part in the fight, half of them women, go
 about their work in the nine worlds: a woman keeps the bar in Dry Gulch, Penelope weaves in Ithaca, nuns turn the prayer
 wheels of Che La. Twenty-seven heroes from history and legend are playable, three per
 chapter. Online, two players fight a duel, as a hero or as one of thirty villains, or play a
@@ -28,11 +28,11 @@ files.
 | **Chapter VII · Stalnogorsk** | **Chapter VIII · Che La** | **Chapter IX · Tenochtitlan** |
 | <img src="screenshot-russia.jpg" width="280" alt="The church of St Nicholas in Stalnogorsk in falling snow: white walls under onion domes in blue and gold with gold crosses, panel blocks with lit windows behind, bare birches, the submachine gun in the foreground"> | <img src="screenshot-tibet.jpg" width="280" alt="The gateway chorten at the foot of the great stair of Che La: prayer flags, a white stupa with a gilded spire beyond, snow peaks under a deep blue sky, the rifle in the foreground"> | <img src="screenshot-aztec.jpg" width="280" alt="The Great Temple of Tenochtitlan at sunset seen from the sacred precinct: its steep stair between the terraces, the two shrines on top, gardens on the walls, the dart-thrower in the foreground"> |
 
-| Duel · choose your fighter | Duel · face to face |
-| :---: | :---: |
-| <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Stalnogorsk: three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), each card with its strength and special skill, and Andrei Sakharov standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="400" alt="A duel on Revolution Square in falling snow: the other player, named Cousin, as Joseph Stalin in a white tunic, stands before the red plinth of the monument; the score line reads You 0 · 0 Cousin, round 1; the pistol in the foreground; the microphone and the other player's voice at the top left"> |
+| Online · the invite | Duel · choose your fighter | Duel · face to face |
+| :---: | :---: | :---: |
+| <img src="screenshot-online.jpg" width="280" alt="The Online screen of the host over Stalnogorsk: the chapter, the game (Duel, first to 5 rounds), the computer enemies, their wits and the map size in five lists, the Start the game button, the code of five letters in large plain type with the invite link and a Copy the link button below it, and the Players list with two names, Marshal (host, you) and Cousin"> | <img src="screenshot-duel-pick.jpg" width="280" alt="The fighter selection of a duel in Stalnogorsk: three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), each card with its strength and special skill, and Andrei Sakharov standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="280" alt="A duel on Revolution Square in falling snow: the other player, named Cousin, as Joseph Stalin in a white tunic, stands before the red plinth of the monument with its hammer and sickle; the score line reads You 0 · 0 Cousin, round 1; a gust of snow drifts over the square; the pistol in the foreground"> |
 
-![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Online button, the Sound button and the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
+![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Online button for two players (duel or together), the Sound button and the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
 
 ## Run it
 
@@ -82,9 +82,9 @@ and some enemies wait indoors, on deck or behind the waterfall.
 | VIII | the village houses, each furnished differently, the old fort, the monks' houses and the monastery's assembly hall with its gallery, side doors and kitchen; the village temple, the chapel of the great prayer wheel, a nomad tent of black yak hair; two army tents, the bed of a lorry, a field barn with a hay loft |
 | IX | the two shrines on top of the Great Temple, each with an altar heaped with gold; the palace of Axayacatl with its rooms round a patio, the market, the temple of the wind god, the House of the Eagles, the ball court; the white houses of the city and of the landing village; a steam bath |
 
-| Below Stalnogorsk · the metro | Inside the church of St Nicholas |
-| :---: | :---: |
-| <img src="screenshot-metro.jpg" width="400" alt="Revolution Square Station, 10 m under Stalnogorsk: a vaulted hall of white columns and arches with a chandelier, the station's name on the walls, the blue train at the platform on the left, the Committee's men on the platform, a red banner at the far end, the submachine gun in the foreground"> | <img src="screenshot-church.jpg" width="400" alt="Inside the church of St Nicholas: the gilded screen of icons with its royal doors open, the priest in black with his tall hat behind the lectern, two old women at prayer before the candle stands, the chandelier above"> |
+| Uri · the Suone | Below Stalnogorsk · the metro | Inside the church of St Nicholas |
+| :---: | :---: | :---: |
+| <img src="screenshot-suone.jpg" width="280" alt="The Suone of Uri below the waterfall: a wooden channel hung on the rock face on beams, the keeper's plank beside it, steps cut in the rock leading up to it, and the channel going on across the meadow on trestles; pines and the mountains behind, the crossbow in the foreground"> | <img src="screenshot-metro.jpg" width="280" alt="Revolution Square Station, 10 m under Stalnogorsk: a vaulted hall of white columns and arches with a chandelier, the station's name on the walls, the blue train at the platform on the left, the Committee's men on the platform, a red banner at the far end, the submachine gun in the foreground"> | <img src="screenshot-church.jpg" width="280" alt="Inside the church of St Nicholas: the gilded screen of icons with its royal doors open, the priest in black with his tall hat behind the lectern, two old women at prayer before the candle stands, the chandelier above"> |
 
 Things to find on the way: mosaic floors and a bronze Athena in Ithaca; the hammer and
 sickle on the flags, the monument, the palace and the tower of Stalnogorsk; a gilded
@@ -92,7 +92,7 @@ Buddha in each of the three temples of Che La; bomb craters in Sainte-Aubine.
 
 ### People who take no part in the fight
 
-Every chapter has ten to eighteen bystanders (more on a large map, and more in chapter VII),
+Every chapter has eleven to twenty bystanders (more on a large map, and 32 in chapter VII),
 about half of them women, dressed for the place and the time and busy with something. They
 breathe, shift their weight and look about; those at work keep working (hammering,
 scrubbing, churning), those talking talk with their hands, those seated take a drink now and
@@ -1047,39 +1047,46 @@ shadow map, gained two frames and was thrown away. The levels as built, same scr
 
 | | High | Medium | Low |
 | --- | --- | --- | --- |
-| Chapter I | 24 | 55 | 120 |
-| Chapter III | 22 | 33 | 68 |
-| Chapter IX | 16 | 27 | 51 |
+| Chapter I | 23 | 53 | 120 |
+| Chapter III | 22 | 47 | 120 |
+| Chapter IX | 17 | 37 | 79 |
 
-These are the figures of version 1.5.0, with 30 enemies; the larger worlds cost a few frames (version 1.4.0 measured
-32 / 61 / 111, 26 / 43 / 96 and 19 / 30 / 78).
+These are the figures of version 2.7.0, with 30 enemies on a medium map, each read over three
+seconds; the display of this laptop shows 120 pictures a second at most. Version 1.5.0 measured
+24 / 55 / 120, 22 / 33 / 68 and 16 / 27 / 51, version 1.4.0, with smaller worlds,
+32 / 61 / 111, 26 / 43 / 96 and 19 / 30 / 78.
 
-At 1280 × 720 the same machine runs every level at 100 to 120 frames a second, so there the
-setting makes no visible difference.
+At 1280 × 720 the same machine runs seven of the nine chapters at 90 to 120 frames a second on
+High, so there the setting makes no visible difference. Chapters II and IX run at 60 to 70
+there, and at about 100 on Medium.
 
-Measured at 1280 × 720, standing at the start of each chapter with 30 enemies alive.
+Measured in version 2.7.0 at 1280 × 720 on High, standing at the start of each chapter on a
+medium map with 30 enemies alive.
 A frame includes the shadow pass and the post-processing passes. Enemies count for much
 of the draw calls: each figure is five or six meshes, drawn once for the picture and
 once for the shadow map.
 
 | Chapter | Draw calls per frame | Triangles per frame | Instances | Colliders | Route grid cells |
 | --- | --- | --- | --- | --- | --- |
-| I · Dry Gulch | 578 | 0.93 million | 8,000 | 1,048 | 53,500 |
-| II · Kagemori | 431 | 0.64 million | 14,900 | 1,890 | 50,800 |
-| III · Uri | 612 | 1.97 million | 52,700 | 902 | 153,700 |
-| IV · Ithaca | 605 | 0.98 million | 18,200 | 1,002 | 106,200 |
-| V · Jarnvik | 490 | 1.05 million | 2,100 | 1,220 | 87,700 |
-| VI · Sainte-Aubine | 416 | 0.92 million | 22,800 | 946 | 98,000 |
-| VII · Stalnogorsk | 517 | 0.27 million | 23 | 716 | 81,100 |
-| VIII · Che La | 455 | 0.93 million | 20,400 | 745 | 118,900 |
-| IX · Tenochtitlan | 524 | 2.12 million | 8,900 | 1,648 | 92,100 |
+| I · Dry Gulch | 835 | 0.95 million | 8,000 | 1,475 | 53,500 |
+| II · Kagemori | 665 | 0.67 million | 15,000 | 1,964 | 50,800 |
+| III · Uri | 859 | 2.01 million | 52,900 | 1,140 | 153,700 |
+| IV · Ithaca | 857 | 1.00 million | 18,300 | 1,138 | 106,200 |
+| V · Jarnvik | 667 | 1.07 million | 2,200 | 1,428 | 87,700 |
+| VI · Sainte-Aubine | 552 | 0.93 million | 22,900 | 1,017 | 98,000 |
+| VII · Stalnogorsk | 902 | 0.37 million | 143 | 1,166 | 81,100 |
+| VIII · Che La | 617 | 0.97 million | 20,800 | 964 | 118,900 |
+| IX · Tenochtitlan | 694 | 2.14 million | 9,200 | 1,680 | 92,100 |
 
 Chapter IX is the heaviest in triangles, with the trees of its shores and its city; chapter III has the most
 instances, with its 42,000 grass tufts. Chapter II has the most
 colliders because every bamboo stalk near the path is solid; chapter IX comes second,
 with its tree trunks and the walls of its city. Chapter VII is the lightest
-in triangles: a city of boxes with painted windows. Bystanders add to the draw calls as
-enemies do: each is five or six meshes.
+in triangles, a city of boxes with painted windows, and has the most draw calls. Bystanders
+add to the draw calls as enemies do: each is five or six meshes, and chapter VII has 32 of
+them. Where the enemies stand is drawn anew for every game, so the first two columns move by a
+few units from one visit to the next. Version 1.5.0 counted 416 to 612 draw calls a frame and
+716 to 1,890 colliders; the grid of routes has not changed since.
 
 ### Versions
 
@@ -1237,6 +1244,14 @@ browsers, the partner at his side, a kill by the one who joined counted for him 
 the end of the mission on both screens). Not tested: players on different networks, the
 effect of real network delay, the timed duel, Safari.
 
+The figures of the *Performance* section were measured again in version 2.7.0, in an
+automated browser on the same laptop: draw calls and triangles were read from the renderer
+over about a second at the start of each chapter, the frame rates over three seconds each.
+The pictures of the title screen, the Online screen, the choice of fighters, the duel and the
+Suone were taken in that version too. The nine chapter pictures and the others date from
+version 2.1.0; the hero screen and the display during play were compared with them and have
+not changed, but the views were not taken again one by one.
+
 Version 2.3.0 was checked in a browser without a window: all nine chapters load without
 an error, every bystander has something to do, the animals are where they were (seven
 horses, a mule and four hens in chapter I, an ox, five cows and two mules, five goats, six
@@ -1285,8 +1300,9 @@ estimate, and frame rate on slower graphics hardware has not been measured.
   one that has run away stays where it stopped.
 - With five villains and three heroes, the fighter selection of chapter IV uses smaller
   cards than the other chapters.
-- Enemies cannot jump, crouch or climb ladders. A player on a roof or in a den can only be shot at, or
-  not reached at all.
+- Enemies cannot jump. At *Low* wits they neither crouch nor climb ladders, so a player on a
+  roof or in a den can only be shot at, or not reached at all; at *Medium* and *Genius* they
+  climb ladders and crouch into low hiding places.
 - The climbable butte of chapter I is built from layered blocks and is more angular than
   the rounded mesas on the horizon. (The boulder of chapter III was rebuilt as one irregular rock.)
 - Wind moves plants but not their shadows.
