@@ -16,6 +16,35 @@ Each version is a Git tag named `lone-hand-vX.Y.Z` and a
 game as one downloadable file. The number is also shown in the bottom right corner of the
 title screen.
 
+Versions 1.6.0 to 2.5.0 were made by raphfleury in
+[his own repository](https://github.com/raphfleury/Outlaws); they have no tag and no release
+here. Since 2.6.0 the game is developed in this repository again.
+
+## [2.6.0] - 2026-11-27
+
+### Added
+
+- **The Suone of Uri** (chapter III): an irrigation channel as they are built in the Valais,
+  about a hundred metres long, from the waterfall to the meadows east of the great hay barn.
+  A wooden launder with a sluice board catches water beside the fall; the channel runs in a
+  notch cut into the rock, then hangs on the rock face on beams, with the keeper's narrow
+  plank beside it (steps cut in the rock lead up at each end, and you can walk it); it
+  crosses a hollow on trestles, high enough to pass under, and goes on as a ditch in the
+  earth with its bank and footpath on the downhill side. A small wheel in the ditch lifts a
+  mallet and lets it knock on a board, every second and a half, beside the keeper's hut: as
+  long as it knocks, the water is running. Five openings in the bank lead to the plots:
+  three are shut by their boards, two are in use, and the water spreads over the grass. The
+  keeper clears the ditch with his long hoe; a woman waters her plot. The place is named on
+  the map.
+- **The hammer means something**: every length of wood of the Suone breaks on its own. Below
+  a break the channel is dry, the water spills at the break, and the hammer falls silent.
+
+### Changed
+
+- **The game is at home here again.** raphfleury took Lone Hand from version 1.5.0 to 2.5.0
+  in his own repository; everything he built is in this version. Play it at
+  <https://iago-swi.github.io/outlaws/Claude/>.
+
 ## [2.5.0] - 2026-11-23
 
 ### Added
@@ -370,6 +399,23 @@ players.
 - After joining a duel with the Join button, pressing `Enter` to choose the hero pressed
   Join again and started a new connection.
 
+## [1.5.1] - 2026-11-22
+
+### Added
+
+- **An old priest in the closed church of Stalnogorsk** (chapter VII). He has come back to
+  the church that was turned into a store: an old man with a white beard down to his
+  waist, in a black habit embroidered with two white crosses and a black cap with a small
+  cross, standing before the frame of the old icon screen with a lit taper in one hand and
+  the other raised in blessing. Like the other bystanders he takes no part in the fight.
+
+### Changed
+
+- The agent posted inside that church now stands nearer the door, away from the priest.
+
+*(Published in this repository only. Since 2.1.0 the church is St Nicholas, open again,
+with a priest of its own.)*
+
 ## [1.5.0] - 2026-11-22
 
 All nine chapters have been enlarged and filled with life: more of each world to walk
@@ -616,6 +662,8 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[2.6.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v2.6.0
+[1.5.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.1
 [1.5.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.0
 [1.4.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.4.0
 [1.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.3.0

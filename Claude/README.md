@@ -1,6 +1,6 @@
 # Lone Hand — Claude version
 
-**Version 2.5.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 2.6.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -18,7 +18,7 @@ The whole game is one file, `index.html`. Every texture, model, sound and piece 
 is generated in the browser when the game starts; there are no image, model or audio
 files.
 
-**[Play it in your browser](https://outlaws.kaiseregg.com/)**
+**[Play it in your browser](https://iago-swi.github.io/outlaws/Claude/)**
 
 | Chapter I · Dry Gulch | Chapter II · Kagemori | Chapter III · Uri |
 | :---: | :---: | :---: |
@@ -76,7 +76,7 @@ and some enemies wait indoors, on deck or behind the waterfall.
 | --- | --- |
 | I | saloon with its upper floor and balcony, the Grand Hotel with lobby, stairs, bedrooms and balcony, barber's, doctor's, jail with two barred cells, bank with its safe, general store, sheriff's office with a cell, livery stable, blacksmith's forge, undertaker's, telegraph office, most with a back door onto the lots behind the street; the church, with its nave, a choir gallery and a stair inside the tower up to the bell; a barn with a hayloft, a homestead, the crypt on Boot Hill; the railroad station, a boxcar to walk through, the stage station, the Silver Queen mine |
 | II | every house, each furnished differently (walk-through, with open screens), the shrine hall with a back door and an inner sanctuary behind it, the dojo in its walled compound, a hermitage; two storeys of the pagoda, a storehouse, the bell tower; a granary on stilts, a cow shed, a barn by the rice paddies; the arched bridge over the pond, a jetty with a boat |
-| III | the chalets, two of them with an upper room reached by an outside stair, the chapel, a Habsburg watchtower with a fighting gallery; the keep under construction (a masons' store below, a scaffold to the top), the bailiff's pavilion and a soldiers' tent; the barns on their stone stilts and a drive-through hay barn with a loft; a mill with a turning wheel, the Sust (goods store) at the lake landing and a lake boat to board; the ledge behind the waterfall |
+| III | the chalets, two of them with an upper room reached by an outside stair, the chapel, a Habsburg watchtower with a fighting gallery; the keep under construction (a masons' store below, a scaffold to the top), the bailiff's pavilion and a soldiers' tent; the barns on their stone stilts and a drive-through hay barn with a loft; a mill with a turning wheel, the Sust (goods store) at the lake landing and a lake boat to board; the ledge behind the waterfall; the Suone, an irrigation channel from the waterfall to the meadows, with the keeper's hut beside its hammer |
 | IV | every house, each with its trade (potter, smith, baker, weaver, fishermen), the temple's inner room with a golden Athena, a treasury on the hill, the round temple, the beacon tower on the fishermen's cape up to its fire platform; the House of Odysseus, with a colonnaded court and a pool, the market under the colonnade, the theatre with its stage house, the olive grove with its press; two tents in the harbour, the Cave of the Nymphs, a swineherd's farm |
 | V | every longhouse, each with its trade (weaver, cook, mead store, fisherman), two of them with a second door and window openings, the jarl's great hall with a back door, a small temple of the old gods; a boat shed, an open smithy, a byre with a hay loft, a shipyard with a hull on the stocks; four longships to board by gangplank: two at the jetty, your own on the beach and the jarl's great ship with a tent on deck |
 | VI | the ground floor of every house (a café, a bakery, a school and a forge among them) and the upper room of the café, the command bunker, both gun casemates, the manor, the windmill with its milling floor; the church, now a roofless ruin after the bombing, and its tower up to the belfry; a farm barn with a hayloft, a cider farm, a railway station |
@@ -149,7 +149,7 @@ that remain.
 | --- | --- |
 | I | the woman who keeps the bar, the pianist, the storekeeper, the telegraph operator, the hotel keeper, the barber, the doctor, the undertaker, the preacher, a deputy locked in his own cell, a woman hanging out washing, a homesteader's wife, a gravedigger |
 | II | three flute monks (komusō) under basket hats and four geisha under oil-paper umbrellas; a woman at the well, two planters in the rice paddies, an old man on the tea-house veranda, an angler, a woodcutter, a pilgrim, a weaver |
-| III | three confederates by the flags at the start; the Senn and the dairywoman, a woman spinning with distaff and spindle, the miller's wife, a priest, a boatman, a woman mending nets, masons; on the Rütli meadow three men raise their hands for the oath |
+| III | three confederates by the flags at the start; the Senn and the dairywoman, a woman spinning with distaff and spindle, the miller's wife, a priest, a boatman, a woman mending nets, masons; on the Rütli meadow three men raise their hands for the oath; the keeper of the Suone clears its ditch with a long hoe, a woman waters her plot |
 | IV | three women at the well, Penelope at her upright loom, the swineherd Eumaeus, the old dog Argos by the door of Odysseus' house, a baker at her oven, a market woman, a priestess, a potter, an old fisherman, a bard with a lyre, a shepherd with goats |
 | V | Norse women at the loom, the cauldron, the mead casks and the cod racks, one in a doorway looking out to sea; a skald, a priest of the old gods, a boat builder, a shepherd, two of your crew aboard your ship; two captives at a post in the raiders' yard |
 | VI | the baker and his wife, a woman at the café window, the schoolmistress, an old woman in the churchyard, a farm woman, the curé, a farmer, a railwayman, a man of the Resistance, a wounded glider pilot by the wreck |
@@ -172,7 +172,7 @@ the roof or the deck. A jump clears about 1.3 m.
 | --- | --- |
 | I | Lookout Butte south of town, 12 m high, climbed by a zigzag of rock steps, with boulders on top to crouch behind; the flat roofs of the general store, the sheriff's office, the blacksmith and the telegraph office, each reached by a ladder at the back; the catwalk of the water tower, the windmill's platform, the barn's hayloft and the roof of the boxcar, all by ladder; the church tower up to the belfry, 11 m up; the back lots behind both rows of the street, with woodpiles and privies; a dry wash that runs unseen from the street to Boot Hill; a root cellar with a crawl-in door; the loading dock, the boxcar, a hay cart and the stage coach to crawl under; a low drift in the mine |
 | II | a watch platform in the dojo court and a low water gate into it; a side stair and a ladder onto the shrine terrace; the upper room of the pagoda with window slits; a mossy boulder with a ladder above the gate path; the granary on stilts, with a crawl space below and a loft above; a path round the ambush over the dikes of the rice paddies; a tea hut and a charcoal kiln to crawl into |
-| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top and a summit cross of dark iron, reached by a wooden ladder that leans against its flank; a hunter's high seat near the start; the scaffold of the keep, three ladders to the top; the watchtower's gallery; a sunken lane to the keep; a gap under the camp's palisade; a hay wagon and the mill's water channel to crouch under; the stepped blocks of the quarry |
+| III | a great boulder in the meadow west of the path, 7.5 m high, with a flat grassy top and a summit cross of dark iron, reached by a wooden ladder that leans against its flank; a hunter's high seat near the start; the scaffold of the keep, three ladders to the top; the watchtower's gallery; a sunken lane to the keep; a gap under the camp's palisade; a hay wagon and the mill's water channel to crouch under; the stepped blocks of the quarry; the keeper's plank along the rock face of the Suone, reached by steps cut in the rock, and its aqueduct to pass under |
 | IV | a goat path up the back of the temple hill; the roofs of the colonnade and of the stage house, and the fire platform of the beacon tower, by ladder; a flat roof with an outside stair; a crag above the harbour; a lookout above the landing beach; an old cistern that is now a crawl tunnel with two ends; the back door of the cave; a hull on the stocks and a boat on trestles to crawl under; a sandbar to an islet with a shrine |
 | V | a fighting step behind the palisade on both sides of the gate, with stairs; a hole under the palisade; a beacon crag with a ladder; the byre's loft; a watch platform in the village; an earth cellar; a tunnel of cod racks, an upturned boat and the keel of the ship being built to crawl under; firewood stacks behind the houses; ice floes from the beach to the jetty; the decks of the longships |
 | VI | fourteen holes to crawl through the hedgerows, and a sunken lane between two of them; a trench through a gap in the wire to a lookout on the cliff; the belfry of the church tower, by two ladders; the roof of a gun casemate under a camouflage net; the barn's hayloft; three hollow hayricks; two railway wagons to crawl under; a hunter's stand among the hedgerows; a dugout; the churchyard with its gravestones |
@@ -600,8 +600,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 1.93 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 10,900 lines of plain JavaScript (ES modules) in 21 files under [source/src/](source/src/), plus 270 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 2.09 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 15,900 lines of plain JavaScript (ES modules) in 34 files under [source/src/](source/src/), plus 375 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
 | Network | Online games only: a WebSocket from each browser to the game server, a Cloudflare Worker with one Durable Object per game ([server/](server/)), which passes the messages on. |
