@@ -1,6 +1,6 @@
 # Lone Hand — Claude version
 
-**Version 2.6.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 2.7.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -11,8 +11,8 @@ Jarnvik can be boarded, and every chapter has several ways to the enemy, places 
 low places to crawl through or into for an ambush. About 130 people who take no part in the fight, half of them women, go
 about their work in the nine worlds: a woman keeps the bar in Dry Gulch, Penelope weaves in Ithaca, nuns turn the prayer
 wheels of Che La. Twenty-seven heroes from history and legend are playable, three per
-chapter. Online, two to four players fight each other, one against one or two against two,
-as a hero or as one of thirty villains, or play a chapter together against its enemies.
+chapter. Online, two players fight a duel, as a hero or as one of thirty villains, or play a
+chapter together against its enemies.
 
 The whole game is one file, `index.html`. Every texture, model, sound and piece of music
 is generated in the browser when the game starts; there are no image, model or audio
@@ -31,8 +31,6 @@ files.
 | Duel · choose your fighter | Duel · face to face |
 | :---: | :---: |
 | <img src="screenshot-duel-pick.jpg" width="400" alt="The fighter selection of a duel in Stalnogorsk: three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), each card with its strength and special skill, and Andrei Sakharov standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="400" alt="A duel on Revolution Square in falling snow: the other player, named Cousin, as Joseph Stalin in a white tunic, stands before the red plinth of the monument; the score line reads You 0 · 0 Cousin, round 1; the pistol in the foreground; the microphone and the other player's voice at the top left"> |
-| **Online · four players in the lobby** | **Online · two against two** |
-| <img src="screenshot-online.jpg" width="400" alt="The Online screen of the host: the game set to Stalnogorsk, capture the flag, the code TPNLC and the invite link, the Start the game button, and the list of players, four of four: Raph (host, you) and Max on side A, Léo and Tom on side B"> | <img src="screenshot-team.jpg" width="400" alt="Capture the flag for four in Stalnogorsk: the team-mate Max as Joseph Stalin a few metres ahead in the snowy street, his name, distance and health over his head; the score line reads Flags: You & Max 0 – 0 Léo & Tom; the microphone and the three other players' voices at the top left; the submachine gun in the foreground"> |
 
 ![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Online button, the Sound button and the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
 
@@ -297,45 +295,37 @@ fighting; the player clears the road ahead of him. Gompo Tashi Andrugtsang and A
 did fight in those years; Songtsen Gampo is a king of the seventh century. The Red Guards
 belong to the years after 1966 and are in the chapter by request, not by the calendar.
 
-### Online: two to four players — duel, capture the flag, together
+### Online: two players — duel or together
 
-Click **Online** on the title screen. Two to four players, each on their own computer,
-play one of the nine chapters against each other, or together against its enemies.
+Click **Online** on the title screen. Two players, each on their own computer, play one of
+the nine chapters against each other, or together against its enemies.
 
-1. Each player writes a name at the top of the screen (it is remembered): the others see
-   it in the scores, in the messages and, on your side, over your head. One player, the
-   host, clicks *Create and get the invite link*.
-2. The host sends the link, or its code of five characters, to the others, who open the
-   link or type the code. Up to three can join. The *Players* list shows who is in, and
-   on which side.
+1. Each player writes a name at the top of the screen (it is remembered): the other sees
+   it in the scores, in the messages and, when you play together, over your head. One
+   player, the host, clicks *Create and get the invite link*.
+2. The host sends the link, or its code of five characters, to the other player, who opens
+   the link or types the code. The *Players* list shows who is in.
 3. Meanwhile the host chooses the chapter, the game, how many computer enemies are in the
    world (none, or 3 to 24 by threes; at least 3 together), their wits and the size of the
-   map; the others see the choice. When everyone is in, the host clicks *Start the game*.
-4. Everyone chooses a fighter. The game starts when all have chosen.
-5. After a game everyone stays connected. A click on the end screen leads back to the
-   Online screen, where the host picks the next chapter and rules and starts again; others
-   may join between two games. No new link or code is needed until the host leaves.
-
-**Sides.** In the duels and in capture the flag the players form two sides: in the order
-they joined, the host first, they take turns, so the first and the third play against the
-second and the fourth. With two players it is one against one; with three, two against one.
-Nothing fired or thrown on your side can hurt your team-mate.
+   map; the other player sees the choice. When both are in, the host clicks *Start the game*.
+4. Both choose a fighter. The game starts when both have chosen.
+5. After a game both stay connected. A click on the end screen leads back to the Online
+   screen, where the host picks the next chapter and rules and starts again. No new link
+   or code is needed until the host leaves.
 
 | Game | How it is played, and how it ends |
 | --- | --- |
-| Duel · first to 5 rounds | A round ends when everyone on one side has fallen; a player who falls waits for the end of the round. Everyone starts the next round with full health, the two sides at opposite ends of the map, and the sides change ends every round. The first side to win five rounds wins. |
-| Duel · 7 minutes, most kills | Each fall scores a point for the other side. A player comes back three seconds after falling, at the end of the map farther from the other side. After seven minutes, the side with more points wins. |
-| Capture the flag | Each side's flag stands at its end of the map: blue is your side's, red the other's, on the maps too. Walk into the red flag to take it, and into yours, at home, to score a capture. A carrier who falls drops the flag where he fell; walk into your own lying out there to send it home (it goes home by itself after 25 seconds). A carrier shows on the other side's maps even when sneaking. First side to three captures, or the most after seven minutes. A fallen player comes back at his end after four seconds. |
-| Together against the enemy | All the players start side by side against 3 to 24 of the chapter's enemies, the boss among them. Nothing one fires or swings can hurt another. Each counts his own kills (the host's browser decides who struck the last blow). A fallen player is back at the start five seconds later. The mission is over when the last enemy falls. |
+| Duel · first to 5 rounds | A round ends when one of the two has fallen. Both start the next round with full health, at opposite ends of the map, and change ends every round. The first to win five rounds wins. |
+| Duel · 7 minutes, most kills | Each fall scores a point for the other player. A player comes back three seconds after falling, at the end of the map farther from the other. After seven minutes, the one with more points wins. |
+| Together against the enemy | The two players start side by side against 3 to 24 of the chapter's enemies, the boss among them. Nothing one fires or swings can hurt the other. Each counts his own kills (the host's browser decides who struck the last blow). A fallen player is back at the start five seconds later. The mission is over when the last enemy falls. |
 
-In every game the enemies stand at places drawn at random for that game, the same in every
-browser (the host's browser draws a number that all use); the outskirts of a large map
-and the posts the enemies take up are the same everywhere too. Each team-mate's name,
-distance and health show over his head, through walls, and at the edge of the screen when
-he is out of view; the ground a team-mate passes near is uncovered on your map, a place
-you mark with the middle button shows on his screen, and what one of you puts down with
-`G`, another can take. The end screen gives each side's score and, with more than two
-players, each player's kills.
+In every game the enemies stand at places drawn at random for that game, the same in both
+browsers (the host's browser draws a number that both use); the outskirts of a large map
+and the posts the enemies take up are the same too. When you play together, your partner's
+name, distance and health show over his head, through walls, and at the edge of the screen
+when he is out of view; the ground he passes near is uncovered on your map, a place you
+mark with the middle button shows on his screen, and what one of you puts down with `G`,
+the other can take. The end screen gives the score, or each player's kills.
 
 In a duel each chapter offers its villains beside its three heroes. Heroes stand in a
 row marked with a gold star, villains in a row marked with a red skull, and every card
@@ -381,23 +371,22 @@ villains, like several heroes, do not belong to their chapter's year.
 
 Things to know in a duel:
 
-- The whole map is used. Your team-mate always shows on the map as a larger green dot;
-  a player of the other side shows as a larger white dot while moving, unless sneaking.
+- The whole map is used. The other player shows on the map as a larger white dot while
+  moving, unless sneaking. (Together, your partner always shows, as a larger green dot.)
 - Weapons do 60% of their usual damage against another player, so a duel is not over
   in one hit. A hit to the head still counts two and a half times.
 - If computer enemies are in the world, there are as many as the host chose, 3 to 24;
-  they attack whichever player is nearest, and a fall to one of them scores for the other side.
+  they attack whichever player is nearest, and a fall to one of them scores for the other player.
 - A game online cannot be paused, and practice mode is switched off.
 
-**Connecting.** Every player's browser connects to the game server, the same way it
-connects to a website, and the server passes the game on between the players of each game.
-So it works whatever network each player is on, behind any box or firewall that lets web
-pages through. The server is a small program on Cloudflare's network
-([server/](server/)): it keeps no record of the games, and the players do not see each
-other's network address. The code is shown in plain upright letters and never contains
-characters that are easily taken for one another (no 0, O or Q; no 1 or I; no 2 or Z; no 5
-or S; no 8 or B; no G; neither U nor V); it may be typed in small letters or with spaces.
-If the server cannot be reached, the Online screen says so after twelve seconds at most.
+**Connecting.** The game runs directly from one browser to the other: there is no game
+server. Only the first contact passes through a public service (the PeerJS broker), which
+puts the two browsers in touch under the code. Between some networks two browsers cannot
+talk to each other directly (strict company firewalls, some mobile networks): the Online
+screen then says so after fifteen seconds at most, and one of you has to try from another
+network. The code is shown in plain upright letters and never contains characters that are
+easily taken for one another (no 0, O or Q; no 1 or I; no 2 or Z; no 5 or S; no 8 or B; no
+G; neither U nor V); it may be typed in small letters or with spaces.
 
 ### Arsenal, bag, map and things that break
 
@@ -446,8 +435,8 @@ If the server cannot be reached, the Online screen says so after twelve seconds 
   only the ground you have passed within about thirty metres of is uncovered. Enemies show
   as red dots (the boss larger) where the map is uncovered, while they move about, after
   they have fired, and once they have seen you; one who stands still or creeps up unseen
-  does not. Online, a player of the other side shows while he moves openly; your
-  team-mates always show, in green.
+  does not. Online, in a duel the other player shows while he moves openly; together, your
+  partner always shows, in green.
 - **Life around.** Small flocks of birds peck on open ground and take wing at a shot, a
   blast or someone coming too near. Gusts lift the dust (in the snow chapters, the snow)
   and drive it along the ground; on the dry plains of chapters I and VIII a dust devil
@@ -525,19 +514,11 @@ the game from a buzzing tone shaped like the vowels of speech. Fallen enemies cr
 bystanders greet you in their language (French in Normandy, Swiss German in Uri) and
 chatter. All of this is on the *Voices* volume.
 
-### Sound settings and voice chat
+### Sound settings
 
-The *Sound* button on the title screen, *Sound settings* on the pause screen (or `O`) and
-*Sound and microphone* on the Online screen open the same panel: four volumes (General,
-Effects, Voices, Music), music on or off (`M` during play), and the microphone for games
-online: always on (`T` mutes it), push to talk (hold `T`), or off. The choices are remembered.
-
-Online, all the players of a game hear each other, from the moment they are connected. The
-browser asks once for the microphone. The voice goes through the game server with the rest
-of the game, in telephone quality (16 000 samples a second, 8 bits each), and nothing is
-sent while you are silent. The others' voices play on the *Voices* volume. Headphones avoid
-an echo. Small lines at the top left show your microphone (green while you transmit) and
-each other player (green while they speak).
+The *Sound* button on the title screen and on the Online screen, and *Sound settings* on
+the pause screen (or `O`), open the same panel: four volumes (General, Effects, Voices,
+Music) and music on or off (`M` during play). The choices are remembered.
 
 ### Controls
 
@@ -559,7 +540,6 @@ each other player (green while they speak).
 | `H` | Use a healing item from the bag without taking it in hand |
 | `E` | The hero's special skill (see *Choose your hero*) |
 | `G` | Put down what you hold: the weapon in hand, or one thing from the bag |
-| `T` | Online: mute and unmute the microphone, or hold to speak (see *Sound settings*) |
 | `Esc` | Pause; then `Q` returns to the chapter list. `P` also pauses when the browser has not captured the mouse |
 | `M` | Music on/off |
 | `O` | Sound settings (on the title screen, the Online screen and while paused) |
@@ -600,11 +580,11 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 
 | | |
 | --- | --- |
-| Delivery | One `index.html` of 2.09 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
-| Source | About 15,900 lines of plain JavaScript (ES modules) in 34 files under [source/src/](source/src/), plus 375 lines of HTML and CSS. No framework. |
+| Delivery | One `index.html` of 2.17 MB: markup, CSS, JavaScript, GLSL and four fonts, all inlined. Most of the size is the three.js library. |
+| Source | About 15,700 lines of plain JavaScript (ES modules) in 33 files under [source/src/](source/src/), plus 368 lines of HTML and CSS. No framework. |
 | Rendering | [three.js](https://threejs.org/) 0.187 on WebGL 2, with custom GLSL for the sky, water, waterfall, particles, wind and the final screen pass. HTML and CSS for the HUD and menu screens. |
 | Sound | Web Audio API. Every effect and all music is synthesised. |
-| Network | Online games only: a WebSocket from each browser to the game server, a Cloudflare Worker with one Durable Object per game ([server/](server/)), which passes the messages on. |
+| Network | Online games only: a WebRTC data channel straight from one browser to the other, opened with [PeerJS](https://peerjs.com/) 1.5. Only the first contact passes through its public broker. |
 | Build | [Vite](https://vite.dev/) 8 with `vite-plugin-singlefile`, which folds scripts, styles and fonts into the one HTML file. |
 | Type | Rye, Pirata One, IM Fell English and Cinzel (SIL Open Font License), bundled through Fontsource. |
 | Storage | None. Progress is not saved; all nine chapters are open from the start. |
@@ -635,10 +615,8 @@ green. The end-of-chapter screen notes that the result was reached in practice m
 | [skills.js](source/src/skills.js) | The heroes' special skills (`E`): what each does, how long it lasts, and which hero has which. |
 | [outskirts.js](source/src/outskirts.js) | The size of the map: the roped-off heart of a small one; the outskirts of a large one (hamlets in each chapter's style, levelled hillsides, boats, trees, people, horses, chimneys, enemies). |
 | [arc.js](source/src/arc.js) | The line of dots that shows where a thrown weapon will land, red when it would strike. |
-| [voice.js](source/src/voice.js) | Voice chat online: the microphone read and coded in µ-law, sent with the game's messages; the other players' voices played as they come. |
-| [duel.js](source/src/duel.js) | Games online: the other players' figures, the sides, rounds, scores and flags, the messages between the games, the lobby. |
-| [net.js](source/src/net.js) | The connection to the game server: creating or joining a game under a short code, the messages of one moment sent together twenty times a second. |
-| [server/](server/) | The game server, for Cloudflare Workers: one Durable Object per game passes each player's messages to the others ([room.js](server/room.js), [worker.js](server/worker.js)). |
+| [duel.js](source/src/duel.js) | Games online for two: the other player's figure, the rounds and scores of a duel, the game together, the messages between the two browsers, the lobby. |
+| [net.js](source/src/net.js) | The connection between the two browsers: creating or joining a game under a short code, the messages of one moment sent together twenty times a second. |
 | [villains.js](source/src/villains.js) | The thirty villains that can be played in a duel. |
 | [util.js](source/src/util.js) | Seeded random numbers and value, fractal and ridged noise. |
 
@@ -898,32 +876,31 @@ is detected by keeping the last few typed characters and testing whether they en
 
 Each browser runs its own copy of the chosen chapter and simulates only its own player.
 Twenty times a second it tells the others where that player is, where they look and
-whether they aim or swing, in a small JSON message sent through the game server.
+whether they aim or swing, in a small JSON message sent straight to the other browser.
 
-- **The server.** A Cloudflare Worker ([server/worker.js](server/worker.js)) with one
-  Durable Object per game code. Every player of a game holds a WebSocket to that object,
-  which passes each message to the other players, with the sender's number in front
-  ([server/room.js](server/room.js)); it lets in at most four, refuses newcomers once the
-  host has started a game, and tells everyone when a player comes or goes. It uses the
-  WebSocket Hibernation API, and answers the browsers' keep-alive (`ping`, every 20
-  seconds) without waking up. It does not look into the game.
+- **The connection.** A WebRTC data channel between the two browsers, opened with PeerJS
+  ([net.js](source/src/net.js)). The host registers at the public PeerJS broker under the
+  game's code; the other browser asks the broker for that code, and from then on the two
+  talk to each other without anything in between. The host is player 0, the one who joins
+  player 1. A third browser is turned away, and so is anyone while a game is being played.
+  When the channel closes, the other player is told that his opponent left or that the
+  connection was lost.
 - **One message per moment.** Everything a browser has to say between two of its twenty
-  beats a second (its state, its shots, its hits, a piece of voice) leaves as one message,
-  because the server's plan counts the messages it receives. With four players that is
-  about 70 messages a second for a game. When a connection falls behind, the next state
-  reports are dropped rather than queued.
+  beats a second (its state, its shots, its hits) leaves as one message. When the channel
+  falls behind, the next state reports are dropped rather than queued.
 - **The other players' figures.** Each other player appears as a figure built by the
   character builder and moved toward the latest report. It is placed in the same list as
   the computer enemies. That one decision makes every existing weapon work against it
   (bullets, arrows, thrown weapons, blades), puts it on the map and makes it solid,
-  without a second set of combat code. A team-mate's figure lets this player's shots pass.
+  without a second set of combat code. In a game together, the partner's figure lets this
+  player's shots pass.
 - **Who decides a hit.** The shooter does. When my shot hits your figure on my screen, my
   browser sends the damage to yours, which applies it with your fighter's own strengths.
   This favours the shooter slightly when the connection is slow, which feels fairer than
   shots that visibly hit and do nothing. A player's own browser decides when that player
   has fallen and announces it, naming the player who last hurt him in the six seconds before.
-- **The host decides for all.** The host's browser keeps the score, ends the rounds (when a
-  side has nobody standing) and the clock, holds the flags, and counts the kills together.
+- **The host decides for both.** The host's browser keeps the score, ends the rounds and the
+  clock, and counts the kills in a game together.
 - **What you see of the others' fire.** Tracers and projectiles are sent as "ghosts":
   they are drawn and heard, but hit nothing on the receiving side, except that the blast
   and the fire of a bomb thrown by a player of the other side hurt you.
@@ -932,11 +909,6 @@ whether they aim or swing, in a small JSON message sent through the game server.
   are simulated on the host only and turn on whichever player is nearest. The others
   receive their positions ten times a second and show them as puppets; a hit on a puppet
   is sent to the host, which applies it.
-- **Voice.** The microphone is read in the audio thread (an AudioWorklet), averaged down to
-  16 000 samples a second, coded in 8-bit µ-law and added to the next message as Base64.
-  Nothing is sent while the sound stays under a threshold. The receiving browser decodes
-  each piece, brings it back to the sound card's rate and schedules it 0.12 s ahead, one
-  piece after the other, which evens out the network's hiccups.
 - **Sneaking and crouching.** Two bits of the position report say whether the player
   sneaks (the map then leaves him out for the other side) and whether he crouches (his
   figure goes down on one knee, and its hit spheres are lowered with it).
@@ -944,12 +916,13 @@ whether they aim or swing, in a small JSON message sent through the game server.
   the same message that started the first one (the host's settings); the level, the
   figures and the scores are rebuilt everywhere.
 - **Spawn points.** The two ends of the map are the chapter's own start and the place
-  where its boss stands; team-mates start side by side, 2.6 m apart.
+  where its boss stands; together, the two start side by side, 2.6 m apart.
 - **The code.** Five characters drawn from 22 letters and digits that cannot be taken for
-  one another. It names the game's Durable Object; a code already in use gets another.
-- **Before version 2.2.0** the two browsers connected directly (WebRTC, introduced by the
-  public PeerJS broker). Between some networks the direct connection never opened and the
-  game stayed on "Connecting…"; the server replaced it.
+  one another. It names the host's browser at the broker; a code already in use gets another.
+- **Versions 2.2.0 to 2.6.0** went through a game server (a Cloudflare Worker) instead, with
+  up to four players, two against two, capture the flag and voice chat. Since 2.7.0 the two
+  browsers connect directly again, as they did before 2.2.0: there is no server to run, at
+  the price that between some networks the connection cannot be made.
 
 ### Breakable things, explosions and the map
 
@@ -1255,20 +1228,14 @@ and a guest's hit kills one on the host). It has not been tried between two comp
 different networks, only guns were fired at the other player in these tests, and the
 effect of real network delay is unknown.
 
-Version 2.2.0 (the game server, up to four players) was tested with four tabs of one
-automated browser and the server running on the same computer in Cloudflare's own runtime
-(`wrangler dev`): the lobby filling up to four, a fifth player refused, the sides, a
-two-against-two duel in rounds (a fall, a team-mate's shot doing nothing, the round won when
-both players of a side are down, the next round, players leaving, the end screen, back to
-the lobby), the timed game, capture the flag (taken, dropped, brought home), four players
-together (a guest's kill counted for him, an enemy of the host going after a guest and
-hurting him, a mark seen by the team-mates, the end of the mission), a duel of two, and the
-host leaving. Each browser sent about 17 messages a second, 22 KB/s with the microphone on
-(a test tone). The same test of four players in rounds was then run through the server on
-Cloudflare's network, with the same results; from the cloud computer that ran the browsers,
-behind its proxy, a message took about a quarter of a second from one browser to another
-through the server, and forty messages sent at twenty a second all arrived. Not tested:
-players on different networks, the delay between players in Switzerland, Safari.
+Version 2.7.0 (two players, connected directly) was tested with two tabs of one automated
+browser through the public broker: a game created and joined by its code and by its invite
+link, a third browser turned away, a duel in rounds (each player seen where he is by the
+other, a fatal hit, the round won, the next round), a player leaving (the other is told),
+and a game together against six enemies (the same enemies at the same places in both
+browsers, the partner at his side, a kill by the one who joined counted for him by the host,
+the end of the mission on both screens). Not tested: players on different networks, the
+effect of real network delay, the timed duel, Safari.
 
 Version 2.3.0 was checked in a browser without a window: all nine chapters load without
 an error, every bystander has something to do, the animals are where they were (seven
@@ -1325,10 +1292,9 @@ estimate, and frame rate on slower graphics hardware has not been measured.
 - Wind moves plants but not their shadows.
 - Games online have no text chat; if a player switches to another browser tab, their
   game stops sending until they come back.
-- The game server runs on Cloudflare's free plan, which counts the messages it receives:
-  about eight hours of play a day with four players, or sixteen with two, by the rates
-  measured below (the limit is shared by all the games of a day). Past it, games stop
-  connecting until midnight UTC. See [server/README.md](server/README.md).
+- Games online connect the two browsers directly. Between some networks (strict company
+  firewalls, some mobile networks) no direct connection can be made, and the game cannot
+  start; the first contact also needs the public PeerJS broker to be reachable.
 - On the title screen the chapter behind the cards is loaded without its route grid;
   entering a chapter loads it again in full.
 

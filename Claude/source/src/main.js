@@ -18,7 +18,6 @@ import { Arc } from './arc.js';
 import { Life } from './life.js';
 import { Havoc } from './havoc.js';
 import { MapView } from './map.js';
-import { Voice } from './voice.js';
 import { dropsOf, lootOf, weaponName, weaponAlt, itemName, itemAlt, THROWN, NOISE } from './loot.js';
 import { SKILLS, skillOf } from './skills.js';
 import { resize } from './outskirts.js';
@@ -107,9 +106,9 @@ class Game {
     this.cache = {}; this.msgT = 0; this.hitT = 0; this.dmgT = 0; this.crossGap = 6;
     this._v = new THREE.Vector3(); this._v2 = new THREE.Vector3(); this._o = { x: 0, y: 0, z: 0 }; this._d = { x: 0, y: 0, z: 0 };
     this.duel = null;
-    this.havoc = new Havoc(this); this.map = new MapView(this); this.voice = new Voice(this); this.bagShown = 0;
+    this.havoc = new Havoc(this); this.map = new MapView(this); this.bagShown = 0;
     this.crowd = new Crowd(this); this.fauna = new Fauna(this); this.arc = new Arc(this); this.bars = []; this.life = new Life(this);
-    this.sound.onchange = () => { this.voice.settings(); this.soundLabel(); };
+    this.sound.onchange = () => { this.soundLabel(); };
     this.bindUI();
   }
 
@@ -205,7 +204,7 @@ class Game {
     sel.value = this.gfxWant; sel.options[0].textContent = this.gfxWant === 'auto' ? 'Automatic (now ' + now + ')' : 'Automatic';
     $('#gfxnow').textContent = 'Graphics: ' + (this.gfxWant === 'auto' ? 'Automatic, now ' + now : now); $('#gfxbtn').textContent = 'Graphics: ' + (this.gfxWant === 'auto' ? 'Automatic' : now);
   }
-  // ---- the sound settings: four volumes, the music on or off, the microphone of the duel ----
+  // ---- the sound settings: four volumes, the music on or off ----
   bindSound() {
     const S = this.sound, panel = $('#sound');
     for (const k of ['master', 'effects', 'voice', 'music']) {
@@ -214,7 +213,6 @@ class Game {
       el.addEventListener('input', () => { S.init(); S.change({ [k]: el.value / 100, ...(k === 'music' && +el.value > 0 ? { musicOn: true } : {}) }); });
     }
     $('#snd-musicOn').addEventListener('change', (e) => { S.init(); S.change({ musicOn: e.target.checked }); });
-    $('#snd-mic').addEventListener('change', (e) => { S.change({ mic: e.target.value }); e.target.blur(); });
     $('#snd-close').addEventListener('click', () => this.soundPanel(false));
     panel.addEventListener('click', (e) => { e.stopPropagation(); if (e.target === panel) this.soundPanel(false); });
     panel.addEventListener('mousedown', (e) => e.stopPropagation());
@@ -225,7 +223,7 @@ class Game {
   soundLabel() {
     const S = this.sound.set;
     for (const k of ['master', 'effects', 'voice', 'music']) { $('#snd-' + k).value = Math.round(S[k] * 100); $('#snv-' + k).textContent = Math.round(S[k] * 100) + '%'; }
-    $('#snd-musicOn').checked = S.musicOn; $('#snd-mic').value = S.mic;
+    $('#snd-musicOn').checked = S.musicOn;
   }
 
   /**
@@ -456,16 +454,12 @@ class Game {
     const duel = this.duel && this.duel.active, n = d.heroes.length;
     if (duel) {
       const c = this.duel.cfg;
-      const D = this.duel, n = D.count, words = ['', 'One', 'Two', 'Three', 'Four'][n] || n, uneven = n % 2 === 1;
-      $('#intro .chap').textContent = words + ' players · ' + RULES[c.rules];
+      $('#intro .chap').textContent = 'Two players · ' + RULES[c.rules];
       const many = c.foes ? (c.foes === 1 ? 'One of the chapter’s enemies' : c.foes + ' of the chapter’s enemies') : '';
       $('#intro .story').textContent = c.rules === 'coop'
-        ? `${words} players together against ${c.foes} of the chapter’s enemies. Nothing any of you fires can hurt the others; each counts his own kills. One who falls is back in a moment. The mission is over when the last enemy falls.`
-        : (n > 2 ? `${words} players, two sides${uneven ? ' (one of them a player short)' : ''}: the players in the order they joined, the host first, take turns — 1 and 3 against 2 and 4. Nothing fired on your side can hurt your team-mate. ` : 'Two players, one world. ')
-        + (c.rules === 'rounds' ? (n > 2 ? 'A round ends when everyone on one side has fallen; the first side to win five rounds wins.' : 'Each kill ends a round; the first to win five rounds wins.')
-          : c.rules === 'ctf' ? 'Capture the flag: your side’s flag, blue, stands at your end of the map, the other one, red, at the other end. Take the red flag and bring it to yours while yours is there. A carrier who falls drops it; touch your own lying out there to send it home. First to three captures, or the most after seven minutes.'
-          : 'Seven minutes: each fall scores for the other side; the side with more at the end wins.')
-        + (many ? ` ${many} ${c.foes === 1 ? 'is' : 'are'} still about, and attack you all.` : '') + (n > 2 ? ' Your team-mate always shows on the map; the other side shows while moving, unless sneaking.' : ' Your opponent shows on the map while moving, unless sneaking.');
+        ? `Two players together against ${c.foes} of the chapter’s enemies. Nothing either of you fires can hurt the other; each counts his own kills. One who falls is back in a moment. The mission is over when the last enemy falls.`
+        : 'Two players, one world. ' + (c.rules === 'rounds' ? 'Each kill ends a round; the first to win five rounds wins.' : 'Seven minutes: each fall scores for the other; the one with more at the end wins.')
+        + (many ? ` ${many} ${c.foes === 1 ? 'is' : 'are'} still about, and attack you both.` : '') + ' Your opponent shows on the map while moving, unless sneaking.';
     }
     $('#intro .pick').textContent = duel ? 'Choose your fighter' : 'Choose your hero';
     $('#witsel').value = this.wits; $('#sizesel').value = this.mapSize;
@@ -512,7 +506,7 @@ class Game {
     this.duelLobbyMode(d); if (this.state !== 'duel') this.setState('duel');
     const n = d.count;
     this.duelStatus((note ? note + ' ' : '') + (d.isHost
-      ? (n < 2 ? 'Send the link or the code to the other players (up to three), then wait here.' : n < MAX_PLAYERS ? `${n} players. Start when everyone is in, or wait for more (up to ${MAX_PLAYERS}).` : 'Four players: the game is full. Start it.')
+      ? (n < MAX_PLAYERS ? 'Send the link or the code to the other player, then wait here.' : 'You are both here. Start the game.')
       : 'Connected. Waiting for the host to start the game…'));
   }
   /** The line under the cards while the players choose. */
@@ -524,7 +518,7 @@ class Game {
   }
   duelAborted(why) {
     this.duel = null; this.duelLobbyMode(null); this.setState('duel');
-    this.duelStatus(why === 'host' ? 'The host left the game. You can create a new one, or join another.' : why === 'left' ? 'The other players left. You can create a new game.' : 'The connection to the game server was lost. You can create a new game, or join again.');
+    this.duelStatus(why === 'host' ? 'The host left the game. You can create a new one, or join another.' : why === 'left' ? 'The other player left. You can create a new game.' : 'The connection was lost. You can create a new game, or join again.');
   }
   /** The end of a game online: rows [who, number, unit], and a line below (each player's kills). */
   duelOver(title, rows, line) {
@@ -1008,7 +1002,6 @@ class Game {
     this.time += dt;
     this.flashLight.intensity = Math.max(0, this.flashLight.intensity - real * 700);
     if (this.duel) this.duel.tick(real);
-    this.voice.update(this.input);
     this.map.setPinsVisible(this.state === 'play');
     if (this.state === 'title' || this.state === 'intro' || this.state === 'duel') {
       this.cineT += real;

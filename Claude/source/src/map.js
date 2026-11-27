@@ -125,7 +125,7 @@ export class MapView {
     const D = this.game.duel, P = this.game.player;
     if (P.skillOn && P.skillOn('eagle') && !this.game.friend(e) && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 90) return true;   // the Eagle eye skill
     if (e.remote && e.cloak && !e.mate) return false;                                  // an opponent who has vanished
-    if (e.remote) return !!e.net && (e.mate || (D && D.carries(e.pid)) || (e.moving > 0.2 && !(e.net.f & 16)));   // a team-mate always; an opponent while he moves openly, or carries a flag
+    if (e.remote) return !!e.net && (e.mate || (e.moving > 0.2 && !(e.net.f & 16)));   // a team-mate always; an opponent while he moves openly
     if (!this.isKnown(e.pos.x, e.pos.z)) return false;                              // ground the player has not seen: nothing shows there
     return (e.moving > 0.2 && !e.sneaking) || e.state === 'combat' || this.game.time - (e.shotAt ?? -99) < 3;   // on the move, shooting, or after the player
   }
@@ -169,7 +169,6 @@ export class MapView {
       const [x, y] = at(e.pos.x, e.pos.z); if (Math.hypot(x - R, y - R) > R - 4 * dpr) continue;
       dot(ctx, x, y, (e.remote || e.cfg.boss ? 5 : 3.6) * dpr, e.remote ? (this.game.friend(e) ? '#7ad86a' : '#ffffff') : '#d83a2a', e.remote || e.cfg.boss ? (this.game.friend(e) ? '#1c4a18' : '#d83a2a') : 'rgba(0,0,0,.7)');
     }
-    this.drawFlags(ctx, at, dpr, R);
     for (const m of this.marks) {                     // a mark beyond the rim sits on the rim, in its direction
       let [x, y] = at(m.x, m.z); const dx = x - R, dy = y - R, l = Math.hypot(dx, dy), lim = R - 9 * dpr;
       if (l > lim) { x = R + dx / l * lim; y = R + dy / l * lim; }
@@ -195,7 +194,6 @@ export class MapView {
     ctx.drawImage(this.base, 0, 0, S, S); ctx.drawImage(this.fog, 0, 0, S, S);
     const at = (x, z) => [(x - this.x0) * k, (z - this.z0) * k], dpr = S / 700;
     for (const e of this.game.enemies) { if (!this.seen(e)) continue; const [x, y] = at(e.pos.x, e.pos.z); dot(ctx, x, y, (e.remote || e.cfg.boss ? 6 : 4.5) * dpr, e.remote ? (this.game.friend(e) ? '#7ad86a' : '#ffffff') : '#d83a2a', e.remote || e.cfg.boss ? (this.game.friend(e) ? '#1c4a18' : '#d83a2a') : 'rgba(0,0,0,.7)'); }
-    this.drawFlags(ctx, at, dpr * 1.3, 0);
     for (const m of this.marks) { const [x, y] = at(m.x, m.z); pinDot(ctx, x, y, this.markLetter(m), dpr * 1.2, m.col); }
     ctx.font = `italic ${14 * dpr}px Georgia, serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const p of this.places) if (p.found) { const [x, y] = at(p.x, p.z); label(ctx, p.name, x, y, dpr * 1.3); }
@@ -204,18 +202,6 @@ export class MapView {
     ctx.fillText('N ↑   ·   middle mouse button: mark a place   ·   release Tab to close', 14 * dpr, 12 * dpr);
   }
 
-  /** Capture the flag: both flags always show (blue, this player's side's; red, the other's), on the rim of the mini-map when far. */
-  drawFlags(ctx, at, s, rim) {
-    const D = this.game.duel; if (!D || !D.flags) return;
-    for (const f of D.flags) {
-      let [x, y] = at(f.x, f.z);
-      if (rim) { const dx = x - rim, dy = y - rim, l = Math.hypot(dx, dy), lim = rim - 9 * s; if (l > lim) { x = rim + dx / l * lim; y = rim + dy / l * lim; } }
-      const mine = f.i === D.myTeam;
-      ctx.fillStyle = '#f4ead4'; ctx.fillRect(x - 1 * s, y - 11 * s, 2 * s, 13 * s);
-      ctx.beginPath(); ctx.moveTo(x + 1 * s, y - 11 * s); ctx.lineTo(x + 10 * s, y - 7.5 * s); ctx.lineTo(x + 1 * s, y - 4 * s); ctx.closePath();
-      ctx.fillStyle = mine ? '#2a62d8' : '#d8322a'; ctx.fill(); ctx.lineWidth = s; ctx.strokeStyle = 'rgba(0,0,0,.8)'; ctx.stroke();
-    }
-  }
   /** Size the canvases to the screen (sharp on high-density displays). */
   resize() {
     const r = Math.min(2, devicePixelRatio || 1);
