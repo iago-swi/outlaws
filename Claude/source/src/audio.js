@@ -23,7 +23,7 @@ const VOWELS = [[800, 1200, 2500], [500, 1800, 2500], [300, 2250, 3000], [500, 9
 
 export const SOUND_KEY = 'lonehand-sound';
 /** The player's sound settings: four volumes (0..1), music on or off (M), and the microphone of the online voice chat. */
-export const SOUND_DEFAULTS = { master: 0.8, effects: 1, voice: 1, music: 0.7, musicOn: true, mic: 'open' };
+export const SOUND_DEFAULTS = { master: 0.8, effects: 1, voice: 1, music: 0.7, musicOn: true };
 
 export class Sound {
   constructor() {

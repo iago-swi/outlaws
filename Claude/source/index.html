@@ -75,11 +75,6 @@
   #bag div { padding:1px 6px; } #bag div.sel { color:var(--ink); border-right:3px solid var(--accent); }
   #bag kbd { font-size:11px; padding:0 4px; margin-right:6px; }
   #arms .res { font-family:var(--font); font-size:16px; color:var(--dim); }
-  /* duel voice chat: my microphone, the other player's voice */
-  #voice { position:absolute; left:3.4vw; top:calc(3.2vh + 28px); display:none; flex-direction:column; gap:4px; font-size:13px; letter-spacing:.06em; color:var(--dim); }
-  #voice.on { display:flex; }
-  #voice span { display:flex; align-items:center; gap:6px; } #voice svg { width:15px; height:15px; fill:currentColor; }
-  #voice .live { color:#9fe08a; }
   /* sound settings */
   #sound { position:fixed; inset:0; z-index:12; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.45); }
   #sound.on { display:flex; }
@@ -273,7 +268,6 @@
   <div id="bars"></div>
   <div id="mate"></div>
   <div id="placeban"></div>
-  <div id="voice"></div>
 </div>
 <canvas id="bigmap" width="700" height="700"></canvas>
 
@@ -285,8 +279,7 @@
     <label>Voices <input type="range" id="snd-voice" min="0" max="100"><span class="v" id="snv-voice"></span></label>
     <label>Music <input type="range" id="snd-music" min="0" max="100"><span class="v" id="snv-music"></span></label>
     <label class="wide">Music on <span><input type="checkbox" id="snd-musicOn"> &nbsp;<span style="color:var(--dim);font-size:14px">(M during play)</span></span></label>
-    <label class="wide">Microphone <select id="snd-mic"><option value="open">Always on (T mutes)</option><option value="ptt">Push to talk (hold T)</option><option value="off">Off</option></select></label>
-    <p class="note">Voices: the shouts of the enemies, and in a duel the other player speaking. The microphone is used only in a duel, to talk with the other player; the browser asks once for permission. Headphones avoid an echo.</p>
+    <p class="note">Voices: the shouts of the enemies and the words of the people who take no part in the fight.</p>
     <button id="snd-close">Close</button>
   </div>
 </div>
@@ -311,19 +304,19 @@
     <div class="card az" data-level="8"><div class="n">IX</div><div class="t">Tenochtitlan</div><div class="p">Mexico, 30 June 1520.<br>Poisoned darts on the causeway at dusk.</div></div>
   </div>
   <div class="foot">Choose a chapter</div>
-  <div id="duelbtn">Online &nbsp;·&nbsp; 2 to 4 players &nbsp;·&nbsp; duel, flags, together</div>
+  <div id="duelbtn">Online &nbsp;·&nbsp; 2 players &nbsp;·&nbsp; duel or together</div>
 </div>
 
 <div id="duel" class="layer screen">
   <div class="veil"></div>
-  <div class="kicker">Two to four players &nbsp;·&nbsp; online</div>
+  <div class="kicker">Two players &nbsp;·&nbsp; online</div>
   <div class="big">Online</div>
-  <label id="dnamebox">Your name <input id="dname" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="seen by the other players"></label>
+  <label id="dnamebox">Your name <input id="dname" maxlength="16" autocomplete="nickname" spellcheck="false" placeholder="seen by the other player"></label>
   <div class="dpanel">
     <div class="dcol">
       <h3 id="dhosttitle">Create a game</h3>
       <label>Chapter <select id="dlevel"><option value="0">I · Dry Gulch</option><option value="1">II · Kagemori</option><option value="2">III · Uri</option><option value="3">IV · Ithaca</option><option value="4">V · Jarnvik</option><option value="5">VI · Sainte-Aubine</option><option value="6">VII · Stalnogorsk</option><option value="7">VIII · Che La</option><option value="8">IX · Tenochtitlan</option></select></label>
-      <label>Game <select id="drules"><option value="rounds">Duel · first to 5 rounds</option><option value="timed">Duel · 7 minutes, most kills</option><option value="ctf">Capture the flag</option><option value="coop">Together against the enemy</option></select></label>
+      <label>Game <select id="drules"><option value="rounds">Duel · first to 5 rounds</option><option value="timed">Duel · 7 minutes, most kills</option><option value="coop">Together against the enemy</option></select></label>
       <label><span id="dfoeslab">Computer enemies, hostile to both</span> <select id="dfoes"><option value="0">None</option><option value="3">3</option><option value="6">6</option><option value="9">9</option><option value="12">12</option><option value="15">15</option><option value="18">18</option><option value="21">21</option><option value="24">24</option></select></label>
       <label>Enemies' wits <select id="dwits"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="genius">Genius</option></select></label>
       <label>Map <select id="dsize"><option value="small">Small</option><option value="medium" selected>Medium</option><option value="large">Large</option></select></label>
@@ -336,12 +329,12 @@
       <h3>Join a game</h3>
       <label>Code from the host <input id="dcodein" maxlength="12" autocomplete="off" spellcheck="false"></label>
       <button id="djoinbtn">Join</button>
-      <p style="margin:14px 0 0;font-size:14px;color:var(--dim);line-height:1.4">Or simply open the invite link the host sent you.<br>Up to four players. Each one connects to the game server, which passes the game on between you, whatever network you are on.</p>
+      <p style="margin:14px 0 0;font-size:14px;color:var(--dim);line-height:1.4">Or simply open the invite link the host sent you.<br>Two players. The game runs directly from one browser to the other; only the first contact passes through a public service.</p>
     </div>
     <div class="dcol hidden" id="dplayers"></div>
   </div>
   <div id="dstatus"></div>
-  <button class="soundbtn" style="margin-top:1.4vh">Sound and microphone</button>
+  <button class="soundbtn" style="margin-top:1.4vh">Sound</button>
   <div class="foot" id="dback">Back to the chapters</div>
 </div>
 

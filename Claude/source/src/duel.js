@@ -1,14 +1,10 @@
-// Two to four players online, one in each browser, in a chapter's world, connected through the game server (net.js).
-// Four ways to play:
-//  - rounds: two sides (one or two players each); a round ends when everyone on one side has fallen; the first side to win
-//    five rounds wins;
-//  - timed: seven minutes; each fall scores for the other side; the side with more at the end wins;
-//  - ctf (capture the flag): each side's flag stands at its end of the map; take the other's and bring it to yours while yours
-//    is there. First to three captures, or the most after seven minutes;
-//  - coop (together): all the players against the chapter's enemies (3 to 24), no harm between them, each counting his own kills;
+// Two players online, one in each browser, in a chapter's world, connected directly to each other (net.js).
+// Three ways to play:
+//  - rounds: a duel; a round ends when one of the two has fallen; the first to win five rounds wins;
+//  - timed: a duel of seven minutes; each fall scores for the other; the one with more at the end wins;
+//  - coop (together): the two players against the chapter's enemies (3 to 24), no harm between them, each counting his own kills;
 //    the mission is over when the last enemy falls.
-// The sides: the players in the order they came in, host first, take turns (1 and 3 against 2 and 4).
-// The host's browser decides what concerns everyone: the computer enemies, the rounds and the score, the clock, the flags.
+// The host's browser decides what concerns both: the computer enemies, the rounds and the score, the clock.
 // Each browser decides for its own player: where he is, what he hits (it tells the one who was hit), when he falls.
 import * as THREE from 'three';
 import { Enemy, TYPES, stride } from './actors.js';
@@ -17,9 +13,9 @@ import { damp } from './util.js';
 
 /** Weapons are tuned to fell computer enemies in one or two hits; between players they hit less hard. */
 export const DUEL_DMG = 0.6;
-export const RULES = { rounds: 'First to 5 rounds', timed: '7 minutes, most kills', ctf: 'Capture the flag', coop: 'Together against the enemy' };
-export const MAX_PLAYERS = 4;
-const WIN_ROUNDS = 5, TIMED = 420, RESPAWN = 3, CAPTURES = 3, FLAG_BACK = 25, BLAME = 6;
+export const RULES = { rounds: 'First to 5 rounds', timed: '7 minutes, most kills', coop: 'Together against the enemy' };
+export const MAX_PLAYERS = 2;
+const WIN_ROUNDS = 5, TIMED = 420, RESPAWN = 3, BLAME = 6;
 const shuffle = (a, rand) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const r2 = (v) => Math.round(v * 100) / 100, r3 = (v) => Math.round(v * 1000) / 1000;
 const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
@@ -97,7 +93,7 @@ export class Duel {
     this.game = game; this.link = new Link(); this.phase = 'lobby'; this.isHost = false; this.cfg = null; this.code = '';
     this.picks = new Map(); this.teams = new Map(); this.remotes = new Map(); this.ai = [];
     this.score = [0, 0]; this.kills = {}; this.round = 0; this.myPick = -1;
-    this.sendT = 0; this.enT = 0; this.wait = 0; this.next = ''; this.clock = TIMED; this.flags = null; this.flT = 0; this.ftT = [0, 0];
+    this.sendT = 0; this.enT = 0; this.wait = 0; this.next = ''; this.clock = TIMED;
     this.guestHit = -1; this.blameId = -1; this.blameT = -99;
     const L = this.link;
     L.onmsg = (m, from) => this.onmsg(m, from); L.onjoin = (id, n) => this.joined(id, n); L.onleave = (id) => this.left(id); L.onclose = (why) => this.lost(why);
@@ -126,19 +122,17 @@ export class Duel {
   sideName(t) { return and(this.ids().filter((id) => this.teamOf(id) === t).map((id) => (id === this.me ? 'you' : this.nameOf(id)))).replace(/^you/, 'You') || 'The other side'; }
 
   // ---- connection --------------------------------------------------------------------------------------------------------
-  /** Connected to the server: everyone waits on the Online screen until the host starts the game. */
-  connected() { this.phase = 'lounge'; this.game.voice.attach(this); this.game.duelLounge(); }
+  /** Connected: both wait on the Online screen until the host starts the game. */
+  connected() { this.phase = 'lounge'; this.game.duelLounge(); }
   joined(id, n) {
     const G = this.game;
     if (this.isHost && this.cfg) this.send({ t: this.phase === 'pick' ? 'setup' : 'cfg', c: this.cfg, to: id });   // in just as the game was set up: he chooses too
     if (this.phase === 'lounge') G.duelLounge(); else if (this.phase === 'over') G.say(n + ' is in the lobby');
-    G.voice.paint();
   }
   left(id) {
     const G = this.game, R = this.remotes.get(id), name = (R && R.name) || this.nameOf(id);
-    this.picks.delete(id); G.voice.drop(id);
+    this.picks.delete(id);
     if (R) {
-      if (this.isHost && this.flags) this.dropFlag(id, R.pos);
       this.remotes.delete(id); const i = G.enemies.indexOf(R); if (i >= 0) G.enemies.splice(i, 1); R.rig.group.removeFromParent();
     }
     G.map.mateMark({ off: 1 }, id);
@@ -151,7 +145,6 @@ export class Duel {
     if (this.isHost && r === 'rounds') this.checkRound();
   }
   lost(why) {
-    this.game.voice.close();
     if (this.phase === 'over' || this.phase === 'left') { this.phase = 'left'; return; }
     this.finish(why === 'host' ? 'host' : 'lost');
   }
@@ -169,7 +162,7 @@ export class Duel {
     this.cfg = cfg; this.link.lock(true); this.send({ t: 'setup', c: cfg }); this.enterPick();
   }
   enterPick() {
-    this.phase = 'pick'; this.myPick = -1; this.picks.clear(); this.remotes.clear(); this.teams.clear(); this.ai = []; this.wait = 0; this.next = ''; this.flags = null;
+    this.phase = 'pick'; this.myPick = -1; this.picks.clear(); this.remotes.clear(); this.teams.clear(); this.ai = []; this.wait = 0; this.next = '';
     this.game.openLevel(this.cfg.level);
   }
 
@@ -207,10 +200,8 @@ export class Duel {
       const R = new RemotePlayer(G, G.roster()[this.picks.get(id) ?? 0] || G.roster()[0], id, this.nameOf(id));
       this.remotes.set(id, R); G.enemies.push(R);
     }
-    G.voice.paint();
     this.score = [0, 0]; this.kills = {}; for (const id of this.ids()) this.kills[id] = 0;
     this.clock = TIMED; this.link.batch = true;
-    if (this.cfg.rules === 'ctf') this.makeFlags();
     G.practice = false; document.body.classList.remove('practice');          // no practice mode online
     this.startRound(1);
   }
@@ -230,7 +221,7 @@ export class Duel {
     for (const R of this.remotes.values()) if (!R.alive) R.revive();
     this.place(this.base(pts));
     const rule = this.cfg.rules, mates = and(this.mates().map((R) => R.name)), foes = and(this.foes().map((R) => R.name));
-    G.say(rule === 'rounds' ? 'Round ' + r : rule === 'ctf' ? 'Take the red flag, bring it to yours' : rule === 'coop' ? 'Together with ' + mates + ': ' + this.ai.length + ' enemies' : 'Find ' + foes);
+    G.say(rule === 'rounds' ? 'Round ' + r : rule === 'coop' ? 'Together with ' + mates + ': ' + this.ai.length + ' enemies' : 'Find ' + foes);
   }
   place(pt) {
     const G = this.game, P = G.player, h = G.roster()[this.myPick] || G.roster()[0];
@@ -242,16 +233,16 @@ export class Duel {
     this.sendState();
   }
   /**
-   * Where this player starts: in rounds the sides change ends every round; with flags each side keeps its own end (the host's side
-   * the chapter's start, the other the boss's place); together, everyone starts at the chapter's start. Side by side with his team-mates.
+   * Where this player starts: in a duel the two change ends every round (the chapter's start, the boss's place); together, both
+   * start at the chapter's start, side by side.
    */
   base(pts) {
     const r = this.cfg.rules, t = this.myTeam;
-    const p = r === 'ctf' ? pts[t] : r === 'coop' ? pts[0] : pts[(this.round + (t === 0 ? 1 : 0)) % 2];
+    const p = r === 'coop' ? pts[0] : pts[(this.round + (t === 0 ? 1 : 0)) % 2];
     const side = this.ids().filter((id) => this.teamOf(id) === t), k = side.indexOf(this.me), s = (k - (side.length - 1) / 2) * 2.6;
     return s ? { ...p, x: p.x + Math.cos(p.yaw) * s, z: p.z - Math.sin(p.yaw) * s } : p;
   }
-  /** After a fall (timed, flags, together): back at one's own end, or in the timed game at the end farther from the other side. */
+  /** After a fall (timed, together): back at one's own end, or in the timed game at the end farther from the other side. */
   respawn() {
     const pts = this.spawnPoints();
     if (this.cfg.rules !== 'timed') { this.place(this.base(pts)); return; }
@@ -276,7 +267,6 @@ export class Duel {
     else if (by >= 0 && by !== id) G.say(Name(by) + ' got ' + name(id));
     else G.say(id === this.me ? 'You fell' : this.nameOf(id) + ' fell');
     if (this.isHost) {
-      if (r === 'ctf') this.dropFlag(id, id === this.me ? P.pos : R.pos);
       if (by >= 0 && by !== id && this.teamOf(by) !== t && this.kills[by] !== undefined) this.kills[by]++;
       if (r === 'timed') { this.score[1 - t]++; this.sendScore(); }
       else if (r === 'rounds') this.checkRound();
@@ -284,7 +274,7 @@ export class Duel {
     }
     if (id === this.me) {
       if (r === 'rounds') { if (this.mates().some((M) => M.alive)) G.say('You are down — your team-mate fights on'); }
-      else { this.wait = r === 'coop' ? 5 : r === 'ctf' ? 4 : RESPAWN; this.next = 'respawn'; }
+      else { this.wait = r === 'coop' ? 5 : RESPAWN; this.next = 'respawn'; }
     }
     G.cache = {};
   }
@@ -308,14 +298,14 @@ export class Duel {
     const was = this.phase, r = this.cfg && this.cfg.rules;
     this.phase = why === 'lost' || why === 'host' ? 'left' : 'over'; this.link.batch = false;
     if (was === 'lobby' || was === 'pick' || was === 'lounge') { this.game.duelAborted(why); return; }
-    const t = this.myTeam, a = this.score[t], b = this.score[1 - t], ctf = r === 'ctf';
-    const title = why === 'host' ? 'The host left' : why === 'lost' ? 'The connection to the server was lost'
+    const t = this.myTeam, a = this.score[t], b = this.score[1 - t];
+    const title = why === 'host' ? 'The host left' : why === 'lost' ? 'The connection was lost'
       : why === 'left' ? (r === 'coop' ? 'Your team-mates left' : 'The other side left') : r === 'coop' ? 'Mission accomplished'
-        : a > b ? (ctf ? 'Your side took the most flags' : this.mates().length ? 'Your side wins' : 'You win') : a < b ? (ctf ? 'They took more flags' : this.mates().length ? 'Your side loses' : 'You lose') : 'A draw';
+        : a > b ? (this.mates().length ? 'Your side wins' : 'You win') : a < b ? (this.mates().length ? 'Your side loses' : 'You lose') : 'A draw';
     const kills = (id) => this.kills[id] || 0;
     const rows = r === 'coop'
       ? this.ids().map((id) => [this.nameOf(id) + (id === this.me ? ' (you)' : ''), kills(id), 'kills'])
-      : [[this.sideName(t), a, ctf ? 'flags' : r === 'rounds' ? 'rounds' : 'kills'], [this.sideName(1 - t), b, ctf ? 'flags' : r === 'rounds' ? 'rounds' : 'kills']];
+      : [[this.sideName(t), a, r === 'rounds' ? 'rounds' : 'kills'], [this.sideName(1 - t), b, r === 'rounds' ? 'rounds' : 'kills']];
     const each = r !== 'coop' && this.count > 2 ? this.ids().map((id) => esc(this.nameOf(id)) + ' ' + kills(id)).join(' · ') : '';
     this.game.duelOver(title, rows, each ? 'Kills: ' + each : '');
   }
@@ -328,90 +318,15 @@ export class Duel {
     this.sendScore();
   }
 
-  // ---- capture the flag ------------------------------------------------------------------------------------------------
-  /** The two flags, at the two ends of the map: flags[0] the host's side's, flags[1] the other side's. This player's side's is blue, the other red. */
-  makeFlags() {
-    const G = this.game, pts = this.spawnPoints(), mine = this.myTeam;
-    this.caps = [0, 0]; this.saidFl = '';
-    this.flags = [0, 1].map((i) => {
-      const p = pts[i], y = G.world.groundAt(p.x, p.z, (p.hint ?? G.world.height(p.x, p.z)) + 1), col = i === mine ? 0x2a62d8 : 0xd8322a;
-      const mesh = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: col, roughness: 0.7, side: THREE.DoubleSide, emissive: col, emissiveIntensity: 0.25 });
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 2.6, 6), new THREE.MeshStandardMaterial({ color: 0xd8d0c0, roughness: 0.6 })); pole.position.y = 1.3;
-      const cloth = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 0.6, 6, 1), mat); cloth.position.set(0.5, 2.25, 0); mesh.add(pole, cloth);
-      mesh.traverse((o) => { o.castShadow = true; }); G.gfx.root.add(mesh);
-      return { i, home: { x: p.x, y, z: p.z }, x: p.x, y, z: p.z, by: null, atHome: true, dropT: 0, mesh, cloth };
-    });
-  }
-  /** Who carries a flag: 'me', a team-'mate', or one of 'them' (who then has this side's flag). */
-  carrying(who) {
-    if (!this.flags) return false;
-    return this.flags.some((f) => f.by !== null && (who === 'me' ? f.by === this.me : who === 'mate' ? f.by !== this.me && this.mateOf(f.by) : !this.mateOf(f.by)));
-  }
-  carries(id) { return !!this.flags && this.flags.some((f) => f.by === id); }
-  home(f) { f.by = null; f.atHome = true; f.x = f.home.x; f.y = f.home.y; f.z = f.home.z; }
-  /** Host: player id touches flag i (flag i belongs to side i). */
-  touch(id, i) {
-    const f = this.flags[i], other = this.flags[1 - i], side = this.teamOf(id);
-    if (f.by !== null || this.phase !== 'play' || !this.alive(id)) return;
-    if (side !== i) { f.by = id; f.atHome = false; }                                   // the other side's flag: taken
-    else if (!f.atHome) this.home(f);                                                  // one's own, lying out there: back home
-    else if (other.by === id) {                                                         // one's own at home, the other's in hand: a capture
-      this.home(other); this.caps[side]++;
-      if (Math.max(...this.caps) >= CAPTURES) { this.sendFlags(); this.send({ t: 'over' }); this.wait = 0; this.applyFlags(); this.finish('score'); return; }
-    } else return;
-    this.sendFlags(); this.applyFlags();
-  }
-  /** Host: a carrier has fallen (or left): the flag lies where he was, and goes home by itself after a while. */
-  dropFlag(id, pos) {
-    if (!this.flags) return;
-    for (const f of this.flags) if (f.by === id) { f.by = null; f.atHome = false; f.x = pos.x; f.y = this.game.world.groundAt(pos.x, pos.z, pos.y + 0.5); f.z = pos.z; f.dropT = FLAG_BACK; }
-    this.sendFlags(); this.applyFlags();
-  }
-  sendFlags() { this.send({ t: 'fl', f: this.flags.map((f) => [f.by ?? -1, f.atHome ? 1 : 0, r2(f.x), r2(f.y), r2(f.z)]), c: this.caps }); }
-  /** The flags' state as the host decided it: the score, and a word when something happened. */
-  applyFlags() {
-    const G = this.game, t = this.myTeam, mine = this.flags[t], theirs = this.flags[1 - t], solo = this.mates().length === 0;
-    const before = this.score.slice(); this.score = this.caps.slice();
-    const said = (k, s) => { if (this.saidFl === k) return; this.saidFl = k; if (s) { G.say(s); G.sound.pickup(); } };   // nothing new: the last word stays
-    if (this.score[t] > before[t]) said('cap' + this.score[t], solo ? 'You captured their flag!' : 'Your side captured their flag!');
-    else if (this.score[1 - t] > before[1 - t]) said('lost' + this.score[1 - t], 'They captured your flag');
-    else if (theirs.by === this.me) said('have', 'You have their flag — bring it to yours');
-    else if (theirs.by !== null) said('mate' + theirs.by, this.nameOf(theirs.by) + ' has their flag');
-    else if (mine.by !== null) said('took' + mine.by, this.nameOf(mine.by) + ' has taken your flag!');
-    else if (!mine.atHome) said('lies', 'Your flag lies out there — touch it to send it home');
-    else said('', '');
-    G.cache = {};
-  }
-  /** Every frame: the flags follow their carriers and wave; this player touching one tells the host. */
-  tickFlags(dt) {
-    const G = this.game, P = G.player;
-    for (const f of this.flags) {
-      if (f.by !== null) {
-        const R = f.by === this.me ? null : this.remotes.get(f.by), at = R ? R.pos : P.pos, yaw = R ? R.yaw + Math.PI : P.yaw;
-        if (!R && f.by !== this.me) { if (this.isHost) this.dropFlag(f.by, f); continue; }
-        f.x = at.x + Math.sin(yaw) * 0.35; f.y = at.y + 0.3; f.z = at.z + Math.cos(yaw) * 0.35;
-      }
-      f.mesh.position.set(f.x, f.y, f.z); f.mesh.visible = f.by !== this.me;            // one's own carried flag would only hide the view
-      f.cloth.rotation.y = Math.sin(G.time * 3 + f.i) * 0.25;
-      if (this.isHost && f.by === null && !f.atHome) { f.dropT -= dt; if (f.dropT <= 0) { this.home(f); this.sendFlags(); this.applyFlags(); } }
-      if (P.dead || f.by !== null) continue;
-      if ((f.x - P.pos.x) ** 2 + (f.z - P.pos.z) ** 2 < 2.9 && Math.abs(f.y - P.pos.y) < 2) {
-        if (this.isHost) this.touch(this.me, f.i);
-        else if ((this.ftT[f.i] -= dt) <= 0) { this.ftT[f.i] = 0.4; this.send({ t: 'ft', i: f.i, to: 0 }); }
-      }
-    }
-    if (this.isHost) { this.flT -= dt; if (this.flT <= 0) { this.flT = 1; this.sendFlags(); } }
-  }
-  /** This player leaves: the server tells the others. */
-  leave() { this.game.voice.close(); this.phase = 'left'; this.link.close(); }
+  /** This player leaves: the other one is told. */
+  leave() { this.phase = 'left'; this.link.close(); }
 
   /** Called every frame. */
   tick(dt) {
     this.sendT -= dt; const beat = this.sendT <= 0; if (beat) this.sendT = 0.05;          // twenty times a second
-    if (this.phase !== 'play') { if (beat) this.game.voice.pack(); this.link.flush(); return; }
-    if (this.flags) this.tickFlags(dt);
+    if (this.phase !== 'play') { this.link.flush(); return; }
     if (this.isHost && this.cfg.rules === 'coop' && this.ai.length && this.ai.every((e) => !e.alive) && this.next !== 'over') { this.send({ t: 'over' }); this.wait = 2.5; this.next = 'over'; }   // the last enemy has fallen
-    if (this.cfg.rules === 'timed' || this.cfg.rules === 'ctf') {
+    if (this.cfg.rules === 'timed') {
       this.clock -= dt;
       if (this.isHost && this.clock <= 0) { this.send({ t: 'over' }); this.link.flush(); this.finish('time'); return; }
     }
@@ -427,13 +342,12 @@ export class Duel {
     if (beat) {                                     // this player's state, with all that happened since the last one
       this.sendState();
       if (this.isHost && this.ai.length && (this.enT = (this.enT || 0) + 1) % 2 === 0) this.send({ t: 'en', e: this.ai.map((e) => [r2(e.pos.x), r2(e.pos.y), r2(e.pos.z), r2(e.yaw), e.state === 'dead' ? 2 : e.state === 'combat' ? 1 : e.state === 'hidden' ? 3 : 0, e.armPose > 0.5 ? 1 : 0, e.sneaking ? 1 : 0, r2(Math.max(0, e.hp) / e.maxHp), r2(e.duckK)]) });
-      this.game.voice.pack();
       this.link.flush();
     }
   }
   sendState() {
     const P = this.game.player, w = P.weapon, m = { t: 's', x: r2(P.pos.x), y: r2(P.pos.y), z: r2(P.pos.z), yaw: r3(P.yaw), pitch: r3(P.pitch), f: (P.aim > 0.5 ? 1 : 0) | (w && w.meleeT > 0 ? 2 : 0) | (P.dead ? 4 : 0) | (P.crouch ? 8 : 0) | (P.sneaking ? 16 : 0) | (P.cloak ? 32 : 0), h: Math.max(0, Math.round(P.hp)), mh: P.maxHp };
-    if (this.isHost && (this.cfg.rules === 'timed' || this.cfg.rules === 'ctf')) m.c = Math.ceil(this.clock);
+    if (this.isHost && this.cfg.rules === 'timed') m.c = Math.ceil(this.clock);
     this.send(m);
   }
   // what this player fires, shown in the other browsers
@@ -455,7 +369,6 @@ export class Duel {
     const clock = () => { const s = Math.max(0, Math.ceil(this.clock)); return ' · ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
     if (r === 'coop') return 'Kills: ' + this.ids().map((id) => (id === this.me ? 'you' : esc(this.nameOf(id))) + ` <b>${this.kills[id] || 0}</b>`).join(' · ') + ` · <b>${this.ai.filter((e) => e.alive).length}</b> left`;
     const sides = `${esc(this.sideName(t))} <b>${a}</b>–<b>${b}</b> ${esc(this.sideName(1 - t))}`;
-    if (r === 'ctf') return `Flags: ${sides}${clock()}${this.carrying('me') ? ' · <b>you have their flag</b>' : ''}${this.carrying('them') ? ' · <b>your flag is taken</b>' : ''}`;
     return sides + (r === 'rounds' ? ' · round ' + this.round : clock());
   }
 
@@ -485,8 +398,6 @@ export class Duel {
         G.hurtPlayer(m.d, { x: m.x, z: m.z }, !!m.m); break;
       case 'died': if (this.phase === 'play') this.fallen(from, m.by ?? -1); break;
       case 'score': if (host && !this.isHost) { this.score = m.s; this.kills = m.k || {}; if (m.w !== undefined) this.roundWon(m.w); G.cache = {}; } break;
-      case 'ft': if (this.isHost && this.flags) this.touch(from, m.i); break;                  // another player touched a flag
-      case 'fl': if (host && !this.isHost && this.flags) { m.f.forEach((a, i) => { const f = this.flags[i]; f.by = a[0] >= 0 ? a[0] : null; f.atHome = !!a[1]; if (f.by === null) { f.x = a[2]; f.y = a[3]; f.z = a[4]; } }); this.caps = m.c; this.applyFlags(); } break;
       case 'tr': {
         const a = m.a, l = Math.hypot(a[3] - a[0], a[4] - a[1], a[5] - a[2]) || 1, d = Math.hypot(a[0] - P.pos.x, a[2] - P.pos.z);
         G.crowd.alarm(a[0], a[2], 26, a[0], a[2]); G.crowd.alarm(a[3], a[5], 7, a[0], a[2]);
@@ -510,7 +421,6 @@ export class Duel {
         if (best >= 0) { G.pickups[best].mesh.removeFromParent(); G.pickups.splice(best, 1); }
         break;
       }
-      case 'v': G.voice.hear(from, m.d); break;
       case 'over': if (!host || this.phase !== 'play') break; if (this.cfg.rules === 'coop') { this.wait = 2.5; this.next = 'over'; } else this.finish('time'); break;
     }
   }
@@ -524,9 +434,9 @@ export function bindDuelUI(G) {
   const fresh = (host) => { if (G.duel) G.duel.leave(); const d = (G.duel = new Duel(G)); d.isHost = host; return d; };
   const WHY = {
     none: 'There is no game under this code (or its host has left). Check the code with the host.',
-    full: 'This game already has four players.', started: 'This game has already started. Ask the host to let you in at the next one.',
-    taken: 'This code is in use. Try again.', timeout: 'The game server did not answer. Check your Internet connection and try again.',
-    network: 'Could not reach the game server. Check your Internet connection and try again.', address: 'The game server’s address is not right.',
+    full: 'This game already has its two players.', started: 'This game has already started. Ask the host to let you in at the next one.',
+    taken: 'This code is in use. Try again.', timeout: 'The two browsers could not be put in touch in time. Check your Internet connection and try again; some networks do not let two browsers talk to each other directly.',
+    network: 'Could not reach the service that puts the two browsers in touch. Check your Internet connection and try again.',
   };
   const fail = (e) => { G.duel = null; G.duelLobbyMode(null); G.duelStatus(WHY[e && e.type] || 'Could not connect (' + ((e && (e.type || e.message)) || 'unknown error') + ').'); };
   const copy = (text, done) => { const p = navigator.clipboard && navigator.clipboard.writeText(text); if (p) p.then(() => G.duelStatus(done), () => {}); };
@@ -535,7 +445,7 @@ export function bindDuelUI(G) {
   /** Each player gives a name before playing: the others see it (scores, messages, the tag over a team-mate's head). */
   const needName = () => {
     const n = ($('#dname').value || '').trim().replace(/\s+/g, ' ').replace(/[<>&"]/g, '').slice(0, 16);
-    if (!n) { G.duelStatus('Write your name first: the other players will see it.'); $('#dname').focus(); return null; }
+    if (!n) { G.duelStatus('Write your name first: the other player will see it.'); $('#dname').focus(); return null; }
     try { localStorage.setItem('outlaws.name', n); } catch (e) { /* for this visit */ }
     G.myName = n; return n;
   };
@@ -544,7 +454,7 @@ export function bindDuelUI(G) {
   const join = async (code) => {
     code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!code || busy) return;
     const n = needName(); if (!n) return;
-    const d = fresh(false); d.code = code; G.duelStatus('Connecting to the game server…'); busy = true;
+    const d = fresh(false); d.code = code; G.duelStatus('Looking for the game…'); busy = true;
     try { await d.link.join(code, n); busy = false; if (G.duel === d) d.connected(); } catch (e) { busy = false; if (G.duel === d) fail(e); }
   };
   G.duelJoin = join;
@@ -561,12 +471,12 @@ export function bindDuelUI(G) {
     }
   });
   // together, the enemies attack all of you, and there are at least three
-  const foesLabel = () => { const co = $('#drules').value === 'coop'; $('#dfoeslab').textContent = co ? 'Enemies against all of you' : 'Computer enemies, hostile to all'; $('#dfoes').options[0].disabled = co; if (co && $('#dfoes').value === '0') $('#dfoes').value = '9'; };
+  const foesLabel = () => { const co = $('#drules').value === 'coop'; $('#dfoeslab').textContent = co ? 'Enemies against all of you' : 'Computer enemies, hostile to both'; $('#dfoes').options[0].disabled = co; if (co && $('#dfoes').value === '0') $('#dfoes').value = '9'; };
   $('#drules').addEventListener('change', foesLabel); G.duelFoesLabel = foesLabel;
   for (const s of ['#dlevel', '#drules', '#dfoes', '#dwits', '#dsize']) $(s).addEventListener('change', () => {   // the host's choice shows on the others' screens
     const D = G.duel; if (D && D.isHost && D.phase === 'lounge') { D.cfg = cfg(); D.send({ t: 'cfg', c: D.cfg }); }
   });
   $('#dagain').addEventListener('click', (e) => { e.currentTarget.blur(); if (G.duel) G.duel.startNext(cfg()); });
-  $('#dcopy').addEventListener('click', () => copy($('#dlink').value, 'Link copied. Send it to the other players, then wait here.'));
+  $('#dcopy').addEventListener('click', () => copy($('#dlink').value, 'Link copied. Send it to the other player, then wait here.'));
   $('#djoinbtn').addEventListener('click', (e) => { e.currentTarget.blur(); join($('#dcodein').value); });   // blurred: Enter, which then chooses the hero, must not press Join again
 }

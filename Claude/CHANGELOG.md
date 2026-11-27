@@ -20,6 +20,28 @@ Versions 1.6.0 to 2.5.0 were made by raphfleury in
 [his own repository](https://github.com/raphfleury/Outlaws); they have no tag and no release
 here. Since 2.6.0 the game is developed in this repository again.
 
+## [2.7.0] - 2026-11-27
+
+### Changed
+
+- **Online games connect the two browsers directly again**, as they did before 2.2.0. No
+  game server stands between the players any more: the game goes straight from one browser
+  to the other, and only the first contact passes through a public service that puts the
+  two in touch under the code. The invite link and the code of five characters work as
+  before. Between some networks (strict company firewalls, some mobile networks) two
+  browsers cannot reach each other directly; the Online screen then says so, and one of
+  the players has to try from another network.
+- **Online is for two players**, in one of two ways: a **Duel** (first to five rounds, or
+  seven minutes and the most kills), or **Together against the enemy**, side by side
+  against 3 to 24 of the chapter's enemies, each counting his own kills.
+
+### Removed
+
+- The game server, and with it the games for three and four players and two against two.
+- Capture the flag.
+- Voice chat: the microphone setting and the `T` key are gone. The *Voices* volume still
+  sets the shouts of the enemies and the words of the bystanders.
+
 ## [2.6.0] - 2026-11-27
 
 ### Added
@@ -662,6 +684,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[2.7.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v2.7.0
 [2.6.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v2.6.0
 [1.5.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.1
 [1.5.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.0
