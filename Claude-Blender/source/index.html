@@ -88,7 +88,7 @@
   #sound .note { font-size:13.5px; color:var(--dim); line-height:1.4; margin:10px 0 0; }
   #sound button, .soundbtn { font:inherit; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--ink); background:rgba(0,0,0,.45); border:1px solid rgba(244,234,212,.35); padding:6px 14px; cursor:pointer; }
   #sound button { margin-top:12px; float:right; } #sound button:hover, .soundbtn:hover { border-color:var(--accent); }
-  #title .soundbtn { position:absolute; left:2.2vw; bottom:calc(2.4vh + 34px); font-size:12px; padding:3px 10px; }
+  #title .soundbtn { font-size:12px; padding:3px 10px; }
   #pause .soundbtn { margin-top:0; }
   #vital .num { font-family:var(--display); font-size:44px; line-height:.9; min-width:74px; }
   #vital .lab, #arms .lab { font-size:13px; letter-spacing:.24em; text-transform:uppercase; color:var(--dim); }
@@ -159,7 +159,7 @@
   .card .t { font-family:var(--font); font-size:clamp(19px,1.95vw,27px); letter-spacing:.02em; }
   .card.off { opacity:.36; filter:grayscale(1); cursor:not-allowed; }
   .card.off:hover { transform:none; border-color:rgba(244,234,212,.28); background:rgba(14,10,8,.5); }
-  .card.off .p::after { content:'Not in this trial'; display:block; margin-top:4px; font-style:normal; letter-spacing:.12em; text-transform:uppercase; font-size:11px; }
+  .card.off .n::after { content:'  ·  not in this trial'; letter-spacing:.14em; font-size:11px; }
   .card.w { --c:#e8a84a; } .card.j { --c:#e0523c; } .card.s { --c:#e8e2d2; } .card.g { --c:#e6c05a; }
   .card.n { --c:#8fd0f0; } .card.x { --c:#d6b25a; } .card.ru { --c:#d8463a; } .card.ti { --c:#e8a030; } .card.az { --c:#3ad0c4; }
   .foot { margin-top:2.2vh; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }
@@ -192,11 +192,21 @@
   .hero.bad { border-color:rgba(232,112,90,.5); background:rgba(40,10,8,.6); } .hero.bad .hn { color:#f4c0b0; } .hero.bad.sel { border-color:#e8705a; background:rgba(60,12,8,.82); }
   #intro.duelpick { padding-bottom:5vh; } #intro.duelpick .keys { display:none; }
   #intro.duelpick h2 { font-size:clamp(34px,min(5vw,7.5vh),76px); } #intro.duelpick .story { max-width:760px; font-size:clamp(14px,2.2vh,17px); margin-top:.8vh; } #intro.duelpick .pick { margin-top:1.4vh; }
-  #ver { position:absolute; right:2.2vw; bottom:2.4vh; font-size:13px; letter-spacing:.22em; color:var(--dim); opacity:.8; }
-  #gfxl { position:absolute; left:2.2vw; bottom:2.4vh; display:flex; align-items:center; gap:10px; font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:var(--dim); }
+  /* the foot of the title screen: one row inside the lower black bar. Left: sound and graphics; middle: the game for two; right: the version. Nothing overlaps. */
+  #title { padding:11vh 0; box-sizing:border-box; }
+  #title .foot { margin-top:1.6vh; }
+  #title #tfoot { position:absolute; left:0; right:0; bottom:0; min-height:max(11vh, 54px); box-sizing:border-box; padding:6px 2.2vw; display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; column-gap:2vw; }
+  #tfoot .l { display:flex; align-items:center; gap:16px; justify-self:start; min-width:0; }
+  #ver { justify-self:end; min-width:0; max-width:100%; text-align:right; font-size:13px; letter-spacing:.22em; color:var(--dim); opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  @media (max-width:1180px) { #title #tfoot { grid-template-columns:auto auto; justify-content:space-between; row-gap:4px; } #ver { grid-column:1 / -1; justify-self:center; font-size:11px; } }
+  @media (max-width:760px) { #title #tfoot { grid-template-columns:1fr; justify-items:center; } #tfoot .l { justify-self:center; } }
+  /* a low window: the title, the nine cards and the foot still fit between the two black bars */
+  @media (max-height:820px) { #title h1 { font-size:clamp(40px,min(8vw,11vh),150px); } #title .kicker { margin-bottom:.5vh; font-size:13px; } #cards { margin-top:1.1vh; } .card { padding:5px 12px 5px; } .card .t { margin:3px 0 2px; } .card .p { line-height:1.18; } #title .foot { margin-top:.9vh; font-size:12px; } }
+  @media (max-height:640px) { #title > .sub, #title .card .p { display:none; } }
+  #gfxl { display:flex; white-space:nowrap; align-items:center; gap:10px; font-size:13px; letter-spacing:.22em; text-transform:uppercase; color:var(--dim); }
   #gfxl select { font:inherit; font-size:14px; letter-spacing:.04em; text-transform:none; color:var(--ink); background:rgba(0,0,0,.45); border:1px solid rgba(244,234,212,.35); padding:3px 7px; cursor:pointer; } #gfxl select option { background:#1a1410; }
   #fps { position:fixed; left:10px; top:8px; z-index:50; font:12px/1.2 ui-monospace,Consolas,monospace; color:#e8f0d8; background:rgba(0,0,0,.55); padding:3px 7px; pointer-events:none; }
-  #duelbtn { margin-top:2.4vh; cursor:pointer; padding:9px 26px; font-size:15px; letter-spacing:.3em; text-transform:uppercase; color:var(--ink); border:1px solid rgba(244,234,212,.4); background:rgba(14,10,8,.5); backdrop-filter:blur(7px); transition:border-color .25s, background .25s; }
+  #duelbtn { cursor:pointer; padding:7px 16px; font-size:clamp(10px,.95vw,15px); letter-spacing:.2em; white-space:nowrap; text-transform:uppercase; color:var(--ink); border:1px solid rgba(244,234,212,.4); background:rgba(14,10,8,.5); backdrop-filter:blur(7px); transition:border-color .25s, background .25s; }
   #duelbtn:hover { border-color:var(--danger); background:rgba(60,14,8,.7); }
   #duel .big { font-size:clamp(40px,min(6vw,9vh),90px); }
   #duel #dnamebox { justify-content:center; gap:14px; margin:2vh 0 0; font-size:17px; color:var(--accent); letter-spacing:.06em; } #duel #dname { width:220px; }
@@ -289,12 +299,10 @@
 
 <div id="title" class="layer screen">
   <div class="veil"></div>
-  <div id="ver"></div>
-  <button class="soundbtn">Sound</button>
-  <label id="gfxl">Graphics <select id="gfxsel"><option value="auto">Automatic</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
   <div class="kicker">Nine frontiers &nbsp;·&nbsp; Twenty-seven legends</div>
   <h1>LONE HAND</h1>
   <div class="sub">From Dry Gulch to Tenochtitlan — one hero, alone against many.</div>
+  <div class="foot">Choose a chapter</div>
   <div id="cards">
     <div class="card w" data-level="0"><div class="n">I</div><div class="t">Dry Gulch</div><div class="p">Arizona Territory, 1881.<br>A revolver, a dusty street, a gang that owns the town.</div></div>
     <div class="card j" data-level="1"><div class="n">II</div><div class="t">Kagemori</div><div class="p">Japan, 1600.<br>Throwing stars and katana on the shrine path at dusk.</div></div>
@@ -306,8 +314,12 @@
     <div class="card ti" data-level="7"><div class="n">VIII</div><div class="t">Che La</div><div class="p">Tibet, March 1959.<br>Open the road for the Dalai Lama's escape.</div></div>
     <div class="card az" data-level="8"><div class="n">IX</div><div class="t">Tenochtitlan</div><div class="p">Mexico, 30 June 1520.<br>Poisoned darts on the causeway at dusk.</div></div>
   </div>
-  <div class="foot">Choose a chapter</div>
-  <div id="duelbtn">Online &nbsp;·&nbsp; 2 players &nbsp;·&nbsp; duel or together</div>
+  <div id="tfoot">
+    <div class="l"><button class="soundbtn">Sound</button>
+    <label id="gfxl">Graphics <select id="gfxsel"><option value="auto">Automatic</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label></div>
+    <div id="duelbtn">Online &nbsp;·&nbsp; 2 players &nbsp;·&nbsp; duel or together</div>
+    <div id="ver"></div>
+  </div>
 </div>
 
 <div id="duel" class="layer screen">

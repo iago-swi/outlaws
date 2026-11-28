@@ -4,6 +4,37 @@ All notable changes to this trial are listed here, newest first.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the numbers follow
 [Semantic Versioning](https://semver.org/). The trial is numbered apart from Lone Hand (see `VERSIONING.md`).
 
+## [0.3.0] - 2026-11-28
+
+The landmarks of the three chapters, redrawn.
+
+### Added
+
+- **Dry Gulch: the train is new.** The engine has a banded boiler, a flared stack, domes, a bell, a headlamp that
+  glows, spoked wheels and a cow-catcher of slats; behind it a tender heaped with coal, a boarded boxcar and a
+  coach with lit windows.
+- **Dry Gulch: the Silver Queen mine has a headframe** with its wheel, on top of the outcrop, and an ore cart
+  stands on the rails outside.
+- **Dry Gulch: the church, the station and the water tower.** Corner boards, a frieze, door and window frames with
+  pointed hoods on the church; a water tank of staves bound with iron hoops.
+- **Kagemori: the shrine, the pagoda and the castle.** Rafters under every curved roof, plaster walls between dark
+  timbers.
+- **Uri: the chapel, the keep and the mill.** Stone plinths, quoins up the corners, lintels and sills round doors
+  and windows.
+
+### Changed
+
+- **The foot of the title screen is tidied up.** Sound and graphics on the left, the game for two in the middle,
+  the version on the right, in one row that no longer runs into the chapters or over itself, whatever the size of
+  the window. "Choose a chapter" now stands above the chapters.
+- Around the headframe and the ore cart you now walk round four posts, a winding drum and the cart.
+- The game file is 8.8 MB (0.2.0: 7.9 MB).
+
+### Removed
+
+- **Dry Gulch: the mission is gone.** The white mission south-west of town was a second church beside the first; the
+  chapter here has the wooden church only, and the train now comes in across open desert. Lone Hand keeps its mission.
+
 ## [0.2.0] - 2026-11-28
 
 Everything that stands in the three chapters now comes from Blender, and the trial shows only what it changed.
@@ -48,5 +79,6 @@ The first trial: Lone Hand 2.7.0 with the people and the houses of three chapter
 - The walls of the Blender houses cannot be shot through or broken.
 - The game file is 5.4 MB (Lone Hand 2.7.0: 2.2 MB).
 
+[0.3.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-blender-v0.3.0
 [0.2.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-blender-v0.2.0
 [0.1.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-blender-v0.1.0

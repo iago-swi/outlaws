@@ -7,6 +7,7 @@
 // The train and the tank are solid (they push whoever stands in their way, and a heavy knock hurts); they are the same in both
 // browsers of a duel only roughly: each browser drives its own, from the same timetable.
 import * as THREE from 'three';
+import { BL as BLEND, blendGroup } from './blend.js';
 import { gBox, gCyl, gCone, gSph } from './actors.js';
 import { merge } from './build.js';
 
@@ -162,8 +163,9 @@ export class Life {
     const box = [gBox(8.6, 2.6, 2.6, 0x7a3024, [0, 2.3, 0]), gBox(8.8, 0.2, 2.8, 0x5a2018, [0, 3.7, 0]), gBox(1.6, 2.2, 0.05, 0x5a2018, [0, 2.2, 1.32])], boxM = []; wheels(boxM, [-3.2, -2.2, 2.2, 3.2], 0.45);
     const coach = [gBox(9, 2.5, 2.6, 0x2c4a32, [0, 2.3, 0]), gBox(9.4, 0.25, 2.9, 0x1c2a1e, [0, 3.65, 0])], coachM = []; wheels(coachM, [-3.4, -2.4, 2.4, 3.4], 0.45);
     for (let i = -3; i <= 3; i++) for (const s of [-1, 1]) coach.push(gBox(0.7, 0.6, 0.05, 0xf0d890, [i * 1.2, 2.6, s * 1.31]));
-    const part = (flat, metal, len) => { const g = new THREE.Group(); g.add(new THREE.Mesh(merge(flat), M.flat)); if (metal.length) g.add(new THREE.Mesh(merge(metal), M.metal)); g.traverse((o) => { o.castShadow = true; }); G.gfx.root.add(g); return { g, len }; };
-    const cars = [part(loco, locoM, 7.4), part(tender, tenderM, 3.8), part(box, boxM, 8.8), part(coach, coachM, 9.4)];
+    // Blender version: each vehicle is the Blender model of that name (blender/extras.py), of the same size, so the colliders below fit
+    const part = (flat, metal, len, name) => { const g = new THREE.Group(), b = BLEND.live ? blendGroup('west', name, M) : null; if (b) g.add(b); else { g.add(new THREE.Mesh(merge(flat), M.flat)); if (metal.length) g.add(new THREE.Mesh(merge(metal), M.metal)); } g.traverse((o) => { o.castShadow = true; }); G.gfx.root.add(g); return { g, len }; };
+    const cars = [part(loco, locoM, 7.4, 'loco'), part(tender, tenderM, 3.8, 'tender'), part(box, boxM, 8.8, 'boxcar'), part(coach, coachM, 9.4, 'coach')];
     for (const c of cars) { G.world.addBox(-400, ZT, c.len, 2.8, 0, -1, 4); c.col = G.world.boxes[G.world.boxes.length - 1]; }
     this.train = { cars, x: -400, v: 0, state: 'away', t: 18 + Math.random() * 15, ZT, chuff: 0, stop: -32, start: -185 };
   }

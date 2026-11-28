@@ -6,7 +6,7 @@ export const PLACES = {
   west: [
     ['Main Street', 0, 0, 26], ['The Railroad Depot', 0, -50, 22], ['The Church', 62, -27, 13], ['The Water Tower', -52, -17, 9],
     ['The Corral', -67, 13, 14], ['The Homestead', -38, 38, 11], ['Boot Hill', 58, 41, 15], ['Lookout Butte', 6, 48, 11],
-    ['The Stage Station', 64, 15, 10], ['The Silver Queen Mine', -86, 47, 13], ['The Mission', -40, -46, 14],
+    ['The Stage Station', 64, 15, 10], ['The Silver Queen Mine', -86, 47, 13],
   ],
   japan: [
     ['The Torii Path', 0, 60, 14], ['The Pond', -1, 24, 14], ['The Hamlet Green', -4.5, -9, 13], ['The Shrine Steps', 0, -28, 8],

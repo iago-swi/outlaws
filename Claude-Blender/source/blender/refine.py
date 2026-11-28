@@ -146,7 +146,21 @@ def cylinder(bag, pid, M, p, col, mat):
         i2 = (i + 1) % seg
         F.append((i, i2, seg + i2, seg + i))
         U.append([(i / seg * rep, 0), ((i + 1) / seg * rep, 0), ((i + 1) / seg * rep, h / tile), (i / seg * rep, h / tile)])
-    bag.add(False, pid, tf(M, P), F, col, mat, U, auto=True)
+    vat = mat in WOODS and r >= 1.0 and h >= 1.0
+    bag.add(False, pid, tf(M, P), F, tuple(c * 0.4 for c in col) if vat else col, mat, U, auto=True)
+    if vat:
+        n = max(24, round(TAU * r / 0.21))
+        for i in range(n):
+            a0, a1 = TAU * (i + 0.07) / n, TAU * (i + 0.93) / n
+            lift = 0.022 if i % 2 else 0.012
+            j = 0.84 + 0.3 * rnd.random()
+            Q = [Vector(((rb + lift) * math.sin(a0), -h / 2, (rb + lift) * math.cos(a0))), Vector(((rb + lift) * math.sin(a1), -h / 2, (rb + lift) * math.cos(a1))),
+                 Vector(((rt + lift) * math.sin(a1), h / 2, (rt + lift) * math.cos(a1))), Vector(((rt + lift) * math.sin(a0), h / 2, (rt + lift) * math.cos(a0)))]
+            bag.add(False, pid, tf(M, Q), [(0, 1, 2, 3)], tuple(min(1.0, c * j) for c in col), mat, [[(i / 8, 0), ((i + 1) / 8, 0), ((i + 1) / 8, h / tile), (i / 8, h / tile)]])
+        for f in (0.12, 0.5, 0.88):                                   # iron hoops
+            y = -h / 2 + h * f; rr = rb + (rt - rb) * f + 0.03
+            ring = [Vector((rr * math.sin(TAU * i / 24), y + dy, rr * math.cos(TAU * i / 24))) for dy in (-0.045, 0.045) for i in range(24)]
+            bag.add(False, pid, tf(M, ring), [(i, (i + 1) % 24, 24 + (i + 1) % 24, 24 + i) for i in range(24)], (0.02, 0.02, 0.024), 'metal', [[(0, 0)] * 4] * 24, auto=True)
     if p.get('open'): return
     for rr, y, s in ((rt, h / 2, 1), (rb, -h / 2, -1)):
         if rr < 1e-4: continue
@@ -366,6 +380,8 @@ def build(chapter, out):
     import time; T0 = time.time(); tick = lambda m: print('TIME', chapter, m, round(time.time() - T0, 1), flush=True)
     reset()
     bag = build_bag(prims)
+    import dress
+    dress.apply(bag, prims, chapter)                    # the landmarks: surrounds, plinths, cornices, quoins, rafters
     tick('shapes: %d + %d faces' % (len(bag.S.f), len(bag.T.f)))
     a = make_mesh(chapter, bag.S, smooth_angle=44.0); paint(a, bag.S); face_attr(a, bag.fs)
     if bag.T.f:
