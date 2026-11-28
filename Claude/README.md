@@ -414,10 +414,11 @@ G; neither U nor V); it may be typed in small letters or with spaces.
 - **Weapons taken from the enemy.** Gunmen, archers, crossbowmen, javelin throwers,
   axemen and ninjas leave their weapon where they fall, glowing on the ground; walk over
   it to take it. It comes with a number of shots (12 for a revolver, 16 for a rifle, 64
-  for a submachine gun, 10 arrows, 8 bolts, 5 javelins, 6 axes, 12 throws of stars);
-  another of the same kind, the hero's own included, adds as many. Up to six weapons are
-  carried. A taken weapon leaves the arsenal when it is empty. Enemies who fight hand to
-  hand often leave a box of ammunition.
+  for a submachine gun, 6 arrows, 5 bolts, 3 javelins or axes, 6 throws of stars);
+  another of the same kind, the hero's own included, adds as many. Halberdiers, knights,
+  swordsmen, hoplites, rōnin and Red Guards leave their blade. Up to six weapons are
+  carried. A taken weapon leaves the arsenal when it is empty. Other enemies who fight
+  hand to hand often leave a box of ammunition.
 - **Enemies at new places every game.** The chapter's enemies are a different choice each
   time (the boss always among them), and those who walk the ground start at random free
   places, most within thirty metres of their usual post, some anywhere, always far from
@@ -484,8 +485,8 @@ G; neither U nor V); it may be typed in small letters or with spaces.
   waves, nods, shrugs or points; aim at one and he raises his hands. A shot or two kills
   one; the end of the chapter shows how many bystanders you killed.
 - **Fists** are always the last weapon of the arsenal: the left button jabs with either hand
-  in turn (28 damage), the right button throws a hook (55). They reach about a metre and a
-  half, strike the bystanders and enemies within reach and the nearest breakable thing
+  in turn (28 damage), the right button throws a hook (55). They reach about two metres,
+  strike the bystanders and enemies within reach and the nearest breakable thing
   (a small thing, furniture, a wooden wall), need no ammunition and make no noise.
 - **Wounds.** A shot leaves a dark mark on the body where it went in, pushes the figure back
   a little, and shows a small health bar over the enemy for four seconds (over the other
