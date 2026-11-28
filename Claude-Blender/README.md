@@ -1,6 +1,6 @@
 # Lone Hand — Blender trial
 
-**Version 0.2.0** · [What changed (changelog)](CHANGELOG.md) · built from [Lone Hand 2.7.0](../Claude/)
+**Version 0.3.0** · [What changed (changelog)](CHANGELOG.md) · built from [Lone Hand 2.7.0](../Claude/)
 
 A trial: what does *Lone Hand* look like when its people and its buildings come from
 [Blender](https://www.blender.org/) instead of being put together from coloured shapes by the game's own code?
@@ -14,13 +14,15 @@ The game of record is still [Lone Hand](../Claude/). Nothing in its folder was c
 
 ![Before and after in the three chapters: the street, the saloon, the church and the corral of Dry Gulch; the tea house, a farmhouse and the shrine of Kagemori; a chalet, a barn and the keep of Uri; and rows of figures, each as the game builds it and as it comes from Blender](comparison.jpg)
 
+![The landmarks before and after: the train of Dry Gulch, its church and the headframe of the mine; the shrine, the pagoda and the castle of Kagemori; the keep and the mill of Uri](landmarks.jpg)
+
 ## What comes from Blender
 
 | | Dry Gulch | Kagemori | Uri |
 | --- | --- | --- | --- |
 | People, **modelled** | all 12 looks: outlaws, the boss, the three heroes, the three duel villains, townspeople, the priest | all 14 looks: ninja, rōnin, archers, the Iron Rōnin, heroes, villains, villagers, komusō, geisha | all 13 looks: Habsburg soldiers, knights, the bailiff, heroes, villains, villagers, the monk |
 | Houses, **modelled** | the 12 houses of Main Street, inside and out | the 6 houses built on one plan: tea house, farmhouses, dōjō, hermitage | the 2 chalets and the 4 barns on staddle stones |
-| Everything else that stands, **reworked** | 1 792 shapes: church, mission, station, barn, corral, water tower, windmill, mine, fences, bridge, furniture | 791 shapes: shrine, pagoda, castle, gates, bridges, lanterns, furniture | 1 067 shapes: chapel, keep, mill, camp, palisade, landing, tower, fences, furniture |
+| Everything else that stands, **reworked** | 1 686 shapes: church, station, barn, corral, water tower, windmill, mine, fences, bridge, furniture | 791 shapes: shrine, pagoda, castle, gates, bridges, lanterns, furniture | 1 067 shapes: chapel, keep, mill, camp, palisade, landing, tower, fences, furniture |
 
 Two ways of using Blender, and the difference shows:
 
@@ -37,6 +39,23 @@ Two ways of using Blender, and the difference shows:
   over the whole place, with dirt where things meet the ground. It is a finish, not a new design: the church is
   the same church, better made.
 
+- **Landmarks, redrawn.** Ten places stand out and got more than the general rework: in Dry Gulch the church, the
+  railroad (the station and the train), the water tower and the mine; in Kagemori the shrine, the pagoda and the
+  castle; in Uri the chapel, the keep and the mill.
+  - *The train* is modelled anew (`extras.py`): an engine with a banded boiler, a flared stack, domes, a bell, a
+    headlamp, spoked wheels and a slatted cow-catcher; a tender heaped with coal; a boarded boxcar; a coach with lit
+    windows. The game moves it as before.
+  - *The mine* has something it never had: a headframe with its sheave wheel on the outcrop, and an ore cart on
+    the rails.
+  - *The water tower's tank* is a vat of staves bound with iron hoops.
+  - *The buildings* are read back out of the game's shapes (`dress.py`): which wall pieces lie in one plane, where
+    the plane has its doors and windows, which side is outside. Then each wall gets what the boxes never had, in
+    the manner of the place: surrounds to doors and windows (pointed hoods on the wooden church, stone lintels and
+    sills in Uri, dark frames in Kagemori), a plinth, a cornice, corner boards or quoins, a timber frame on
+    plaster, rafters under every curved roof. The gain is plain on the church, the pagoda, the shrine and the mill;
+    it is small on the castle and the keep, which are stacked blocks rather than walls with openings and would
+    need a model of their own.
+
 In both cases the game keeps its own colliders: you enter the same doors, climb the same ladders and stand on the
 same roofs. The reworked wooden walls can still be shot through and broken, as in Lone Hand.
 
@@ -48,6 +67,7 @@ same roofs. The reworked wooden walls can still be shot through and broken, as i
   (crates, barrels, tables): they are the game's, and break as before.
 - The walls of the *modelled* houses (Main Street, the chalets, the barns) cannot be shot through or broken:
   each house is one model.
+- The mission of Dry Gulch is not in this version at all: a second church beside the first, it was taken out of the chapter here. It stands as ever in Lone Hand.
 - Chapters IV to IX.
 - The models were made by scripts, not by a sculptor's hand: they are tidier and richer than the shapes they
   replace, not the work of a 3D artist.
@@ -68,25 +88,25 @@ columns against each other, not against Lone Hand's own table.
 
 | | Dry Gulch | Kagemori | Uri |
 | --- | --- | --- | --- |
-| Frames per second, Blender | 89 / 90 | 39 / 42 | 55 / 55 |
-| Frames per second, classic | 72 / 74 | 46 / 41 | 66 / 58 |
-| Triangles drawn, Blender | 2.01 million | 1.30 million | 2.92 million |
-| Triangles drawn, classic | 0.95 million | 0.67 million | 2.01 million |
-| Draw calls, Blender | 380 | 330 | 400 |
-| Draw calls, classic | 820 | 650 | 860 |
+| Frames per second, Blender | 75 / 73 | 54 / 54 | 74 / 68 |
+| Frames per second, classic | 90 / 90 | 59 / 59 | 80 / 77 |
+| Triangles drawn, Blender | 2.04 million | 1.36 million | 2.95 million |
+| Triangles drawn, classic | 0.95 million | 0.66 million | 2.01 million |
+| Draw calls, Blender | 400 | 280 | 420 |
+| Draw calls, classic | 830 | 590 | 850 |
 
 | Model file | Contents | Size in the page |
 | --- | --- | --- |
 | `people.lhm` | 61 parts, 23 364 vertices, 35 848 triangles | 259 KB |
-| `west.lhm` | 12 houses, 137 160 vertices, 162 872 triangles | 1 474 KB |
+| `west.lhm` | 12 houses, the train, the headframe, the ore cart: 162 838 vertices, 185 492 triangles | 1 672 KB |
 | `japan.lhm` | 6 houses, 33 241 vertices, 45 008 triangles | 374 KB |
 | `swiss.lhm` | 2 chalets and a barn, 24 947 vertices, 31 774 triangles | 269 KB |
-| `west-scenery.lhm` | 1 792 shapes, 121 715 vertices, 102 668 triangles | 795 KB |
-| `japan-scenery.lhm` | 791 shapes, 68 354 vertices, 67 564 triangles | 563 KB |
-| `swiss-scenery.lhm` | 1 067 shapes, 66 285 vertices, 56 774 triangles | 512 KB |
+| `west-scenery.lhm` | 1 686 shapes, 122 594 vertices, 102 232 triangles | 820 KB |
+| `japan-scenery.lhm` | 791 shapes, 98 520 vertices, 100 804 triangles | 915 KB |
+| `swiss-scenery.lhm` | 1 067 shapes, 76 154 vertices, 66 642 triangles | 626 KB |
 
-The game is still one file, `index.html`: 7.9 MB instead of 2.2 MB (5.0 MB instead of 0.9 MB when a web server
-compresses it). Reading the models takes 0.2 to 0.4 seconds when the game starts.
+The game is still one file, `index.html`: 8.8 MB instead of 2.2 MB (5.7 MB instead of 0.9 MB when a web server
+compresses it). Reading the models takes about 0.4 seconds when the game starts.
 
 ## Run it
 
@@ -98,8 +118,9 @@ How to play: see [Lone Hand's README](../Claude/README.md).
 
 - **Scripts, not files drawn by hand.** `source/blender/` holds the Python scripts that Blender 5.3 runs without
   its window: `people.py` (the library of parts), `town.py` (Main Street, from the options of the game's `bld()`,
-  kept in `west.json`), `village.py` (the Japanese houses, the chalets, the barn), `refine.py` (the rework of
-  everything else, from `dump/<chapter>.json`), `lib.py` (lofts, lathes, the mesh), `pack.py` (shading and the
+  kept in `west.json`), `village.py` (the Japanese houses, the chalets, the barn), `extras.py` (the train, the headframe,
+  the ore cart), `refine.py` (the rework of everything else, from `dump/<chapter>.json`), `dress.py` (the landmarks'
+  walls and roofs), `lib.py` (lofts, lathes, the mesh), `pack.py` (shading and the
   model file). Blender bevels the woodwork and weights the normals; the scripts bake ambient occlusion into the
   vertices with Blender's ray casting.
 - **The model file** (`.lhm`, see `pack.py`): positions as 16-bit numbers, normals and colours as bytes, deflated;

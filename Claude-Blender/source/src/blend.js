@@ -200,6 +200,20 @@ export function blendPlace(file, name, x, y, z, ry = 0) {
   }
   return true;
 }
+/** The object `name` of a model file as a group of its own, in its own space (the train's vehicles, which the game moves). */
+export function blendGroup(file, name, M) {
+  const set = BL.models[file] && BL.models[file].sets && BL.models[file].sets.get(name);
+  if (!set) return null;
+  const grp = new THREE.Group();
+  for (const g of set) {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(g.P, 3)); geo.setAttribute('normal', new THREE.BufferAttribute(g.N, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(g.U, 2)); geo.setAttribute('color', new THREE.BufferAttribute(g.C, 3));
+    const mat = M[g.mat] || M.flat, m = new THREE.Mesh(geo, mat);
+    m.castShadow = !mat.userData.noShadow; m.receiveShadow = !mat.userData.noShadow;
+    grp.add(m);
+  }
+  return grp;
+}
 /** One mesh per material for everything placed since the last call. They are plain triangles in the game's own
  *  materials, like the merged scenery: shots and sight lines stop at them, and their roofs can be stood on. */
 export function blendFlush(M, parent) {

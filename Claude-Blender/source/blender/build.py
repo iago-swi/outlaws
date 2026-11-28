@@ -15,7 +15,8 @@ if not want or 'people' in want:
 if not want or 'west' in want:
     import town
     reset()
-    export_building(os.path.join(OUT, 'west.lhm'), town.build())
+    import extras
+    export_building(os.path.join(OUT, 'west.lhm'), town.build() + extras.build())          # Main Street; the train, the headframe and the ore cart
 if not want or 'japan' in want:
     import village
     reset()
