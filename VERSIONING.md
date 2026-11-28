@@ -1,12 +1,14 @@
 # Versioning in this repository
 
 This repository holds two games that are numbered separately. A change to one never raises
-the number of the other.
+the number of the other. A trial of Lone Hand with people and houses modelled in Blender has a
+folder and a number of its own; it is published by the same route as Lone Hand.
 
 | Game | Folder | Tag | Changelog | Where the number lives |
 | --- | --- | --- | --- | --- |
 | Lone Hand (Claude version) | `Claude/` | `lone-hand-vX.Y.Z` | `Claude/CHANGELOG.md` | `Claude/source/package.json` |
 | Nine Horizons (Gemini version) | `Gemini/` | `eight-horizons-vX.Y.Z` | `Gemini/CHANGELOG.md` | `Gemini/package.json` |
+| Lone Hand, Blender trial | `Claude-Blender/` | `lone-hand-blender-vX.Y.Z` | `Claude-Blender/CHANGELOG.md` | `Claude-Blender/source/package.json` |
 
 ## The number
 
