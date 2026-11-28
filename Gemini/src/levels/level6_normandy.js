@@ -9,15 +9,19 @@ import {
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
   addSolidBox,
   addAltar,
   addPewRow,
   addDesk,
-  addBunk
+  addBunk,
+  addCrawlPassage,
+  addTableAndChairs
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL6_META = {
   id: 'normandy',
@@ -524,6 +528,85 @@ export function buildLevel6(scene, collision, particles) {
     { name: 'Norman Windmill', inside: new THREE.Vector3(50, 0.2, 24), outside: new THREE.Vector3(43, 0, 24) }
   ];
 
-  const specialSpots = { raisedHide: normandyHide, crawlDen: normandyDen };
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  // ---- STAGE 7 EXPANSION: 14 BOCAGE HEDGEROW CRAWL HOLES, RAILWAY HALT WITH 2 BOXCARS, CIDER FARM, SCHOOL, GLIDER WRECK & 12 SHELTERED BYSTANDERS ----
+  const n7Hedge = new THREE.MeshStandardMaterial({ color: 0x243b1e, roughness: 0.96 });
+  const n7Stone = new THREE.MeshStandardMaterial({ color: 0x7a766d, roughness: 0.9 });
+  const n7Wood = new THREE.MeshStandardMaterial({ color: 0x4b3524, roughness: 0.88 });
+  const n7Slate = new THREE.MeshStandardMaterial({ color: 0x3b424c, roughness: 0.82 });
+  const n7Iron = new THREE.MeshStandardMaterial({ color: 0x383c42, metalness: 0.72, roughness: 0.4 });
+
+  // 1. Fourteen Bocage Hedgerow Crawl Holes (1.24m clear height!) opening off both flanks of the road!
+  const hedgeHoles = [];
+  const hedgeCoords = [
+    [-12, 34], [-26, 26], [-12, 10], [-12, 2], [-12, -10], [-12, -20], [-26, -26],
+    [12, 34],  [28, 26],  [12, 10],  [12, 2],  [12, -10],  [12, -20],  [12, -30]
+  ];
+  for (const [hx, hz] of hedgeCoords) {
+    hedgeHoles.push(addCrawlPassage(scene, collision, {
+      cx: hx, cz: hz, floorY: 0, w: 2.2, d: 2.8, clearH: 1.24, bodyH: 1.65, mat: n7Hedge, postMat: n7Hedge, tag: 'wood'
+    }));
+  }
+
+  // 2. Railway Halt on Far East Flank (x = 46, z = -10..-34) with 2 Crawl-Under Boxcars (1.24m!) + ladder
+  const railCar1 = addCrawlPassage(scene, collision, {
+    cx: 46, cz: -12, floorY: 0, w: 3.1, d: 7.4, clearH: 1.24, bodyH: 2.25, mat: n7Wood, postMat: n7Iron
+  });
+  const railCar2 = addCrawlPassage(scene, collision, {
+    cx: 46, cz: -24, floorY: 0, w: 3.1, d: 7.4, clearH: 1.24, bodyH: 2.25, mat: n7Slate, postMat: n7Iron
+  });
+  collision.addWalkable(46, -12, 3.1, 7.4, 3.49, true);
+  buildLadder(scene, collision, { x: 44.3, z: -12, bottomY: 0, topY: 3.49, normalX: -1, normalZ: 0, mat: n7Wood });
+
+  // 3. Enterable Cider Farm (West South, x = -44, z = 36) & Village School/Café (East South, x = 36, z = 40)
+  const ciderFarm = buildHollowRoom(scene, collision, {
+    cx: -44, cz: 36, w: 9.5, d: 9.0, h: 3.9, floorY: 0.16,
+    wallMat: n7Stone, floorMat: n7Stone, roofMat: n7Slate, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    interiorLight: { color: 0xffc670, intensity: 1.4, distance: 12 }
+  });
+  addTableAndChairs(scene, collision, -46.2, ciderFarm.floorY, 36, n7Wood);
+
+  const schoolCafe = buildHollowRoom(scene, collision, {
+    cx: 36, cz: 40, w: 9.5, d: 9.0, h: 3.9, floorY: 0.16,
+    wallMat: n7Stone, floorMat: n7Stone, roofMat: n7Slate, roofStyle: 'gable',
+    west: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    interiorLight: { color: 0xffd088, intensity: 1.4, distance: 12 }
+  });
+  addTableAndChairs(scene, collision, 38.0, schoolCafe.floorY, 40, n7Wood);
+
+  // 4. Church Tower Ladder (climbable inside the bombed parish church tower at x = 23.5, z = -12)
+  collision.addWalkable(24.5, -12, 4.2, 4.2, 5.4, true);
+  buildLadder(scene, collision, { x: 22.25, z: -12, bottomY: 0.2, topY: 5.4, normalX: -1, normalZ: 0, mat: n7Wood });
+
+  // 5. Crashed Allied Glider Wreck near player start (x = -8.5, z = 50) where the wounded pilot shelters!
+  const gliderBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.5, 5.6), new THREE.MeshStandardMaterial({ color: 0x4b543b, roughness: 0.88 }));
+  gliderBody.position.set(-8.5, 0.85, 50);
+  gliderBody.rotation.set(0.14, 0.35, -0.22);
+  const gliderWing = new THREE.Mesh(new THREE.BoxGeometry(7.2, 0.16, 1.6), new THREE.MeshStandardMaterial({ color: 0x4b543b, roughness: 0.88 }));
+  gliderWing.position.set(-8.5, 1.35, 49.5);
+  gliderWing.rotation.z = -0.26;
+  scene.add(gliderBody, gliderWing);
+
+  // 6. Twelve Sheltered/Indoor Pre-Dawn Normandy Bystanders (6 women, 6 men — all indoors or under shelter!)
+  const bystanders = spawnBystanders(scene, collision, animated, 'normandy', [
+    { gender: 'male',   role: 'baker', pos: new THREE.Vector3(-20.2, 0.16, 18.2), yaw: 1.4 },
+    { gender: 'female', role: 'baker_wife', pos: new THREE.Vector3(-19.8, 0.16, 14.0), yaw: 1.2 },
+    { gender: 'female', role: 'cafe_woman', pos: new THREE.Vector3(34.5, schoolCafe.floorY, 42.5), yaw: -1.4 },
+    { gender: 'female', role: 'schoolmistress', pos: new THREE.Vector3(38.0, schoolCafe.floorY, 37.2), yaw: -1.2 },
+    { gender: 'female', role: 'church_elder', pos: new THREE.Vector3(18.0, 0.2, -9.8), yaw: -0.5, seated: true },
+    { gender: 'female', role: 'farm_woman', pos: new THREE.Vector3(-37.0, 0.14, 22.5), yaw: 1.3 },
+    { gender: 'male',   role: 'priest', pos: new THREE.Vector3(18.0, 0.2, -14.8), yaw: -1.2 },
+    { gender: 'male',   role: 'farmer', pos: new THREE.Vector3(-42.2, ciderFarm.floorY, 33.2), yaw: 1.1 },
+    { gender: 'male',   role: 'railwayman', pos: new THREE.Vector3(48.8, 0, -14.0), yaw: -1.4 },
+    { gender: 'male',   role: 'resistance', pos: new THREE.Vector3(-20.2, 0.16, -6.2), yaw: 1.3 },
+    { gender: 'male',   role: 'pilot', pos: new THREE.Vector3(-6.2, 0, 50.2), yaw: 0.7, seated: true },
+    { gender: 'female', role: 'housemaid', pos: new THREE.Vector3(-54.0, 0.18, -15.5), yaw: 1.4 }
+  ]);
+
+  const specialSpots = {
+    raisedHide: normandyHide,
+    crawlDen: normandyDen,
+    extraCrawls: [...hedgeHoles, railCar1, railCar2]
+  };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }

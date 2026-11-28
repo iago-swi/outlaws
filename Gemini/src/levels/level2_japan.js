@@ -15,9 +15,12 @@ import {
   buildCrawlDen,
   addSolidBox,
   addAltar,
-  addDesk
+  addDesk,
+  addCrawlPassage,
+  addUprightLoom
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL2_META = {
   id: 'japan',
@@ -744,6 +747,50 @@ export function buildLevel2(scene, collision, particles) {
     { name: 'Bamboo Hermitage', inside: new THREE.Vector3(-51.5, 0.22, 32), outside: new THREE.Vector3(-45.5, 0, 32) }
   ];
 
-  const specialSpots = { raisedHide: japanHide, crawlDen: japanDen, pagodaLadder };
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  // ---- STAGE 7 EXPANSION: RICE PADDIES WITH DIKE PATH, STILT GRANARY (CRAWL UNDER + LOFT LADDER), CHARCOAL CAMP & 8 MORE BYSTANDERS ----
+  // 1. Terraced Rice Paddies flanking East side (x = 46..64, z = 12..40) with walkable dry earthen dikes!
+  const matPaddyWater = new THREE.MeshStandardMaterial({ color: 0x3b6352, roughness: 0.35, metalness: 0.25 });
+  const matSprout = new THREE.MeshStandardMaterial({ color: 0x5c9638, roughness: 0.9 });
+  for (let py = 0; py < 2; py++) {
+    const pz = 18 + py * 14;
+    const basin = new THREE.Mesh(new THREE.PlaneGeometry(14, 10), matPaddyWater);
+    basin.rotation.x = -Math.PI / 2;
+    basin.position.set(55, 0.03, pz);
+    scene.add(basin);
+    for (let sx = -5; sx <= 5; sx += 2.5) {
+      for (let sz = -3; sz <= 3; sz += 3) {
+        const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.65, 5), matSprout);
+        tuft.position.set(55 + sx, 0.35, pz + sz);
+        scene.add(tuft);
+      }
+    }
+  }
+  // 2. Granary on Stilts (x = -38, z = -22) with 1.24m crawl-under space AND ladder to upper loft!
+  const granaryCrawl = addCrawlPassage(scene, collision, {
+    cx: -38, cz: -22, floorY: 0, w: 6.4, d: 6.4, clearH: 1.24, bodyH: 2.8, mat: matDarkWood, postMat: matDarkWood
+  });
+  collision.addWalkable(-38, -22, 6.2, 6.2, 4.04, true);
+  buildLadder(scene, collision, { x: -34.68, z: -22, bottomY: 0, topY: 4.04, normalX: 1, normalZ: 0, mat: matDarkWood });
+
+  // 3. Charcoal Burners' Camp on West Flank (x = -52, z = 10) + low crawl-through water gate (1.24m) into Dojo!
+  addSolidBox(scene, collision, -52, 0.85, 10, 3.2, 1.7, 3.2, matStone, 'stone');
+  const dojoWaterGate = addCrawlPassage(scene, collision, {
+    cx: 30, cz: -28, floorY: 0, w: 3.4, d: 2.0, clearH: 1.24, bodyH: 1.8, mat: matDarkWood, postMat: matStone
+  });
+
+  // 4. Eight Additional Period Japan Bystanders (joining the 3 komuso + 4 geisha -> 15 total, 8 women!)
+  addUprightLoom(scene, collision, -24.5, 0.25, -18.0, matDarkWood, 0xc93b42);
+  const bystanders = spawnBystanders(scene, collision, animated, 'japan', [
+    { gender: 'female', role: 'well_woman', pos: new THREE.Vector3(-14.5, 0, 20.5), yaw: 0.9, prop: 'jar_head' },
+    { gender: 'female', role: 'planter', pos: new THREE.Vector3(49.5, 0, 18.0), yaw: -0.6 },
+    { gender: 'male',   role: 'planter', pos: new THREE.Vector3(59.0, 0, 32.0), yaw: -2.2 },
+    { gender: 'male',   role: 'tea_elder', pos: new THREE.Vector3(-19.0, 0.25, -13.2), yaw: 1.4, seated: true },
+    { gender: 'male',   role: 'angler', pos: new THREE.Vector3(10.5, 0, 10.5), yaw: 1.5, prop: 'staff' },
+    { gender: 'male',   role: 'woodcutter', pos: new THREE.Vector3(-48.0, 0, 12.5), yaw: 1.1 },
+    { gender: 'male',   role: 'pilgrim', pos: new THREE.Vector3(11.0, 0, -29.0), yaw: -0.4, prop: 'staff' },
+    { gender: 'female', role: 'weaver', pos: new THREE.Vector3(-23.2, 0.25, -18.0), yaw: 1.5 }
+  ]);
+
+  const specialSpots = { raisedHide: japanHide, crawlDen: japanDen, pagodaLadder, extraCrawls: [granaryCrawl, dojoWaterGate] };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }

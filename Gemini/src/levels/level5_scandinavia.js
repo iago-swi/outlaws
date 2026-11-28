@@ -10,15 +10,20 @@ import {
 import { createSkyDome, createWaterMesh, createAuroraMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
   addSolidBox,
   addHearth,
   addPewRow,
   addAltar,
-  addBunk
+  addBunk,
+  addCrawlPassage,
+  addUprightLoom,
+  addStairFlight
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL5_META = {
   id: 'scandinavia',
@@ -752,6 +757,60 @@ export function buildLevel5(scene, collision, particles) {
     { name: 'Outlying Farm', inside: new THREE.Vector3(-52, 0.18, 26), outside: new THREE.Vector3(-45, 0, 26) }
   ];
 
-  const specialSpots = { raisedHide: scandiHide, crawlDen: scandiDen };
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  // ---- STAGE 7 EXPANSION: SHIPYARD HULL CRAWL, BEACON CRAG LADDER, BYRE WITH LOFT, PALISADE FIGHTING STEP & CRAWL HOLE, FISH-RACK TUNNEL & 14 BYSTANDERS ----
+  // 1. Shipyard with Clinker Hull on Stocks (1.24m clear crawl space underneath!, x = -56, z = 48)
+  const hullCrawl = addCrawlPassage(scene, collision, {
+    cx: -56, cz: 48, floorY: 0, w: 3.4, d: 8.4, clearH: 1.24, bodyH: 1.5, mat: matDarkWood, postMat: matTimber
+  });
+
+  // 2. Beacon Crag on East Shore with Climbable Wooden Ladder (x = 56, z = 40, topY = 4.5m)
+  addSolidBox(scene, collision, 56, 2.25, 40, 6.2, 4.5, 6.2, matStone, 'stone');
+  collision.addWalkable(56, 40, 6.0, 6.0, 4.5, true);
+  buildLadder(scene, collision, { x: 56, z: 43.25, bottomY: 0, topY: 4.5, normalX: 0, normalZ: 1, mat: matTimber });
+
+  // 3. Nordic Byre (animal barn) with Interior Hayloft Ladder (x = -50, z = -4)
+  const byre = buildHollowRoom(scene, collision, {
+    cx: -50, cz: -4, w: 10.5, d: 10.0, h: 4.8, floorY: 0.16,
+    wallMat: matTimber, floorMat: matFloor, roofMat: matSnowRoof, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
+    interiorLight: { color: 0xffb366, intensity: 1.4, distance: 14 }
+  });
+  collision.addWalkable(-52.5, -4, 4.4, 9.2, 2.7, true);
+  buildLadder(scene, collision, { x: -50.15, z: -1.0, bottomY: byre.floorY, topY: 2.7, normalX: 1, normalZ: 0, mat: matTimber });
+
+  // 4. Fighting Step with Stairs behind the Timber Palisade on Both Sides of Gate + Crawl Hole under East Palisade!
+  for (const sx of [-12, 12]) {
+    const stepDeck = new THREE.Mesh(new THREE.BoxGeometry(10.0, 0.22, 2.2), matTimber);
+    stepDeck.position.set(sx, 2.1, 4.3);
+    scene.add(stepDeck);
+    collision.addWalkable(sx, 4.3, 10.2, 2.4, 2.21, true);
+    addStairFlight(scene, collision, {
+      x: sx + (sx < 0 ? -4.2 : 4.2), zStart: 0.4, zEnd: 3.4, yStart: 0, yEnd: 2.21, width: 1.6, steps: 6, mat: matTimber, navIgnore: true
+    });
+  }
+  const fishRackCrawl = addCrawlPassage(scene, collision, {
+    cx: 38, cz: 40, floorY: 0, w: 3.2, d: 5.4, clearH: 1.24, bodyH: 1.4, mat: matDarkWood, postMat: matTimber
+  });
+
+  // 5. Fourteen Period Norse Bystanders (7 blonde Norse women in apron dresses with twin brooches + skald, priest, boat builder, shepherd, 2 ship crew, 2 bound unhurt captives!)
+  addUprightLoom(scene, collision, -26.5, 0.18, 22.0, matDarkWood, 0x8c2e28);
+  const bystanders = spawnBystanders(scene, collision, animated, 'scandinavia', [
+    { gender: 'female', role: 'norse_woman', pos: new THREE.Vector3(-25.2, 0.18, 22.0), yaw: -1.4 },
+    { gender: 'female', role: 'norse_woman', pos: new THREE.Vector3(-23.5, 0.18, 25.5), yaw: 0.6 },
+    { gender: 'female', role: 'norse_woman', pos: new THREE.Vector3(24.0, 0.18, 26.2), yaw: -1.2 },
+    { gender: 'female', role: 'norse_woman', pos: new THREE.Vector3(34.5, 0, 42.5), yaw: -0.9 },
+    { gender: 'female', role: 'norse_woman', pos: new THREE.Vector3(-49.0, 0.18, 24.0), yaw: 1.5 },
+    { gender: 'female', role: 'norse_woman', pos: new THREE.Vector3(-25.2, 0.18, -11.5), yaw: 1.2 },
+    { gender: 'female', role: 'captive', pos: new THREE.Vector3(16.0, 0, -24.0), yaw: -0.5, seated: true },
+    { gender: 'male',   role: 'captive', pos: new THREE.Vector3(17.4, 0, -24.4), yaw: -0.7, seated: true },
+    { gender: 'male',   role: 'skald', pos: new THREE.Vector3(-4.8, 0.25, -45.5), yaw: 0.4, prop: 'lyre' },
+    { gender: 'male',   role: 'priest', pos: new THREE.Vector3(52.0, 0.22, -31.5), yaw: -1.4, prop: 'staff' },
+    { gender: 'male',   role: 'boat_builder', pos: new THREE.Vector3(-49.5, 0, 48.0), yaw: 1.1 },
+    { gender: 'male',   role: 'shepherd', pos: new THREE.Vector3(-44.0, 0, -2.0), yaw: 0.8, prop: 'staff' },
+    { gender: 'male',   role: 'crew', pos: new THREE.Vector3(-6.0, 0.82, 68.5), yaw: 0.0, prop: 'paddle' },
+    { gender: 'male',   role: 'crew', pos: new THREE.Vector3(-6.0, 0.82, 74.5), yaw: 0.2 }
+  ]);
+
+  const specialSpots = { raisedHide: scandiHide, crawlDen: scandiDen, extraCrawls: [hullCrawl, fishRackCrawl] };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }

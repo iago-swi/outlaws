@@ -60,6 +60,8 @@ export class RemoteFighter {
     this.targetPitch = 0;
     this.moving = false;
     this.crouched = false;
+    this.sneaking = false;
+    this.vanished = false;
     this.crouchBlend = 0;
     this.alive = true;
     this.hp = 100;
@@ -68,6 +70,33 @@ export class RemoteFighter {
     this.muzzleFlash = 0;
     this.swingAnim = 0;
     this.deathTimer = 0;
+    this._clonedMats = false;
+  }
+
+  _setVanished(isVanished) {
+    if (this.vanished === isVanished) return;
+    this.vanished = isVanished;
+    if (!this._clonedMats) {
+      this._clonedMats = true;
+      for (const m of this.hitMeshes) {
+        if (m.material && typeof m.material.clone === 'function') {
+          m.material = m.material.clone();
+          m.userData._origTransparent = !!m.material.transparent;
+          m.userData._origOpacity = typeof m.material.opacity === 'number' ? m.material.opacity : 1;
+        }
+      }
+    }
+    for (const m of this.hitMeshes) {
+      if (!m.material) continue;
+      if (isVanished) {
+        m.material.transparent = true;
+        m.material.opacity = 0.2;
+      } else {
+        m.material.transparent = !!m.userData._origTransparent;
+        m.material.opacity = m.userData._origOpacity ?? 1;
+      }
+      m.material.needsUpdate = true;
+    }
   }
 
   getHitMeshes() {
@@ -82,6 +111,8 @@ export class RemoteFighter {
     if (typeof state.pitch === 'number') this.targetPitch = state.pitch;
     if (typeof state.moving === 'boolean') this.moving = state.moving;
     if (typeof state.cr === 'number' || typeof state.cr === 'boolean') this.crouched = !!state.cr;
+    if (typeof state.sn === 'number' || typeof state.sn === 'boolean') this.sneaking = !!state.sn;
+    if (typeof state.van === 'number' || typeof state.van === 'boolean') this._setVanished(!!state.van);
     if (typeof state.hp === 'number') this.hp = state.hp;
     if (typeof state.maxHp === 'number' && state.maxHp > 0) this.maxHp = state.maxHp;
     if (typeof state.alive === 'boolean') {

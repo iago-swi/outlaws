@@ -21,8 +21,12 @@ import {
   addDesk,
   addBunk,
   addStove,
-  addPiano
+  addPiano,
+  addCrawlPassage,
+  addTableAndChairs,
+  addStairFlight
 } from '../engine/buildings.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL1_META = {
   id: 'west',
@@ -651,10 +655,16 @@ export function buildLevel1(scene, collision, particles) {
     bed.position.y = 1.25;
     bed.castShadow = true;
     wgrp.add(bed);
-    const canopy = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 4.4, 12, 1, true, 0, Math.PI), matCanvas);
+    const canopy = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 4.4, 14, 1, true, 0, Math.PI), matCanvas);
     canopy.rotation.z = Math.PI / 2;
     canopy.rotation.y = Math.PI / 2;
     canopy.position.y = 1.72;
+    // Wooden hoop bows supporting the canvas bonnet!
+    for (let bi = -2; bi <= 2; bi++) {
+      const bow = new THREE.Mesh(new THREE.TorusGeometry(1.21, 0.032, 6, 14, Math.PI), matDarkWood);
+      bow.position.set(0, 1.72, bi * 1.02);
+      wgrp.add(bow);
+    }
     wgrp.add(canopy);
     for (const [lx, lz] of [[-1.3, -1.5], [1.3, -1.5], [-1.3, 1.5], [1.3, 1.5]]) {
       const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.08, 6, 14), matDarkWood);
@@ -942,6 +952,100 @@ export function buildLevel1(scene, collision, particles) {
     { name: 'Boot Hill Crypt', inside: new THREE.Vector3(45.0, 0.16, -61.8), outside: new THREE.Vector3(45.0, 0, -56.5) }
   ];
 
+  // ---- STAGE 7 EXPANSION: RAILROAD DEPOT + BOXCAR CRAWL, SILVER MINE, HOTEL, BARBER, DOCTOR & DRY WASH ----
+  // 1. Railroad Line along East Flank (x = 46, z = -42..58) with Steel Rails, Timber Depot, Loading Dock & Crawl-Under Boxcar!
+  const matRailIron = new THREE.MeshStandardMaterial({ color: 0x3b3f45, metalness: 0.78, roughness: 0.36 });
+  for (const rx of [45.2, 46.8]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.14, 100), matRailIron);
+    rail.position.set(rx, 0.08, 8);
+    scene.add(rail);
+  }
+  for (let tz = -40; tz <= 56; tz += 2.0) {
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.08, 0.28), matDarkWood);
+    tie.position.set(46, 0.04, tz);
+    scene.add(tie);
+  }
+  const depot = buildHollowRoom(scene, collision, {
+    cx: 56, cz: 10, w: 10.5, d: 13.0, h: 4.1, floorY: 0.25,
+    wallMat: matWood, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'gable',
+    west: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
+    south: [{ type: 'door', offset: 0, width: 2.2, height: 2.8 }],
+    interiorLight: { color: 0xffc470, intensity: 1.5, distance: 14 }
+  });
+  addSign(50.6, 4.3, 10, 5.4, 0.9, -Math.PI / 2, 'RAILROAD DEPOT', 'RED GULCH LINE', '#362115');
+  addDesk(scene, collision, 58.6, depot.floorY, 10, 1.8, 0.9, matDarkWood, -1);
+  // Crawl-under Boxcar parked on the rails (1.24m clear underneath!) + ladder onto boxcar roof!
+  const boxcarCrawl = addCrawlPassage(scene, collision, {
+    cx: 46, cz: 26, floorY: 0, w: 3.1, d: 8.4, clearH: 1.24, bodyH: 2.35, mat: matSaloon, postMat: matRailIron
+  });
+  collision.addWalkable(46, 26, 3.1, 8.4, 3.59, true);
+  buildLadder(scene, collision, { x: 44.32, z: 26, bottomY: 0, topY: 3.59, normalX: -1, normalZ: 0, mat: matDarkWood });
+
+  // 2. Silver Mine Drift on the far West cliff (x = -58, z = -12) with 1.24m low timber-framed drift entrance!
+  const mineDrift = buildCrawlDen(scene, collision, {
+    cx: -58, cz: -12, w: 7.4, d: 6.4, doorSide: 'east',
+    wallMat: matStone, floorMat: matStone, roofMat: matDarkWood
+  });
+  addSign(-54.1, 3.0, -12, 4.4, 0.85, Math.PI / 2, 'SILVER QUEEN MINE', 'KEEP OUT', '#2b1e14');
+
+  // 3. Enterable Frontier Hotel (Lobby, Upper Floor & Roof Ladder!) at South-West Flank (x = -42, z = 34, clear of Butte stair!)
+  const hotel = buildHollowRoom(scene, collision, {
+    cx: -42, cz: 34, w: 12.0, d: 13.0, h: 7.2, floorY: 0.16,
+    wallMat: matWood, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'flat',
+    east: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }, { type: 'window', offset: -3.8, width: 1.5 }, { type: 'window', offset: 3.8, width: 1.5 }],
+    west: [{ type: 'door', offset: 0, width: 2.2, height: 2.8 }],
+    interiorLight: { color: 0xffca7a, intensity: 1.8, distance: 16 }
+  });
+  addSign(-35.8, 7.6, 34, 6.2, 1.0, Math.PI / 2, 'GRAND HOTEL', 'ROOMS & BOARD', '#3b2416');
+  addDesk(scene, collision, -45.5, hotel.floorY, 30.2, 2.2, 0.9, matDarkWood, 1);
+  addBunk(scene, collision, -45.2, hotel.floorY, 37.8, false, matDarkWood, 0x8a382b);
+  // Hotel upper balcony & roof ladder
+  collision.addWalkable(-42, 34, 11.6, 12.6, 7.36, true);
+  buildLadder(scene, collision, { x: -42, z: 40.68, bottomY: 0, topY: 7.36, normalX: 0, normalZ: 1, mat: matDarkWood });
+
+  // 4. Enterable Barber & Doctor Offices on the South-East back street (x = 34, z = 36 & x = 34, z = 49)
+  const barber = buildHollowRoom(scene, collision, {
+    cx: 34, cz: 36, w: 8.6, d: 8.0, h: 3.8, floorY: 0.16,
+    wallMat: matWeathered, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'flat',
+    west: [{ type: 'door', offset: 0, width: 2.2, height: 2.8 }],
+    east: [{ type: 'door', offset: 0, width: 2.0, height: 2.7 }],
+    interiorLight: { color: 0xffd28a, intensity: 1.4, distance: 12 }
+  });
+  addSign(29.5, 4.1, 36, 4.4, 0.85, -Math.PI / 2, 'BARBER SHOP', 'SHAVE & HAIRCUT', '#4d201c');
+  addTableAndChairs(scene, collision, 35.8, barber.floorY, 36, matDarkWood);
+
+  const doctor = buildHollowRoom(scene, collision, {
+    cx: 34, cz: 49, w: 8.6, d: 8.0, h: 3.8, floorY: 0.16,
+    wallMat: matChurchWall, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'flat',
+    west: [{ type: 'door', offset: 0, width: 2.2, height: 2.8 }],
+    interiorLight: { color: 0xffe6b8, intensity: 1.4, distance: 12 }
+  });
+  addSign(29.5, 4.1, 49, 4.4, 0.85, -Math.PI / 2, 'DOC HOLLIDAY', 'PHYSICIAN', '#243642');
+  addBunk(scene, collision, 36.2, doctor.floorY, 51.0, false, matDarkWood, 0xeee8dc);
+
+  // 5. Dry Wash Trench flanking unseen from back-lot East street to Boot Hill (low cover banks!)
+  for (const bz of [-36, -42, -48]) {
+    addSolidBox(scene, collision, 33.5, 0.6, bz, 1.2, 1.2, 4.6, matStone, 'stone');
+    addSolidBox(scene, collision, 39.5, 0.6, bz, 1.2, 1.2, 4.6, matStone, 'stone');
+  }
+
+  // 6. Thirteen Period West Bystanders (6 women, 7 men — never blocking doorways or paths!)
+  const bystanders = spawnBystanders(scene, collision, animated, 'west', [
+    { gender: 'female', role: 'barmaid', pos: new THREE.Vector3(3.4, 0.16, -29.2), yaw: 0 },
+    { gender: 'male',   role: 'pianist', pos: new THREE.Vector3(-4.2, 0.16, -30.0), yaw: 0.4, seated: true },
+    { gender: 'male',   role: 'storekeeper', pos: new THREE.Vector3(21.2, 0.16, -15.6), yaw: -1.5 },
+    { gender: 'male',   role: 'telegraph', pos: new THREE.Vector3(21.2, 0.16, 21.6), yaw: -1.4 },
+    { gender: 'female', role: 'hotelkeeper', pos: new THREE.Vector3(-44.0, 0.16, 30.6), yaw: 1.3 },
+    { gender: 'male',   role: 'barber', pos: new THREE.Vector3(34.6, 0.16, 34.0), yaw: -1.2 },
+    { gender: 'male',   role: 'doctor', pos: new THREE.Vector3(35.0, 0.16, 47.4), yaw: -1.3 },
+    { gender: 'male',   role: 'undertaker', pos: new THREE.Vector3(19.2, 0.16, -30.5), yaw: -0.6 },
+    { gender: 'male',   role: 'preacher', pos: new THREE.Vector3(churchX + 1.8, church.floorY, churchZ - 4.0), yaw: 0.2 },
+    { gender: 'female', role: 'washerwoman', pos: new THREE.Vector3(-34.0, 0, 32.0), yaw: 0.8 },
+    { gender: 'female', role: 'homestead_wife', pos: new THREE.Vector3(-25.5, 0, 56.0), yaw: 0.5 },
+    { gender: 'female', role: 'townswoman', pos: new THREE.Vector3(53.2, 0.25, 13.4), yaw: -1.4 },
+    { gender: 'female', role: 'mourner', pos: new THREE.Vector3(34.0, 0, -57.5), yaw: -0.4 }
+  ]);
+
   const specialSpots = {
     zigzagHill: butte,
     jumpRoof: { roofPos: new THREE.Vector3(20, genRoofY, -14), ladder: genLadder },
@@ -950,10 +1054,11 @@ export function buildLevel1(scene, collision, particles) {
     churchBelfryPos: new THREE.Vector3(twX, belfryY, twZ - 1.4),
     churchTowerBasePos: new THREE.Vector3(twX - 1.9, 0.16, twZ + 2.1),
     raisedHide: westHide,
-    crawlDen: westDen
+    crawlDen: westDen,
+    extraCrawls: [boxcarCrawl, mineDrift]
   };
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }
 
 export function createPickupMesh(type, variant = 'default') {

@@ -18,9 +18,12 @@ import {
   addPewRow,
   addHearth,
   addBunk,
-  addDesk
+  addDesk,
+  addCrawlPassage,
+  addTableAndChairs
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL3_META = {
   id: 'swiss',
@@ -711,6 +714,78 @@ export function buildLevel3(scene, collision, particles) {
     { name: 'Alp Hut', inside: new THREE.Vector3(-43.5, 0.2, -48), outside: new THREE.Vector3(-37, 0, -48) }
   ];
 
-  const specialSpots = { boulderLadder, boulderSummit, raisedHide: hunterSeat, crawlDen: swissDen };
-  return { enemySpawns, pickups, animated, disposables, tellApple, enterableBuildings, specialSpots };
+  // ---- STAGE 7 EXPANSION: WATERMILL WITH TURNING WHEEL, LAKE SUST GOODS STORE, 3-LADDER KEEP SCAFFOLD, PALISADE CRAWL & 15 BYSTANDERS ----
+  // 1. Alpine Watermill with Turning Timber Wheel (x = -46, z = 4)
+  const mill = buildHollowRoom(scene, collision, {
+    cx: -46, cz: 4, w: 9.0, d: 8.5, h: 4.0, floorY: 0.18,
+    wallMat: matStone, floorMat: matTimber, roofMat: matRoof, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    interiorLight: { color: 0xffc670, intensity: 1.3, distance: 12 }
+  });
+  addTableAndChairs(scene, collision, -48.0, mill.floorY, 4, matDarkWood);
+  const wheelGrp = new THREE.Group();
+  wheelGrp.position.set(-46, 1.8, -0.55);
+  const wheelRim = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.14, 7, 14), matDarkWood);
+  wheelGrp.add(wheelRim);
+  for (let k = 0; k < 6; k++) {
+    const sp = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.12, 0.24), matTimber);
+    sp.rotation.z = (k * Math.PI) / 6;
+    wheelGrp.add(sp);
+  }
+  scene.add(wheelGrp);
+  animated.push((t) => { wheelGrp.rotation.z = -t * 1.1; });
+
+  // 2. Lake Landing Goods Store (The Sust) at East Shore (x = 24, z = 34) + Bailiff's Open Pavilion (x = 22, z = -34)
+  const sust = buildHollowRoom(scene, collision, {
+    cx: 24, cz: 34, w: 9.0, d: 8.5, h: 3.9, floorY: 0.18,
+    wallMat: matTimber, floorMat: matTimber, roofMat: matRoof, roofStyle: 'gable',
+    west: [{ type: 'door', offset: 0, width: 2.4, height: 2.9 }],
+    interiorLight: { color: 0xffc670, intensity: 1.3, distance: 12 }
+  });
+  addSolidBox(scene, collision, 26.2, sust.floorY + 0.55, 34, 1.8, 1.1, 3.2, matDarkWood, 'wood');
+
+  // 3. Keep Under Construction with a 3-Ladder Timber Scaffold climbing to top (x = 22, z = -10)!
+  const scafX = 22, scafZ = -10;
+  addSolidBox(scene, collision, scafX, 4.0, scafZ, 6.2, 8.0, 6.2, matStone, 'stone');
+  collision.addWalkable(scafX, scafZ, 6.0, 6.0, 8.0, true);
+  // 3 stepped scaffold landings (y = 2.6, 5.3, 8.0) with 3 wooden ladders!
+  for (const [lx, lz, y0, y1, nx, nz] of [
+    [scafX - 3.9, scafZ + 1.5, 0, 2.6, -1, 0],
+    [scafX - 3.9, scafZ - 1.5, 2.6, 5.3, -1, 0],
+    [scafX - 1.5, scafZ - 3.9, 5.3, 8.0, 0, -1]
+  ]) {
+    const plat = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.18, 3.4), matTimber);
+    plat.position.set(lx, y1 - 0.09, lz);
+    scene.add(plat);
+    collision.addWalkable(lx, lz, 2.4, 3.6, y1, true);
+    buildLadder(scene, collision, { x: lx + nx * 0.9, z: lz + nz * 0.9, bottomY: y0, topY: y1, normalX: nx, normalZ: nz, mat: matTimber });
+  }
+
+  // 4. Low Crawl Gap under Camp Palisade (1.24m clear height at x = -14, z = -34)
+  const palisadeGap = addCrawlPassage(scene, collision, {
+    cx: -14, cz: -34, floorY: 0, w: 3.4, d: 1.8, clearH: 1.24, bodyH: 1.9, mat: matDarkWood, postMat: matDarkWood
+  });
+
+  // 5. Fifteen Period Swiss Bystanders (including Rütli 3 oath men raising right hands, 6 women!)
+  const bystanders = spawnBystanders(scene, collision, animated, 'swiss', [
+    { gender: 'male',   role: 'confederate', pos: new THREE.Vector3(-8.5, 0, 44.0), yaw: 0.4 },
+    { gender: 'male',   role: 'confederate', pos: new THREE.Vector3(-6.2, 0, 45.2), yaw: 0.2 },
+    { gender: 'male',   role: 'confederate', pos: new THREE.Vector3(6.5, 0, 44.5), yaw: -0.4 },
+    { gender: 'male',   role: 'senn', pos: new THREE.Vector3(-39.0, 0, 33.0), yaw: 1.2 },
+    { gender: 'female', role: 'dairywoman', pos: new THREE.Vector3(-36.0, 0, 35.0), yaw: 0.9 },
+    { gender: 'female', role: 'spinner', pos: new THREE.Vector3(-19.5, 0.18, 24.5), yaw: 1.4, prop: 'distaff' },
+    { gender: 'female', role: 'miller_wife', pos: new THREE.Vector3(-44.0, 0.18, 6.2), yaw: 1.5 },
+    { gender: 'male',   role: 'priest', pos: new THREE.Vector3(12.2, 0.2, -23.5), yaw: -1.4 },
+    { gender: 'male',   role: 'boatman', pos: new THREE.Vector3(24.0, 0, 26.0), yaw: -1.1, prop: 'paddle' },
+    { gender: 'female', role: 'net_mender', pos: new THREE.Vector3(22.0, 0, 28.5), yaw: -1.3 },
+    { gender: 'female', role: 'weaver', pos: new THREE.Vector3(12.2, 0.18, 22.0), yaw: -1.4 },
+    { gender: 'female', role: 'herdsman_wife', pos: new THREE.Vector3(-42.0, 0.2, -46.0), yaw: 1.1 },
+    // Rütli Oath Meadow: Three men raising their right hands in the oath of 1307!
+    { gender: 'male',   role: 'oath_man', pos: new THREE.Vector3(16.0, 0, 46.0), yaw: -0.4 },
+    { gender: 'male',   role: 'oath_man', pos: new THREE.Vector3(18.0, 0, 46.6), yaw: -0.7 },
+    { gender: 'male',   role: 'oath_man', pos: new THREE.Vector3(17.2, 0, 48.2), yaw: -1.6 }
+  ]);
+
+  const specialSpots = { boulderLadder, boulderSummit, raisedHide: hunterSeat, crawlDen: swissDen, extraCrawls: [palisadeGap] };
+  return { enemySpawns, pickups, animated, disposables, tellApple, enterableBuildings, specialSpots, bystanders };
 }

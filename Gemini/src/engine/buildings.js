@@ -9,7 +9,8 @@ export function addSolidBox(scene, collision, cx, cy, cz, sx, sy, sz, mat, tag =
   mesh.castShadow = castShadow;
   mesh.receiveShadow = true;
   scene.add(mesh);
-  collision.addBox(cx, cy, cz, sx, sy, sz, tag);
+  mesh.userData.collisionBox = collision.addBox(cx, cy, cz, sx, sy, sz, tag);
+  mesh.userData.tag = tag;
   return mesh;
 }
 
@@ -885,4 +886,50 @@ export function addTableAndChairs(scene, collision, cx, floorY, cz, mat) {
     bench.position.set(cx, floorY + 0.225, cz + dz);
     scene.add(bench);
   }
+}
+
+/**
+ * Builds a crouch-only passage (1.22m clear underside height):
+ * e.g. railway boxcar on wheels, farm wagon, ship on stocks, hedge hole, or drain lintel!
+ * Stops an upright player (1.75m) while letting a crouching player (1.05m) crawl cleanly underneath.
+ */
+export function addCrawlPassage(scene, collision, opts) {
+  const {
+    cx, cz, floorY = 0,
+    w = 3.2, d = 2.6,
+    clearH = 1.24,
+    bodyH = 1.65,
+    mat,
+    postMat = null,
+    tag = 'wood',
+    posts = true
+  } = opts;
+  const pMat = postMat || mat;
+  // Overhead solid deck/body starting strictly at floorY + clearH (so crouching 1.05m passes under!)
+  addSolidBox(scene, collision, cx, floorY + clearH + bodyH * 0.5, cz, w, bodyH, d, mat, tag);
+  if (posts) {
+    const ox = Math.max(0.95, w * 0.5 - 0.18);
+    const oz = Math.max(0.95, d * 0.5 - 0.18);
+    for (const [dx, dz] of [[-ox, -oz], [ox, -oz], [-ox, oz], [ox, oz]]) {
+      addSolidBox(scene, collision, cx + dx, floorY + clearH * 0.5, cz + dz, 0.24, clearH, 0.24, pMat, tag);
+    }
+  }
+  return {
+    entryA: new THREE.Vector3(cx, floorY, cz - d * 0.5 - 1.2),
+    entryB: new THREE.Vector3(cx, floorY, cz + d * 0.5 + 1.2),
+    center: new THREE.Vector3(cx, floorY, cz)
+  };
+}
+
+/**
+ * Adds a vertical wood upright loom or period work prop inside a furnished room.
+ */
+export function addUprightLoom(scene, collision, cx, floorY, cz, matWood, clothColor = 0xd94b3b) {
+  addSolidBox(scene, collision, cx - 0.55, floorY + 1.0, cz, 0.12, 2.0, 0.14, matWood, 'wood');
+  addSolidBox(scene, collision, cx + 0.55, floorY + 1.0, cz, 0.12, 2.0, 0.14, matWood, 'wood');
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 0.14), matWood);
+  beam.position.set(cx, floorY + 1.96, cz);
+  const cloth = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.35, 0.04), new THREE.MeshStandardMaterial({ color: clothColor, roughness: 0.85 }));
+  cloth.position.set(cx, floorY + 1.12, cz);
+  scene.add(beam, cloth);
 }

@@ -10,14 +10,18 @@ import {
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
   addSolidBox,
   addDesk,
   addBunk,
-  addAltar
+  addAltar,
+  addCrawlPassage,
+  addUprightLoom
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL4_META = {
   id: 'greece',
@@ -536,6 +540,60 @@ export function buildLevel4(scene, collision, particles) {
     { name: 'Village House', inside: new THREE.Vector3(-22, 0.16, 22), outside: new THREE.Vector3(-14.5, 0, 22) }
   ];
 
-  const specialSpots = { raisedHide: greeceHide, crawlDen: greeceDen };
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  // ---- STAGE 7 EXPANSION: STEPPED QUARRY, EUMAEUS FARM, TWO-END CISTERN CRAWL TUNNEL, BEACON LADDER, ROUND TEMPLE & 14 BYSTANDERS ----
+  // 1. Old Stone Cistern Crawl Tunnel with 2 open ends (1.24m clear height, x = -28, z = -22)
+  const cisternCrawl = addCrawlPassage(scene, collision, {
+    cx: -28, cz: -22, floorY: 0, w: 3.4, d: 6.4, clearH: 1.24, bodyH: 1.7, mat: rockMat, postMat: marbleMat, tag: 'stone'
+  });
+
+  // 2. Stepped Marble Quarry on North-West ridge (x = -56, z = -34) with walkable carved blocks!
+  for (let q = 0; q < 4; q++) {
+    const qy = (q + 1) * 0.42;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(8.5, qy, 3.0), marbleMat);
+    m.position.set(-56, qy * 0.5, -28 - q * 3.0);
+    scene.add(m);
+    collision.addWalkable(-56, -28 - q * 3.0, 8.7, 3.3, qy);
+  }
+
+  // 3. Eumaeus' Swineherd Farm on Far East Slope (x = 56, z = 4) + Enterable Harbour Tent (x = 24, z = 44)
+  const swineFarm = buildHollowRoom(scene, collision, {
+    cx: 56, cz: 4, w: 8.6, d: 8.0, h: 3.6, floorY: 0.16,
+    wallMat: rockMat, floorMat: marbleMat, roofMat: terraMat, roofStyle: 'gable',
+    west: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    interiorLight: { color: 0xffd288, intensity: 1.3, distance: 12 }
+  });
+  addSolidBox(scene, collision, 58.0, swineFarm.floorY + 0.5, 4, 1.4, 1.0, 2.8, woodMat, 'wood');
+
+  // 4. Climbable Ladder up the Beacon Tower to its Fire Platform (x = 56, z = -14)
+  collision.addWalkable(56, -14, 6.2, 6.2, 5.2, true);
+  buildLadder(scene, collision, { x: 56, z: -10.55, bottomY: 0, topY: 5.2, normalX: 0, normalZ: 1, mat: woodMat });
+
+  // 5. Fourteen Period Ancient Greek Bystanders (7 women: 3 at well, Penelope at upright loom, baker, market woman, priestess; plus Eumaeus, bard, potter, fisherman, shepherd, etc. + old dog Argos!)
+  addUprightLoom(scene, collision, -24.0, 0.16, 20.5, woodMat, 0x2a6c9c);
+  // Sculpted stone village well at (x = -12, z = 26)
+  addSolidBox(scene, collision, -12, 0.45, 26, 1.6, 0.9, 1.6, marbleMat, 'stone');
+  // Old Dog Argos lying faithfully beside Odysseus' house door (-18.5, 0, 24.5)
+  const argos = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.36, 0.88), new THREE.MeshStandardMaterial({ color: 0x9c8b76, roughness: 0.92 }));
+  argos.position.set(-18.5, 0.18, 25.0);
+  scene.add(argos);
+
+  const bystanders = spawnBystanders(scene, collision, animated, 'greece', [
+    { gender: 'female', role: 'well_woman', pos: new THREE.Vector3(-10.5, 0, 26.0), yaw: -1.5, prop: 'jar_head' },
+    { gender: 'female', role: 'well_woman', pos: new THREE.Vector3(-12.0, 0, 27.6), yaw: 3.0 },
+    { gender: 'female', role: 'well_woman', pos: new THREE.Vector3(-13.6, 0, 25.8), yaw: 1.5 },
+    { gender: 'female', role: 'penelope', pos: new THREE.Vector3(-23.0, 0.16, 20.5), yaw: -1.5 },
+    { gender: 'male',   role: 'eumaeus', pos: new THREE.Vector3(51.2, 0, 6.5), yaw: -1.2, prop: 'staff' },
+    { gender: 'female', role: 'baker', pos: new THREE.Vector3(23.2, 0.16, 23.6), yaw: -1.4 },
+    { gender: 'female', role: 'market_woman', pos: new THREE.Vector3(10.5, 0, 20.0), yaw: -1.1 },
+    { gender: 'female', role: 'priestess', pos: new THREE.Vector3(-4.5, 0.38, -36.5), yaw: 0.3 },
+    { gender: 'male',   role: 'potter', pos: new THREE.Vector3(-23.5, 0.16, -7.8), yaw: 1.3 },
+    { gender: 'male',   role: 'fisherman', pos: new THREE.Vector3(38.0, 0, 35.0), yaw: -0.8, prop: 'paddle' },
+    { gender: 'male',   role: 'bard', pos: new THREE.Vector3(11.5, 0, 28.0), yaw: -0.9, prop: 'lyre' },
+    { gender: 'male',   role: 'shepherd', pos: new THREE.Vector3(-48.0, 0, 22.0), yaw: 0.7, prop: 'staff' },
+    { gender: 'female', role: 'weaver', pos: new THREE.Vector3(-40.0, 0.2, -40.0), yaw: 0.8 },
+    { gender: 'male',   role: 'villager', pos: new THREE.Vector3(23.0, 0.16, -7.5), yaw: -1.4 }
+  ]);
+
+  const specialSpots = { raisedHide: greeceHide, crawlDen: greeceDen, extraCrawls: [cisternCrawl] };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }

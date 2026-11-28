@@ -1,160 +1,141 @@
 # Outlaws · Nine Horizons (Gemini version)
 
-**Version 1.6.0** · [Changelog](CHANGELOG.md) · **[Play it in your browser](https://iago-swi.github.io/outlaws/Gemini/)**
+**Version 1.16.0** · [Changelog](CHANGELOG.md) · **[Play it in your browser](https://iago-swi.github.io/outlaws/Gemini/)**
 
-A real-time 3D WebGL2 first-person shooter inspired by LucasArts’ 1997 spaghetti-western classic *Outlaws*, built with **Three.js**, custom **GLSL shaders** (atmospheric skies, animated sea/lake/waterfalls, and shimmering northern lights), procedural **PBR Canvas textures**, **ACES Filmic selective bloom**, enterable hollow buildings across all nine worlds, crouching (`C`), sneaking (`X`), climbable vertical and leaning ladders, crouch-only crawl-in dens, customizable enemy counts (`5–30` with variety-first thinning), spatial-bucket 2D **A\* enemy route-finding**, live **3D hero selection** (27 heroes in single-player plus 30 villains in online Duel Mode), direct browser-to-browser **WebRTC Duel Mode** with persistent rematch connections, and **Web Audio API** music & SFX synthesis — with zero external media assets.
+*Nine Horizons* (*Nine frontiers — Twenty-seven legends*) is a real-time WebGL2 / Three.js 3D first-person shooter inspired by LucasArts’ 1997 spaghetti-western classic *Outlaws*, built entirely from procedural code with zero external media assets. Cross nine historical worlds — from the 1884 American West to Tenochtitlan in 1520 — entering furnished buildings, climbing ladders and towers, uncovering a fog-of-war map of 99 named landmarks, fighting enemies with selectable wits (`Low`, `Medium`, `Genius`) across three map sizes (`Small`, `Medium`, `Large`), shattering wooden props and chain-detonating powder kegs, scavenging fallen enemies' weapons, using each hero's `[E]` special skill, and playing **online for two players** directly browser-to-browser over WebRTC — either **face-to-face in a duel** or **together against the enemy**.
 
 | Act I · Red Gulch (Wild West) | Act II · Kyoto Mist (Feudal Japan) | Act III · Rütli Valley (Switzerland) |
 | :---: | :---: | :---: |
-| <img src="screenshot-west.png" width="280" alt="Act I: Red Gulch Wild West main street at sunset with blacksmith, bank, jail, saloon, telegraph office, stepped 12m red-rock butte on the left, and .45 Peacemaker revolver"> | <img src="screenshot-japan.png" width="280" alt="Act II: Kyoto Mist with geisha holding an oil-paper umbrella on the left, arched vermilion bridge over the koi pond on the right, vermilion Torii gate framing Mount Fuji, sakura blossoms, and samurai katana"> | <img src="screenshot-swiss.png" width="280" alt="Act III: Rütli Valley snow-capped Alps, enterable Swiss chalets, Habsburg watchtower with Austrian banners, alpine chapel, and Tell's crossbow"> |
+| <img src="screenshot-west.png" width="280" alt="Act I: Red Gulch at sunset with blacksmith, bank, jail, saloon, telegraph office, stepped 12m red-rock butte, rotating mini-map, weapon list, and .45 Peacemaker revolver"> | <img src="screenshot-japan.png" width="280" alt="Act II: Kyoto Mist with vermilion Torii gates framing Mount Fuji, cherry blossoms, raised hide, shoji houses, rotating mini-map, and Miyamoto Musashi's arsenal"> | <img src="screenshot-swiss.png" width="280" alt="Act III: Rütli Valley with snow-capped Alps, enterable chalets, Habsburg watchtower, alpine chapel, Confederate banner, rotating mini-map, and Tell's crossbow"> |
 | **Act IV · Aegean Isle (Ancient Greece)** | **Act V · Fjord of the North (Scandinavia)** | **Act VI · Normandy (6 June 1944)** |
-| <img src="screenshot-greece.png" width="280" alt="Act IV: Aegean Isle sunlit Sacred Way leading to the large bronze Athena statue before the marble temple sanctuary, olive trees, cypresses, Spartans with lambda shields, and bronze javelin"> | <img src="screenshot-scandinavia.png" width="280" alt="Act V: Fjord of the North snowy palisade gate, horned Viking chieftain with painted shield, Great Hall under green northern lights, and throwing axe"> | <img src="screenshot-normandy.png" width="280" alt="Act VI: Normandy pre-dawn stone village with bombed ruined parish church, sweeping searchlights, occupying soldiers, guard dog, coastal concrete bunker, and scoped rifle"> |
+| <img src="screenshot-greece.png" width="280" alt="Act IV: Aegean Isle sunlit Sacred Way leading to the bronze Athena statue before the marble temple, olive trees, Spartans, villagers, rotating mini-map, and bronze javelin"> | <img src="screenshot-scandinavia.png" width="280" alt="Act V: Fjord of the North snowy palisade gate and Great Hall under shimmering green northern lights, rotating mini-map, and throwing axe"> | <img src="screenshot-normandy.png" width="280" alt="Act VI: Normandy before dawn on 6 June 1944 with glider wreckage, bocage hedgerows, sweeping searchlights, stone village, coastal bunker, rotating mini-map, and scoped rifle"> |
 | **Act VII · Stalnogorsk (Soviet Russia, 1974)** | **Act VIII · Road to Lhasa (Tibet, 1959)** | **Act IX · Tenochtitlan (Aztec Empire, 1520)** |
-| <img src="screenshot-soviet.png" width="280" alt="Act VII: Stalnogorsk winter 1974 grey overcast sky, falling snow, tram rails, red flags and monuments with yellow hammer and sickle, district library, red M metro pavilion, Committee tower with red star, and PPSh-41 SMG"> | <img src="screenshot-tibet.png" width="280" alt="Act VIII: Road to Lhasa March 1959 deep blue sky, snow peaks, whitewashed houses with dark red parapets, chortens, five-coloured prayer flags, army camp, ridge monastery, and bolt-action rifle"> | <img src="screenshot-aztec.png" width="280" alt="Act IX: Tenochtitlan evening on Lake Texcoco 30 June 1520 showing the climbable 17 m Great Temple with twin roof-combed shrines, sacred precinct, skull rack, and Cuauhtémoc's poisoned dart-thrower with feathered shield"> |
+| <img src="screenshot-soviet.png" width="280" alt="Act VII: Stalnogorsk winter 1974 with tram rails, falling snow, food shop, red flags and monuments, distant TV tower, rotating mini-map, and PPSh-41 SMG"> | <img src="screenshot-tibet.png" width="280" alt="Act VIII: Road to Lhasa March 1959 under deep blue Himalayan skies with snow peaks, whitewashed houses, chortens, prayer flags, ladder, rotating mini-map, and bolt-action rifle"> | <img src="screenshot-aztec.png" width="280" alt="Act IX: Tenochtitlan at sunset on 30 June 1520 with smoking volcano, Lake Texcoco causeway, canal city, rotating mini-map, and Cuauhtémoc's poisoned dart-thrower"> |
 
-| Duel · choose your fighter | Duel · face to face |
-| :---: | :---: |
-| <img src="screenshot-duel-pick.png" width="400" alt="Duel fighter selection screen in Aegean Isle at 1366x768: 3 gold-star Heroes above 5 red-skull Villains (Polyphemus, Medusa, Antinous, Minotaur, Xerxes) with live 3D Minotaur turntable on the left"> | <img src="screenshot-duel.png" width="400" alt="Two-player online duel on the Sacred Way of Aegean Isle: Minotaur (160 HP, throwing axe) facing Xerxes in his tall gold crown and purple-and-gold robe, with top scoreline You 0-0 Xerxes and compass"> |
+| Online · direct 2-player room | Duel · choose your fighter | Duel · face to face |
+| :---: | :---: | :---: |
+| <img src="screenshot-online.png" width="280" alt="Online two-player screen over Stalnogorsk showing Players (2 of 2), chapter, mode, enemy count, wits, map size, Start the game button, and bold 5-character code with invite link"> | <img src="screenshot-duel-pick.png" width="280" alt="Duel fighter selection in Aegean Isle at 1366x768: 3 gold-star Heroes above 5 red-skull Villains (Polyphemus, Medusa, Antinous, Minotaur, Xerxes), each card showing its strength and [E] special skill, with live 3D Minotaur turntable"> | <img src="screenshot-duel.png" width="280" alt="Two-player online duel on the Sacred Way of Aegean Isle: Minotaur facing Xerxes with scoreline Marshal 0-0 Rival round 1 and top-right rotating mini-map"> |
 
-## Title Screen
-
-Every visit to the title screen picks one of the eight worlds at random for the rotating 3D background and aligns the page's accent colour and title lettering to that horizon (with elevated camera orbits clear of roofs, trees, and foliage). All eight level cards share a uniform layout (Roman numeral, title, place and year, and one line of description) distinguished only by each level's top accent bar, alongside the **Duel · two players online** and **Ride Out** controls and the build version (`v1.1.0`) in the bottom-right corner.
-
-## Single-Player Campaign
-
-All eight historical frontiers — *Eight frontiers — Twenty-four legends* — can be played sequentially or selected directly from the title screen, alongside *Outlaws*-style difficulty settings (**The Good**, **The Bad**, **The Ugly**). Before every single-player level begins, a **Hero Selection Screen** displays its three historical or legendary heroes (villains never appear in single-player) on a live rotating 3D turntable — selectable with mouse hover/click or keyboard (`1`, `2`, `3`, `Enter`) — and keeps your chosen hero on retry.
-
-| Act | Setting, Enterable Places, Climbs & Dens | Selectable Heroes (1 strength / loadout each) | Arsenal | Enemies & Boss (Total) |
-| --- | --- | --- | --- | --- |
-| **Act I · 1884** — *Red Gulch* | Wild West town + **Boot Hill Cemetery** (iron fence, stone gate, graves, open grave with coffin & shovel, dead hanging tree, undertaker's cart) & climbable **12 m flat-topped red-rock butte** (4-leg zigzag rock path & summit marksman). Enterable: **Saloon**, **Jail** (marshal office + 2 iron-barred cells solid to bodies & bullets), **Sheriff's Office** (1 barred cell), **Bank** (counter, barred teller cage, safe & gold bars), **Livery Barn** (stalls, sculpted horse, hay), **General Store** (counter & shelves), **Blacksmith** (forge & anvil), **Undertaker** (coffins), **Telegraph Office** (counter & safe), **Southern Homestead**, **Boot Hill Crypt** (hidden outlaw + health item). Walkable flat roofs behind false fronts (General Store, Sheriff, Blacksmith, Telegraph, each reached by 3 jump crates), raised timber hide, and 1.25 m crawl-in cellar den. | **Wyatt Earp** (−25% damage taken) · **Calamity Jane** (+18% move speed) · **Billy the Kid** (faster fire & reload) | `.45 Peacemaker`, `10-Gauge Coach Gun`, `Henry .44 Scoped`, `Dynamite Sticks` | Outlaw Cowboys, Mexican Banditos & **El Diablo** (28) |
-| **Act II · 1603** — *Kyoto Mist* | Feudal Japan sanctuary beneath Mount Fuji with Torii gates, Zen garden, Koi pond & walkable **arched vermilion bridge**, sakura groves, bamboo forest, and **7 solid non-combatant bystanders** (3 *komusō* flute monks + 4 geisha with oil-paper umbrellas, one dressed all in white with a white silk hood). Enterable: **Grand Shinto Shrine Hall** (altar), walk-through **Shoji Tea Houses**, walled **Dojo Compound** with Torii gate, **Pagoda ground floor**, **Storehouse (*kura*)**, **Bell Tower (*shōrō*)**, **Bamboo Hermitage**, raised hide, and 1.25 m crawl-in den. | **Miyamoto Musashi** (faster katana + extra reach) · **Tomoe Gozen** (~2× Yumi Longbow speed) · **Date Masamune** (−30% damage taken) | `Muramasa Katana`, `Yumi Longbow`, `Shinobi Shuriken`, `Tanegashima Matchlock` | Shadow Ninjas, Rōnin Samurai & **Lord Kurogane** (28) |
-| **Act III · 1307** — *Rütli Valley* | Medieval Switzerland encircled by snow-capped Alps, Lake Lucerne, **walk-behind waterfall & grotto** (half-transparent falling water into plunge pool, stone ledge reached by steps on both sides, enemy & health item inside), bridge, bearded Waldstätten halberdiers & Uri bull flag, Tell's apple, climbable **9 m rocky hill** (3-leg zigzag stair & summit marksman), and **hunter's high seat** near start (2 jump blocks). Enterable: **Swiss Chalets** (open stone ground floor), **3 Stilt Barns** on stone stilts (hay, cheese wheels, tools), **Drive-Through Hay Barn** (bales & cart), **Alpine Chapel**, **Habsburg Watchtower**, outlying **Alp Hut**, and 1.25 m crawl-in stone den. | **Wilhelm Tell** (40% faster crossbow reload) · **Arnold von Winkelried** (+50% max health) · **Werner Stauffacher** (out-of-danger health regen) | `Tell's Armbrust`, `Swiss Halberd`, `Alpine Repeater`, `Alpine Fire-Pot` | Austrian Halberdiers, Habsburg Arquebusiers & **Captain von Gessler** (28) |
-| **Act IV · 480 BC** — *Aegean Isle* | Sunlit Greek island in a turquoise sea with a **25-tree olive grove & oil press**, cypresses, **mosaic floors**, large **bronze Athena statue** outdoors, triremes & marble Sacred Way. Enterable: **Every Cycladic Village House**, **Acropolis Marble Temple** (golden Athena statue inside), **Colonnaded Villa** (courtyard pool), **Stone Theatre** (stepped seats & 3-door stage house), outlying **Fishermen's Cape** (2 houses + **Beacon Tower**), raised hide, and 1.25 m crawl-in den. | **Ulysses** (faster & harder javelins) · **Achilles** (−33% damage taken) · **Heracles** (+60% max health) | `Bronze Javelin`, `Xiphos Short Sword` | Spartan Hoplites, Spartan Javelineers (red cloaks, crested helms, Λ shields) & **Archidamos** (29) |
-| **Act V · 985 AD** — *Fjord of the North* | Snowy Norwegian winter fjord beneath animated northern lights with palisade gate, timber jetty, **4 boardable Viking longships** (2 at the jetty, player's ship at the beach, larger chieftain's ship with red-and-white striped tent on deck; walkable decks, raised bow/stern platforms, solid bulwarks, sea chests, set/furled sails, rail shields, stowed oars, steering oar, dragon heads & gangplanks) & snowy pines. Enterable: **Every Longhouse**, **Boat Shed** (with boat), **Open Smithy**, **Jarl's Great Hall**, outlying **Farm**, **Temple of the Old Gods**, raised timber hide, and 1.25 m crawl-in turf den. | **Erik the Red** (faster axe throw & reload) · **Leif Erikson** (−33% damage taken) · **Ragnar Lothbrok** (faster & harder Viking Sword) | `Throwing Axe`, `Ulfberht Viking Sword` | Viking Huscarls, Bowmen, Berserkers, **4 Horned Viking Chieftains** (iron helmet with 2 ox horns & gilt band, ~2× HP), horned **Jarl Hakon** & occasional horned raiders (34) |
-| **Act VI · 6 June 1944** — *Normandy* | Occupied Norman countryside before dawn under searchlights, flak bursts & Channel invasion fleet, parked tank & truck (plain bar crosses only), and bomb craters. Enterable: ground floor of **Every Stone House**, **Bombed Parish Church Ruin** (no roof, breached walls, jagged tower, fallen bell, charred beams, rubble & small fire), **Farm Barn**, **Concrete Command Bunker** (map table, radio, bunks), outlying **Walled Manor**, rotating-sail **Windmill**, raised hide, and 1.25 m crawl-in den. | **Lyudmila Pavlichenko** (scoped bolt-action rifle, 1-shot kills on ordinary soldiers) · **Virginia Hall** (full-auto 32-round Sten SMG + stealth) · **Maurice Bavaud** (hard-hitting heavy pistol) | Hero's signature firearm + `Resistance Knife` | Occupying Riflemen, Officers, Sandbag MG Gunners, barking **Guard Dogs** & **Major Vogel** (32) |
-| **Act VII · Winter 1974** — *Stalnogorsk* | Invented Soviet city under grey overcast skies & falling snow: tram-rail avenue, street lamps, five-storey panel blocks & courtyard playground, bus shelter, news kiosk, parked cars, checkpoint & militia van, cobbled square with yellow-on-red **hammer & sickle** emblems on flags, leader plinth, tower, palace of culture & ministry, park with frozen pond & bandstand, distant TV tower. Enterable: **Food Shop**, **2 Garages** (connected walkable roof row reached by 2 jump crates), **Metro Pavilion** (red `M` sign, turnstiles, ticket window, iron grille), **District Library** (rows of shelves), **Building Site** (concrete frame, upper slab reached by stairs, tower crane & enterable **Builders' Hut**), **Palace of Culture**, **Factory Hall**, **Committee Building** (lobby, barred archive cage with seized manuscript, 3 barred cells), and **Concrete Cellar Hatch** crawl-in den. Health item: **glass of hot tea**. | **Aleksandr Solzhenitsyn** (PPSh-41 SMG, −15% damage taken) · **Andrei Sakharov** (pistol +60% damage) · **Rudolf Nureyev** (+25% move speed & stealth) | Hero's firearm + `Utility Knife` | Committee Agents, Soviet Militia, Guard Dogs & **Colonel Voronin** (36) |
-| **Act VIII · March 1959** — *Road to Lhasa* | High valley of ochre winter grass ringed by snow-capped peaks under a deep blue sky: unarmed **Dalai Lama** & caravan at start (2 monks, 2 Khampa riders, 3 horses, prayer pole — strictly non-combatant), white chortens, five-coloured prayer flags, mani wall, grazing yaks, frozen turquoise lake, army camp, stone stairway with gateway chorten up to ridge monastery. Enterable: **Every Tibetan Village House**, **Village Temple** (gilded seated Buddha), **Yak-Hair Nomad Tent**, **Ruined Stone Fort**, **Monks' Houses**, **Ridge Chapel** (gilded seated Buddha + **one huge spinning prayer wheel**), **Monastery Assembly Hall** (large gilded seated Buddha on lotus throne with earth-touching hand, alms bowl, blue hair & halo), raised stone hide, and 1.25 m crawl-in den. Health item: **bowl of butter tea**. | **Gompo Tashi Andrugtsang** (bolt-action rifle with iron sights, 1-shot kills on ordinary soldiers + knife) · **Ani Pachen** (pistol + knife, +20% speed) · **Songtsen Gampo** (bow & royal sword, −20% damage taken) | Hero's loadout (`Bolt Rifle`, `Pistol`, `Bow`, `Sword` or `Knife`) | Occupying Riflemen, Machine-Gunners, club-wielding **Red Guards** & **Commander Zhao** (35) |
+| Chapter Map (`Tab`) with fog of war & mark | Valais Suone (Rütli Valley) | Church of St Nicholas (Stalnogorsk) |
+| :---: | :---: | :---: |
+| <img src="screenshot-map.png" width="280" alt="Full north-up Chapter Map held open with Tab over Red Gulch showing uncovered fog of war, named landmarks, red enemy dots, and a cyan crosshair mark"> | <img src="screenshot-suone.png" width="280" alt="The 100 m wooden Valais Suone irrigation channel on trestles across the meadows of Rütli Valley with alpine peaks behind and Tell's crossbow in hand"> | <img src="screenshot-church.png" width="280" alt="The open Church of St Nicholas in Stalnogorsk under blue-and-gold onion domes, with the priest in candlelight and worshippers inside"> |
 
 ---
 
-## Duel Mode: Two Players Online, Face to Face
+## Playing the Game
 
-Click **Duel · two players online** on the title screen to open the Duel Lobby. Two players on separate browsers connect directly peer-to-peer over a **WebRTC DataChannel** and fight across the full map of any of the eight levels, spawning at opposite ends (normal start vs. far boss end).
+### Title Screen, Graphics & Sound
+- Every visit to the title screen picks one of the nine chapters at random for the rotating 3D flyover and matches the page's accent colour to that era.
+- **Graphics quality** (bottom-left dropdown, saved across sessions): `Automatic` (default — starts on `High`, steps down only if frame rate stays under `42 fps` over 80 frames and keeps the step only if it yields at least a `7%` gain), `High`, `Medium`, or `Low`. On the pause screen press `G` to cycle quality live without reloading the chapter. Adding `?fps` to the URL shows a live corner frame-rate counter.
+- **Sound Settings** (`O` from Title, Online, or Pause): independent sliders for **General**, **Effects**, **Voices**, and **Music**, plus a **Music On/Off** switch (`M` toggles music only during play).
 
-### Starting, Connecting & Rematches
-1. **Invite link (primary method):** The host picks the chapter, rules, and computer-enemy count, then clicks **Create Invite Link** to get a 5-letter code and shareable `?duel=XXXXX` URL. Opening that URL takes the guest straight into the lobby and connects automatically. Public **PeerJS** signalling (`0.peerjs.com`) is used **only** for the initial handshake; once the direct WebRTC DataChannel opens, the signalling socket disconnects so zero gameplay data passes through any server.
-2. **Copy-paste codes (backup, zero outside service):** Inside the lobby's fold-out **Backup connection** section, the host generates a native WebRTC offer code and sends it via any chat app; the guest pastes it to generate a reply code; the host pastes the reply code to connect directly without any signalling server.
-3. **Stay connected for rematches:** When a duel ends, the WebRTC connection stays open. Clicking **Next Duel (Same Connection)** returns both players to the Duel screen where the host picks the next chapter, rules, and enemy count and starts again — no new link or code is needed until one player leaves.
-4. **Privacy & connection limits:** Because WebRTC connects the two browsers directly, each player can see the other's network (IP) address. Direct peer-to-peer connections work across most home networks and LANs via STUN, but strict corporate firewalls or symmetric NATs without a TURN relay may block direct UDP handshakes.
+### Nine Chapters, 27 Heroes & Cultural Landmarks
+Before every single-player chapter, the **Hero Selection** screen lets you pick from three historical or legendary heroes on a live rotating 3D turntable, alongside **Enemies** (`5–30`, or up to `45` on a Large map), **Wits** (`Low`, `Medium`, `Genius`), **Map size** (`Small`, `Medium`, `Large`), and **Difficulty** (`The Good`, `The Bad`, `The Ugly`).
 
-### Rules & Options
-- **First to 3 rounds:** Each kill ends a round; both fighters restart with full health and ammo at opposite ends of the map and swap ends every round.
-- **One life:** Single sudden-death showdown — the first kill decides.
-- **5 minutes, most kills:** A 5:00 wall-clock timer counts down; a slain fighter returns 3 seconds later at whichever end of the map is farther from the opponent. Higher score wins (or **A draw** if tied).
-- **Computer enemies:** Choose **None, 1, 2, 3, 4, 5, 6, 7, 8, or 9** enemies from the chapter, spread across the map and hostile to both players (simulated authoritatively by the host; guest hits are sent to and decided by the host; dying to a computer enemy awards a point to the opponent).
-- **Duel combat & crouching:** Every weapon works against the opponent at **60% of normal damage** (keeping headshot multipliers and each fighter's strength). Crouching (`C` / `CapsLock`) syncs live so the opponent visibly kneels with a lowered hit shape. The top HUD shows the live scoreline (`You 0–0 Xerxes · round 1`) and a **compass** marking the opponent as a larger glowing dot. Duels cannot be paused; pressing `Esc` only unlocks the mouse while the duel stays live.
-
-### Playable Duel Villains (27 total — Duel Mode only)
-
-In Duel Mode, fighter selection displays two labelled rows: **★ Heroes** (gold star) and **☠ Villains** (red skull, red-tinted cards; all eight cards in Greece fit comfortably on a 1366 × 768 screen). Either player may choose any hero or villain. No living person is included; historical dictators are shown with recognisable likenesses and strictly without party symbols (no swastika, fasces, or hammer and sickle) and with plain, factual descriptions.
-
-| Act | Villain | Description | Duel Strength & Loadout |
+| Act | World, Enterable Places, Landmarks & Living World | Selectable Heroes (Strength · `[E]` Skill) | Starting Gear & Bag |
 | --- | --- | --- | --- |
-| **I · West** | **Jesse James** | Bank and train robber of Missouri. | Moves 15% faster. |
-| **I · West** | **Ike Clanton** | Rustler of Tombstone, Earp's enemy at the O.K. Corral. | Starts with 130 health. |
-| **I · West** | **Belle Starr** | The Bandit Queen of Indian Territory. | Fires 30% faster. |
-| **II · Japan** | **Oda Nobunaga** | Warlord, the Demon King of the Sixth Heaven. | Takes 25% less damage. |
-| **II · Japan** | **Sasaki Kojirō** | Musashi's rival, master of the long sword. | Extended katana reach (+2.0 m). |
-| **II · Japan** | **Fūma Kotarō** | Leader of the Fūma ninja clan. | Moves 20% faster. |
-| **III · Switzerland** | **Hermann Gessler** | Habsburg bailiff of Uri, of the hat on the pole. | Takes 20% less damage. |
-| **III · Switzerland** | **Charles the Bold** | Duke of Burgundy, beaten at Grandson, Murten and Nancy. | Starts with 150 health. |
-| **III · Switzerland** | **Duke Leopold I** | Habsburg duke, routed at Morgarten in 1315. | Harder melee blows (+45%). |
-| **IV · Greece** | **Polyphemus** | The Cyclops, one-eyed giant of Homer. | 180 health, larger target (`1.36×` stature). |
-| **IV · Greece** | **Medusa** | The Gorgon with living snakes for hair. | Thrown javelins fire faster and hit 30% harder. |
-| **IV · Greece** | **Antinous** | Leader of the suitors in Ulysses' hall. | Moves 15% faster. |
-| **IV · Greece** | **Minotaur** | Bull-headed monster of the Cretan labyrinth. | Throwing axes and sword; starts with 160 health. |
-| **IV · Greece** | **Xerxes** | Great King of Persia, who invaded Greece in 480 BC. | Bow and sword; takes 20% less damage. |
-| **V · Scandinavia** | **Erik Bloodaxe** | King of Norway, slayer of his brothers. | Throws axes much faster. |
-| **V · Scandinavia** | **Ivar the Boneless** | Ragnar's son, leader of the Great Heathen Army. | Takes 25% less damage. |
-| **V · Scandinavia** | **Loki** | Trickster god of Norse myth. | Moves 20% faster (mythic Norse depiction). |
-| **VI · Normandy** | **Adolf Hitler** | Dictator of Nazi Germany, 1933–1945. | Pistol & knife; takes 20% less damage. |
-| **VI · Normandy** | **Benito Mussolini** | Fascist dictator of Italy, 1922–1943. | Submachine gun & knife; 120 health. |
-| **VI · Normandy** | **Hermann Göring** | Head of the Luftwaffe in Nazi Germany. | Scoped bolt-action rifle & knife. |
-| **VII · Soviet Russia** | **Joseph Stalin** | Soviet dictator, 1924–1953. | Pistol & knife; takes 25% less damage. |
-| **VII · Soviet Russia** | **Yuri Andropov** | Head of the KGB, 1967–1982. | Pistol & knife; moves 15% faster. |
-| **VII · Soviet Russia** | **Lavrentiy Beria** | Stalin's chief of secret police. | Pistol hits 50% harder + knife. |
-| **VII · Soviet Russia** | **Leonid Brezhnev** | Soviet leader, 1964–1982. | Submachine gun & knife; 130 health. |
-| **VIII · Tibet** | **Mao Zedong** | Chairman of Communist China, 1949–1976. | Bolt-action rifle & knife; takes 20% less damage. |
-| **VIII · Tibet** | **Langdarma** | Ninth-century Tibetan king who persecuted Buddhism. | Bow and sword; 140 health. |
-| **VIII · Tibet** | **Jiang Qing** | Madame Mao, leader of the Gang of Four. | Pistol & knife; moves 20% faster. |
+| **Act I · 1884**<br>*Red Gulch* | Wild West town, Boot Hill Cemetery, climbable 12 m red-rock butte, **San Xavier Mission** (twin towers, pews, altar, priest & pilgrim), railroad depot with moving steam train, mine, dust devils, cattle & horses. Enterable: Saloon, Jail, Sheriff's Office, Bank, Livery Barn, General Store, Blacksmith, Undertaker, Telegraph Office, Homestead, Crypt, crawl-in cellar den. | **Wyatt Earp** (−25% dmg · *Stand fast*) · **Calamity Jane** (+18% speed · *Dash*) · **Billy the Kid** (fast draw · *Dead eye*) | `.45 Peacemaker`, `Cavalry Sabre`, `Coach Gun`, `Henry .44`, `Fists` · Dynamite, Canteen |
+| **Act II · 1603**<br>*Kyoto Mist* | Mount Fuji sanctuary, Torii avenue, Koi pond & walkable arched vermilion bridge, two-storey pagoda, **Kiri Castle** (3-storey hillside keep), tea-garden bamboo ***shishi-odoshi*** (knocks every 6 s, audible to 34 m), rice paddies, *komusō* flute monks & geisha with umbrellas. Enterable: Shrine Hall, Shoji Tea Houses, Dojo, Pagoda, Storehouse (*kura*), Bell Tower, Hermitage, crawl-in den. | **Miyamoto Musashi** (swift katana · *Fury*) · **Tomoe Gozen** (2× bow speed · *Dead eye*) · **Date Masamune** (−30% dmg · *Stand fast*) | `Shuriken` (3-star 8-point fan), `Poison Blowgun`, `Katana`, `Yumi Bow`, `Matchlock`, `Fists` |
+| **Act III · 1307**<br>*Rütli Valley* | Snow-capped Alps, Lake Lucerne, **walk-behind waterfall grotto**, 100 m wooden **Valais Suone** irrigation channel (cliff plank walk, 6 trestles, meadow ditch with 5 sluices, knocking water hammer & keeper — breaking upstream wood dries downstream water), **Devil's Bridge** & goat, natural 7.5 m boulder with iron summit cross, Tell's apple, Rütli oath men, cows & goats. Enterable: Chalets, 3 Stilt Barns, Drive-Through Barn, Chapel, Watchtower, Alp Hut, crawl-in den. | **Wilhelm Tell** (fast crossbow · *Dead eye*) · **Arnold von Winkelried** (+50% HP · *Second wind*) · **Werner Stauffacher** (health regen · *Second wind*) | `Tell's Armbrust`, `Swiss Sword`, `Halberd`, `Alpine Repeater`, `Fists` · Big Stones |
+| **Act IV · 480 BC**<br>*Aegean Isle* | Sunlit Cycladic village, 25-tree olive grove & oil press, bronze & golden Athena statues, mosaic floors, **Contest of the Twelve Axes** (with Odysseus's bow), sheep, goats & villagers. Enterable: Cycladic Houses, Acropolis Marble Temple, Colonnaded Villa, Stone Theatre, Fishermen's Cape & Beacon Tower, crawl-in den. | **Ulysses** (+25% javelins · *Dead eye*) · **Achilles** (−33% dmg · *Stand fast*) · **Heracles** (+60% HP · *Second wind*) | `Bronze Javelin`, `Sling`, `Xiphos Short Sword`, `Fists` · Big Stones |
+| **Act V · 985 AD**<br>*Fjord of the North* | Aurora-lit snowy Norwegian fjord, **4 boardable Viking longships** (decks, bow/stern platforms, sails, rail shields, gangplanks), **The Thing Field** (law mound, 12 standing stones, lawspeaker), horned animal-skin Viking chieftains, wolves & reindeer. Enterable: Longhouses, Boat Shed, Open Smithy, Jarl's Great Hall, Farm, Temple of the Old Gods, crawl-in den. | **Erik the Red** (fast axes · *Dead eye*) · **Leif Erikson** (−33% dmg · *Stand fast*) · **Ragnar Lothbrok** (swift melee · *Fury*) | `Throwing Axe`, `Seax`, `Two-Ball Iron Flail`, `Fists` · Big Stones |
+| **Act VI · 6 June 1944**<br>*Normandy* | Pre-dawn bocage lanes with 14 crawl-through hedge holes, sweeping searchlights, bombed parish church ruin with **hanging paratrooper** on the tower, Channel fleet, guard dogs & villagers. Enterable: Stone Houses, Ruined Parish Church, Farm Barn, Command Bunker, Walled Manor, rotating-sail Windmill, crawl-in den. | **Lyudmila Pavlichenko** (1-shot scoped rifle · *Eagle eye*) · **Virginia Hall** (Sten SMG + stealth · *Vanish*) · **Maurice Bavaud** (heavy pistol · *Dead eye*) | Signature firearm + chapter second firearm, `Resistance Knife`, `Fists` · Molotovs |
+| **Act VII · Winter 1974**<br>*Stalnogorsk* | Snowy Soviet city with tram avenue, moving tank & car, **underground Metro station** (`10 m` down with marble columns, chandeliers, passengers & blue train), navigable **5-floor stairwell block** with furnished flats, open **Church of St Nicholas** (5 blue-and-gold onion domes, priest & worshippers), yellow **`КВАС` kvas tanker** & soda machines, Committee archive. Enterable: Food Shop, Garages, Metro, Library, Building Site & Builders' Hut, Palace of Culture, Factory, Committee Building, cellar hatch den. | **Aleksandr Solzhenitsyn** (PPSh-41, −15% dmg · *Stand fast*) · **Andrei Sakharov** (+60% pistol · *Dead eye*) · **Rudolf Nureyev** (+25% speed & stealth · *Vanish*) | Signature firearm + chapter second firearm, `Utility Knife`, `Fists` · Molotovs, Hot Tea |
+| **Act VIII · March 1959**<br>*Road to Lhasa* | High ochre valley under deep blue Himalayan skies, strictly non-combatant **Dalai Lama** & caravan, white chortens, **prostrating pilgrim**, five-coloured prayer flags, **Iron Chain Bridge**, grazing yaks & dust devils. Enterable: Tibetan Houses, Village Temple, Nomad Tent, Ruined Fort, Monks' Houses, Ridge Chapel (giant spinning prayer wheel), Monastery Assembly Hall (gilded Buddha), crawl-in den. | **Gompo Tashi Andrugtsang** (1-shot bolt rifle · *Eagle eye*) · **Ani Pachen** (+20% speed · *Dash*) · **Songtsen Gampo** (bow & sword, −20% dmg · *Stand fast*) | Hero's firearm/bow, `Sling`, `Knife`/`Sword`, `Fists` · Butter Tea |
+| **Act IX · 30 June 1520**<br>*Tenochtitlan* | Aztec capital on Lake Texcoco at sunset under a smoking volcano, climbable **17 m Great Temple** (twin shrines with roof combs), **Moctezuma's House of Birds** (aviary & colourful birds), canal city, three routes over the lake (causeway, chinampas, aqueduct), Spanish horsemen & cannon, market bystanders. Enterable: Palace of Axayacatl, Round Temple of Ehecatl, House of the Eagles, Mainland Village, crawl-in den. | **Cuauhtémoc** (poison darts · *Dead eye*) · **Tzilacatzin** (+50% HP · *Second wind*) · **Nezahualcóyotl** (+20% speed · *Dash*) | `Poisoned Dart-Thrower` (with feathered shield), `Blowgun`, `Macuahuitl`, `Fists` |
 
-*Historical notes:*
-- **Act VI (Normandy):** Lyudmila Pavlichenko, Virginia Hall, and Maurice Bavaud were real figures who resisted the Nazi regime; they did not meet in Normandy in June 1944 and appear together here as legends. Vehicles display plain military bar crosses only.
-- **Act VII (Stalnogorsk):** Stalnogorsk is an invented 1974 Soviet city; Solzhenitsyn, Sakharov, and Nureyev stand together as legends.
-- **Act VIII (Tibet):** Gompo Tashi Andrugtsang, Ani Pachen, and King Songtsen Gampo appear together as legends. The Dalai Lama at the start is strictly unarmed, non-targetable, and takes no part in fighting. **Red Guards** belong historically to the Cultural Revolution years after 1966 rather than 1959.
+### Arsenal, Bag, Recoverable Missiles & Special Skills (`[E]`)
+- **Finite ammo & scavenging:** Every hero starts with their own weapon, the chapter's second weapon, and **Fists** (always last, up to 6 weapons). When a weapon runs completely dry, you switch cleanly to Fists (weapons taken from fallen enemies are discarded when emptied). Fallen enemies drop their weapon, ammo boxes (from melee foes), healing items, and bombs in gunpowder eras.
+- **Quick blade (`F`), Drop (`G`), Heal (`H`), Aimed throw (`RMB`):** Press `F` for an instant swing with your chapter blade; press `G` to drop your held weapon or bag item (shareable with your partner online); press `H` to heal `+35 HP` from your bag. Holding `RMB` with any thrown weapon, stone, Molotov, or bomb draws a fine **flight trajectory** that turns red when it hits an enemy. Stuck arrows, bolts, javelins, axes, knives, darts, and big stones can be pulled out and recovered where they land (up to 40 kept).
+- **Seven Special Skills (`E`):** *Dash* (burst of speed), *Stand fast* (80% damage reduction), *Dead eye* (faster fire & sharper aim), *Second wind* (rapid health recovery), *Vanish* (stealth cloak — turns faint to enemies and opponents), *Fury* (rapid, harder melee strikes), and *Eagle eye* (marks enemies through walls and on the map up to 90 m).
+- **Destructible world & powder kegs:** Wooden fences, tables, chairs, crates, carts, barrels, stalls, and bottles chip, darken, lean, and shatter when shot or punched (dropping any pickups resting on them to the floor). Stone, rock, iron, and trees stand firm. Red powder kegs with pale lids in the six gunpowder chapters explode in a 6 m blast and chain-detonate neighbouring kegs.
 
-### Controls
+### Map, Fog of War, Wits, Map Sizes & Living World
+- **Rotating mini-map & `Tab` full map:** Top-right round mini-map rotates with your heading (`N` orbits the rim). Hold `Tab` for the north-up full chapter map. Fog of war clears within 30 m of you (and your partner in co-op), naming landmarks as you arrive. Middle-click (`MMB`) places or clears a world mark with a through-wall distance readout (`◆ 42 m`).
+- **Enemy Wits (`Low` / `Medium` / `Genius`):** `Low` ignores noise and stops chasing quickly; `Medium` hears gunshots/footsteps, climbs ladders, crouches low passages, and searches for 12 s; `Genius` hears much farther, alerts nearby allies, seeks crouched cover between shots, flanks, throws explosives at cover, and retreats when hurt. Enemies shout in their era's language.
+- **Map Sizes (`Small` / `Medium` / `Large`):** `Small` trims the chapter with rope and red-and-white flags; `Large` expands the world `1.5×` with 7 furnished era outskirts hamlets, chimney smoke, trees, fences, extra bystanders, named landmarks, and raises the Enemies ceiling to `45`. Ground spawns are freshly randomized every run.
+- **Living bystanders & animals:** 147 non-combatant bystanders go about their day, wave or greet you, put their hands up when aimed at, run for cover when fighting starts, and return once quiet. Some hurt bystanders (1 in 4 in single-player, never protected roles such as the Dalai Lama, priests, or the prostrating pilgrim) and startled or injured animals may fight back.
 
-| Action | Controls |
+---
+
+## Online: Two Players, Duel or Together
+
+Click **Online · 2 players · duel or together** on the title screen to open a direct peer-to-peer room over **WebRTC** (two browsers talking straight to each other — PeerJS is used only for the initial 5-character handshake and disconnects immediately once connected, so zero gameplay data passes through any server). Because browsers connect directly, each player can see the other's network address.
+
+- **5-character room codes & invite links:** Uses a 22-character unambiguous alphabet (`34679ACDEFHJKLMNPRTWXY`, no `0/O/Q`, `1/I`, `2/Z`, `5/S`, `8/B`, `G`, `U/V`), accepts lowercase and spaces, or connects straight from a `?duel=XXXXX` invite link. A third browser trying to join a full or in-progress room is turned away with a clear message.
+- **Live lobby & persistent rematches:** Both players pick a display name (up to 16 characters, remembered), see `Players (2 of 2)`, and see the host's chosen **Chapter**, **Mode**, **Computer Enemies** (`None` or `3–24`), **Wits**, and **Map Size** update live. After a match ends, the connection stays open — click **Play Again (Same Connection)** to play as many matches in a row as you like with no new code.
+- **Three online modes:**
+  1. **Duel · first to 5 rounds:** Each kill ends a round; both restart with full health and ammo at opposite ends and swap ends every round. Choose any of the **27 heroes** or **30 duel villains**.
+  2. **Duel · 7 minutes, most kills:** Wall-clock 7-minute showdown; a fallen fighter returns 3 seconds later at the end farther from the opponent.
+  3. **Together against the enemy (Co-op):** Both players start side by side (`2.6 m` apart) as heroes (villains are Duel-only) against `3–24` seeded enemies plus the chapter boss, with **friendly fire off**, 5-second respawn at the start, through-wall partner distance/HP badge, shared fog-of-war uncovering, shared middle-click marks, shared `G`-dropped items, synchronized broken props, and individual kill tallies on mission completion.
+
+### Playable Duel Villains (30 total — Duel Mode only)
+No living person is included; historical dictators appear strictly without party symbols and with plain, factual descriptions.
+
+| Act | Villains |
 | --- | --- |
-| Hero / fighter selection | Mouse hover/click (plus `1`, `2`, `3` and `Enter` in single-player) |
+| **I · West** | **Jesse James** (+15% speed · *Dash*) · **Ike Clanton** (130 HP · *Second wind*) · **Belle Starr** (+30% fire rate · *Dead eye*) |
+| **II · Japan** | **Oda Nobunaga** (−25% dmg · *Stand fast*) · **Sasaki Kojirō** (+2 m katana reach · *Fury*) · **Fūma Kotarō** (+20% speed · *Vanish*) |
+| **III · Switzerland** | **Hermann Gessler** (−20% dmg · *Stand fast*) · **Charles the Bold** (150 HP · *Second wind*) · **Duke Leopold I** (+45% melee · *Fury*) |
+| **IV · Greece** | **Polyphemus** (180 HP, giant · *Second wind*) · **Medusa** (+30% javelins · *Dead eye*) · **Antinous** (+15% speed · *Dash*) · **Minotaur** (axes & flail, 160 HP · *Second wind*) · **Xerxes** (bow & sword, −20% dmg · *Stand fast*) |
+| **V · Scandinavia** | **Erik Bloodaxe** (fast axes · *Dead eye*) · **Ivar the Boneless** (−25% dmg · *Stand fast*) · **Loki** (+20% speed · *Vanish*) |
+| **VI · Normandy** | **Adolf Hitler** (pistol & knife, −20% dmg · *Stand fast*) · **Benito Mussolini** (SMG & knife, 120 HP · *Second wind*) · **Hermann Göring** (scoped rifle & knife · *Eagle eye*) |
+| **VII · Soviet Russia** | **Joseph Stalin** (pistol & knife, −25% dmg · *Stand fast*) · **Yuri Andropov** (+15% speed · *Dash*) · **Lavrentiy Beria** (+50% pistol · *Dead eye*) · **Leonid Brezhnev** (SMG & knife, 130 HP · *Second wind*) |
+| **VIII · Tibet** | **Mao Zedong** (bolt rifle & knife, −20% dmg · *Stand fast*) · **Langdarma** (bow & sword, 140 HP · *Second wind*) · **Jiang Qing** (+20% speed · *Dash*) |
+| **IX · Tenochtitlan** | **Hernán Cortés** (crossbow & halberd, −20% dmg · *Stand fast*) · **Pedro de Alvarado** (+15% speed · *Dash*) · **Nuño de Guzmán** (140 HP · *Second wind*) |
+
+---
+
+## Controls
+
+| Action | Key / Input |
+| --- | --- |
 | Move & strafe | `W`, `A`, `S`, `D` or Arrow keys |
-| Sprint / Jump (or stand up) | `Shift` / `Space` |
-| Crouch (toggle or CapsLock state) | `C` or `CapsLock` |
-| Aim / Shoot / Scope or Alt-Fire | Mouse (Pointer Lock) / `LMB` / `RMB` |
-| Manual reload / Switch weapons | `R` / `1`–`4` or Mouse Wheel |
-| Mute / Pause (SP) or Unlock Mouse (Duel) | `M` / `Esc` |
+| Run / Jump (or stand up) | `Shift` / `Space` |
+| Crouch / Sneak | `C` (or `CapsLock`) / `X` |
+| Aim / Shoot, strike, throw / Scope or aimed throw | Mouse / `LMB` / `RMB` |
+| Quick chapter blade | `F` |
+| Reload | `R` |
+| Switch weapon or bag item | `1`–`9` or Mouse Wheel |
+| Use healing item from bag | `H` |
+| Special skill | `E` |
+| Drop held weapon or bag item | `G` |
+| Place or clear map mark | Middle mouse button (`MMB`) |
+| Hold open full chapter map | `Tab` |
+| Music on / off | `M` |
+| Sound settings | `O` |
+| Pause (single-player) / Unlock mouse (online) / Back | `Esc` |
+| Cycle graphics quality (while paused) | `G` (on pause screen) |
 
 ---
 
-## Technical notes
+## Technical Notes
 
-### Source & build layout (`24` source files · `20,308` lines)
+### Source & Build Layout (`32` source files · `29,928` lines)
 
-| Path | Responsibility |
+| Metric | Value |
 | --- | --- |
-| [index.html](index.html) & [assets/](assets/) | Pre-built standalone production bundle (`index.html` 22.8 kB / 6.3 kB gz, CSS 31.5 kB / 6.9 kB gz, JS 1,017.2 kB / 272.5 kB gz). |
-| [src/main.js](src/main.js) | Core game loop (`dt` clamped `>= 0`), random title-background picker, single-player & duel hooks, crouching (`0.95 m` eye / `1.05 m` collision / headroom check / −40% enemy detection), Pointer Lock input, post-processing, sub-stepped movement, and solid living-body separation. |
-| [src/engine/duelNet.js](src/engine/duelNet.js) | Direct WebRTC DataChannel transport supporting PeerJS 5-letter invite-code signalling (disconnecting signalling once connected), zero-server native `RTCPeerConnection` copy-paste SDP codes, and persistent rematch connections (`isOpen()`). |
-| [src/engine/duelController.js](src/engine/duelController.js) | Duel Lobby UI (`None, 1–9` computer enemies), two-row Fighter Selection (`★ Heroes` / `☠ Villains`, 1366 × 768 compact 8-card layout), three rule engines (`first3`, `onelife`, `timed5`), live crouch sync (`cr`), post-match rematch flow without re-inviting, top scoreline & compass. |
-| [src/entities/villains.js](src/entities/villains.js) | Roster and party-symbol-free sculpted 3D figures for all 27 Duel villains (including Minotaur & Xerxes and sculpted historical likenesses) plus unified `buildFighterFigure()` / `getFighterById()` helpers. |
-| [src/entities/remoteFighter.js](src/entities/remoteFighter.js) | Live animated 3D opponent figure in Duel Mode with smooth network interpolation, walking stride, kneeling crouch stance & lowered hit zones, aiming pitch, melee swings, muzzle flash, floating health bar, and collapse animation. |
-| [src/engine/collision.js](src/engine/collision.js) & [src/engine/buildings.js](src/engine/buildings.js) | Solid AABB collision (`STEP_MAX = 0.52 m`, water-surface bridge/deck override, headroom check, iron `bars`), coarse 6 m × 6 m spatial-bucket 2D nav grid (`1.4–14.1 ms` build per level) & binary-heap **A\*** pathfinder (`0.48 m` uphill limit), plus hollow building, raised hide, jump crate, crawl-in den, and zigzag hill builders. |
-| [src/engine/shaders.js](src/engine/shaders.js), [textures.js](src/engine/textures.js), [particles.js](src/engine/particles.js), [audio.js](src/engine/audio.js) | Custom GLSL sky/water/waterfall (half-transparent grotto option)/aurora shaders, procedural Canvas PBR textures (including hammer & sickle banners, Greek mosaics, and striped ship tents), particles, and 8-era Web Audio API music & SFX synthesis. |
-| [src/entities/heroes.js](src/entities/heroes.js), [weapons.js](src/entities/weapons.js), [enemies.js](src/entities/enemies.js) | 24 single-player heroes with sculpted facial features (ears, mouth, eyebrows) and historical likenesses, 26 first-person weapon viewmodels, and all 8-era enemy & boss models. |
-| [src/levels/level1_west.js](src/levels/level1_west.js) – [level8_tibet.js](src/levels/level8_tibet.js) | Eight enlarged 3D worlds with hollow enterable buildings, climbable zigzag hills, jump roofs/hides, crawl-in dens, 4 boardable Viking longships, Swiss waterfall grotto, Japan bystanders, and 250 total enemies (242 initial + 8 bosses). |
-
-### Dependencies & Licences
-
-| Package | Version | Purpose | Licence |
-| --- | --- | --- | --- |
-| `three` | `^0.172.0` | WebGL2 3D rendering, shaders, post-processing bloom | MIT |
-| `peerjs` | `^1.5.5` | Optional WebRTC signalling handshake for 5-letter duel invite links | MIT ([licenses/peerjs-LICENSE.txt](licenses/peerjs-LICENSE.txt)) |
-| `vite` | `^6.0.0` | Dev server & production bundler (devDependency only) | MIT |
+| Production bundle (`dist/`) | `index.html` `28.02 kB` (`7.39 kB` gz) · CSS `38.67 kB` (`8.25 kB` gz) · JS `1,234.15 kB` (`339.71 kB` gz) |
+| Worlds & Navigation | `9` chapters · `67` enterable buildings · `33` climbable ladders · `1.0–5.8 ms` spatial-bucket 2D A\* nav-grid build per chapter |
+| Living & Destructible World (Medium map) | `99` named landmarks · `147` bystanders · `21` living animals · `2,783` destructible props · `28` explosive powder kegs |
+| Roster | `27` single-player heroes + `30` online duel villains (`57` playable figures with `[E]` special skills) |
+| Dependencies | `three` `^0.172.0` (MIT), `peerjs` `^1.5.5` (MIT, [license](licenses/peerjs-LICENSE.txt)), `vite` `^6.0.0` (devDependency, MIT) |
 
 ### Verification — What Was Tested & What Was Not
 
 - **Tested (automated headless Microsoft Edge WebGL2 / CDP verification against the production `dist/` bundle + visual inspection of every screenshot):**
-  - **All 8 single-player levels (`0` game console/runtime errors, `0` unreachable enemies across all 242 initial enemies, `0` stuck spots):**
-    - Measured spatial-bucket nav-grid build times per chapter: Act I `4.7 ms`, Act II `12.6 ms`, Act III `2.1 ms`, Act IV `9.2 ms`, Act V `7.9 ms`, Act VI `1.4 ms`, Act VII `1.6 ms`, Act VIII `14.1 ms`.
-    - Simulated keyboard-driven walking (`KeyW` + steering along A\* routes) from spawn to **every single enemy post** (`242 / 242`) and **every non-den pickup** (`78 / 78`) across all eight chapters, plus active firing & combat ticks in every level.
-    - Verified negative `dt` clamping (`dt = -0.5` clamps to `0`, `0.0 m` displacement) and walking across Kyoto Mist's arched vermilion bridge in both directions without jumping (`maxY = 1.16 m`, A\* routes across bridge).
-    - Verified crouching & 1.25 m crawl-in dens across Acts I, III, VII, and VIII: upright entry blocked, `C` lowers eye height to `0.95 m` and shows the HUD badge, crouched player enters and collects the den health item, standing up (`C` / `Space`) is refused under the low ceiling, and `Space` stands back up outside.
-    - Verified jumping up rising crates/blocks onto the West General Store flat roof (`3.79 m`), Swiss Hunter's High Seat (`2.25 m`), and Soviet Garage Roofs (`3.08 m`, walking the full roof row north to `z = 31.9`).
-    - Verified walking (without jumping) up both zigzag rock paths to their summits: West 12 m Butte (`reachedY = 12.0 m`) and Swiss 9 m Rocky Hill (`reachedY = 9.0 m`).
-  - **Two-tab Duel Mode (two headless Edge tabs on `127.0.0.1`, `0` game errors on both Host and Guest):**
-    - Verified Greece Fighter Selection at `1366 × 768`: 3 heroes + 5 villains (`Polyphemus`, `Medusa`, `Antinous`, `Minotaur`, `Xerxes`; no Circe), all 8 cards and lock-in button fit within `768 px` (`scrollHeight = 768`, `btnBottom = 727`).
-    - Verified `None, 1–9` computer enemy selector (`10` options, spawning `4` enemies in Match 1 and `2` in Match 2), Minotaur `160 HP`, Xerxes `0.8×` damage taken, and live crouch sync (`cr: 1` lowering `remoteFighter.crouched`).
-    - Verified persistent post-duel rematch: after finishing a `One life` duel, clicking **Next Duel (Same Connection)** returned both tabs to the connected Duel screen (`isOpen() === true`), where the host switched to Act V with 2 enemies and started the second duel without any new code or invite link.
+  - All 9 chapters verified with `0` console/runtime errors: `0` unreachable enemies at `5`, `15`, and `30` enemies, all `33` ladders climbable, all crawl-in dens and `14` Normandy hedge holes crouch-passable, roof walking and drawn-geometry shot blocking verified.
+  - Verified Graphics dropdown (`Automatic` / `High` / `Medium` / `Low`), mid-chapter `G` toggle, `?fps` counter, Sound Settings (`General` / `Effects` / `Voices` / `Music` + `M` music-only mute), and `Esc` menu navigation.
+  - Verified full Stage 9 arsenal (finite ammo, auto-switch to Fists, bag items, Molotov fire pools, recoverable missiles, `F` quick blade, `G` drop, `RMB` red-on-target trajectory preview, and all 7 `[E]` special skills), Stage 10 mini-map / `Tab` full map / fog of war / `MMB` marks / landmarks, Stage 11 destructible props & chain-detonating powder kegs, Stage 12 `Low`/`Medium`/`Genius` enemy wits & `Small`/`Medium`/`Large` map sizes, Stage 13 living bystanders & animals, and Stage 14 Soviet underground Metro (`-10 m`), 5-floor stairwell block, Church of St Nicholas, Japan *shishi-odoshi*, Tibet prostrating pilgrim, and Swiss 100 m Valais Suone (breaking upstream wood stops downstream water).
+  - **Two-tab Online verification (two tabs + a 3rd tab in one headless Edge browser over live WebRTC / PeerJS, `0` errors):** verified 5-character room codes (typed lowercase with spaces), `?duel=` invite links, 3rd-player rejection, live lobby sync, `first5` duel round swap & match completion, `timed7` 3-second respawn, 3 consecutive games over a single connection, `coop` together mode (identical seeded spawns, `2.6 m` side-by-side start, boss included, friendly fire off, individual kill credit, mission complete on both screens, shared mark, `G`-dropped weapon pickup by partner), and disconnect notification.
 - **Not tested:**
-  - **Two separate physical computers over the public internet or behind restrictive corporate NATs/firewalls:** All Duel Mode checks ran between two tabs of one browser on the same machine.
-  - **Live speaker audio balance & manual hardware-GPU mouse feel:** Web Audio initialized cleanly without errors in headless verification, but live speaker output and manual Pointer Lock aiming were not auditioned interactively.
+  - **Two separate physical computers on different networks or behind restrictive NATs/firewalls:** Online play was tested between two browser tabs on one machine, not across two separate computers on different networks.
+  - **Interactive speaker audio balance & manual hardware-GPU mouse aiming:** Web Audio and speech synthesis ran cleanly without errors in automated checks, but live speaker balance and manual mouse feel were not auditioned interactively.
 
-### Running & rebuilding locally
+### Running & Rebuilding Locally
 
 ```sh
 cd Gemini
-copy src\index.html index.html
 npm install
 npm run dev       # Live dev server on http://localhost:5173
 npm run build     # Standalone bundle in dist/ (injects version from package.json)

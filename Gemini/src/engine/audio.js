@@ -7,7 +7,20 @@ export class SoundEngine {
     this.master = null;
     this.musicGain = null;
     this.sfxGain = null;
+    this.voicesGain = null;
     this.muted = false;
+    // Stage 15 Item 98: Four remembered volume sliders + independent Music toggle
+    this.prefs = { general: 0.80, effects: 0.85, voices: 0.85, music: 0.35, musicOn: true };
+    try {
+      const raw = JSON.parse(localStorage.getItem('nine_horizons_audio') || 'null');
+      if (raw && typeof raw === 'object') {
+        if (Number.isFinite(raw.general)) this.prefs.general = Math.max(0, Math.min(1, raw.general));
+        if (Number.isFinite(raw.effects)) this.prefs.effects = Math.max(0, Math.min(1, raw.effects));
+        if (Number.isFinite(raw.voices)) this.prefs.voices = Math.max(0, Math.min(1, raw.voices));
+        if (Number.isFinite(raw.music)) this.prefs.music = Math.max(0, Math.min(1, raw.music));
+        if (typeof raw.musicOn === 'boolean') this.prefs.musicOn = raw.musicOn;
+      }
+    } catch {}
     this.musicTimer = null;
     this.currentTheme = null;
     this.step = 0;
@@ -24,16 +37,20 @@ export class SoundEngine {
     this.ctx = new AudioCtx();
 
     this.master = this.ctx.createGain();
-    this.master.gain.value = this.muted ? 0 : 0.72;
+    this.master.gain.value = this.muted ? 0 : this.prefs.general;
     this.master.connect(this.ctx.destination);
 
     this.musicGain = this.ctx.createGain();
-    this.musicGain.gain.value = 0.28;
+    this.musicGain.gain.value = this.prefs.musicOn ? this.prefs.music : 0;
     this.musicGain.connect(this.master);
 
     this.sfxGain = this.ctx.createGain();
-    this.sfxGain.gain.value = 0.85;
+    this.sfxGain.gain.value = this.prefs.effects;
     this.sfxGain.connect(this.master);
+
+    this.voicesGain = this.ctx.createGain();
+    this.voicesGain.gain.value = this.prefs.voices;
+    this.voicesGain.connect(this.master);
 
     // Pre-generate 1.5s white noise buffer for gunfire, wind, explosions, slashes
     const sampleRate = this.ctx.sampleRate;
@@ -43,11 +60,42 @@ export class SoundEngine {
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
   }
 
+  _savePrefs() {
+    try { localStorage.setItem('nine_horizons_audio', JSON.stringify(this.prefs)); } catch {}
+  }
+
+  applyVolumes() {
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    if (this.master) this.master.gain.setTargetAtTime(this.muted ? 0 : this.prefs.general, now, 0.03);
+    if (this.sfxGain) this.sfxGain.gain.setTargetAtTime(this.prefs.effects, now, 0.03);
+    if (this.voicesGain) this.voicesGain.gain.setTargetAtTime(this.prefs.voices, now, 0.03);
+    if (this.musicGain) this.musicGain.gain.setTargetAtTime(this.prefs.musicOn ? this.prefs.music : 0, now, 0.03);
+  }
+
+  setVolume(channel, value01) {
+    const v = Math.max(0, Math.min(1, Number(value01) || 0));
+    if (channel in this.prefs) {
+      this.prefs[channel] = v;
+      this._savePrefs();
+      this.applyVolumes();
+    }
+  }
+
+  setMusicEnabled(on) {
+    this.prefs.musicOn = !!on;
+    this._savePrefs();
+    this.applyVolumes();
+    return this.prefs.musicOn;
+  }
+
+  toggleMusic() {
+    return this.setMusicEnabled(!this.prefs.musicOn);
+  }
+
   setMuted(m) {
     this.muted = m;
-    if (this.master) {
-      this.master.gain.setTargetAtTime(m ? 0 : 0.72, this.ctx.currentTime, 0.04);
-    }
+    this.applyVolumes();
   }
 
   toggleMute() {
@@ -652,5 +700,81 @@ export class SoundEngine {
     this.ensureInit();
     if (!this.ctx || this.muted) return;
     this._noiseBurst(0.045, 0.08, 380, 'lowpass');
+  }
+
+  /**
+   * Stage 13 Item 88: Era-language voices (SpeechSynthesis when a matching locale voice exists,
+   * with instant synthesized vowel-formant fallback so cries & chatter always work cleanly).
+   */
+  speakVoice(eraId, kind = 'spot') {
+    if (this.muted) return;
+    const nowMs = performance.now();
+    if (this._lastVoiceMs && nowMs - this._lastVoiceMs < 900) return;
+    this._lastVoiceMs = nowMs;
+
+    const PHRASES = {
+      west:        { lang: 'en', spot: ['There he is!', 'Get him!', 'Draw!'],           greet: ['Howdy, stranger.', 'Quiet day.'],     fright: ['Watch out!', 'Run!'] },
+      japan:       { lang: 'ja', spot: ['Kusemono da!', 'Ike!'],                         greet: ['Konnichiwa.'],                        fright: ['Nigero!'] },
+      swiss:       { lang: 'de', spot: ['Halt! Da ist er!', 'Greift an!'],               greet: ['Grüezi!', 'Guten Tag.'],              fright: ['Hilfe!'] },
+      greece:      { lang: 'el', spot: ['Ekei einai!', 'Stasou!'],                       greet: ['Chaire!'],                            fright: ['Fevgete!'] },
+      scandinavia: { lang: 'nb', spot: ['Der er han!', 'Til våpen!'],                    greet: ['Hei!', 'God dag.'],                   fright: ['Løp!'] },
+      normandy:    { lang: 'de', spot: ['Halt! Stehen bleiben!', 'Feuer!'],              greet: ['Bonjour!', 'Courage!'],               fright: ['Au secours!'], greetLang: 'fr' },
+      soviet:      { lang: 'ru', spot: ['Stoi! Kto idyot!', 'Derzhi ego!'],              greet: ['Zdravstvuyte.'],                      fright: ['Begi!'] },
+      tibet:       { lang: 'zh', spot: ['Zhan zhu!', 'Zai na li!'],                      greet: ['Tashi delek.'],                       fright: ['Kuai pao!'] },
+      aztec:       { lang: 'es', spot: ['¡Alto! ¡A las armas!', '¡Allí está!'],          greet: ['Niltze.'],                            fright: ['¡Cuidado!'] }
+    };
+    const spec = PHRASES[eraId] || PHRASES.west;
+    const targetLang = (kind === 'greet' && spec.greetLang) ? spec.greetLang : spec.lang;
+    const list = spec[kind] || spec.spot;
+    const text = list[Math.floor(Math.random() * list.length)];
+
+    // Try browser SpeechSynthesis only if a matching voice is installed
+    try {
+      if (typeof window !== 'undefined' && window.speechSynthesis && kind !== 'pain') {
+        const voices = window.speechSynthesis.getVoices();
+        const match = voices && voices.find((v) => v.lang && v.lang.toLowerCase().startsWith(targetLang));
+        if (match && !window.speechSynthesis.speaking) {
+          const u = new SpeechSynthesisUtterance(text);
+          u.voice = match;
+          u.lang = match.lang;
+          u.volume = this.voicesGain ? Math.min(1, this.voicesGain.gain.value) : 0.75;
+          u.rate = kind === 'spot' ? 1.12 : 0.98;
+          window.speechSynthesis.speak(u);
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback: synthesized formant vowel cry/chatter via Web Audio!
+    this.ensureInit();
+    if (!this.ctx || !this.voicesGain) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
+    const g = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    const baseF = kind === 'pain' ? 210 : kind === 'fright' ? 320 : kind === 'greet' ? 170 : 145;
+    osc.frequency.setValueAtTime(baseF, now);
+    osc.frequency.exponentialRampToValueAtTime(kind === 'pain' ? baseF * 0.62 : baseF * 1.18, now + 0.22);
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(kind === 'fright' ? 1200 : 750, now);
+    filter.Q.value = 4.2;
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(0.18, now + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
+    osc.connect(filter);
+    filter.connect(g);
+    g.connect(this.voicesGain);
+    osc.start(now);
+    osc.stop(now + 0.28);
+  }
+
+  playWoodKnock(gainScale = 1.0) {
+    this.ensureInit();
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    const vol = Math.max(0.02, Math.min(0.6, 0.35 * gainScale));
+    this._tone(440, 'triangle', 0.055, vol, now, this.sfxGain, 1200);
+    this._tone(215, 'sine', 0.08, vol * 0.9, now, this.sfxGain, 800);
   }
 }

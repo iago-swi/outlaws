@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OUTLAWS: Eight Horizons</title>
+  <title>OUTLAWS: Nine Horizons</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%231b0e08'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='38' fill='%23f2b755'>★</text></svg>" />
   <link rel="stylesheet" href="/src/styles.css" />
 </head>
 <body>
   <div id="game-container"></div>
+
+  <!-- Optional ?fps Diagnostic Readout -->
+  <div id="fps-counter" class="hidden" aria-live="off">60 FPS · High · 1366×768</div>
 
   <!-- Vintage Scope / Focus Overlay -->
   <div id="scope-overlay" class="hidden">
@@ -21,8 +24,10 @@
     </div>
   </div>
 
-  <!-- Damage & Low-Health Vignette -->
+  <!-- Damage & Low-Health Vignette + Skill Tint & Eagle-Eye Marker Layer -->
   <div id="damage-overlay"></div>
+  <div id="skill-tint-overlay"></div>
+  <div id="eagle-eye-layer"></div>
   <div id="hit-flash"></div>
 
   <!-- Hidden Practice Mode Indicator (Visible on every screen ONLY while PAX is active; never during Duel) -->
@@ -53,9 +58,20 @@
     </div>
   </div>
 
-  <!-- Floating Callout (Headshot, Boss Incoming, Reload, Pickup, Duel Round) -->
+  <!-- Floating Callout (Headshot, Boss Incoming, Reload, Pickup, Duel Round) + Landmark Arrival + World Mark Label -->
   <div id="callout-banner" class="hidden"></div>
+  <div id="landmark-banner" class="hidden"></div>
+  <div id="mark-label" class="hidden">◆ 0 m</div>
+  <div id="coop-partner-tag" class="hidden">PARTNER · 5 m · 100 HP</div>
   <div id="pickup-toast"></div>
+
+  <!-- Full Chapter Map (Held with Tab, North Up) -->
+  <div id="fullmap-overlay" class="hidden">
+    <div class="fullmap-shell">
+      <div class="fullmap-head"><span>CHAPTER MAP (NORTH UP)</span><span>MMB: Mark · Hold TAB</span></div>
+      <canvas id="fullmap-canvas" width="520" height="520"></canvas>
+    </div>
+  </div>
 
   <!-- Main Gameplay HUD -->
   <div id="hud" class="hidden">
@@ -70,13 +86,9 @@
       </div>
     </div>
 
-    <!-- Top Center: Duel Scoreline & Compass Bar (Duel Mode Only) -->
+    <!-- Top Center: Duel Scoreline (Compass removed in favor of Mini-Map!) -->
     <div id="duel-hud-top" class="hidden">
       <div class="duel-scoreline" id="duel-scoreline">You 0–0 Opponent · round 1</div>
-      <div class="duel-compass" id="duel-compass">
-        <div class="compass-track" id="compass-track"></div>
-        <div class="compass-center-tick"></div>
-      </div>
     </div>
 
     <!-- Duel Respawn Countdown Banner (Timed 5-min mode) -->
@@ -90,18 +102,24 @@
       </div>
     </div>
 
-    <!-- Top Right: Score & Quick Controls -->
+    <!-- Top Right: Round Rotating Mini-Map + Score & Quick Controls -->
     <div class="hud-top-right">
+      <div class="minimap-wrap" id="minimap-wrap">
+        <canvas id="minimap-canvas" width="168" height="168"></canvas>
+        <div class="minimap-north" id="minimap-north">N</div>
+      </div>
       <div class="hud-score-box" id="hud-score-box">
         <div class="hud-score-label">BOUNTY</div>
         <div class="hud-score-val" id="hud-score">$0</div>
       </div>
       <div class="hud-controls-hint">
-        <span id="hud-esc-hint">[ESC] Menu</span>
-        <span>[C] Crouch</span>
-        <span>[M] Mute</span>
-        <span>[R] Reload</span>
-        <span>[RMB] Zoom / Alt</span>
+        <span id="hud-esc-hint">[ESC] Pause</span>
+        <span>[TAB] Map</span>
+        <span>[MMB] Mark</span>
+        <span>[F] Blade</span>
+        <span>[E] Skill</span>
+        <span>[H] Heal</span>
+        <span>[G] Drop</span>
       </div>
     </div>
 
@@ -115,6 +133,7 @@
         <div class="hud-hero-perk-row">
           <div class="hud-hero-perk" id="hud-hero-perk">-25% DMG</div>
           <div class="hud-crouch-badge hidden" id="hud-crouch-badge">CROUCHING</div>
+          <div class="hud-crouch-badge hidden" id="hud-sneak-badge">SNEAKING</div>
         </div>
         <div class="bar-track health-track">
           <div class="bar-fill health-fill" id="hud-hp-bar"></div>
@@ -125,14 +144,20 @@
             <div class="bar-fill stamina-fill" id="hud-stamina-bar"></div>
           </div>
         </div>
+        <div class="hud-skill-row" id="hud-skill-row">
+          <span class="hud-skill-key">[E]</span>
+          <span class="hud-skill-name" id="hud-skill-name">STAND FAST</span>
+          <span class="hud-skill-status ready" id="hud-skill-status">READY</span>
+        </div>
       </div>
     </div>
 
     <!-- Bottom Center: Weapon Bar -->
     <div class="hud-weapon-strip" id="hud-weapon-strip"></div>
 
-    <!-- Bottom Right: Ammo Display -->
+    <!-- Bottom Right: Arsenal & Bag List + Active Weapon Ammo -->
     <div class="hud-bottom-right">
+      <div class="hud-arsenal-list" id="hud-arsenal-list"></div>
       <div class="hud-panel ammo-panel">
         <div class="hud-weapon-name" id="hud-weapon-name">.45 PEACEMAKER</div>
         <div class="hud-ammo-row">
@@ -161,8 +186,8 @@
     <div class="title-content">
       <div class="title-eyebrow">A MODERN TRIBUTE TO LUCASARTS' 1997 CLASSIC</div>
       <h1 class="title-logo">OUTLAWS</h1>
-      <div class="title-subtitle">EIGHT HORIZONS</div>
-      <div class="title-tagline">Eight frontiers — Twenty-four legends</div>
+      <div class="title-subtitle">NINE HORIZONS</div>
+      <div class="title-tagline">Nine frontiers — Twenty-seven legends</div>
 
       <div class="level-cards">
         <button class="level-card active" data-level="0" style="--card-accent:#e89b3c">
@@ -213,6 +238,12 @@
           <div class="card-meta">Tibet · March 1959</div>
           <div class="card-desc">High ochre valley, village houses, ruined fort, camp and ridge monastery.</div>
         </button>
+        <button class="level-card" data-level="8" style="--card-accent:#1fb89a">
+          <div class="card-num">IX</div>
+          <div class="card-title">TENOCHTITLAN</div>
+          <div class="card-meta">Aztec Empire · 30 June 1520</div>
+          <div class="card-desc">Great Temple, canal city, chinampas, aqueduct and western causeway over Lake Texcoco.</div>
+        </button>
       </div>
 
       <div class="title-controls-row">
@@ -223,7 +254,7 @@
           <button class="diff-btn" data-diff="ugly">THE UGLY <em>(Deadly)</em></button>
         </div>
         <div class="title-action-btns">
-          <button id="btn-duel-open" class="btn-duel-entry">⚔ DUEL · TWO PLAYERS ONLINE</button>
+          <button id="btn-duel-open" class="btn-duel-entry">⚔ Online · 2 players · duel or together</button>
           <button id="btn-play" class="btn-primary-western">
             <span>RIDE OUT</span>
             <span class="btn-arrow">▶</span>
@@ -232,46 +263,69 @@
       </div>
 
       <div class="controls-legend">
-        <span><b>WASD</b> Move</span>
-        <span><b>SHIFT</b> Sprint</span>
-        <span><b>SPACE</b> Jump</span>
-        <span><b>C / CAPS</b> Crouch</span>
-        <span><b>MOUSE</b> Aim</span>
-        <span><b>LMB</b> Shoot / Strike</span>
-        <span><b>RMB</b> Scope / Alt-Fire</span>
+        <span><b>WASD / Arrows</b> Move</span>
+        <span><b>SHIFT / SPACE</b> Run / Jump</span>
+        <span><b>C / X</b> Crouch / Sneak</span>
+        <span><b>LMB / RMB</b> Fire / Aim</span>
+        <span><b>F</b> Blade</span>
         <span><b>R</b> Reload</span>
-        <span><b>1-4 / SCROLL</b> Weapons</span>
+        <span><b>1–9 / Wheel</b> Gear</span>
+        <span><b>MMB</b> Mark</span>
+        <span><b>TAB</b> Map</span>
+        <span><b>H / E / G</b> Heal / Skill / Drop</span>
+        <span><b>M / O</b> Music / Sound</span>
       </div>
+    </div>
+    <div class="title-bottom-left">
+      <label class="title-graphics-wrap" for="title-graphics-select">
+        <span>Graphics</span>
+        <select id="title-graphics-select" class="plain-select">
+          <option value="auto" selected>Automatic</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </label>
+      <button id="btn-title-sound" class="btn-secondary-western btn-compact">SOUND [O]</button>
     </div>
     <div id="title-version" class="title-version" aria-label="Game version">v%APP_VERSION%</div>
   </div>
 
-  <!-- Duel Lobby Screen (Host / Join via 5-letter Invite Link or Copy-Paste Backup) -->
+  <!-- Unified Online 2-Player Screen (Duel or Together Co-op) -->
   <div id="duel-lobby-screen" class="overlay-screen hidden">
     <div class="duel-lobby-shell">
       <div class="duel-lobby-header">
         <div>
-          <div class="picker-eyebrow">ONLINE FACE-TO-FACE</div>
-          <h2 class="duel-lobby-title">DUEL LOBBY</h2>
+          <div class="picker-eyebrow">ONLINE · 2 PLAYERS DIRECT P2P</div>
+          <h2 class="duel-lobby-title">ONLINE — DUEL OR TOGETHER</h2>
         </div>
-        <button id="btn-duel-lobby-back" class="btn-secondary-western btn-compact">← BACK</button>
+        <div class="duel-lobby-header-actions">
+          <button id="btn-online-sound" class="btn-secondary-western btn-compact">SOUND</button>
+          <button id="btn-duel-lobby-back" class="btn-secondary-western btn-compact">← MAIN MENU</button>
+        </div>
+      </div>
+
+      <div class="online-name-bar">
+        <label for="online-player-name">Your name (max 16)</label>
+        <input id="online-player-name" type="text" maxlength="16" placeholder="Outlaw" autocomplete="off" />
+        <div id="online-players-list" class="online-players-list">Players (1 of 2): You</div>
       </div>
 
       <p class="duel-privacy-note">
-        Direct browser-to-browser connection (WebRTC): the two computers talk directly and each player can see the other's network address.
+        Direct browser-to-browser connection (WebRTC, two players only): the two computers talk directly and each player can see the other's network address.
       </p>
 
       <div id="duel-status-bar" class="duel-status-bar status-idle">
-        Choose Host or Join to start a two-player duel.
+        Create a room or enter a 5-character code to play a duel or together.
       </div>
 
       <div class="duel-lobby-columns">
         <!-- Host Column -->
         <div class="duel-panel">
-          <h3 class="duel-panel-title">HOST A DUEL</h3>
+          <h3 class="duel-panel-title">HOST SETTINGS</h3>
 
           <label class="duel-field">
-            <span>Level</span>
+            <span>Chapter</span>
             <select id="duel-level-select">
               <option value="0">I · Red Gulch (Wild West, 1884)</option>
               <option value="1">II · Kyoto Mist (Feudal Japan, 1603)</option>
@@ -281,36 +335,54 @@
               <option value="5">VI · Normandy (Occupied France, 1944)</option>
               <option value="6">VII · Stalnogorsk (Soviet Russia, 1974)</option>
               <option value="7">VIII · Road to Lhasa (Tibet, 1959)</option>
+              <option value="8">IX · Tenochtitlan (Aztec Empire, 1520)</option>
             </select>
           </label>
 
           <label class="duel-field">
-            <span>Rules</span>
+            <span>Game</span>
             <select id="duel-rule-select">
-              <option value="first3">First to 3 rounds (swap ends each round)</option>
-              <option value="onelife">One life (first kill decides)</option>
-              <option value="timed5">5 minutes, most kills (3s respawn)</option>
+              <option value="first5">Duel · first to 5 rounds</option>
+              <option value="timed7">Duel · 7 minutes, most kills</option>
+              <option value="coop">Together against the enemy</option>
             </select>
           </label>
 
-          <label class="duel-field">
-            <span>Computer enemies</span>
-            <select id="duel-enemies-select">
-              <option value="0">None</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-              <option value="9">9</option>
-            </select>
-          </label>
+          <div class="online-sub-selects">
+            <label class="duel-field">
+              <span>Computer enemies</span>
+              <select id="duel-enemies-select">
+                <option value="0">None</option>
+                <option value="3">3</option>
+                <option value="6" selected>6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+                <option value="24">24</option>
+              </select>
+            </label>
+            <label class="duel-field">
+              <span>Wits</span>
+              <select id="duel-wits-select">
+                <option value="low">Low</option>
+                <option value="medium" selected>Medium</option>
+                <option value="genius">Genius</option>
+              </select>
+            </label>
+            <label class="duel-field">
+              <span>Map size</span>
+              <select id="duel-mapsize-select">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </label>
+          </div>
 
-          <button id="btn-duel-host" class="btn-primary-western btn-full">CREATE INVITE LINK</button>
-          <button id="btn-duel-rematch-start" class="btn-primary-western btn-full hidden">START NEXT DUEL ▶</button>
+          <button id="btn-duel-host" class="btn-primary-western btn-full">Create and get the invite link</button>
+          <button id="btn-duel-rematch-start" class="btn-primary-western btn-full hidden">Start the game ▶</button>
 
           <div id="duel-invite-box" class="duel-invite-box hidden">
             <div class="duel-code-row">
@@ -326,41 +398,19 @@
 
         <!-- Join Column -->
         <div class="duel-panel">
-          <h3 class="duel-panel-title">JOIN A DUEL</h3>
-          <p class="duel-panel-hint">Open your host's invite link directly, or enter their 5-letter code below:</p>
+          <h3 class="duel-panel-title">JOIN A GAME</h3>
+          <p class="duel-panel-hint">Open your host's invite link directly, or enter their 5-character code below (spaces &amp; lowercase accepted):</p>
           <div class="duel-join-row">
-            <input id="duel-join-code" type="text" maxlength="5" placeholder="ABCDE" autocomplete="off" />
+            <input id="duel-join-code" type="text" maxlength="12" placeholder="AC37K" autocomplete="off" />
             <button id="btn-duel-join" class="btn-primary-western btn-compact">JOIN</button>
           </div>
-          <div class="duel-rules-summary">
-            <div><b>First to 3 rounds:</b> each kill ends a round; both reset at opposite ends and swap ends.</div>
-            <div><b>One life:</b> single sudden-death showdown.</div>
-            <div><b>5 minutes, most kills:</b> 3-second respawn at the end farther from your opponent.</div>
+          <div id="online-guest-summary" class="duel-rules-summary">
+            <div><b>Duel · first to 5 rounds:</b> each fall ends a round; both reset at opposite ends and swap ends.</div>
+            <div><b>Duel · 7 minutes, most kills:</b> 3-second respawn at the end farther from your opponent.</div>
+            <div><b>Together against the enemy:</b> start side by side against 3–24 enemies + boss; no friendly fire; 5-second respawn; shared map, marks &amp; drops.</div>
           </div>
         </div>
       </div>
-
-      <!-- Fold-out Manual Copy-Paste WebRTC Fallback (Zero External Service) -->
-      <details id="duel-backup-details" class="duel-backup">
-        <summary>Backup connection — copy-paste codes (no outside service, use when the invite link does not work)</summary>
-        <div class="duel-backup-grid">
-          <div class="duel-backup-col">
-            <h4>Host (manual handshake)</h4>
-            <button id="btn-manual-make-offer" class="btn-secondary-western btn-compact">1. Generate Offer Code</button>
-            <textarea id="manual-host-offer" rows="2" readonly placeholder="Your offer code appears here — send it to your opponent via chat"></textarea>
-            <button id="btn-manual-copy-offer" class="btn-secondary-western btn-compact">Copy Offer Code</button>
-            <textarea id="manual-host-answer" rows="2" placeholder="2. Paste your opponent's reply code here"></textarea>
-            <button id="btn-manual-apply-answer" class="btn-primary-western btn-compact">3. Connect Duel</button>
-          </div>
-          <div class="duel-backup-col">
-            <h4>Guest (manual handshake)</h4>
-            <textarea id="manual-guest-offer" rows="2" placeholder="1. Paste the host's offer code here"></textarea>
-            <button id="btn-manual-make-answer" class="btn-primary-western btn-compact">2. Generate Reply Code</button>
-            <textarea id="manual-guest-answer" rows="2" readonly placeholder="Your reply code appears here — send it back to the host"></textarea>
-            <button id="btn-manual-copy-answer" class="btn-secondary-western btn-compact">Copy Reply Code</button>
-          </div>
-        </div>
-      </details>
     </div>
   </div>
 
@@ -420,16 +470,46 @@
       <div class="hero-picker-pane">
         <div class="hero-picker-header">
           <div class="picker-eyebrow">CHOOSE YOUR HERO</div>
-          <div class="picker-keys"><span>[1]</span> <span>[2]</span> <span>[3]</span> Select &nbsp;•&nbsp; <span>[ENTER]</span> Begin</div>
+          <div class="picker-keys"><span>[1-3]</span> Hero &nbsp;•&nbsp; <span>[ENTER]</span> Begin &nbsp;•&nbsp; <span>[F]</span> Blade &nbsp;•&nbsp; <span>[E]</span> Skill &nbsp;•&nbsp; <span>[H]</span> Heal &nbsp;•&nbsp; <span>[TAB]</span> Map &nbsp;•&nbsp; <span>[ESC]</span> Main menu</div>
         </div>
         <p class="comic-quote" id="comic-quote"></p>
         <p class="hero-historical-note hidden" id="hero-historical-note"></p>
+
+        <div class="hero-options-row">
+          <label class="hero-option-field" for="hero-enemies-select">
+            <span>Enemies</span>
+            <select id="hero-enemies-select" class="plain-select">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15" selected>15</option>
+              <option value="20">20</option>
+              <option value="25">25</option>
+              <option value="30">30</option>
+            </select>
+          </label>
+          <label class="hero-option-field" for="hero-wits-select">
+            <span>Wits</span>
+            <select id="hero-wits-select" class="plain-select">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="genius">Genius</option>
+            </select>
+          </label>
+          <label class="hero-option-field" for="hero-mapsize-select">
+            <span>Map size</span>
+            <select id="hero-mapsize-select" class="plain-select">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </label>
+        </div>
 
         <div class="hero-cards-list" id="hero-cards-list" role="radiogroup" aria-label="Select Hero"></div>
 
         <div class="hero-picker-actions">
           <button id="btn-start-mission" class="btn-primary-western">DRAW WEAPON &amp; BEGIN ▶</button>
-          <button id="btn-hero-back" class="btn-secondary-western">← LEVELS</button>
+          <button id="btn-hero-back" class="btn-secondary-western">MAIN MENU</button>
         </div>
       </div>
     </div>
@@ -442,10 +522,44 @@
       <div class="modal-subtitle" id="pause-level-name">ACT I — RED GULCH</div>
       <div class="modal-buttons">
         <button id="btn-resume" class="btn-primary-western">RESUME</button>
-        <button id="btn-restart" class="btn-secondary-western">RESTART LEVEL</button>
-        <button id="btn-pause-change-hero" class="btn-secondary-western">CHANGE HERO</button>
-        <button id="btn-toggle-audio" class="btn-secondary-western">SOUND: ON</button>
-        <button id="btn-main-menu" class="btn-secondary-western">CHANGE LEVEL / MAIN MENU</button>
+        <button id="btn-pause-sound" class="btn-secondary-western">SOUND SETTINGS [O]</button>
+        <button id="btn-pause-graphics" class="btn-secondary-western">GRAPHICS: AUTOMATIC [G]</button>
+        <button id="btn-restart" class="btn-secondary-western">RESTART CHAPTER</button>
+        <button id="btn-pause-change-hero" class="btn-secondary-western">ANOTHER HERO</button>
+        <button id="btn-main-menu" class="btn-secondary-western">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4-Slider Sound Settings Panel (Title, Online & Pause [O]) -->
+  <div id="sound-modal" class="overlay-screen hidden">
+    <div class="modal-panel sound-panel">
+      <h2 class="modal-title">SOUND SETTINGS</h2>
+      <div class="sound-sliders">
+        <label class="sound-row">
+          <span>General</span>
+          <input id="vol-general" type="range" min="0" max="100" value="80" />
+          <span class="vol-val" id="vol-general-val">80%</span>
+        </label>
+        <label class="sound-row">
+          <span>Effects</span>
+          <input id="vol-effects" type="range" min="0" max="100" value="85" />
+          <span class="vol-val" id="vol-effects-val">85%</span>
+        </label>
+        <label class="sound-row">
+          <span>Voices</span>
+          <input id="vol-voices" type="range" min="0" max="100" value="85" />
+          <span class="vol-val" id="vol-voices-val">85%</span>
+        </label>
+        <label class="sound-row">
+          <span>Music</span>
+          <input id="vol-music" type="range" min="0" max="100" value="35" />
+          <span class="vol-val" id="vol-music-val">35%</span>
+        </label>
+      </div>
+      <div class="modal-buttons">
+        <button id="btn-toggle-music" class="btn-secondary-western">MUSIC: ON [M]</button>
+        <button id="btn-sound-close" class="btn-primary-western">CLOSE</button>
       </div>
     </div>
   </div>

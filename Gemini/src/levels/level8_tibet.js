@@ -8,13 +8,17 @@ import {
 import { createSkyDome } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
   addSolidBox,
   addHearth,
-  addAltar
+  addAltar,
+  addCrawlPassage,
+  addUprightLoom
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL8_META = {
   id: 'tibet',
@@ -707,10 +711,61 @@ export function buildLevel8(scene, collision, particles) {
     { name: "Monks' House West", inside: new THREE.Vector3(-28, plateauY + 0.16, -56), outside: new THREE.Vector3(-21, plateauY, -56) }
   ];
 
+  // ---- STAGE 7 EXPANSION: BARLEY TERRACES & BARN WITH LOFT LADDER, FORT BREACH CRAWL, ENTERABLE ARMY TENT & 12 TIBETAN BYSTANDERS ----
+  const t7Stone = new THREE.MeshStandardMaterial({ color: 0x9c8b72, roughness: 0.92 });
+  const t7Wood = new THREE.MeshStandardMaterial({ color: 0x5c3c24, roughness: 0.88 });
+  const t7Wall = new THREE.MeshStandardMaterial({ color: 0xeee6d6, roughness: 0.86 });
+  const t7Tent = new THREE.MeshStandardMaterial({ color: 0x5c6648, roughness: 0.9 });
+
+  // 1. Barley Terraces with Dry-Stone Walls & Enterable Stone Barn + Roof Ladder (x = 46, z = 24)
+  for (const [bx, bz] of [[42, 16], [42, 32], [54, 16]]) {
+    addSolidBox(scene, collision, bx, 0.52, bz, 6.5, 1.04, 0.6, t7Stone, 'stone');
+  }
+  const barleyBarn = buildHollowRoom(scene, collision, {
+    cx: 50, cz: 24, w: 9.0, d: 8.5, h: 3.6, floorY: 0.16,
+    wallMat: t7Wall, floorMat: t7Stone, roofMat: t7Wood, roofStyle: 'flat',
+    west: [{ type: 'door', offset: 0, width: 2.3, height: 2.7 }],
+    interiorLight: { color: 0xffd288, intensity: 1.3, distance: 12 }
+  });
+  collision.addWalkable(50, 24, 8.8, 8.3, 3.76, true);
+  buildLadder(scene, collision, { x: 50, z: 28.45, bottomY: 0, topY: 3.76, normalX: 0, normalZ: 1, mat: t7Wood });
+
+  // 2. Enterable Occupying Army Tent (x = -18, z = -8) & 1.24m Breach in Ruined Fort Wall (x = -46, z = 12)
+  buildHollowRoom(scene, collision, {
+    cx: -18, cz: -8, w: 7.4, d: 6.8, h: 3.2, floorY: 0.1,
+    wallMat: t7Tent, floorMat: t7Stone, roofMat: t7Tent, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 2.4, height: 2.6 }]
+  });
+  const fortBreach = addCrawlPassage(scene, collision, {
+    cx: -42, cz: -8, floorY: 0, w: 3.2, d: 2.0, clearH: 1.24, bodyH: 1.8, mat: t7Stone, postMat: t7Stone, tag: 'stone'
+  });
+
+  // 3. Twelve Additional Period Tibetan Bystanders (joining Dalai Lama + 2 monks + 2 Khampa riders -> 17 total, 8 women!)
+  addUprightLoom(scene, collision, -23.5, 0.16, 44.0, t7Wood, 0xc93828);
+  const bystanders = spawnBystanders(scene, collision, animated, 'tibet', [
+    // Three Buddhist nuns (shaved heads, wine-red robes over yellow/red shirt) by prayer wheels
+    { gender: 'female', role: 'tibetan_nun', pos: new THREE.Vector3(41.5, plateauY, -53.0), yaw: 1.2 },
+    { gender: 'female', role: 'tibetan_nun', pos: new THREE.Vector3(41.5, plateauY, -57.0), yaw: 1.4 },
+    { gender: 'female', role: 'tibetan_nun', pos: new THREE.Vector3(-12.0, plateauY, -52.0), yaw: 0.6 },
+    // Three Tibetan women (dark sleeveless chuba, bright blouse, striped pangden apron) at loom, tea churn & barley terrace
+    { gender: 'female', role: 'tibetan_woman', pos: new THREE.Vector3(-22.2, 0.16, 44.0), yaw: -1.4 },
+    { gender: 'female', role: 'tibetan_woman', pos: new THREE.Vector3(23.2, 0.16, 48.0), yaw: -1.3 },
+    { gender: 'female', role: 'tibetan_woman', pos: new THREE.Vector3(44.0, 0, 20.0), yaw: -0.9 },
+    // Two Nepalese women traders with bales
+    { gender: 'female', role: 'tibetan_woman', pos: new THREE.Vector3(14.0, 0, 56.0), yaw: -1.1, prop: 'tote' },
+    { gender: 'female', role: 'tibetan_woman', pos: new THREE.Vector3(15.6, 0, 54.6), yaw: -1.3, prop: 'tote' },
+    // Yak herder, old hermit in crawl cell & two Khampa villagers
+    { gender: 'male',   role: 'khampa', pos: new THREE.Vector3(34.0, 0, 52.0), yaw: -0.7, prop: 'staff' },
+    { gender: 'male',   role: 'hermit', pos: new THREE.Vector3(tibetDen.insidePos.x + 1.0, tibetDen.floorY, tibetDen.insidePos.z), yaw: -1.5, seated: true },
+    { gender: 'male',   role: 'khampa', pos: new THREE.Vector3(-23.0, 0.16, 26.2), yaw: 1.2 },
+    { gender: 'male',   role: 'khampa', pos: new THREE.Vector3(23.0, 0.16, 26.2), yaw: -1.2 }
+  ]);
+
   const specialSpots = {
     raisedHide: tibetHide,
-    crawlDen: tibetDen
+    crawlDen: tibetDen,
+    extraCrawls: [fortBreach]
   };
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }
