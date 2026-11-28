@@ -81,6 +81,29 @@ export const ERA_WEAPONS = {
   ],
   japan: [
     {
+      id: 'shuriken',
+      name: 'SHINOBI SHURIKEN',
+      shortName: 'Shuriken',
+      kind: 'projectile',
+      projType: 'shuriken',
+      sound: 'shuriken',
+      damage: 26,
+      headMult: 2.0,
+      fanCount: 3,
+      fanHalfAngle: 0.035,
+      projSpeed: 52,
+      projGravity: 2.8,
+      fireRate: 0.48,
+      autoFire: true,
+      magSize: 12,
+      reserve: 72,
+      reloadTime: 0.85,
+      recoil: 0.09,
+      altMode: 'none',
+      altHint: 'LMB (Hold): 3-Star Fan Throw',
+      tracerColor: 0xd0ecff
+    },
+    {
       id: 'katana',
       name: 'MURAMASA KATANA',
       shortName: 'Katana',
@@ -119,25 +142,6 @@ export const ERA_WEAPONS = {
       scopeFov: 30,
       altHint: 'RMB: Spirit Focus Zoom',
       tracerColor: 0xfff0c2
-    },
-    {
-      id: 'shuriken',
-      name: 'SHINOBI SHURIKEN',
-      shortName: 'Shuriken',
-      kind: 'hitscan',
-      sound: 'shuriken',
-      damage: 34,
-      headMult: 2.0,
-      pellets: 1,
-      spread: 0.018,
-      fireRate: 0.2,
-      magSize: 9,
-      reserve: 63,
-      reloadTime: 0.85,
-      recoil: 0.07,
-      altMode: 'fan_stars',
-      altHint: 'RMB: 3-Star Fan Throw',
-      tracerColor: 0xd0ecff
     },
     {
       id: 'matchlock',
@@ -302,23 +306,27 @@ export const ERA_WEAPONS = {
       tracerColor: 0xc2f5ff
     },
     {
-      id: 'viking_sword',
-      name: 'ULFBERHT SWORD',
-      shortName: 'Viking Sword',
+      id: 'viking_flail',
+      name: 'IRON FLAIL',
+      shortName: 'Flail',
       kind: 'melee',
+      meleeStyle: 'flail',
       sound: 'slash',
-      damage: 72,
-      headMult: 1.5,
-      range: 4.1,
-      fireRate: 0.38,
+      damage: 150,
+      headMult: 1.4,
+      range: 3.4,
+      arcCos: 0.208,
+      hitAllInArc: true,
+      hitPhase: 0.6,
+      fireRate: 0.8,
       magSize: 99,
       reserve: 99,
       infinite: true,
       reloadTime: 0.1,
-      recoil: 0.24,
+      recoil: 0.28,
       altMode: 'heavy_slash',
-      altHint: 'RMB: Shield-Breaker Cleave',
-      slashColor: 0x9ef5e8
+      altHint: 'LMB: Wide 2-Ball Flail Sweep',
+      slashColor: 0xb8d4e8
     }
   ],
   normandy: [
@@ -562,8 +570,144 @@ export const ERA_WEAPONS = {
       altHint: 'RMB: Close Thrust',
       slashColor: 0xd8ecff
     }
+  ],
+  aztec: [
+    {
+      id: 'atlatl_dart',
+      name: 'POISONED DART-THROWER',
+      shortName: 'Poison Darts',
+      kind: 'projectile',
+      projType: 'poison_dart',
+      sound: 'javelin',
+      damage: 45,
+      headMult: 2.1,
+      fanCount: 1,
+      fanHalfAngle: 0,
+      projSpeed: 64,
+      projGravity: 3.4,
+      sticks: true,
+      poison: { duration: 5.0, interval: 0.5, tickDamage: 7 },
+      fireRate: 0.56,
+      magSize: 8,
+      reserve: 40,
+      reloadTime: 0.9,
+      recoil: 0.14,
+      altMode: 'none',
+      altHint: 'Poison: +7 dmg / 0.5s for 5s',
+      tracerColor: 0x45e87c,
+      projColor: 0x2ecc71
+    },
+    {
+      id: 'sling_stone',
+      name: 'HEAVY THROWN STONES',
+      shortName: 'Heavy Stones',
+      kind: 'projectile',
+      projType: 'heavy_stone',
+      sound: 'throw',
+      damage: 120,
+      headMult: 1.75,
+      fanCount: 1,
+      fanHalfAngle: 0,
+      projSpeed: 30,
+      projGravity: 15.0,
+      sticks: false,
+      fireRate: 1.05,
+      magSize: 4,
+      reserve: 24,
+      reloadTime: 0.85,
+      recoil: 0.22,
+      altMode: 'none',
+      altHint: 'Heavy High-Arc Stone (120 dmg)',
+      tracerColor: 0xc2b8a3,
+      projColor: 0x857c70
+    },
+    {
+      id: 'aztec_bow',
+      name: 'TEXCOCO WAR BOW',
+      shortName: 'War Bow',
+      kind: 'hitscan',
+      sound: 'bow',
+      damage: 78,
+      headMult: 2.3,
+      pellets: 1,
+      spread: 0.005,
+      fireRate: 0.56,
+      magSize: 1,
+      reserve: 45,
+      reloadTime: 0.42,
+      recoil: 0.1,
+      altMode: 'scope',
+      scopeLabel: 'EAGLE EYE AIM',
+      scopeFov: 34,
+      altHint: 'RMB: Aim Focus',
+      tracerColor: 0x7ef2d4
+    },
+    {
+      id: 'macuahuitl',
+      name: 'OBSIDIAN MACUAHUITL',
+      shortName: 'Macuahuitl',
+      kind: 'melee',
+      meleeStyle: 'wide_arc',
+      sound: 'slash',
+      damage: 115,
+      headMult: 1.5,
+      range: 3.1,
+      arcCos: 0.5,
+      fireRate: 0.45,
+      magSize: 99,
+      reserve: 99,
+      infinite: true,
+      reloadTime: 0.1,
+      recoil: 0.2,
+      altMode: 'heavy_slash',
+      altHint: 'LMB: Fast Wide Obsidian Cut',
+      slashColor: 0x36e6c4
+    }
   ]
 };
+
+let _shurikenCoreGeo = null;
+let _shurikenEdgeGeo = null;
+
+/**
+ * Builds a flat 8-point throwing star (happō shuriken) with a round central hole,
+ * dark forged steel core and bright ground bevelled edges all round.
+ */
+export function buildEightPointShuriken(scale = 1) {
+  if (!_shurikenCoreGeo) {
+    const makeStarGeo = (outerR, innerR, holeR, depth) => {
+      const shape = new THREE.Shape();
+      const pts = 8;
+      for (let i = 0; i < pts * 2; i++) {
+        const a = (i * Math.PI) / pts;
+        const r = i % 2 === 0 ? outerR : innerR;
+        const x = Math.cos(a) * r;
+        const y = Math.sin(a) * r;
+        if (i === 0) shape.moveTo(x, y);
+        else shape.lineTo(x, y);
+      }
+      shape.closePath();
+      const hole = new THREE.Path();
+      hole.absarc(0, 0, holeR, 0, Math.PI * 2, true);
+      shape.holes.push(hole);
+      const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+      geo.rotateX(-Math.PI / 2);
+      geo.translate(0, -depth * 0.5, 0);
+      return geo;
+    };
+    _shurikenEdgeGeo = makeStarGeo(0.088, 0.036, 0.017, 0.0045);
+    _shurikenCoreGeo = makeStarGeo(0.072, 0.034, 0.017, 0.009);
+  }
+  const grp = new THREE.Group();
+  const darkSteel = new THREE.MeshStandardMaterial({ color: 0x242830, metalness: 0.86, roughness: 0.34 });
+  const groundEdge = new THREE.MeshStandardMaterial({ color: 0xe6eff8, metalness: 0.94, roughness: 0.14 });
+  const edgeMesh = new THREE.Mesh(_shurikenEdgeGeo, groundEdge);
+  const coreMesh = new THREE.Mesh(_shurikenCoreGeo, darkSteel);
+  grp.add(edgeMesh, coreMesh);
+  grp.scale.setScalar(scale);
+  grp.userData.isEightPointShuriken = true;
+  return grp;
+}
 
 /**
  * Builds detailed 3D first-person weapon meshes attached to the camera
@@ -708,21 +852,53 @@ export function buildWeaponViewmodel(weaponId) {
     g.add(bowCurve, stringMesh, arrowShaft, arrowTip, fletch);
     g.position.set(0.25, -0.18, -0.45);
   } else if (weaponId === 'shuriken') {
-    const star = new THREE.Group();
-    for (let i = 0; i < 4; i++) {
-      const p = new THREE.Mesh(new THREE.ConeGeometry(0.036, 0.12, 4), brightSteel);
-      const ang = (i * Math.PI) / 2;
-      p.position.set(Math.cos(ang) * 0.06, 0, Math.sin(ang) * 0.06);
-      p.rotation.z = -Math.PI / 2;
-      p.rotation.y = -ang;
-      star.add(p);
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xdca984, roughness: 0.72 });
+    const wrapMat = new THREE.MeshStandardMaterial({ color: 0x1b1d24, roughness: 0.86 });
+
+    // Right hand holding 3 fanned 8-point throwing stars like a hand of cards!
+    const rightHand = new THREE.Group();
+    rightHand.name = 'rightHand';
+    const rPalm = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.06, 0.09), skinMat);
+    rPalm.position.set(0.03, -0.055, 0.03);
+    const rSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.048, 0.22, 8), wrapMat);
+    rSleeve.rotation.x = Math.PI / 2;
+    rSleeve.position.set(0.05, -0.08, 0.16);
+    rightHand.add(rPalm, rSleeve);
+
+    const fanSpec = [
+      { x: -0.055, y: 0.025, z: -0.03, rz: 0.32, ry: 0.22 },
+      { x: 0.0, y: 0.045, z: -0.05, rz: 0.04, ry: 0.0 },
+      { x: 0.055, y: 0.02, z: -0.03, rz: -0.26, ry: -0.22 }
+    ];
+    for (const fs of fanSpec) {
+      const star = buildEightPointShuriken(1.12);
+      star.rotation.set(Math.PI * 0.44, fs.ry, fs.rz);
+      star.position.set(fs.x, fs.y, fs.z);
+      rightHand.add(star);
     }
-    const center = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.012, 10), steelMat);
-    star.add(center);
-    star.name = 'spinner';
-    g.add(star);
-    g.rotation.set(0.35, 0.2, 0.1);
-    g.position.set(0.24, -0.2, -0.48);
+    rightHand.position.set(0.23, -0.20, -0.46);
+    rightHand.rotation.set(0.18, 0.18, 0.08);
+
+    // Left hand holding spare 8-point stars ready to feed
+    const leftHand = new THREE.Group();
+    leftHand.name = 'leftHand';
+    const lPalm = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.058, 0.088), skinMat);
+    lPalm.position.set(-0.02, -0.055, 0.03);
+    const lSleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.046, 0.22, 8), wrapMat);
+    lSleeve.rotation.x = Math.PI / 2;
+    lSleeve.position.set(-0.05, -0.08, 0.16);
+    leftHand.add(lPalm, lSleeve);
+    for (let k = 0; k < 3; k++) {
+      const sp = buildEightPointShuriken(1.0);
+      sp.rotation.set(0.15, k * 0.28, 0.12);
+      sp.position.set(0.015 * k - 0.01, -0.015 + k * 0.014, -0.02 - k * 0.008);
+      leftHand.add(sp);
+    }
+    leftHand.position.set(-0.26, -0.25, -0.44);
+    leftHand.rotation.set(0.22, -0.28, -0.14);
+
+    g.add(rightHand, leftHand);
+    g.position.set(0, 0, 0);
   } else if (weaponId === 'matchlock') {
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.92, 8), steelMat);
     barrel.rotation.x = Math.PI / 2;
@@ -854,22 +1030,54 @@ export function buildWeaponViewmodel(weaponId) {
     g.add(haft, wrap, head, beard);
     g.rotation.set(0.28, -0.18, 0.18);
     g.position.set(0.28, -0.26, -0.48);
-  } else if (weaponId === 'viking_sword') {
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.88, 0.064), brightSteel);
-    blade.position.set(0, 0.44, 0);
-    const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.72, 0.02), steelMat);
-    fuller.position.set(0, 0.42, 0);
-    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.034, 0.14, 4), brightSteel);
-    tip.position.set(0, 0.94, 0);
-    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.036, 0.22), steelMat);
-    guard.position.set(0, 0.0, 0);
-    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.026, 0.22, 8), darkWood);
-    hilt.position.set(0, -0.12, 0);
-    const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.055, 0.1), brassMat);
-    pommel.position.set(0, -0.24, 0);
-    g.add(blade, fuller, tip, guard, hilt, pommel);
-    g.rotation.set(-0.34, -0.24, 0.24);
-    g.position.set(0.32, -0.34, -0.52);
+  } else if (weaponId === 'viking_flail') {
+    // Wooden haft with dark leather grip + iron collar + TWO spiked iron balls on chains of different lengths!
+    const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.62, 10), woodMat);
+    haft.position.set(0, 0.04, 0);
+    const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.027, 0.22, 10), darkWood);
+    grip.position.set(0, -0.16, 0);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.026, 0.06, 10), steelMat);
+    cap.position.set(0, 0.35, 0);
+    const topRing = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.008, 6, 12), steelMat);
+    topRing.position.set(0, 0.39, 0);
+
+    const makeChainBall = (chainLen, ballR, name) => {
+      const pivot = new THREE.Group();
+      pivot.name = name;
+      pivot.position.set(0, 0.40, 0);
+      const links = Math.max(4, Math.round(chainLen / 0.045));
+      for (let i = 0; i < links; i++) {
+        const link = new THREE.Mesh(new THREE.TorusGeometry(0.017, 0.0045, 6, 10), steelMat);
+        link.position.y = -(i + 0.5) * (chainLen / links);
+        if (i % 2 === 1) link.rotation.y = Math.PI / 2;
+        pivot.add(link);
+      }
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(ballR, 12, 10), steelMat);
+      ball.position.y = -chainLen - ballR * 0.85;
+      // Iron spikes jutting out around the ball
+      const spikeDirs = [
+        [1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1],
+        [0.7, 0.7, 0], [-0.7, 0.7, 0], [0.7, -0.7, 0], [-0.7, -0.7, 0]
+      ];
+      for (const [dx, dy, dz] of spikeDirs) {
+        const sp = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.042, 5), brightSteel);
+        const v = new THREE.Vector3(dx, dy, dz).normalize();
+        sp.position.copy(v).multiplyScalar(ballR + 0.015);
+        sp.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), v);
+        ball.add(sp);
+      }
+      pivot.add(ball);
+      return pivot;
+    };
+
+    const chainShort = makeChainBall(0.22, 0.056, 'flailChain1');
+    chainShort.rotation.set(0.25, 0, 0.32);
+    const chainLong = makeChainBall(0.34, 0.064, 'flailChain2');
+    chainLong.rotation.set(-0.22, 0, -0.24);
+
+    g.add(haft, grip, cap, topRing, chainShort, chainLong);
+    g.rotation.set(-0.28, -0.18, 0.22);
+    g.position.set(0.32, -0.28, -0.52);
   } else if (weaponId === 'mosin_scoped') {
     const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.02, 0.96, 8), steelMat);
     barrel.rotation.x = Math.PI / 2;
@@ -1017,6 +1225,86 @@ export function buildWeaponViewmodel(weaponId) {
     g.add(blade, tip, guard, hilt, pommel);
     g.rotation.set(-0.34, -0.24, 0.24);
     g.position.set(0.32, -0.34, -0.52);
+  } else if (weaponId === 'atlatl_dart' || weaponId === 'sling_stone' || weaponId === 'aztec_bow' || weaponId === 'macuahuitl') {
+    const obsidianMat = new THREE.MeshStandardMaterial({ color: 0x14171c, metalness: 0.9, roughness: 0.14 });
+    const jadeMat = new THREE.MeshStandardMaterial({ color: 0x1fb89a, roughness: 0.55 });
+    const poisonMat = new THREE.MeshStandardMaterial({ color: 0x32e66b, emissive: 0x115e28, emissiveIntensity: 0.6, roughness: 0.35 });
+    const stoneMat = new THREE.MeshStandardMaterial({ color: 0x7f786d, roughness: 0.92 });
+
+    // Round feathered Aztec shield (chimalli) carried on the left arm by all three Mexica heroes!
+    const shieldGrp = new THREE.Group();
+    const shieldDisk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.028, 16), crimsonMat);
+    shieldDisk.rotation.x = Math.PI / 2;
+    const shieldInner = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.032, 16), brassMat);
+    shieldInner.rotation.x = Math.PI / 2;
+    const shieldBoss = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.036, 12), jadeMat);
+    shieldBoss.rotation.x = Math.PI / 2;
+    shieldGrp.add(shieldDisk, shieldInner, shieldBoss);
+    for (let f = -4; f <= 4; f++) {
+      const feather = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.11, 5), f % 2 === 0 ? jadeMat : brassMat);
+      feather.rotation.x = Math.PI;
+      feather.position.set(f * 0.042, -0.23, 0);
+      shieldGrp.add(feather);
+    }
+    shieldGrp.position.set(-0.34, -0.24, -0.44);
+    shieldGrp.rotation.set(0.08, 0.38, -0.1);
+    g.add(shieldGrp);
+
+    const rh = new THREE.Group();
+    if (weaponId === 'atlatl_dart') {
+      const board = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.025, 0.42), woodMat);
+      board.position.set(0, -0.02, -0.18);
+      const dart = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.85, 6), darkWood);
+      dart.rotation.x = Math.PI / 2;
+      dart.position.set(0, 0.02, -0.34);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.024, 0.11, 4), poisonMat);
+      tip.rotation.x = -Math.PI / 2;
+      tip.position.set(0, 0.02, -0.8);
+      const fletch = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.005, 0.11), jadeMat);
+      fletch.position.set(0, 0.02, 0.04);
+      rh.add(board, dart, tip, fletch);
+      rh.position.set(0.26, -0.20, -0.28);
+    } else if (weaponId === 'sling_stone') {
+      const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.11, 0), stoneMat);
+      stone.scale.set(1.1, 0.92, 1.0);
+      rh.add(stone);
+      rh.position.set(0.28, -0.22, -0.46);
+    } else if (weaponId === 'aztec_bow') {
+      const bowCurve = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.018, 8, 20, Math.PI * 0.9), woodMat);
+      bowCurve.rotation.z = -Math.PI * 0.45;
+      bowCurve.position.set(0, 0.05, -0.2);
+      const str = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.84, 6), new THREE.MeshBasicMaterial({ color: 0xf4e8d1 }));
+      str.position.set(0, 0.05, 0.03);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.72, 6), darkWood);
+      shaft.rotation.x = Math.PI / 2;
+      shaft.position.set(0.02, 0.02, -0.24);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.07, 4), obsidianMat);
+      tip.rotation.x = -Math.PI / 2;
+      tip.position.set(0.02, 0.02, -0.62);
+      const fletch = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.004, 0.1), jadeMat);
+      fletch.position.set(0.02, 0.02, 0.07);
+      rh.add(bowCurve, str, shaft, tip, fletch);
+      rh.position.set(0.25, -0.18, -0.44);
+    } else {
+      // Macuahuitl: flat hardwood paddle studded along both edges with gleaming razor obsidian blades!
+      const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.78, 0.095), woodMat);
+      paddle.position.set(0, 0.34, 0);
+      const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.025, 0.24, 8), crimsonMat);
+      grip.position.set(0, -0.14, 0);
+      rh.add(paddle, grip);
+      for (let i = 0; i < 6; i++) {
+        const y = 0.08 + i * 0.11;
+        for (const s of [-1, 1]) {
+          const tooth = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.082, 0.038), obsidianMat);
+          tooth.position.set(0, y, s * 0.058);
+          rh.add(tooth);
+        }
+      }
+      rh.rotation.set(-0.34, -0.22, 0.24);
+      rh.position.set(0.32, -0.32, -0.50);
+    }
+    g.add(rh);
+    g.position.set(0, 0, 0);
   }
 
   g.userData.basePos = g.position.clone();

@@ -218,6 +218,88 @@ export function buildLevel5(scene, collision, particles) {
   addAltar(scene, collision, 53.2, hov.floorY, -34, 1.2, 2.8, matStone, 0x8f2424);
   addSolidBox(scene, collision, 53.4, hov.floorY + 1.9, -34, 0.65, 2.0, 1.1, matStone, 'stone');
 
+  // Bleached horned animal skulls (cattle, rams, a stag — NO human skulls!) on stakes round the Temple & over Great Hall door!
+  const matBone = new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: 0.72 });
+  const matHornDark = new THREE.MeshStandardMaterial({ color: 0xcabca0, roughness: 0.62 });
+  const matSocket = new THREE.MeshStandardMaterial({ color: 0x26201a, roughness: 0.9 });
+  function addHornedAnimalSkull(x, y, z, yaw = 0, kind = 'cattle', stakeHeight = 0) {
+    const grp = new THREE.Group();
+    grp.position.set(x, y, z);
+    grp.rotation.y = yaw;
+    if (stakeHeight > 0) {
+      const stake = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.08, stakeHeight, 7), matDarkWood);
+      stake.position.y = stakeHeight * 0.5;
+      grp.add(stake);
+      collision.addBox(x, stakeHeight * 0.5, z, 0.25, stakeHeight, 0.25, 'wood');
+    }
+    const sk = new THREE.Group();
+    sk.position.y = stakeHeight > 0 ? stakeHeight + 0.04 : 0;
+    const cranium = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.20, 0.26), matBone);
+    const snout = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.34, 6), matBone);
+    snout.rotation.x = Math.PI * 0.52;
+    snout.position.set(0, -0.06, 0.22);
+    sk.add(cranium, snout);
+    for (const s of [-1, 1]) {
+      const eyeSock = new THREE.Mesh(new THREE.SphereGeometry(0.042, 6, 6), matSocket);
+      eyeSock.position.set(s * 0.095, 0.02, 0.10);
+      sk.add(eyeSock);
+      if (kind === 'cattle') {
+        const h1 = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.046, 0.32, 7), matHornDark);
+        h1.rotation.z = -s * 1.18;
+        h1.position.set(s * 0.22, 0.08, 0);
+        const h2 = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.28, 7), matHornDark);
+        h2.rotation.z = -s * 0.32;
+        h2.rotation.x = 0.22;
+        h2.position.set(s * 0.38, 0.23, 0.05);
+        sk.add(h1, h2);
+      } else if (kind === 'ram') {
+        const coil = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.036, 7, 14, Math.PI * 1.55), matHornDark);
+        coil.rotation.y = Math.PI / 2;
+        coil.rotation.x = s * 0.35;
+        coil.position.set(s * 0.18, 0.02, -0.02);
+        sk.add(coil);
+      } else {
+        // Branched stag antlers
+        const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.032, 0.56, 6), matHornDark);
+        beam.rotation.z = -s * 0.72;
+        beam.rotation.x = -0.18;
+        beam.position.set(s * 0.26, 0.24, -0.04);
+        const tine1 = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.24, 5), matHornDark);
+        tine1.rotation.z = -s * 0.12;
+        tine1.rotation.x = 0.35;
+        tine1.position.set(s * 0.22, 0.26, 0.06);
+        const tine2 = new THREE.Mesh(new THREE.ConeGeometry(0.016, 0.22, 5), matHornDark);
+        tine2.rotation.z = -s * 0.25;
+        tine2.position.set(s * 0.42, 0.44, -0.06);
+        sk.add(beam, tine1, tine2);
+      }
+    }
+    grp.add(sk);
+    scene.add(grp);
+    return grp;
+  }
+  // 8 Horned animal skulls on stakes in a ring around the Temple of the Old Gods (west doorway clear)
+  const templeSkulls = [
+    [43.4, -30.0, -Math.PI * 0.65, 'cattle', 1.85],
+    [43.4, -38.0, -Math.PI * 0.35, 'ram', 1.78],
+    [47.0, -27.2, Math.PI * 0.95, 'stag', 1.95],
+    [53.0, -27.2, Math.PI * 0.85, 'cattle', 1.80],
+    [57.0, -31.0, Math.PI * 0.5, 'ram', 1.82],
+    [57.0, -37.0, Math.PI * 0.5, 'cattle', 1.88],
+    [53.0, -40.8, 0.15, 'ram', 1.75],
+    [47.0, -40.8, -0.15, 'cattle', 1.84]
+  ];
+  for (const [sx, sz, syaw, skind, sh] of templeSkulls) {
+    addHornedAnimalSkull(sx, 0, sz, syaw, skind, sh);
+  }
+  // Large bleached horned bull skull & stag skull mounted prominently over the Great Hall doorway
+  const hallSkull = addHornedAnimalSkull(0, greatHall.floorY + 3.95, -33.75, 0, 'cattle', 0);
+  hallSkull.scale.setScalar(1.65);
+  const hallStagL = addHornedAnimalSkull(-2.6, greatHall.floorY + 3.65, -33.8, 0, 'stag', 0);
+  hallStagL.scale.setScalar(1.2);
+  const hallStagR = addHornedAnimalSkull(2.6, greatHall.floorY + 3.65, -33.8, 0, 'ram', 0);
+  hallStagR.scale.setScalar(1.2);
+
   // ---- 5. ENTERABLE BOAT SHED (NAUST — Boat inside on keel blocks, shore-side!) ----
   const boatShed = buildHollowRoom(scene, collision, {
     cx: -44, cz: 46, w: 11.0, d: 14.0, h: 4.5, floorY: 0.16,

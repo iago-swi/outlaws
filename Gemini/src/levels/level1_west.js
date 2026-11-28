@@ -10,11 +10,14 @@ import { createSkyDome } from '../engine/shaders.js';
 import {
   buildHollowRoom,
   buildBarredWall,
-  buildJumpCrateStack,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
   buildZigzagHill,
+  addSegmentedFence,
   addSolidBox,
+  addAltar,
+  addPewRow,
   addDesk,
   addBunk,
   addStove,
@@ -312,8 +315,20 @@ export function buildLevel1(scene, collision, particles) {
       horseGrp.add(leg);
     }
     scene.add(horseGrp);
-    collision.addBox(19.5, barn.floorY + 1.0, 10.6, 2.1, 2.0, 1.0, 'solid');
+    collision.addOrientedBox(19.5, barn.floorY + 1.0, 10.6, 0.92, 2.0, 2.05, Math.PI * 0.5, 'solid');
   }
+  // Barn Hayloft (walkable timber loft over north stalls at y = 3.1m, reached by interior wooden ladder!)
+  const hayloftY = 3.1;
+  const hayloftDeck = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.22, 4.4), matWood);
+  hayloftDeck.position.set(21.0, hayloftY - 0.11, 1.8);
+  hayloftDeck.receiveShadow = true;
+  scene.add(hayloftDeck);
+  collision.addWalkable(21.0, 1.8, 10.6, 4.4, hayloftY, true);
+  addSolidBox(scene, collision, 17.6, hayloftY + 0.55, 1.2, 1.8, 1.1, 1.3, matHay, 'wood');
+  addSolidBox(scene, collision, 24.4, hayloftY + 0.55, 1.2, 1.8, 1.1, 1.3, matHay, 'wood');
+  const barnHayloftLadder = buildLadder(scene, collision, {
+    x: 22.8, z: 4.08, bottomY: barn.floorY, topY: hayloftY, normalX: 0, normalZ: 1, mat: matDarkWood
+  });
 
   // ---- 5. ENTERABLE GENERAL STORE (East side north of Barn — counter, shelves & walkable flat roof + 3 jump crates!) ----
   const gen = buildHollowRoom(scene, collision, {
@@ -328,10 +343,10 @@ export function buildLevel1(scene, collision, particles) {
   });
   const genRoofY = gen.roofY + 0.28;
   collision.addWalkable(20, -14, 10.2, 11.2, genRoofY, true);
-  // Street-facing false front sniper parapet on west edge of roof
+  // Street-facing false front sniper parapet on west edge of roof + rear ladder!
   addSolidBox(scene, collision, 15.1, genRoofY + 0.55, -14, 0.35, 1.1, 11.0, matWeathered, 'wood');
-  const genCrates = buildJumpCrateStack(scene, collision, {
-    startX: 28.6, startZ: -14, dirX: -1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  const genLadder = buildLadder(scene, collision, {
+    x: 25.12, z: -14, bottomY: 0, topY: genRoofY, normalX: 1, normalZ: 0, mat: matDarkWood
   });
   addSign(14.8, 5.1, -14, 6.8, 1.6, -Math.PI / 2, 'GENERAL', 'DRY GOODS & AMMO');
   addLantern(14.3, 3.4, -14);
@@ -360,8 +375,8 @@ export function buildLevel1(scene, collision, particles) {
   const sheriffRoofY = sheriff.roofY + 0.28;
   collision.addWalkable(-21, -12, 10.2, 10.2, sheriffRoofY, true);
   addSolidBox(scene, collision, -16.1, sheriffRoofY + 0.55, -12, 0.35, 1.1, 10.0, matWood, 'wood');
-  buildJumpCrateStack(scene, collision, {
-    startX: -29.6, startZ: -12, dirX: 1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  buildLadder(scene, collision, {
+    x: -26.12, z: -12, bottomY: 0, topY: sheriffRoofY, normalX: -1, normalZ: 0, mat: matDarkWood
   });
   addSign(-15.75, 5.0, -12, 6.4, 1.55, Math.PI / 2, 'SHERIFF', 'LAW & ORDER', '#2e1d12');
   addLantern(-15.2, 3.4, -11.6);
@@ -391,8 +406,8 @@ export function buildLevel1(scene, collision, particles) {
   const smithyRoofY = smithy.roofY + 0.28;
   collision.addWalkable(-21, 22, 10.2, 10.2, smithyRoofY, true);
   addSolidBox(scene, collision, -16.1, smithyRoofY + 0.55, 22, 0.35, 1.1, 10.0, matStone, 'stone');
-  buildJumpCrateStack(scene, collision, {
-    startX: -29.6, startZ: 22, dirX: 1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  buildLadder(scene, collision, {
+    x: -26.12, z: 22, bottomY: 0, topY: smithyRoofY, normalX: -1, normalZ: 0, mat: matDarkWood
   });
   addSign(-15.75, 5.0, 22, 6.8, 1.55, Math.PI / 2, 'BLACKSMITH', 'FORGE & SHOEING', '#2b1812');
   // Brick Forge & glowing coal bed + chimney
@@ -424,8 +439,8 @@ export function buildLevel1(scene, collision, particles) {
   const telegRoofY = teleg.roofY + 0.28;
   collision.addWalkable(21, 23, 9.7, 9.7, telegRoofY, true);
   addSolidBox(scene, collision, 16.3, telegRoofY + 0.55, 23, 0.35, 1.1, 9.5, matWeathered, 'wood');
-  buildJumpCrateStack(scene, collision, {
-    startX: 29.4, startZ: 23, dirX: -1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  buildLadder(scene, collision, {
+    x: 25.88, z: 23, bottomY: 0, topY: telegRoofY, normalX: 1, normalZ: 0, mat: matDarkWood
   });
   addSign(16.05, 4.95, 23, 6.4, 1.5, -Math.PI / 2, 'TELEGRAPH', 'WESTERN WIRE', '#24221e');
   addSolidBox(scene, collision, 22.6, teleg.floorY + 0.55, 22.0, 1.0, 1.1, 4.6, matDarkWood, 'wood');
@@ -653,21 +668,133 @@ export function buildLevel1(scene, collision, particles) {
   addWagon(6.5, 24, 0.35);
   addWagon(-7.5, -2, -0.25);
 
-  // Water tower on stilts
+  // Water tower on stilts with walkable catwalk & ladder!
   const wtGrp = new THREE.Group();
   wtGrp.position.set(-32, 0, -28);
+  const wtCatY = 8.9;
   for (const [lx, lz] of [[-2, -2], [2, -2], [-2, 2], [2, 2]]) {
-    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45, 9.5, 0.45), matDarkWood);
-    leg.position.set(lx, 4.75, lz);
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.45, wtCatY, 0.45), matDarkWood);
+    leg.position.set(lx, wtCatY * 0.5, lz);
     wtGrp.add(leg);
+    collision.addBox(-32 + lx, wtCatY * 0.5, -28 + lz, 0.55, wtCatY, 0.55, 'wood');
   }
-  const tank = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 4.8, 16), matWeathered);
-  tank.position.y = 11.4;
-  const wtRoof = new THREE.Mesh(new THREE.ConeGeometry(3.7, 2.4, 16), matDarkWood);
-  wtRoof.position.y = 15.0;
-  wtGrp.add(tank, wtRoof);
+  const wtCatwalk = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.24, 8.4), matWood);
+  wtCatwalk.position.y = wtCatY - 0.12;
+  wtCatwalk.receiveShadow = true;
+  const tank = new THREE.Mesh(new THREE.CylinderGeometry(2.7, 2.7, 4.8, 16), matWeathered);
+  tank.position.y = wtCatY + 2.4;
+  const wtRoof = new THREE.Mesh(new THREE.ConeGeometry(3.3, 2.4, 16), matDarkWood);
+  wtRoof.position.y = wtCatY + 5.9;
+  wtGrp.add(wtCatwalk, tank, wtRoof);
   scene.add(wtGrp);
-  collision.addBox(-32, 4.5, -28, 4.8, 9.0, 4.8, 'wood');
+  collision.addWalkable(-32, -28, 8.6, 8.6, wtCatY, true);
+  collision.addBox(-32, wtCatY + 2.4, -28, 5.2, 4.8, 5.2, 'wood');
+  // Waist-high catwalk rails on N/W/E edges (south open for ladder!)
+  addSolidBox(scene, collision, -32, wtCatY + 0.52, -32.1, 8.4, 1.04, 0.2, matDarkWood, 'wood');
+  addSolidBox(scene, collision, -36.1, wtCatY + 0.52, -28, 0.2, 1.04, 8.4, matDarkWood, 'wood');
+  addSolidBox(scene, collision, -27.9, wtCatY + 0.52, -28, 0.2, 1.04, 8.4, matDarkWood, 'wood');
+  const waterTowerLadder = buildLadder(scene, collision, {
+    x: -32, z: -23.72, bottomY: 0, topY: wtCatY, normalX: 0, normalZ: 1, mat: matDarkWood
+  });
+
+  // ---- 7B. ENTERABLE WESTERN CHURCH (Nave, Pews, Altar, Choir Gallery & 11m Bell Tower Stair!) ----
+  const matChurchWall = new THREE.MeshStandardMaterial({ color: 0xeae0cc, roughness: 0.85 });
+  const churchX = -38, churchZ = -52;
+  const church = buildHollowRoom(scene, collision, {
+    cx: churchX, cz: churchZ, w: 12.0, d: 15.0, h: 6.2, floorY: 0.16,
+    wallMat: matChurchWall, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'gable',
+    south: [
+      { type: 'window', offset: -3.8, width: 1.5 },
+      { type: 'door', offset: 0, width: 2.6, height: 3.2 },
+      { type: 'window', offset: 3.8, width: 1.5 }
+    ],
+    west: [{ type: 'window', offset: 0, width: 1.6 }],
+    east: [{ type: 'window', offset: 0, width: 1.6 }],
+    north: [{ type: 'door', offset: 0, width: 2.6, height: 3.2 }], // Open archway into Bell Tower base!
+    interiorLight: { color: 0xffd288, intensity: 1.8, distance: 18 }
+  });
+  // Nave altar & pews
+  addAltar(scene, collision, churchX, church.floorY, churchZ - 5.2, 2.8, 1.0, matDarkWood, 0x9c2626);
+  addPewRow(scene, collision, churchX - 3.1, church.floorY, churchZ - 1.2, 3.0, matDarkWood);
+  addPewRow(scene, collision, churchX + 3.1, church.floorY, churchZ - 1.2, 3.0, matDarkWood);
+  addPewRow(scene, collision, churchX - 3.1, church.floorY, churchZ + 1.4, 3.0, matDarkWood);
+  addPewRow(scene, collision, churchX + 3.1, church.floorY, churchZ + 1.4, 3.0, matDarkWood);
+  // Choir Gallery over the south entrance (y = 3.0m) reached by an interior stair along the west wall!
+  const choirY = 3.0;
+  const choirDeck = new THREE.Mesh(new THREE.BoxGeometry(11.4, 0.24, 3.4), matWood);
+  choirDeck.position.set(churchX, choirY - 0.12, churchZ + 5.6);
+  scene.add(choirDeck);
+  collision.addWalkable(churchX, churchZ + 5.6, 11.4, 3.4, choirY, true);
+  addSolidBox(scene, collision, churchX + 1.4, choirY + 0.5, churchZ + 4.0, 8.6, 1.0, 0.2, matDarkWood, 'wood');
+  for (let i = 0; i < 8; i++) {
+    const sy = church.floorY + (choirY - church.floorY) * ((i + 1) / 8);
+    const sz = churchZ - 2.6 + i * 0.88;
+    const st = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.26, 0.94), matDarkWood);
+    st.position.set(churchX - 4.9, sy - 0.13, sz);
+    scene.add(st);
+    collision.addWalkable(churchX - 4.9, sz, 1.6, 1.0, sy, true);
+  }
+  // Square Bell Tower directly behind nave (x = churchX, z = churchZ - 10.6, climbing round inner walls to 11.0m Belfry!)
+  const twX = churchX, twZ = churchZ - 10.6, twSize = 6.2, belfryY = 11.0;
+  const towerBase = buildHollowRoom(scene, collision, {
+    cx: twX, cz: twZ, w: twSize, d: twSize, h: belfryY - 0.16, floorY: 0.16,
+    wallMat: matChurchWall, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'none',
+    south: [{ type: 'door', offset: 0, width: 2.6, height: 3.2 }],
+    interiorLight: { color: 0xffd288, intensity: 1.5, distance: 14 }
+  });
+  // Wrapping interior staircase (4 flights around the 4 walls, 7 low steps per flight, <= 0.39m rise!)
+  const flights = [
+    { startX: twX - 1.9, startZ: twZ + 1.8, dx: 0, dz: -0.56, y0: 0.16, y1: 2.9, landX: twX - 1.9, landZ: twZ - 1.9 },
+    { startX: twX - 1.8, startZ: twZ - 1.9, dx: 0.56, dz: 0, y0: 2.9, y1: 5.6, landX: twX + 1.9, landZ: twZ - 1.9 },
+    { startX: twX + 1.9, startZ: twZ - 1.8, dx: 0, dz: 0.56, y0: 5.6, y1: 8.3, landX: twX + 1.9, landZ: twZ + 1.9 },
+    { startX: twX + 1.8, startZ: twZ + 1.9, dx: -0.56, dz: 0, y0: 8.3, y1: belfryY, landX: twX - 1.9, landZ: twZ + 1.9 }
+  ];
+  for (const fl of flights) {
+    const steps = 7;
+    for (let s = 0; s < steps; s++) {
+      const sy = fl.y0 + (fl.y1 - fl.y0) * ((s + 1) / steps);
+      const sx = fl.startX + fl.dx * (s + 0.5);
+      const sz = fl.startZ + fl.dz * (s + 0.5);
+      const sw = fl.dx === 0 ? 1.55 : 0.72;
+      const sd = fl.dz === 0 ? 1.55 : 0.72;
+      const st = new THREE.Mesh(new THREE.BoxGeometry(sw, 0.24, sd), matDarkWood);
+      st.position.set(sx, sy - 0.12, sz);
+      scene.add(st);
+      collision.addWalkable(sx, sz, sw + 0.16, sd + 0.16, sy, true);
+    }
+    const ld = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.26, 1.75), matDarkWood);
+    ld.position.set(fl.landX, fl.y1 - 0.13, fl.landZ);
+    scene.add(ld);
+    collision.addWalkable(fl.landX, fl.landZ, 1.9, 1.9, fl.y1, true);
+  }
+  // Open Belfry deck at y = 11.0m (leaving stair arrival hole open on SW corner!) + cover parapets + corner posts + steeple + hanging brass BELL!
+  const belfFloor1 = new THREE.Mesh(new THREE.BoxGeometry(twSize - 0.5, 0.26, 3.4), matWood);
+  belfFloor1.position.set(twX, belfryY - 0.13, twZ - 1.1);
+  const belfFloor2 = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.26, 2.5), matWood);
+  belfFloor2.position.set(twX + 1.3, belfryY - 0.13, twZ + 1.6);
+  scene.add(belfFloor1, belfFloor2);
+  collision.addWalkable(twX, twZ - 1.1, twSize - 0.2, 3.6, belfryY, true);
+  collision.addWalkable(twX + 1.3, twZ + 1.6, 3.4, 2.7, belfryY, true);
+  // Belfry waist-high cover parapets (1.05m) on all 4 sides + 4 corner posts + pointed steeple roof + golden bell!
+  addSolidBox(scene, collision, twX, belfryY + 0.52, twZ - twSize * 0.5 + 0.15, twSize, 1.04, 0.28, matChurchWall, 'wood');
+  addSolidBox(scene, collision, twX, belfryY + 0.52, twZ + twSize * 0.5 - 0.15, twSize, 1.04, 0.28, matChurchWall, 'wood');
+  addSolidBox(scene, collision, twX - twSize * 0.5 + 0.15, belfryY + 0.52, twZ, 0.28, 1.04, twSize, matChurchWall, 'wood');
+  addSolidBox(scene, collision, twX + twSize * 0.5 - 0.15, belfryY + 0.52, twZ, 0.28, 1.04, twSize, matChurchWall, 'wood');
+  for (const [px, pz] of [[-2.7, -2.7], [2.7, -2.7], [-2.7, 2.7], [2.7, 2.7]]) {
+    addSolidBox(scene, collision, twX + px, belfryY + 1.85, twZ + pz, 0.42, 3.7, 0.42, matChurchWall, 'wood');
+  }
+  const steeple = new THREE.Mesh(new THREE.ConeGeometry(4.4, 5.2, 4), matDarkWood);
+  steeple.rotation.y = Math.PI / 4;
+  steeple.position.set(twX, belfryY + 6.2, twZ);
+  const crossV = new THREE.Mesh(new THREE.BoxGeometry(0.14, 1.4, 0.14), matGold);
+  crossV.position.set(twX, belfryY + 9.4, twZ);
+  const crossH = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.14, 0.14), matGold);
+  crossH.position.set(twX, belfryY + 9.65, twZ);
+  const bellBeam = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 0.24), matDarkWood);
+  bellBeam.position.set(twX, belfryY + 3.25, twZ - 0.6);
+  const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.72, 0.95, 14), matGold);
+  bell.position.set(twX, belfryY + 2.65, twZ - 0.6);
+  scene.add(steeple, crossV, crossH, bellBeam, bell);
 
   // Street cover crates & barrels
   const coverSpots = [
@@ -792,6 +919,9 @@ export function buildLevel1(scene, collision, particles) {
     { type: 'cowboy',  pos: new THREE.Vector3(38, 0, -49) },
     { type: 'bandito', pos: new THREE.Vector3(45, 0.16, -61.5), options: { hideUntilClose: true, ambushDist: 14 } },
     { type: 'bandito', pos: new THREE.Vector3(10, 0, -34) },
+    // Western Church nave & 11m belfry guards
+    { type: 'cowboy',  pos: new THREE.Vector3(churchX, church.floorY, churchZ - 2.0) },
+    { type: 'cowboy',  pos: new THREE.Vector3(twX, belfryY, twZ - 1.4), options: { holdPost: true } },
     // Marksman holding the 12m flat-topped Butte summit!
     { type: 'cowboy',  pos: butte.summitPos.clone() },
     // Boss El Diablo
@@ -801,6 +931,7 @@ export function buildLevel1(scene, collision, particles) {
   const enterableBuildings = [
     { name: 'Saloon', inside: new THREE.Vector3(0, 0.16, -27.5), outside: new THREE.Vector3(0, 0, -20.5) },
     { name: 'Jail', inside: new THREE.Vector3(-15.0, 0.16, -26.0), outside: new THREE.Vector3(-14.9, 0, -20.5) },
+    { name: 'Church', inside: new THREE.Vector3(churchX, church.floorY, churchZ), outside: new THREE.Vector3(churchX, 0, churchZ + 9.5) },
     { name: "Sheriff's Office", inside: new THREE.Vector3(-19.5, 0.16, -11.5), outside: new THREE.Vector3(-14.0, 0, -11.5) },
     { name: 'Bank', inside: new THREE.Vector3(-19.2, 0.16, 4.0), outside: new THREE.Vector3(-14.0, 0, 4.0) },
     { name: 'Blacksmith', inside: new THREE.Vector3(-19.5, 0.14, 22.0), outside: new THREE.Vector3(-14.0, 0, 22.0) },
@@ -813,7 +944,11 @@ export function buildLevel1(scene, collision, particles) {
 
   const specialSpots = {
     zigzagHill: butte,
-    jumpRoof: { roofPos: new THREE.Vector3(20, genRoofY, -14), crates: genCrates },
+    jumpRoof: { roofPos: new THREE.Vector3(20, genRoofY, -14), ladder: genLadder },
+    waterTowerLadder,
+    barnHayloftLadder,
+    churchBelfryPos: new THREE.Vector3(twX, belfryY, twZ - 1.4),
+    churchTowerBasePos: new THREE.Vector3(twX - 1.9, 0.16, twZ + 2.1),
     raisedHide: westHide,
     crawlDen: westDen
   };

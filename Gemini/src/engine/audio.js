@@ -294,6 +294,54 @@ export class SoundEngine {
           this._noiseBurst(0.06, 0.08, 1600, 'highpass', 1.0);
         }
       }, 450);
+    } else if (theme === 'aztec') {
+      // Tenochtitlan: great huehuetl drum, two-toned teponaztli slit drum, seed rattles, clay flute,
+      // occasional conch shell horn, and evening lake ambience (crickets, frogs, parrot, far drum, water)!
+      const clayFlute = [392.0, 440.0, 523.25, 587.33, 523.25, 440.0, 392.0, 329.63];
+
+      this.musicTimer = setInterval(() => {
+        if (!this.ctx || this.muted) return;
+        const s = this.step++;
+        const now = this.ctx.currentTime;
+
+        // Great Huehuetl war drum pulse
+        if (s % 4 === 0 || s % 8 === 6) {
+          this._taiko(now, s % 8 === 0 ? 0.34 : 0.22);
+        }
+        // Two-toned Teponaztli wooden slit drum (low & high hollow knock)
+        if (s % 2 === 1) {
+          const pitch = (s % 4 === 1) ? 262 : 349;
+          this._tone(pitch, 'triangle', 0.14, 0.16, now, this.musicGain, 950);
+        }
+        // Seed rattles (ayacachtli)
+        this._noiseBurst(0.055, 0.06, 4800, 'highpass', 1.2);
+        // Clay flute (tlapitzalli) pentatonic phrase
+        if (s % 4 === 2) {
+          const fn = clayFlute[(s >> 2) % clayFlute.length];
+          this._whistle(fn, 0.82, 0.12, now);
+        }
+        // Booming conch shell (atecocolli) every 16 steps
+        if (s % 16 === 0) {
+          this._alphorn(130.81, 1.85, 0.20, now);
+        }
+        // Evening crickets & frogs along Lake Texcoco
+        if (s % 6 === 3) {
+          this._tone(3600, 'sine', 0.06, 0.025, now, this.sfxGain, 5000);
+          this._tone(3650, 'sine', 0.06, 0.022, now + 0.09, this.sfxGain, 5000);
+        }
+        if (s % 10 === 7) {
+          this._tone(165, 'sawtooth', 0.11, 0.045, now, this.sfxGain, 420);
+          this._tone(195, 'sawtooth', 0.10, 0.04, now + 0.14, this.sfxGain, 460);
+        }
+        // Distant tropical parrot call every 22 steps & gentle lake water lap
+        if (s % 22 === 13) {
+          this._tone(980, 'sawtooth', 0.12, 0.055, now, this.sfxGain, 2200);
+          this._tone(820, 'sawtooth', 0.14, 0.048, now + 0.16, this.sfxGain, 1900);
+        }
+        if (s % 9 === 4) {
+          this._noiseBurst(0.42, 0.035, 520, 'bandpass', 2.0);
+        }
+      }, 360);
     }
   }
 
@@ -590,5 +638,19 @@ export class SoundEngine {
       osc.stop(now + off + 0.13);
       this._noiseBurst(0.09, 0.28, 950, 'bandpass', 1.6);
     }
+  }
+
+  playRung() {
+    this.ensureInit();
+    if (!this.ctx || this.muted) return;
+    const now = this.ctx.currentTime;
+    this._tone(165 + Math.random() * 25, 'triangle', 0.06, 0.24, now, this.sfxGain, 700);
+    this._noiseBurst(0.035, 0.14, 520, 'bandpass', 1.2);
+  }
+
+  playFootstep() {
+    this.ensureInit();
+    if (!this.ctx || this.muted) return;
+    this._noiseBurst(0.045, 0.08, 380, 'lowpass');
   }
 }

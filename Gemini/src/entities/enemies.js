@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { createSpartanShieldTexture, createVikingShieldTexture } from '../engine/textures.js';
+import { addVikingAnimalSkins } from './heroes.js';
+import { buildEightPointShuriken } from './weapons.js';
 
 const ENEMY_SPECS = {
   cowboy: {
@@ -334,6 +336,77 @@ const ENEMY_SPECS = {
     style: 'boss_ranged',
     scale: 1.3,
     projectileColor: 0xff5a36
+  },
+  // Level 9: Tenochtitlan — 30 June 1520 (Spanish Conquistadors, Horsemen, Causeway Cannon & Captain Luján)
+  spanish_swordsman: {
+    name: 'Spanish Swordsman',
+    hp: 95,
+    speed: 4.8,
+    range: 3.4,
+    fireRate: 0.98,
+    damage: 17,
+    score: 240,
+    style: 'melee',
+    projectileColor: 0xffffff
+  },
+  spanish_crossbow: {
+    name: 'Spanish Crossbowman',
+    hp: 80,
+    speed: 3.9,
+    range: 38,
+    fireRate: 1.42,
+    damage: 15,
+    score: 250,
+    style: 'ranged',
+    projectileColor: 0xf4f9ff
+  },
+  spanish_arquebusier: {
+    name: 'Spanish Arquebusier',
+    hp: 85,
+    speed: 3.5,
+    range: 42,
+    fireRate: 2.05,
+    damage: 21,
+    score: 280,
+    style: 'ranged',
+    smokeOnFire: true,
+    projectileColor: 0xffc864
+  },
+  spanish_horseman: {
+    name: 'Spanish Lancer',
+    hp: 165,
+    speed: 7.2,
+    range: 3.9,
+    fireRate: 0.95,
+    damage: 22,
+    score: 420,
+    style: 'horseman',
+    projectileColor: 0xffffff
+  },
+  spanish_cannon: {
+    name: 'Causeway Cannon',
+    hp: 150,
+    speed: 0,
+    range: 56,
+    fireRate: 2.6,
+    damage: 26,
+    score: 450,
+    style: 'cannon',
+    smokeOnFire: true,
+    projectileColor: 0x262626
+  },
+  boss_aztec: {
+    name: 'CAPTAIN LUJÁN — REAR-GUARD COMMANDER',
+    hp: 500,
+    speed: 4.7,
+    range: 42,
+    fireRate: 0.72,
+    damage: 18,
+    score: 2800,
+    style: 'boss_ranged',
+    smokeOnFire: true,
+    scale: 1.3,
+    projectileColor: 0xff6e38
   }
 };
 
@@ -416,6 +489,157 @@ function buildEnemyMesh(type) {
     return { root, legL, legR, armL, armR, torso, head, muzzle, hpBg, hpFill };
   }
 
+  // Dedicated Mounted Spanish Horseman (horse + rider as ONE fast tough enemy that falls together!)
+  if (type === 'spanish_horseman') {
+    const horseMat = new THREE.MeshStandardMaterial({ color: 0x5c361e, roughness: 0.86 });
+    const maneMat = new THREE.MeshStandardMaterial({ color: 0x1e1612, roughness: 0.92 });
+    const steelM = new THREE.MeshStandardMaterial({ color: 0xb8c4d0, metalness: 0.84, roughness: 0.26 });
+    const skinM = new THREE.MeshStandardMaterial({ color: 0xdfb088, roughness: 0.74 });
+    const redM = new THREE.MeshStandardMaterial({ color: 0xb02222, roughness: 0.66 });
+    const woodM = new THREE.MeshStandardMaterial({ color: 0x4a2c18, roughness: 0.82 });
+
+    // Horse body, neck, head, saddle & 4 animated legs
+    const horseBody = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.74, 1.85), horseMat);
+    horseBody.position.set(0, 1.18, 0);
+    horseBody.castShadow = true;
+    horseBody.userData.hitZone = 'body';
+    const saddle = new THREE.Mesh(new THREE.BoxGeometry(0.80, 0.16, 0.68), redM);
+    saddle.position.set(0, 1.56, -0.05);
+    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.72, 0.42), horseMat);
+    neck.position.set(0, 1.66, 0.84);
+    neck.rotation.x = 0.35;
+    const hHead = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.34, 0.62), horseMat);
+    hHead.position.set(0, 1.92, 1.12);
+    hHead.rotation.x = 0.25;
+    const hTail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.08, 0.78, 6), maneMat);
+    hTail.position.set(0, 1.12, -1.02);
+    hTail.rotation.x = -0.35;
+
+    const legGeo = new THREE.CylinderGeometry(0.09, 0.07, 0.95, 7);
+    const legL = new THREE.Mesh(legGeo, horseMat);
+    legL.position.set(-0.24, 0.48, 0.64);
+    const legR = new THREE.Mesh(legGeo, horseMat);
+    legR.position.set(0.24, 0.48, 0.64);
+    const armL = new THREE.Mesh(legGeo, horseMat);
+    armL.position.set(-0.24, 0.48, -0.64);
+    const armR = new THREE.Mesh(legGeo, horseMat);
+    armR.position.set(0.24, 0.48, -0.64);
+
+    // Mounted armored Spanish Lancer seated in saddle + couched lance!
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.68, 0.32), steelM);
+    torso.position.set(0, 1.98, -0.05);
+    torso.userData.hitZone = 'body';
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.20, 10, 8), skinM);
+    head.position.set(0, 2.52, -0.05);
+    head.userData.hitZone = 'head';
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.23, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.56), steelM);
+    helm.position.y = 0.08;
+    const comb = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.12, 0.42), steelM);
+    comb.position.set(0, 0.28, 0);
+    head.add(helm, comb);
+
+    const riderArmR = new THREE.Group();
+    riderArmR.position.set(0.36, 2.02, 0.08);
+    const lance = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.032, 3.4, 7), woodM);
+    lance.rotation.x = Math.PI / 2;
+    lance.position.set(0, 0, 1.15);
+    const lanceTip = new THREE.Mesh(new THREE.ConeGeometry(0.052, 0.34, 4), steelM);
+    lanceTip.rotation.x = Math.PI / 2;
+    lanceTip.position.set(0, 0, 2.95);
+    const pennant = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.22, 0.42), redM);
+    pennant.position.set(0, -0.1, 2.45);
+    riderArmR.add(lance, lanceTip, pennant);
+
+    const muzzle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.05, 4, 4),
+      new THREE.MeshBasicMaterial({ color: 0xffd25a, transparent: true, opacity: 0 })
+    );
+    riderArmR.add(muzzle);
+
+    const hpBg = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.1, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0x160d0a, side: THREE.DoubleSide })
+    );
+    hpBg.position.set(0, 3.05, 0);
+    hpBg.visible = false;
+    const hpFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.04, 0.08),
+      new THREE.MeshBasicMaterial({ color: 0xe83b2c, side: THREE.DoubleSide })
+    );
+    hpFill.position.set(0, 0, 0.01);
+    hpBg.add(hpFill);
+
+    root.add(horseBody, saddle, neck, hHead, hTail, legL, legR, armL, armR, torso, head, riderArmR, hpBg);
+    return { root, legL, legR, armL, armR, torso, head, muzzle, hpBg, hpFill };
+  }
+
+  // Dedicated Stationary Causeway Cannon + Spanish Gunner (cannon carriage does not turn; gunner aims!)
+  if (type === 'spanish_cannon') {
+    const bronzeM = new THREE.MeshStandardMaterial({ color: 0x8a6d3b, metalness: 0.78, roughness: 0.34 });
+    const woodM = new THREE.MeshStandardMaterial({ color: 0x4d301c, roughness: 0.86 });
+    const ironM = new THREE.MeshStandardMaterial({ color: 0x2a2d32, metalness: 0.8, roughness: 0.35 });
+    const steelM = new THREE.MeshStandardMaterial({ color: 0xb6c2cf, metalness: 0.84, roughness: 0.28 });
+    const skinM = new THREE.MeshStandardMaterial({ color: 0xdfb088, roughness: 0.74 });
+    const redM = new THREE.MeshStandardMaterial({ color: 0x9c2222, roughness: 0.72 });
+
+    // Wheeled timber carriage & heavy cast-bronze cannon barrel pointing +Z (south toward incoming player!)
+    const carriage = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.45, 1.55), woodM);
+    carriage.position.set(0, 0.56, 0);
+    for (const s of [-1, 1]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.14, 14), woodM);
+      wheel.rotation.z = Math.PI / 2;
+      wheel.position.set(s * 0.56, 0.46, 0.35);
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.46, 0.04, 6, 14), ironM);
+      rim.rotation.y = Math.PI / 2;
+      rim.position.set(s * 0.56, 0.46, 0.35);
+      root.add(wheel, rim);
+    }
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.21, 1.95, 12), bronzeM);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.96, 0.25);
+    const muzzle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.24, 6, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffaa33, transparent: true, opacity: 0 })
+    );
+    muzzle.position.set(0, 0.96, 1.32);
+
+    // Spanish gunner standing beside/behind the breech
+    const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.82, 8), redM);
+    legL.position.set(-0.55, 0.41, -0.78);
+    const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.82, 8), redM);
+    legR.position.set(-0.25, 0.41, -0.78);
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.70, 0.30), steelM);
+    torso.position.set(-0.4, 1.15, -0.78);
+    torso.userData.hitZone = 'body';
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.58, 7), redM);
+    armL.position.set(-0.74, 1.16, -0.72);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.58, 7), redM);
+    armR.position.set(-0.06, 1.18, -0.58);
+    armR.rotation.x = -0.9;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.20, 10, 8), skinM);
+    head.position.set(-0.4, 1.70, -0.78);
+    head.userData.hitZone = 'head';
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.23, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), steelM);
+    helm.position.y = 0.08;
+    head.add(helm);
+
+    const hpBg = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.0, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0x160d0a, side: THREE.DoubleSide })
+    );
+    hpBg.position.set(0, 2.35, 0);
+    hpBg.visible = false;
+    const hpFill = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.95, 0.08),
+      new THREE.MeshBasicMaterial({ color: 0xe83b2c, side: THREE.DoubleSide })
+    );
+    hpFill.position.set(0, 0, 0.01);
+    hpBg.add(hpFill);
+
+    root.add(carriage, barrel, muzzle, legL, legR, torso, armL, armR, head, hpBg);
+    return { root, legL, legR, armL, armR, torso, head, muzzle, hpBg, hpFill };
+  }
+
   const skinMat = new THREE.MeshStandardMaterial({
     color: type === 'bandito' ? 0xc68a5c : 0xe3b18a,
     roughness: 0.72
@@ -449,6 +673,8 @@ function buildEnemyMesh(type) {
   else if (type === 'pla_rifleman' || type === 'pla_mg') { coatColor = 0x8a8255; pantsColor = 0x777049; }
   else if (type === 'red_guard') { coatColor = 0x5c6b47; pantsColor = 0x454f38; }
   else if (type === 'boss_tibet') { coatColor = 0x6b6642; pantsColor = 0x545034; }
+  else if (type === 'spanish_swordsman' || type === 'spanish_crossbow' || type === 'spanish_arquebusier') { coatColor = 0x9aa4b0; pantsColor = 0x5e2822; }
+  else if (type === 'boss_aztec') { coatColor = 0x262930; pantsColor = 0x7a1c1c; }
 
   const coatMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.68 });
   const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.78 });
@@ -566,11 +792,15 @@ function buildEnemyMesh(type) {
     scarfTail.rotation.x = 0.35;
     root.add(scarf, scarfTail);
 
-    // Ninjato sword on back + blade in hand
+    // Ninjato blade in right hand + 8-point shuriken in left hand
     const blade = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.75, 0.05), steelMat);
     blade.position.set(0, -0.35, 0.28);
     blade.rotation.x = Math.PI / 2;
     armR.add(blade);
+    const shur = buildEightPointShuriken(1.18);
+    shur.position.set(0, -0.33, 0.14);
+    shur.rotation.set(Math.PI * 0.45, 0, 0.2);
+    armL.add(shur);
   } else if (type === 'ronin' || type === 'boss_japan') {
     if (isBoss) {
       // Ornate horned Kabuto helmet
@@ -677,18 +907,30 @@ function buildEnemyMesh(type) {
     armR.add(spear, tip);
   } else if (type === 'viking_warrior' || type === 'viking_archer' || type === 'viking_berserker' || type === 'viking_chieftain' || type === 'boss_scandinavia') {
     const isChieftain = type === 'viking_chieftain';
-    const furMat = new THREE.MeshStandardMaterial({ color: type === 'viking_berserker' ? 0x4a3525 : 0x3b332d, roughness: 0.95 });
+    const furPalettes = [
+      { fur: 0x5c3e26, trim: 0x332215 }, // brown bear
+      { fur: 0x2e2824, trim: 0x161311 }, // dark wolf
+      { fur: 0x6c6e72, trim: 0x3a3c40 }, // grey wolf
+      { fur: 0xbcb3a4, trim: 0x736c62 }  // pale winter pelt
+    ];
+    const pal = type === 'viking_berserker' ? furPalettes[0]
+      : isChieftain ? furPalettes[1]
+      : isBoss ? furPalettes[3]
+      : furPalettes[Math.floor(Math.random() * furPalettes.length)];
+    const furMat = new THREE.MeshStandardMaterial({ color: pal.fur, roughness: 0.95 });
     const beardCol = type === 'viking_berserker' ? 0x7c3b1e : isChieftain ? 0x2e2116 : 0x4d3a28;
     const beardMat = new THREE.MeshStandardMaterial({ color: beardCol, roughness: 0.92 });
     const helmMat = isBoss ? goldMat : steelMat;
     const hasHorns = isChieftain || isBoss || (type !== 'viking_berserker' && Math.random() < 0.32);
+    const hasBeastHead = type === 'viking_berserker' || isChieftain || isBoss || Math.random() < 0.5;
 
-    // Fur shoulder mantle & beard
-    const furMantle = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.26, 0.4), furMat);
-    furMantle.position.set(0, 1.48, -0.02);
-    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.95, 0.1), (isBoss || isChieftain) ? redMat : furMat);
-    cloak.position.set(0, 1.0, -0.22);
-    root.add(furMantle, cloak);
+    // Dress every Viking enemy in shaggy animal skins (shoulder tufts, forelegs with paws, tailed pelt, jagged fur kilt, optional beast head)
+    addVikingAnimalSkins(root, {
+      furColor: pal.fur,
+      trimColor: pal.trim,
+      withBeastHead: hasBeastHead,
+      shoulderSide: Math.random() < 0.5 ? -1 : 1
+    });
 
     const beard = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.34, 10), beardMat);
     beard.rotation.x = Math.PI;
@@ -927,6 +1169,47 @@ function buildEnemyMesh(type) {
         armR.add(rifle);
       }
     }
+  } else if (type === 'spanish_swordsman' || type === 'spanish_crossbow' || type === 'spanish_arquebusier' || type === 'boss_aztec') {
+    // 1520 Spanish Conquistadors: steel cuirass, morion helmet with comb crest, crimson sash, sword/buckler, crossbow, or arquebus!
+    const armorMat = isBoss ? goldMat : steelMat;
+    const cuirass = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.56, 0.35), armorMat);
+    cuirass.position.set(0, 1.20, 0);
+    const sash = new THREE.Mesh(new THREE.BoxGeometry(0.60, 0.14, 0.36), redMat);
+    sash.position.set(0, 0.96, 0);
+    root.add(cuirass, sash);
+
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.58), armorMat);
+    helm.position.y = 0.09;
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.35, 0.04, 14), armorMat);
+    brim.position.y = 0.09;
+    const comb = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.15, 0.44), armorMat);
+    comb.position.set(0, 0.32, 0);
+    head.add(helm, brim, comb);
+
+    if (type === 'spanish_swordsman') {
+      // Round steel rodela buckler shield + Toledo sword
+      const buckler = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.05, 16), steelMat);
+      buckler.rotation.x = Math.PI / 2;
+      buckler.position.set(-0.08, -0.18, 0.24);
+      armL.add(buckler);
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.06, 0.96), steelMat);
+      blade.position.set(0, -0.26, 0.50);
+      const guard = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.04, 0.04), goldMat);
+      guard.position.set(0, -0.26, 0.08);
+      armR.add(blade, guard);
+    } else if (type === 'spanish_crossbow') {
+      const stock = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.72), darkLeather);
+      stock.position.set(0, -0.24, 0.32);
+      const prod = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.035, 0.045), steelMat);
+      prod.position.set(0, -0.22, 0.56);
+      armR.add(stock, prod);
+    } else {
+      // Arquebus matchlock (or gilded Captain Luján carbine)
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.036, 1.15, 8), steelMat);
+      barrel.rotation.x = Math.PI / 2;
+      barrel.position.set(0, -0.25, 0.48);
+      armR.add(barrel);
+    }
   }
 
   // Muzzle flash beacon on weapon tip
@@ -982,6 +1265,8 @@ export class Enemy {
 
     this.alive = true;
     this.alert = false;
+    this.holdPost = !!options.holdPost;
+    if (this.holdPost) this.speed = 0;
     this.hideUntilClose = !!options.hideUntilClose;
     this.ambushDist = options.ambushDist || 12.5;
     if (this.hideUntilClose) {
@@ -997,10 +1282,19 @@ export class Enemy {
     this.fallChecked = false;
     this.slumpDeath = false;
     this.walkPhase = Math.random() * Math.PI * 2;
-    this.radius = this.style === 'dog' ? 0.36 : this.isBoss ? 0.68 : 0.46;
-    this.headHeight = this.style === 'dog' ? 0.72 : this.isBoss ? 2.15 : 1.72;
+    this.radius = this.style === 'dog' ? 0.36 : this.style === 'horseman' ? 0.74 : this.style === 'cannon' ? 0.95 : this.isBoss ? 0.68 : 0.46;
+    this.headHeight = this.style === 'dog' ? 0.72 : this.style === 'horseman' ? 2.52 : this.isBoss ? 2.15 : 1.72;
+    this.smokeOnFire = !!spec.smokeOnFire;
 
-    // A* route-finding state
+    // Poison damage-over-time state (Cuauhtémoc's poisoned darts!)
+    this.poisonRemaining = 0;
+    this.poisonTickTimer = 0;
+    this.poisonInterval = 0.5;
+    this.poisonTickDamage = 7;
+
+    // A* route-finding state & deep-water rescue spawn anchor
+    this.spawnPos = this.mesh.position.clone();
+    this.submergedTimer = 0;
     this.path = null;
     this.pathIdx = 0;
     this.pathTimer = Math.random() * 0.5;
@@ -1016,6 +1310,14 @@ export class Enemy {
       }
     });
     return list;
+  }
+
+  applyPoison(duration = 5.0, interval = 0.5, tickDamage = 7) {
+    if (!this.alive) return;
+    this.poisonRemaining = duration;
+    this.poisonInterval = interval;
+    this.poisonTickDamage = tickDamage;
+    this.poisonTickTimer = interval;
   }
 
   takeDamage(amount, isHeadshot = false) {
@@ -1042,7 +1344,7 @@ export class Enemy {
     return false;
   }
 
-  update(dt, playerPos, collision, callbacks, detectMult = 1.0, playerCrouched = false) {
+  update(dt, playerPos, collision, callbacks, detectMult = 1.0, playerCrouched = false, playerSneaking = false) {
     if (!this.alive) {
       // Pick a wall-free fall direction on the first death frame, or slump cleanly in place
       if (!this.fallChecked) {
@@ -1103,11 +1405,27 @@ export class Enemy {
       this.parts.hpBg.lookAt(playerPos.x, this.mesh.position.y + (this.style === 'dog' ? 1.15 : 2.3), playerPos.z);
     }
 
-    // Hurt flash feedback
+    // Poison damage-over-time (Cuauhtémoc's darts: hurts every 0.5s for 5s and tints enemy green!)
+    if (this.poisonRemaining > 0) {
+      this.poisonRemaining = Math.max(0, this.poisonRemaining - dt);
+      this.poisonTickTimer -= dt;
+      if (this.poisonTickTimer <= 0) {
+        this.poisonTickTimer += this.poisonInterval;
+        if (callbacks && callbacks.onPoisonTick) {
+          callbacks.onPoisonTick(this, this.poisonTickDamage);
+          if (!this.alive) return;
+        }
+      }
+    }
+
+    // Hurt flash & green poison tint feedback
     if (this.hurtFlash > 0) {
       this.hurtFlash -= dt;
-      const emissiveHex = this.hurtFlash > 0 ? 0x661111 : 0x000000;
-      this.parts.torso.material.emissive.setHex(emissiveHex);
+      if (this.parts.torso.material && this.parts.torso.material.emissive) {
+        this.parts.torso.material.emissive.setHex(this.hurtFlash > 0 ? 0x661111 : (this.poisonRemaining > 0 ? 0x186624 : 0x000000));
+      }
+    } else if (this.parts.torso.material && this.parts.torso.material.emissive) {
+      this.parts.torso.material.emissive.setHex(this.poisonRemaining > 0 ? 0x186624 : 0x000000);
     }
 
     // Muzzle flash fade
@@ -1116,18 +1434,40 @@ export class Enemy {
       this.parts.muzzle.material.opacity = Math.max(0, this.muzzleFlash * 8);
     }
 
-    // Wake up when player gets close or enters sight (scaled by hero stealth & crouching -40%!)
+    // Deep-water rescue: if an enemy ever ends up submerged in deep water for ~1s, return them to their starting post
+    if (collision.isSubmergedInWater(this.mesh.position.x, this.mesh.position.y, this.mesh.position.z)) {
+      this.submergedTimer += dt;
+      if (this.submergedTimer >= 1.0) {
+        this.mesh.position.copy(this.spawnPos);
+        this.submergedTimer = 0;
+        this.path = null;
+      }
+    } else {
+      this.submergedTimer = 0;
+    }
+
+    // Wake up when player gets close or enters sight (scaled by hero stealth, crouching -40% & sneaking!)
     const eyeY = this.style === 'dog' ? 0.7 : 1.55;
     const eyePos = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + eyeY, this.mesh.position.z);
     // Crouching lowers the LOS target to ~0.88m so waist-high (~1m) cover hides a crouching player!
     const playerEye = new THREE.Vector3(playerPos.x, playerPos.y + (playerCrouched ? 0.88 : 1.45), playerPos.z);
     const crouchMult = playerCrouched ? 0.60 : 1.0;
-    const sightRange = 42 * detectMult * crouchMult;
-    const proxRange = (this.style === 'dog' ? 28 : 26) * detectMult * crouchMult;
+    const sneakMult = playerSneaking ? 0.67 : 1.0;
+    const combinedMult = detectMult * crouchMult * sneakMult;
+    const sightRange = 42 * combinedMult;
+    const proxRange = (this.style === 'dog' ? 28 : 26) * combinedMult;
     const canSee = horizDist < 54 && collision.hasLineOfSight(eyePos, playerEye);
 
     if (!this.alert) {
-      if (horizDist < proxRange || (canSee && horizDist < sightRange)) {
+      // Check whether the player is behind this idle enemy
+      const eFwdX = Math.sin(this.mesh.rotation.y);
+      const eFwdZ = Math.cos(this.mesh.rotation.y);
+      const toLen = horizDist || 1;
+      const inFront = (eFwdX * (toPlayer.x / toLen) + eFwdZ * (toPlayer.z / toLen)) >= 0;
+      const detected = playerSneaking && !inFront
+        ? horizDist <= 3.0
+        : (horizDist < proxRange || (canSee && horizDist < sightRange));
+      if (detected) {
         this.alert = true;
         if (this.style === 'dog' && callbacks.onDogBark) {
           callbacks.onDogBark(this);
@@ -1146,11 +1486,11 @@ export class Enemy {
       this.strafeDir *= -1;
     }
 
-    const isMelee = this.style === 'melee' || this.style === 'dog';
-    const isTurret = this.style === 'turret';
+    const isMelee = this.style === 'melee' || this.style === 'dog' || this.style === 'horseman';
+    const isTurret = this.style === 'turret' || this.style === 'cannon';
     const isHybrid = this.style === 'hybrid' || this.style === 'boss_hybrid';
-    const desiredMin = this.style === 'dog' ? 1.55 : isMelee ? 2.0 : isHybrid ? 7.0 : 12.5;
-    const desiredMax = this.style === 'dog' ? 2.0 : isMelee ? 2.5 : isHybrid ? 15.0 : 25.0;
+    const desiredMin = this.style === 'dog' ? 1.55 : this.style === 'horseman' ? 2.4 : isMelee ? 2.0 : isHybrid ? 7.0 : 12.5;
+    const desiredMax = this.style === 'dog' ? 2.0 : this.style === 'horseman' ? 3.2 : isMelee ? 2.5 : isHybrid ? 15.0 : 25.0;
 
     const move = new THREE.Vector3();
     let lookTargetX = playerPos.x;
@@ -1201,12 +1541,14 @@ export class Enemy {
       }
     }
 
-    // Face either the player (when visible) or the next route waypoint
-    const targetYaw = Math.atan2(lookTargetX - this.mesh.position.x, lookTargetZ - this.mesh.position.z);
-    let diffYaw = targetYaw - this.mesh.rotation.y;
-    while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
-    while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
-    this.mesh.rotation.y += diffYaw * Math.min(1, dt * 8);
+    // Face either the player (when visible) or the next route waypoint (stationary cannon does not turn its carriage!)
+    if (this.style !== 'cannon') {
+      const targetYaw = Math.atan2(lookTargetX - this.mesh.position.x, lookTargetZ - this.mesh.position.z);
+      let diffYaw = targetYaw - this.mesh.rotation.y;
+      while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
+      while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
+      this.mesh.rotation.y += diffYaw * Math.min(1, dt * 8);
+    }
 
     if (move.lengthSq() > 0.001 && this.speed > 0) {
       move.normalize().multiplyScalar(this.speed * dt);
@@ -1215,11 +1557,11 @@ export class Enemy {
       const fy = collision.getFloorHeight(this.mesh.position.x, this.mesh.position.z, this.mesh.position.y);
       this.mesh.position.y += (fy - this.mesh.position.y) * Math.min(1, dt * 14);
 
-      // Animate legs running
-      this.walkPhase += dt * this.speed * (this.style === 'dog' ? 2.8 : 2.2);
+      // Animate legs running (including 4-legged gallop for Spanish horseman!)
+      this.walkPhase += dt * this.speed * (this.style === 'dog' ? 2.8 : this.style === 'horseman' ? 1.85 : 2.2);
       this.parts.legL.rotation.x = Math.sin(this.walkPhase) * 0.6;
       this.parts.legR.rotation.x = -Math.sin(this.walkPhase) * 0.6;
-      if (this.style === 'dog') {
+      if (this.style === 'dog' || this.style === 'horseman') {
         this.parts.armL.rotation.x = -Math.sin(this.walkPhase) * 0.6;
         this.parts.armR.rotation.x = Math.sin(this.walkPhase) * 0.6;
       } else {
@@ -1230,7 +1572,7 @@ export class Enemy {
     // Attack logic (melee strictly requires unobstructed line of sight!)
     this.fireCooldown -= dt;
     if (this.fireCooldown <= 0) {
-      const biteRange = this.style === 'dog' ? 2.45 : 3.5;
+      const biteRange = this.style === 'dog' ? 2.45 : this.style === 'horseman' ? 4.1 : 3.5;
       if (isMelee || (isHybrid && horizDist < 3.6)) {
         if (horizDist < biteRange && collision.hasLineOfSight(eyePos, playerEye)) {
           this.fireCooldown = this.fireRate;

@@ -1,4 +1,114 @@
 import * as THREE from 'three';
+import { buildEightPointShuriken } from './weapons.js';
+
+/**
+ * Dresses a Viking figure (hero, enemy, or villain) in animal skins:
+ * shaggy fur shoulder tufts, forelegs hanging down the chest ending in paws,
+ * ragged pelt down the back with a tail, a fur kilt with torn pointed hem,
+ * and an optional beast head perched on one shoulder (skull, muzzle, nose, eyes, two ears).
+ */
+export function addVikingAnimalSkins(root, opts = {}) {
+  const {
+    furColor = 0x4d3726,
+    trimColor = 0x2b1e15,
+    withBeastHead = false,
+    shoulderSide = -1
+  } = opts;
+  const furMat = new THREE.MeshStandardMaterial({ color: furColor, roughness: 0.96 });
+  const darkFur = new THREE.MeshStandardMaterial({ color: trimColor, roughness: 0.98 });
+  const clawMat = new THREE.MeshStandardMaterial({ color: 0x161210, roughness: 0.55 });
+  const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1c140e });
+  const g = new THREE.Group();
+
+  // 1. Shaggy fur tufts standing out over both shoulders
+  for (const s of [-1, 1]) {
+    for (let k = 0; k < 4; k++) {
+      const tuft = new THREE.Mesh(new THREE.DodecahedronGeometry(0.115 - k * 0.012, 0), k % 2 === 0 ? furMat : darkFur);
+      tuft.scale.set(1.25, 0.85, 1.15);
+      tuft.position.set(s * (0.24 + k * 0.055), 1.50 + (k % 2) * 0.05, -0.06 + (k - 1.5) * 0.065);
+      g.add(tuft);
+    }
+  }
+  const yoke = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.16, 0.40), furMat);
+  yoke.position.set(0, 1.48, -0.02);
+  g.add(yoke);
+
+  // 2. Forelegs of the pelt hanging down the chest, ending in paws with claws
+  for (const s of [-1, 1]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.042, 0.42, 7), furMat);
+    leg.position.set(s * 0.19, 1.24, 0.18);
+    leg.rotation.z = s * 0.08;
+    const paw = new THREE.Mesh(new THREE.SphereGeometry(0.055, 7, 6), darkFur);
+    paw.scale.set(1.1, 0.72, 1.25);
+    paw.position.set(s * 0.21, 1.02, 0.19);
+    for (let c = -1; c <= 1; c++) {
+      const claw = new THREE.Mesh(new THREE.ConeGeometry(0.011, 0.042, 4), clawMat);
+      claw.rotation.x = Math.PI;
+      claw.position.set(s * 0.21 + c * 0.022, 0.985, 0.22);
+      g.add(claw);
+    }
+    g.add(leg, paw);
+  }
+
+  // 3. Ragged pelt draped down the back with a furry tail hanging at the hem
+  const backPelt = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.96, 0.11), furMat);
+  backPelt.position.set(0, 1.02, -0.22);
+  backPelt.rotation.x = 0.10;
+  g.add(backPelt);
+  for (let i = -2; i <= 2; i++) {
+    const jag = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.22, 4), i % 2 === 0 ? furMat : darkFur);
+    jag.rotation.x = Math.PI;
+    jag.position.set(i * 0.12, 0.48, -0.26);
+    g.add(jag);
+  }
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.024, 0.44, 7), darkFur);
+  tail.position.set(0, 0.44, -0.29);
+  tail.rotation.x = 0.24;
+  const tailTip = new THREE.Mesh(new THREE.ConeGeometry(0.036, 0.14, 6), furMat);
+  tailTip.rotation.x = Math.PI + 0.24;
+  tailTip.position.set(0, 0.21, -0.34);
+  g.add(tail, tailTip);
+
+  // 4. Fur kilt around the waist with its hem torn into jagged points
+  const kiltUpper = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.36, 0.30, 10), furMat);
+  kiltUpper.position.set(0, 0.80, 0);
+  g.add(kiltUpper);
+  const pointCount = 10;
+  for (let i = 0; i < pointCount; i++) {
+    const a = (i / pointCount) * Math.PI * 2;
+    const pt = new THREE.Mesh(new THREE.ConeGeometry(0.088, 0.24, 4), i % 2 === 0 ? furMat : darkFur);
+    pt.rotation.x = Math.PI;
+    pt.position.set(Math.sin(a) * 0.33, 0.56, Math.cos(a) * 0.22);
+    g.add(pt);
+  }
+
+  // 5. Optional beast head on one shoulder: skull, muzzle, nose, eyes, two ears
+  if (withBeastHead) {
+    const bh = new THREE.Group();
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(0.125, 10, 8), furMat);
+    skull.scale.set(0.95, 0.88, 1.15);
+    const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.16), darkFur);
+    muzzle.position.set(0, -0.025, 0.14);
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.032, 6, 6), clawMat);
+    nose.position.set(0, -0.005, 0.225);
+    for (const es of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), eyeMat);
+      eye.position.set(es * 0.055, 0.03, 0.105);
+      const ear = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.12, 5), darkFur);
+      ear.position.set(es * 0.075, 0.13, -0.02);
+      ear.rotation.z = -es * 0.28;
+      bh.add(eye, ear);
+    }
+    bh.add(skull, muzzle, nose);
+    bh.position.set(shoulderSide * 0.31, 1.62, 0.04);
+    bh.rotation.y = shoulderSide * 0.35;
+    bh.rotation.x = 0.15;
+    g.add(bh);
+  }
+
+  root.add(g);
+  return g;
+}
 
 export const ERA_HEROES = {
   west: [
@@ -52,7 +162,7 @@ export const ERA_HEROES = {
       strengthLabel: 'Two Heavens Style',
       strengthDesc: 'Faster katana strikes (+28% speed) with +1.2 m reach.',
       hudTag: 'SWIFT BLADE',
-      defaultWeaponIdx: 0,
+      defaultWeaponIdx: 1,
       mods: {
         meleeFireRateMult: 0.72,
         meleeRangeBonus: 1.2
@@ -62,14 +172,14 @@ export const ERA_HEROES = {
       id: 'tomoe',
       era: 'japan',
       name: 'Tomoe Gozen',
-      bio: 'Woman warrior of the Genpei War, famous archer.',
-      strengthLabel: 'Genpei Archer',
-      strengthDesc: 'Shoots and nocks the Yumi Longbow nearly twice as fast.',
-      hudTag: '2× BOW RATE',
-      defaultWeaponIdx: 1,
+      bio: 'Woman warrior of the Genpei War, famous for swift hands.',
+      strengthLabel: 'Swift Hands',
+      strengthDesc: 'Throws her stars almost twice as fast.',
+      hudTag: '2× STAR RATE',
+      defaultWeaponIdx: 0,
       mods: {
         weaponOverrides: {
-          yumi: { fireRateMult: 0.52, reloadTimeMult: 0.52 }
+          shuriken: { fireRateMult: 0.54, reloadTimeMult: 0.58 }
         }
       }
     },
@@ -209,9 +319,9 @@ export const ERA_HEROES = {
       era: 'scandinavia',
       name: 'Ragnar Lothbrok',
       bio: 'Legendary sea-king and raider.',
-      strengthLabel: 'Sea-King Blade',
-      strengthDesc: 'Strikes 28% faster and 35% harder with the Viking Sword.',
-      hudTag: 'FIERCE SWORD',
+      strengthLabel: 'Iron Flail',
+      strengthDesc: 'Swings the spiked flail 28% faster and 35% harder.',
+      hudTag: 'FIERCE FLAIL',
       defaultWeaponIdx: 1,
       mods: {
         meleeFireRateMult: 0.72,
@@ -347,6 +457,48 @@ export const ERA_HEROES = {
       weaponIds: ['tibet_bow', 'tibet_sword'],
       mods: {
         damageTakenMult: 0.80
+      }
+    }
+  ],
+  aztec: [
+    {
+      id: 'cuauhtemoc',
+      era: 'aztec',
+      name: 'Cuauhtémoc',
+      bio: 'Last ruler of the Mexica ("Descending Eagle"), 1520.',
+      strengthLabel: 'Poisoned Atlatl',
+      strengthDesc: 'Throws poisoned darts (45 hit + 7 every 0.5 s for 5 s) alongside an obsidian macuahuitl.',
+      hudTag: 'POISON DARTS',
+      defaultWeaponIdx: 0,
+      weaponIds: ['atlatl_dart', 'macuahuitl'],
+      mods: {}
+    },
+    {
+      id: 'tzilacatzin',
+      era: 'aztec',
+      name: 'Tzilacatzin',
+      bio: 'Fearless stone-throwing warrior of Tlatelolco.',
+      strengthLabel: 'Stone-Caster',
+      strengthDesc: 'Hurls heavy stones (120 damage) and starts with 130 health.',
+      hudTag: 'STONES · 130 HP',
+      defaultWeaponIdx: 0,
+      weaponIds: ['sling_stone', 'macuahuitl'],
+      mods: {
+        fixedMaxHp: 130
+      }
+    },
+    {
+      id: 'nezahualcoyotl',
+      era: 'aztec',
+      name: 'Nezahualcóyotl',
+      bio: 'Poet-king of Texcoco ("Fasting Coyote").',
+      strengthLabel: 'Fleet Archer',
+      strengthDesc: 'Fights with war bow and macuahuitl, moving 15% faster.',
+      hudTag: 'BOW · +15% SPD',
+      defaultWeaponIdx: 0,
+      weaponIds: ['aztec_bow', 'macuahuitl'],
+      mods: {
+        moveSpeedMult: 1.15
       }
     }
   ]
@@ -728,7 +880,7 @@ export function buildHeroFigure(heroId) {
     ribbon.position.y = 0.09;
     p.head.add(hairCrown, longHair, ribbon);
 
-    // Tall graceful Yumi Longbow held in left hand + arrow in right!
+    // Tall graceful Yumi Longbow held in left hand + 3 fanned 8-point stars in right!
     p.armL.rotation.x = -0.85;
     const bow = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.022, 8, 22, Math.PI * 0.9), darkWood);
     bow.rotation.y = Math.PI / 2;
@@ -738,10 +890,12 @@ export function buildHeroFigure(heroId) {
     bowStr.position.set(0, -0.15, -0.08);
     p.armL.add(bow, bowStr);
 
-    const arrow = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.85, 6), darkWood);
-    arrow.rotation.x = Math.PI / 2;
-    arrow.position.set(0, -0.32, 0.18);
-    p.armR.add(arrow);
+    for (let k = -1; k <= 1; k++) {
+      const star = buildEightPointShuriken(1.1);
+      star.position.set(k * 0.055, -0.32, 0.14 + Math.abs(k) * -0.02);
+      star.rotation.set(Math.PI * 0.4, 0, k * -0.25);
+      p.armR.add(star);
+    }
   } else if (heroId === 'masamune') {
     // Date Masamune: Black armor, eye patch, kabuto helmet with HUGE asymmetric gold crescent moon!
     const p = addBaseBody({ torsoMat: blackArmor, legsMat: blackArmor, armsMat: blackArmor, bootsMat: blackCloth, skin: skinWeathered });
@@ -1011,22 +1165,17 @@ export function buildHeroFigure(heroId) {
     p.armR.add(club);
   }
 
-  // ==================== LEVEL 5: SCANDINAVIA (NO HORNED HELMETS!) ====================
+  // ==================== LEVEL 5: SCANDINAVIA (ANIMAL SKINS!) ====================
   else if (heroId === 'erik') {
-    // Erik the Red: Fiery red hair and beard, heavy dark fur cloak, throwing axe
+    // Erik the Red: Fiery red hair and beard, shaggy brown bear-skin pelt with beast head, throwing axe
     const redHair = new THREE.MeshStandardMaterial({ color: 0xb83e18, roughness: 0.88 });
-    const furDark = new THREE.MeshStandardMaterial({ color: 0x3b2c22, roughness: 0.95 });
-    const tunicMat = new THREE.MeshStandardMaterial({ color: 0x4f463c, roughness: 0.88 });
-    const p = addBaseBody({ torsoMat: tunicMat, legsMat: brownLeather, armsMat: tunicMat, bootsMat: brownLeather, skin: skinFair });
+    const furBody = new THREE.MeshStandardMaterial({ color: 0x5c3e26, roughness: 0.94 });
+    const p = addBaseBody({ torsoMat: furBody, legsMat: brownLeather, armsMat: furBody, bootsMat: brownLeather, skin: skinFair });
 
-    const furShoulders = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.28, 0.42), furDark);
-    furShoulders.position.set(0, 1.48, -0.02);
-    const furCloak = new THREE.Mesh(new THREE.BoxGeometry(0.68, 1.12, 0.12), furDark);
-    furCloak.position.set(0, 1.0, -0.22);
-    furCloak.rotation.x = 0.12;
     const belt = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.11, 0.34), brownLeather);
     belt.position.set(0, 0.94, 0);
-    root.add(furShoulders, furCloak, belt);
+    root.add(belt);
+    addVikingAnimalSkins(root, { furColor: 0x5c3e26, trimColor: 0x332215, withBeastHead: true, shoulderSide: -1 });
 
     // Fiery Red Hair & Thick Red Beard (bareheaded — no horns!)
     const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.225, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.6), redHair);
@@ -1048,22 +1197,15 @@ export function buildHeroFigure(heroId) {
     blade.position.set(0, 0.18, 0.56);
     p.armR.add(haft, blade);
   } else if (heroId === 'leif') {
-    // Leif Erikson: Blond hair & beard, deep blue Nordic cloak, mail & sailor tunic, axe
+    // Leif Erikson: Blond hair & beard, pale silver-grey wolf pelts & fur kilt, axe
     const blondHair = new THREE.MeshStandardMaterial({ color: 0xe6c465, roughness: 0.86 });
-    const nordicBlue = new THREE.MeshStandardMaterial({ color: 0x1e4d8c, roughness: 0.78 });
-    const p = addBaseBody({ torsoMat: mailSteel, legsMat: darkCharcoal, armsMat: nordicBlue, bootsMat: brownLeather, skin: skinFair });
+    const paleFur = new THREE.MeshStandardMaterial({ color: 0xb0a798, roughness: 0.94 });
+    const p = addBaseBody({ torsoMat: paleFur, legsMat: darkCharcoal, armsMat: paleFur, bootsMat: brownLeather, skin: skinFair });
 
-    // Striking Deep-Blue Cloak with Silver Clasp
-    const cloakShoulders = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.24, 0.38), nordicBlue);
-    cloakShoulders.position.set(0, 1.48, -0.01);
-    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.66, 1.14, 0.1), nordicBlue);
-    cloak.position.set(0, 1.0, -0.22);
-    cloak.rotation.x = 0.12;
-    const clasp = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), brightSteel);
-    clasp.position.set(0.18, 1.48, 0.18);
     const belt = new THREE.Mesh(new THREE.BoxGeometry(0.59, 0.1, 0.34), brownLeather);
     belt.position.set(0, 0.94, 0);
-    root.add(cloakShoulders, cloak, clasp, belt);
+    root.add(belt);
+    addVikingAnimalSkins(root, { furColor: 0xbcb3a4, trimColor: 0x6f685e, withBeastHead: false });
 
     // Blond Hair & Neat Blond Beard (no horns!)
     const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), blondHair);
@@ -1084,20 +1226,15 @@ export function buildHeroFigure(heroId) {
     blade.position.set(0, 0.18, 0.56);
     p.armR.add(haft, blade);
   } else if (heroId === 'ragnar') {
-    // Ragnar Lothbrok: Dark braided hair and beard, fur and leather raider armor, Viking sword
-    const leatherDark = new THREE.MeshStandardMaterial({ color: 0x30241c, roughness: 0.76 });
+    // Ragnar Lothbrok: Dark braided hair and beard, grey wolf skins with beast head, spiked Iron Flail!
     const wolfFur = new THREE.MeshStandardMaterial({ color: 0x524c48, roughness: 0.95 });
-    const p = addBaseBody({ torsoMat: leatherDark, legsMat: darkCharcoal, armsMat: leatherDark, bootsMat: brownLeather, skin: skinWeathered });
+    const p = addBaseBody({ torsoMat: wolfFur, legsMat: darkCharcoal, armsMat: wolfFur, bootsMat: brownLeather, skin: skinWeathered });
 
-    // Stitched leather chest harness + wolf-fur mantle & leather skirt
-    const furMantle = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.26, 0.42), wolfFur);
-    furMantle.position.set(0, 1.48, -0.02);
     const harness = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.34), brownLeather);
     harness.position.set(0, 1.24, 0);
     harness.rotation.z = 0.42;
-    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.38, 0.42, 8), leatherDark);
-    skirt.position.set(0, 0.74, 0);
-    root.add(furMantle, harness, skirt);
+    root.add(harness);
+    addVikingAnimalSkins(root, { furColor: 0x5c5854, trimColor: 0x2c2826, withBeastHead: true, shoulderSide: -1 });
 
     // Dark Braided Hair & Long Dark Braided Beard (twin braids + iron clasps, NO horns!)
     const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), darkHair);
@@ -1116,11 +1253,24 @@ export function buildHeroFigure(heroId) {
     beardRing.position.set(0, -0.34, 0.11);
     p.head.add(hairTop, braidL, braidR, braidBack, beardMain, beardRing);
 
-    // Gleaming Ulfberht Viking Sword in right hand
-    const sword = makeKatana(1.0);
-    sword.position.set(0, -0.3, 0.06);
-    sword.rotation.set(0.85, 0, -0.15);
-    p.armR.add(sword);
+    // Spiked Two-Ball Iron Flail in right hand
+    const flailGrp = new THREE.Group();
+    const fHaft = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.68, 8), darkWood);
+    fHaft.position.y = 0.22;
+    const fChain1 = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.26, 6), brightSteel);
+    fChain1.position.set(0.05, 0.42, 0.08);
+    fChain1.rotation.z = -0.35;
+    const fBall1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.075, 0), brightSteel);
+    fBall1.position.set(0.1, 0.28, 0.11);
+    const fChain2 = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.38, 6), brightSteel);
+    fChain2.position.set(-0.06, 0.36, 0.12);
+    fChain2.rotation.z = 0.28;
+    const fBall2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.085, 0), brightSteel);
+    fBall2.position.set(-0.11, 0.16, 0.14);
+    flailGrp.add(fHaft, fChain1, fBall1, fChain2, fBall2);
+    flailGrp.position.set(0, -0.28, 0.08);
+    flailGrp.rotation.x = 0.72;
+    p.armR.add(flailGrp);
   }
 
   // ==================== LEVEL 6: NORMANDY, 6 JUNE 1944 ====================
@@ -1436,6 +1586,69 @@ export function buildHeroFigure(heroId) {
     sword.position.set(0, -0.32, 0.08);
     sword.rotation.x = 0.72;
     p.armR.add(sword);
+  } else if (heroId === 'cuauhtemoc' || heroId === 'tzilacatzin' || heroId === 'nezahualcoyotl') {
+    // Aztec Mexica heroes with jade/crimson cotton armour, feather headdress, feathered chimalli shield & obsidian macuahuitl / weapon!
+    const skinBronze = new THREE.MeshStandardMaterial({ color: 0xb97c52, roughness: 0.76 });
+    const cottonWhite = new THREE.MeshStandardMaterial({ color: 0xeee5cf, roughness: 0.88 });
+    const jadeFeather = new THREE.MeshStandardMaterial({ color: 0x1bb58c, roughness: 0.65 });
+    const turquoiseMat = new THREE.MeshStandardMaterial({ color: 0x26b5c4, roughness: 0.55 });
+    const obsidianMat = new THREE.MeshStandardMaterial({ color: 0x16181e, metalness: 0.9, roughness: 0.16 });
+
+    const torsoCol = heroId === 'cuauhtemoc' ? crimsonMat : heroId === 'tzilacatzin' ? cottonWhite : turquoiseMat;
+    const p = addBaseBody({ torsoMat: torsoCol, legsMat: skinBronze, armsMat: skinBronze, bootsMat: brownLeather, skin: skinBronze });
+
+    // Quilted cotton kilt (ichcahuipilli) & gold/jade belt
+    const kilt = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.37, 0.44, 10), heroId === 'tzilacatzin' ? crimsonMat : cottonWhite);
+    kilt.position.set(0, 0.75, 0);
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.11, 0.34), goldMat);
+    belt.position.set(0, 0.96, 0);
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.05, 8, 16), jadeFeather);
+    collar.rotation.x = Math.PI / 2;
+    collar.position.set(0, 1.53, 0);
+    const cape = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.0, 0.08), heroId === 'cuauhtemoc' ? jadeFeather : heroId === 'nezahualcoyotl' ? crimsonMat : goldMat);
+    cape.position.set(0, 1.04, -0.2);
+    cape.rotation.x = 0.12;
+    root.add(kilt, belt, collar, cape);
+
+    // Sweeping quetzal-feather panache / warrior headband
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.218, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), darkHair);
+    hair.position.set(0, 0.07, -0.02);
+    const headband = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.028, 6, 16), goldMat);
+    headband.rotation.x = Math.PI / 2;
+    headband.position.y = 0.11;
+    p.head.add(hair, headband);
+    const plumeCount = heroId === 'cuauhtemoc' ? 9 : heroId === 'nezahualcoyotl' ? 7 : 5;
+    for (let i = 0; i < plumeCount; i++) {
+      const a = ((i / (plumeCount - 1)) - 0.5) * 1.45;
+      const feather = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.46, 5), i % 2 === 0 ? jadeFeather : crimsonMat);
+      feather.position.set(Math.sin(a) * 0.24, 0.34 + Math.cos(a) * 0.12, -0.04);
+      feather.rotation.z = -a;
+      p.head.add(feather);
+    }
+
+    // Round feathered Chimalli shield on left arm
+    const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.055, 18), crimsonMat);
+    shield.rotation.x = Math.PI / 2;
+    shield.position.set(-0.08, -0.16, 0.22);
+    const sRing = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.062, 16), goldMat);
+    sRing.rotation.x = Math.PI / 2;
+    sRing.position.set(-0.08, -0.16, 0.22);
+    p.armL.add(shield, sRing);
+
+    // Signature weapon in right hand
+    if (heroId === 'tzilacatzin') {
+      const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.14, 0), new THREE.MeshStandardMaterial({ color: 0x857c70, roughness: 0.9 }));
+      stone.position.set(0, -0.34, 0.1);
+      p.armR.add(stone);
+    } else {
+      const paddle = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.92, 0.12), darkWood);
+      paddle.position.set(0, 0.14, 0.12);
+      paddle.rotation.x = 0.75;
+      const edgeL = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.72, 0.04), obsidianMat);
+      edgeL.position.set(0, 0.18, 0.20);
+      edgeL.rotation.x = 0.75;
+      p.armR.add(paddle, edgeL);
+    }
   }
 
   // Ground pedestal disc beneath hero figure for clean turntable framing
@@ -1453,7 +1666,9 @@ export function buildHeroFigure(heroId) {
               ? 0x6b7078
               : heroId === 'gompo' || heroId === 'pachen' || heroId === 'songtsen'
                 ? 0x8f3a2c
-                : 0x5d6269;
+                : heroId === 'cuauhtemoc' || heroId === 'tzilacatzin' || heroId === 'nezahualcoyotl'
+                  ? 0x2a6b60
+                  : 0x5d6269;
   const plinth = new THREE.Mesh(
     new THREE.CylinderGeometry(0.72, 0.82, 0.16, 20),
     new THREE.MeshStandardMaterial({ color: plinthColor, roughness: 0.78 })

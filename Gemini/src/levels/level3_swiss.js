@@ -10,9 +10,9 @@ import {
 import { createSkyDome, createWaterMesh, createWaterfallMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
-  buildZigzagHill,
   addSolidBox,
   addAltar,
   addPewRow,
@@ -530,12 +530,96 @@ export function buildLevel3(scene, collision, particles) {
     [16, 36, 1.15], [17, 6, 1.1], [19, -46, 1.3], [-16, -24, 1.2], [-18, 49, 1.2], [10, 48, 1.15]
   ]) addPineTree(px, pz, sc);
 
-  // ---- 6.3 SMALL ROCKY HILL (~9m) WITH ZIGZAG STAIR + HUNTER'S HIGH SEAT + 6.4 CRAWL-IN DEN (1.25m!) ----
-  const rockyHill = buildZigzagHill(scene, collision, {
-    cx: -26, cz: -46, topW: 11.5, topD: 12.2, topY: 9.0,
-    legs: 3, stepsPerLeg: 8, faceSide: 'east',
-    rockMat: matCliff, boulderMat: matStone
-  });
+  // ---- GREAT NATURAL ALPINE BOULDER (~16m x 14m x 7.5m, leaning ladder & dark iron summit cross!) ----
+  const bX = -26, bZ = -46, bTopY = 7.5;
+  const boulderSummit = new THREE.Vector3(bX, bTopY, bZ);
+  let boulderLadder = null;
+  {
+    const rockDark = new THREE.MeshStandardMaterial({ color: 0x565b61, roughness: 0.94 });
+    const rockMid = new THREE.MeshStandardMaterial({ color: 0x6f757c, roughness: 0.92 });
+    const rockLight = new THREE.MeshStandardMaterial({ color: 0x858b92, roughness: 0.90 });
+    const grassTopMat = new THREE.MeshStandardMaterial({ color: 0x3f7533, roughness: 0.92 });
+    const mossMat = new THREE.MeshStandardMaterial({ color: 0x4b6e35, roughness: 0.95 });
+    const ironCrossMat = new THREE.MeshStandardMaterial({ color: 0x202326, metalness: 0.78, roughness: 0.36 });
+
+    // Organic irregular sculpted boulder body from overlapping rounded dodecahedron lobes
+    const lobes = [
+      [0, 3.5, 0, 7.2, 4.0, 6.2, rockMid],
+      [-3.2, 3.0, -2.0, 5.4, 3.8, 4.8, rockDark],
+      [3.0, 2.8, 1.8, 5.2, 3.6, 4.6, rockLight],
+      [2.8, 3.2, -2.2, 4.9, 3.8, 4.5, rockDark],
+      [-2.8, 2.9, 2.4, 5.0, 3.5, 4.6, rockLight],
+      [0.4, 5.2, 0.2, 6.2, 2.4, 5.2, rockMid]
+    ];
+    for (const [ox, oy, oz, rx, ry, rz, m] of lobes) {
+      const mesh = new THREE.Mesh(new THREE.DodecahedronGeometry(1.0, 2), m);
+      mesh.scale.set(rx, ry, rz);
+      mesh.position.set(bX + ox, oy, bZ + oz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+    }
+    // Flat grassy summit cap & grassy ledges + moss patches on leaning faces
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 6.4, 0.45, 12), grassTopMat);
+    cap.scale.set(1.08, 1.0, 0.92);
+    cap.position.set(bX, bTopY - 0.18, bZ);
+    cap.receiveShadow = true;
+    scene.add(cap);
+    for (const [mx, my, mz, s] of [[-5.6, 4.2, -1.2, 1.8], [4.8, 3.6, 3.4, 1.5], [-2.0, 4.8, 5.0, 1.7], [3.6, 4.4, -4.6, 1.6]]) {
+      const patch = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 1), mossMat);
+      patch.scale.set(1.2, 0.35, 1.1);
+      patch.position.set(bX + mx, my, bZ + mz);
+      scene.add(patch);
+    }
+    // Fallen rocks & grass tussocks around the boulder's foot
+    for (const [fx, fz, sc] of [[-8.6, -4.0, 1.3], [-9.2, 2.4, 1.1], [6.5, -6.2, 1.2], [7.2, 5.4, 1.15], [-3.2, 7.6, 1.25]]) {
+      const r = new THREE.Mesh(new THREE.DodecahedronGeometry(sc, 1), rockDark);
+      r.scale.set(1.2, 0.68, 1.0);
+      r.position.set(bX + fx, sc * 0.45, bZ + fz);
+      scene.add(r);
+      collision.addBox(bX + fx, sc * 0.45, bZ + fz, sc * 1.9, sc * 1.1, sc * 1.6, 'stone');
+      const tuss = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.7, 6), grassTopMat);
+      tuss.position.set(bX + fx + 0.9, 0.35, bZ + fz + 0.6);
+      scene.add(tuss);
+    }
+    // Solid core blocking body below summit + flat walkable grassy summit (navIgnore: true -> reached by ladder!)
+    collision.addBox(bX, (bTopY - 0.35) * 0.5, bZ, 12.6, bTopY - 0.35, 10.8, 'stone');
+    collision.addWalkable(bX, bZ, 11.4, 9.6, bTopY, true);
+
+    // Three natural cover stones on the summit
+    for (const [cx, cz] of [[2.8, -1.8], [3.0, 2.0], [-1.4, 2.8]]) {
+      const st = new THREE.Mesh(new THREE.DodecahedronGeometry(0.75, 1), rockMid);
+      st.scale.set(1.0, 0.8, 1.2);
+      st.position.set(bX + cx, bTopY + 0.52, bZ + cz);
+      scene.add(st);
+      collision.addBox(bX + cx, bTopY + 0.52, bZ + cz, 1.2, 1.05, 1.4, 'stone');
+    }
+
+    // Slim 3.5m Dark Iron Summit Cross with slightly flared ends set in a rough stone block (no inscription!)
+    const crossX = bX - 3.4, crossZ = bZ - 2.6;
+    const cPlinth = new THREE.Mesh(new THREE.DodecahedronGeometry(0.68, 1), rockDark);
+    cPlinth.scale.set(1.1, 0.75, 1.1);
+    cPlinth.position.set(crossX, bTopY + 0.35, crossZ);
+    const cShaft = new THREE.Mesh(new THREE.BoxGeometry(0.11, 3.5, 0.11), ironCrossMat);
+    cShaft.position.set(crossX, bTopY + 2.15, crossZ);
+    const cArm = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.11, 0.11), ironCrossMat);
+    cArm.position.set(crossX, bTopY + 3.02, crossZ);
+    // Slightly flared ends on shaft top & both arms
+    const flTop = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.18, 0.14), ironCrossMat);
+    flTop.position.set(crossX, bTopY + 3.85, crossZ);
+    const flL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, 0.14), ironCrossMat);
+    flL.position.set(crossX - 0.78, bTopY + 3.02, crossZ);
+    const flR = flL.clone();
+    flR.position.x = crossX + 0.78;
+    scene.add(cPlinth, cShaft, cArm, flTop, flL, flR);
+    collision.addBox(crossX, bTopY + 1.4, crossZ, 0.9, 2.8, 0.9, 'solid');
+
+    // Plain wooden LEANING LADDER standing 1.5m out at its foot on the east flank and touching the summit rim!
+    boulderLadder = buildLadder(scene, collision, {
+      x: bX + 7.2, z: bZ, bottomY: 0, topY: bTopY,
+      normalX: 1, normalZ: 0, leanOffset: 1.5, topExitDist: 0.78, mat: matTimber
+    });
+  }
   const hunterSeat = buildRaisedHide(scene, collision, {
     cx: 8.5, cz: 42, deckY: 2.25, w: 4.0, d: 4.0, openSide: 'south',
     wallMat: matTimber, floorMat: matTimber, postMat: matDarkWood, jumpMat: matTimber
@@ -572,6 +656,7 @@ export function buildLevel3(scene, collision, particles) {
     { type: 'ammo',   pos: new THREE.Vector3(11.0, 0.9, 20),   label: 'STEEL QUARREL BOLTS' },
     { type: 'ammo',   pos: new THREE.Vector3(-4.0, 0.9, -40),  label: 'WATCHTOWER BOLT CRATE' },
     { type: 'health', pos: new THREE.Vector3(-23.0, 0.9, 4),   label: 'MOUNTAIN HERB TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(bX + 1.4, bTopY + 0.85, bZ - 1.2), label: 'SUMMIT CROSS TONIC (+35 HP)', onHighPerch: true },
     { type: 'health', pos: new THREE.Vector3(swissDen.insidePos.x, swissDen.floorY + 0.55, swissDen.insidePos.z), label: 'ROOT CELLAR CIDER (+35 HP)', inDen: true }
   ];
   for (const pd of pickupDefs) {
@@ -609,8 +694,8 @@ export function buildLevel3(scene, collision, particles) {
     { type: 'halberdier',  pos: new THREE.Vector3(-4, 0.22, -39) },    // Inside Watchtower
     { type: 'arquebusier', pos: new THREE.Vector3(-1, 0.22, -42) },    // Inside Watchtower
     { type: 'halberdier',  pos: new THREE.Vector3(-4, 0, -28) },
-    // Arquebusier marksman holding the 9m Rocky Hill summit!
-    { type: 'arquebusier', pos: rockyHill.summitPos.clone() },
+    // Arquebusier marksman holding the Great Natural Boulder summit!
+    { type: 'arquebusier', pos: boulderSummit.clone(), options: { holdPost: true } },
     { type: 'boss_swiss',  pos: new THREE.Vector3(-4, 0, -31), isBossWave: true }
   ];
 
@@ -626,6 +711,6 @@ export function buildLevel3(scene, collision, particles) {
     { name: 'Alp Hut', inside: new THREE.Vector3(-43.5, 0.2, -48), outside: new THREE.Vector3(-37, 0, -48) }
   ];
 
-  const specialSpots = { zigzagHill: rockyHill, raisedHide: hunterSeat, crawlDen: swissDen };
+  const specialSpots = { boulderLadder, boulderSummit, raisedHide: hunterSeat, crawlDen: swissDen };
   return { enemySpawns, pickups, animated, disposables, tellApple, enterableBuildings, specialSpots };
 }

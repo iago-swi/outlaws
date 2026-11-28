@@ -10,6 +10,7 @@ import {
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildLadder,
   buildRaisedHide,
   buildCrawlDen,
   addSolidBox,
@@ -334,22 +335,54 @@ export function buildLevel2(scene, collision, particles) {
   });
   addDesk(scene, collision, -54.5, hermit.floorY, 32, 1.4, 0.85, matDarkWood, 1);
 
-  // ---- 5. ENTERABLE FIVE-TIER PAGODA (Ground floor hollow with pillar, incense burner & scroll shelves!) ----
+  // ---- 5. ENTERABLE TWO-STOREY FIVE-TIER PAGODA (Ground floor + interior ladder to 2nd storey with window slits!) ----
   const pagoda = buildHollowRoom(scene, collision, {
-    cx: -26, cz: -38, w: 10.2, d: 10.2, h: 4.3, floorY: 0.3,
-    wallMat: matVermilion, floorMat: matTatami, roofMat: matRoof, roofStyle: 'flat',
+    cx: -26, cz: -38, w: 10.2, d: 10.2, h: 4.1, floorY: 0.3,
+    wallMat: matVermilion, floorMat: matTatami, roofMat: matRoof, roofStyle: 'none',
     south: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
     east: [{ type: 'door', offset: 0, width: 2.4, height: 2.9 }],
     west: [{ type: 'window', offset: 0, width: 2.0 }],
     stepMat: matStone,
     interiorLight: { color: 0xffbe6b, intensity: 2.0, distance: 16 }
   });
-  // Four upper tapered pagoda tiers + curved eaves + golden sōrin spire
-  for (let tier = 0; tier < 4; tier++) {
-    const tw = 8.4 - tier * 1.45;
-    const th = 2.6 - tier * 0.2;
-    const ty = pagoda.roofY + 0.6 + tier * 2.95;
-    const eave = new THREE.Mesh(new THREE.ConeGeometry(tw * 0.92, 1.45, 4), matRoof);
+  const pag2Y = pagoda.roofY + 0.24; // 4.64m
+  // Ground-floor eave overhang + 2nd-storey floor slabs leaving ladder hatch open on SE side (-23.8, -36.0)
+  const pagEave1 = new THREE.Mesh(new THREE.ConeGeometry(9.6, 1.35, 4), matRoof);
+  pagEave1.rotation.y = Math.PI / 4;
+  pagEave1.position.set(-26, pag2Y + 0.35, -38);
+  scene.add(pagEave1);
+  // 2nd storey walkable floor (north half + west half, leaving clean SE hatch for the interior ladder!)
+  const pFlN = new THREE.Mesh(new THREE.BoxGeometry(9.8, 0.22, 6.2), matTatami);
+  pFlN.position.set(-26, pag2Y - 0.11, -39.9);
+  const pFlW = new THREE.Mesh(new THREE.BoxGeometry(6.0, 0.22, 3.6), matTatami);
+  pFlW.position.set(-27.9, pag2Y - 0.11, -35.0);
+  scene.add(pFlN, pFlW);
+  collision.addWalkable(-26, -39.9, 9.8, 6.2, pag2Y, true);
+  collision.addWalkable(-27.9, -35.0, 6.0, 3.6, pag2Y, true);
+  // 2nd storey hollow room walls with archer/lookout window slits on all 4 sides!
+  const pagoda2 = buildHollowRoom(scene, collision, {
+    cx: -26, cz: -38, w: 8.6, d: 8.6, h: 3.2, floorY: pag2Y,
+    wallMat: matVermilion, floorMat: matTatami, roofMat: matRoof, roofStyle: 'flat',
+    north: [{ type: 'window', offset: 0, width: 1.4, sill: 0.9, top: 2.35 }],
+    south: [{ type: 'window', offset: 0, width: 1.4, sill: 0.9, top: 2.35 }],
+    west:  [{ type: 'window', offset: 0, width: 1.4, sill: 0.9, top: 2.35 }],
+    east:  [{ type: 'window', offset: 0, width: 1.4, sill: 0.9, top: 2.35 }],
+    interiorLight: { color: 0xffc878, intensity: 1.5, distance: 12 }
+  });
+  // Keep 2nd storey floor navIgnore so ground floor nav grid stays 100% open!
+  for (const w of collision.walkables) {
+    if (Math.abs(w.topY - pag2Y) < 0.05 && Math.abs((w.minX + w.maxX) * 0.5 + 26) < 6) w.navIgnore = true;
+  }
+  // Interior wooden ladder climbing from ground floor up through SE hatch into the 2nd storey!
+  const pagodaLadder = buildLadder(scene, collision, {
+    x: -23.6, z: -36.5, bottomY: pagoda.floorY, topY: pag2Y, normalX: 0, normalZ: 1, topExitDist: 0.72, mat: matDarkWood
+  });
+  // Three upper tapered pagoda tiers + curved eaves + golden sōrin spire above 2nd storey
+  for (let tier = 0; tier < 3; tier++) {
+    const tw = 7.4 - tier * 1.45;
+    const th = 2.4 - tier * 0.2;
+    const ty = pagoda2.roofY + 0.9 + tier * 2.85;
+    const eave = new THREE.Mesh(new THREE.ConeGeometry(tw * 0.94, 1.4, 4), matRoof);
     eave.rotation.y = Math.PI / 4;
     eave.position.set(-26, ty + th * 0.48, -38);
     const body = new THREE.Mesh(new THREE.BoxGeometry(tw * 0.72, th, tw * 0.72), matVermilion);
@@ -357,10 +390,10 @@ export function buildLevel2(scene, collision, particles) {
     scene.add(body, eave);
   }
   const pagSpire = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 3.6, 8), matGold);
-  pagSpire.position.set(-26, pagoda.roofY + 13.8, -38);
+  pagSpire.position.set(-26, pagoda2.roofY + 10.6, -38);
   scene.add(pagSpire);
-  // Pagoda interior: central shinbashira pillar, bronze incense burner & scroll rack
-  addSolidBox(scene, collision, -26, pagoda.floorY + 2.15, -38, 0.7, 4.3, 0.7, matDarkWood, 'wood');
+  // Pagoda interior: central shinbashira pillar rising through both storeys, incense altar & censer untouched!
+  addSolidBox(scene, collision, -26, pagoda.floorY + 3.8, -38, 0.68, 7.6, 0.68, matDarkWood, 'wood');
   addSolidBox(scene, collision, -28.8, pagoda.floorY + 0.55, -40.8, 1.4, 1.1, 1.2, matDarkWood, 'wood');
   const censer = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.24, 0.45, 10), matGold);
   censer.position.set(-28.8, pagoda.floorY + 1.32, -40.8);
@@ -711,6 +744,6 @@ export function buildLevel2(scene, collision, particles) {
     { name: 'Bamboo Hermitage', inside: new THREE.Vector3(-51.5, 0.22, 32), outside: new THREE.Vector3(-45.5, 0, 32) }
   ];
 
-  const specialSpots = { raisedHide: japanHide, crawlDen: japanDen };
+  const specialSpots = { raisedHide: japanHide, crawlDen: japanDen, pagodaLadder };
   return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }

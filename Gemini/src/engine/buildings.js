@@ -450,8 +450,111 @@ export function addPiano(scene, collision, x, y, z, rotY = 0) {
 }
 
 /**
- * Builds a row of rising jump crates/blocks (each jump ~1.1m, > STEP_MAX so enemies cannot step up,
- * while a jumping player clears every crate cleanly to reach a flat roof or raised hide).
+ * Builds a climbable vertical or leaning wooden/iron ladder (two side rails + rungs every ~0.34m)
+ * and registers it with CollisionWorld so facing it and pressing W climbs automatically with no extra key.
+ */
+export function buildLadder(scene, collision, {
+  x, z,
+  bottomY = 0,
+  topY = 3.5,
+  normalX = 0,
+  normalZ = 1,
+  width = 0.68,
+  leanOffset = 0,
+  topExitDist = 0.62,
+  mat
+}) {
+  const nLen = Math.hypot(normalX, normalZ) || 1;
+  const nx = normalX / nLen;
+  const nz = normalZ / nLen;
+  // Side tangent perpendicular to normal
+  const tx = -nz;
+  const tz = nx;
+
+  const bot = new THREE.Vector3(x, bottomY, z);
+  const top = new THREE.Vector3(x - nx * leanOffset, topY, z - nz * leanOffset);
+  const spanVec = new THREE.Vector3().subVectors(top, bot);
+  const ladderLen = spanVec.length();
+  const mid = new THREE.Vector3().addVectors(bot, top).multiplyScalar(0.5);
+  const upDir = spanVec.clone().normalize();
+  const railQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), upDir);
+
+  const lMat = mat || new THREE.MeshStandardMaterial({ color: 0x5c3c22, roughness: 0.85 });
+  const halfW = width * 0.5;
+  for (const s of [-1, 1]) {
+    const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.046, ladderLen + 0.14, 6), lMat);
+    rail.position.set(mid.x + tx * s * halfW, mid.y, mid.z + tz * s * halfW);
+    rail.quaternion.copy(railQuat);
+    rail.castShadow = true;
+    scene.add(rail);
+  }
+  const rungCount = Math.max(3, Math.floor(ladderLen / 0.34));
+  const sideQuat = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(tx, 0, tz));
+  for (let i = 1; i <= rungCount; i++) {
+    const frac = i / (rungCount + 0.5);
+    const rx = bot.x + spanVec.x * frac;
+    const ry = bot.y + spanVec.y * frac;
+    const rz = bot.z + spanVec.z * frac;
+    const rung = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, width, 6), lMat);
+    rung.position.set(rx, ry, rz);
+    rung.quaternion.copy(sideQuat);
+    rung.castShadow = true;
+    scene.add(rung);
+  }
+
+  return collision.addLadder({ x, z, bottomY, topY, normalX: nx, normalZ: nz, leanOffset, topExitDist, width });
+}
+
+/**
+ * Builds a fence/wall/hedge bay-by-bay so each bay follows the ground height on slopes
+ * and ends cleanly at the top rail (preventing projectiles from lodging in mid-air above a sloped fence).
+ */
+export function addSegmentedFence(scene, collision, {
+  x1, z1, x2, z2,
+  height = 1.15,
+  bayLen = 2.6,
+  mat,
+  tag = 'wood'
+}) {
+  const dx = x2 - x1;
+  const dz = z2 - z1;
+  const totalLen = Math.hypot(dx, dz);
+  if (totalLen < 0.2) return;
+  const bays = Math.max(1, Math.round(totalLen / bayLen));
+  const stepX = dx / bays;
+  const stepZ = dz / bays;
+  const segLen = totalLen / bays;
+  const rotY = Math.atan2(dx, dz);
+  const fMat = mat || new THREE.MeshStandardMaterial({ color: 0x5c3e26, roughness: 0.9 });
+
+  for (let i = 0; i <= bays; i++) {
+    const px = x1 + stepX * i;
+    const pz = z1 + stepZ * i;
+    const py = collision.heightFn(px, pz);
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.14, height + 0.12, 0.14), fMat);
+    post.position.set(px, py + height * 0.5, pz);
+    post.castShadow = true;
+    scene.add(post);
+  }
+
+  for (let i = 0; i < bays; i++) {
+    const bx = x1 + stepX * (i + 0.5);
+    const bz = z1 + stepZ * (i + 0.5);
+    const gStart = collision.heightFn(x1 + stepX * i, z1 + stepZ * i);
+    const gEnd = collision.heightFn(x1 + stepX * (i + 1), z1 + stepZ * (i + 1));
+    const gMid = (gStart + gEnd) * 0.5;
+    for (const frac of [0.42, 0.88]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.11, segLen + 0.04), fMat);
+      rail.position.set(bx, gMid + height * frac, bz);
+      rail.rotation.y = rotY;
+      scene.add(rail);
+    }
+    collision.addOrientedBox(bx, gMid + height * 0.5, bz, 0.22, height, segLen, rotY, tag);
+  }
+}
+
+/**
+ * Builds a row of rising jump crates/blocks (legacy helper kept for compatibility).
  */
 export function buildJumpCrateStack(scene, collision, {
   startX, startZ, dirX, dirZ,
@@ -475,8 +578,8 @@ export function buildJumpCrateStack(scene, collision, {
 }
 
 /**
- * Builds a Raised Hide (lookout deck on 4 posts with a waist-high wall on 3 sides,
- * reached by TWO jump blocks so enemies cannot climb up while a jumping player can snipe from cover).
+ * Builds a Raised Hide (lookout deck on 4 posts with a waist-high wall on 3 sides and a light roof,
+ * reached by a wooden ladder on the open side).
  */
 export function buildRaisedHide(scene, collision, {
   cx, cz,
@@ -491,9 +594,10 @@ export function buildRaisedHide(scene, collision, {
 }) {
   const gY = collision.heightFn(cx, cz);
   const fy = gY + deckY;
-  // 4 solid support corner posts
+  const roofH = 2.55;
+  // 4 solid support corner posts extending up to support a light shelter roof
   for (const [ox, oz] of [[-w * 0.44, -d * 0.44], [w * 0.44, -d * 0.44], [-w * 0.44, d * 0.44], [w * 0.44, d * 0.44]]) {
-    addSolidBox(scene, collision, cx + ox, gY + deckY * 0.5, cz + oz, 0.34, deckY, 0.34, postMat || wallMat, 'wood');
+    addSolidBox(scene, collision, cx + ox, gY + (deckY + roofH) * 0.5, cz + oz, 0.28, deckY + roofH, 0.28, postMat || wallMat, 'wood');
   }
   // Walkable raised deck floor slab
   const deck = new THREE.Mesh(new THREE.BoxGeometry(w, 0.24, d), floorMat || wallMat);
@@ -503,7 +607,14 @@ export function buildRaisedHide(scene, collision, {
   scene.add(deck);
   collision.addWalkable(cx, cz, w + 0.2, d + 0.2, fy, true);
 
-  // Waist-high parapet wall (~1.05m) on 3 sides (leaving openSide open for jump entry!)
+  // Light roof canopy over the raised hide
+  const canopy = new THREE.Mesh(new THREE.BoxGeometry(w + 0.5, 0.16, d + 0.5), postMat || wallMat);
+  canopy.position.set(cx, fy + roofH + 0.08, cz);
+  canopy.castShadow = true;
+  scene.add(canopy);
+  collision.addBox(cx, fy + roofH + 0.08, cz, w + 0.5, 0.16, d + 0.5, 'wood');
+
+  // Waist-high parapet wall (~1.05m) on 3 sides (leaving openSide open for ladder entry!)
   const wallH = 1.05;
   const thick = 0.24;
   if (openSide !== 'north') addSolidBox(scene, collision, cx, fy + wallH * 0.5, cz - d * 0.5 + thick * 0.5, w, wallH, thick, wallMat, 'wood');
@@ -511,25 +622,23 @@ export function buildRaisedHide(scene, collision, {
   if (openSide !== 'west')  addSolidBox(scene, collision, cx - w * 0.5 + thick * 0.5, fy + wallH * 0.5, cz, thick, wallH, d, wallMat, 'wood');
   if (openSide !== 'east')  addSolidBox(scene, collision, cx + w * 0.5 - thick * 0.5, fy + wallH * 0.5, cz, thick, wallH, d, wallMat, 'wood');
 
-  // Two rising jump blocks (1.08m and 2.12m) outside the open side!
-  let dx = 0, dz = 0, bx = cx, bz = cz;
-  if (openSide === 'south') { dz = -1; bz = cz + d * 0.5 + 2.85; }
-  else if (openSide === 'north') { dz = 1; bz = cz - d * 0.5 - 2.85; }
-  else if (openSide === 'east') { dx = -1; bx = cx + w * 0.5 + 2.85; }
-  else { dx = 1; bx = cx - w * 0.5 - 2.85; }
+  // Wooden ladder flush against the open side of the deck (replacing old jump blocks!)
+  let nx = 0, nz = 0, lx = cx, lz = cz;
+  if (openSide === 'south') { nz = 1; lz = cz + d * 0.5 + 0.08; }
+  else if (openSide === 'north') { nz = -1; lz = cz - d * 0.5 - 0.08; }
+  else if (openSide === 'east') { nx = 1; lx = cx + w * 0.5 + 0.08; }
+  else { nx = -1; lx = cx - w * 0.5 - 0.08; }
 
-  const jumpBlocks = buildJumpCrateStack(scene, collision, {
-    startX: bx, startZ: bz, dirX: dx, dirZ: dz,
-    heights: [1.08, 2.12],
-    size: 1.6,
-    spacing: 1.85,
-    mat: jumpMat || wallMat
+  const ladder = buildLadder(scene, collision, {
+    x: lx, z: lz, bottomY: gY, topY: fy,
+    normalX: nx, normalZ: nz,
+    mat: jumpMat || postMat || wallMat
   });
 
   return {
     deckY: fy,
     deckPos: new THREE.Vector3(cx, fy, cz),
-    jumpBlocks
+    ladder
   };
 }
 
@@ -734,4 +843,46 @@ export function buildZigzagHill(scene, collision, {
     basePos: waypoints[0],
     waypoints
   };
+}
+
+/**
+ * Builds a solid walkable flight of stone/timber steps along the Z axis (zStart -> zEnd, yStart -> yEnd).
+ */
+export function addStairFlight(scene, collision, opts) {
+  const {
+    x,
+    zStart,
+    zEnd,
+    yStart = 0,
+    yEnd = 3.0,
+    width = 2.4,
+    steps = 10,
+    mat,
+    navIgnore = false
+  } = opts;
+  const totalZ = zEnd - zStart;
+  const tread = Math.abs(totalZ) / steps;
+  const rise = (yEnd - yStart) / steps;
+  for (let i = 0; i < steps; i++) {
+    const sy = yStart + (i + 1) * rise;
+    const sz = zStart + ((i + 0.5) / steps) * totalZ;
+    const stepH = Math.max(0.24, sy - yStart);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(width, stepH, tread + 0.08), mat);
+    m.position.set(x, yStart + stepH * 0.5, sz);
+    m.receiveShadow = true;
+    scene.add(m);
+    collision.addWalkable(x, sz, width + 0.15, tread + 0.35, sy, navIgnore);
+  }
+}
+
+/**
+ * Places a simple solid timber table and two benches inside a room.
+ */
+export function addTableAndChairs(scene, collision, cx, floorY, cz, mat) {
+  addSolidBox(scene, collision, cx, floorY + 0.42, cz, 1.5, 0.84, 0.85, mat, 'wood');
+  for (const dz of [-0.72, 0.72]) {
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.45, 0.32), mat);
+    bench.position.set(cx, floorY + 0.225, cz + dz);
+    scene.add(bench);
+  }
 }

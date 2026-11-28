@@ -4,8 +4,10 @@ const STEP_MAX = 0.52; // Steps up to 0.5m are climbable; anything higher is a w
 
 export class CollisionWorld {
   constructor(bounds = { minX: -90, maxX: 90, minZ: -90, maxZ: 90 }) {
-    this.boxes = [];      // Solid blocking AABBs { minX, maxX, minY, maxY, minZ, maxZ, tag }
-    this.walkables = [];  // Elevated surfaces { minX, maxX, minZ, maxZ, topY }
+    this.boxes = [];         // Solid blocking AABBs { minX, maxX, minY, maxY, minZ, maxZ, tag }
+    this.orientedBoxes = []; // Rotated solid boxes { cx, cy, cz, hx, hy, hz, cos, sin, tag } (e.g. animals)
+    this.walkables = [];     // Elevated surfaces { minX, maxX, minZ, maxZ, topY, navIgnore }
+    this.ladders = [];       // Climbable vertical or leaning ladders
     this.bounds = bounds;
     this.heightFn = () => 0;
     this.waterLevel = null; // Optional deep-water surface Y (terrain below waterLevel - 0.35 blocks walkers unless a walkable bridge/jetty/deck spans it)
@@ -36,6 +38,50 @@ export class CollisionWorld {
 
   addBoxMinMax(minX, minY, minZ, maxX, maxY, maxZ, tag = 'solid') {
     this.boxes.push({ minX, minY, minZ, maxX, maxY, maxZ, tag });
+  }
+
+  /**
+   * Registers a yaw-rotated solid box (tight fit for horses, yaks, carts, etc.).
+   */
+  addOrientedBox(cx, cy, cz, sx, sy, sz, rotY = 0, tag = 'solid') {
+    this.orientedBoxes.push({
+      cx, cy, cz,
+      hx: sx * 0.5, hy: sy * 0.5, hz: sz * 0.5,
+      minY: cy - sy * 0.5, maxY: cy + sy * 0.5,
+      cos: Math.cos(-rotY),
+      sin: Math.sin(-rotY),
+      tag
+    });
+  }
+
+  /**
+   * Registers a vertical or leaning climbable ladder.
+   * (normalX, normalZ) points outward from the wall toward the climber.
+   */
+  addLadder({ x, z, bottomY = 0, topY = 3.5, normalX = 0, normalZ = 1, leanOffset = 0, topExitDist = 0.62, width = 0.72 }) {
+    const len = Math.hypot(normalX, normalZ) || 1;
+    const nx = normalX / len;
+    const nz = normalZ / len;
+    const topX = x - nx * leanOffset;
+    const topZ = z - nz * leanOffset;
+    const lad = { x, z, topX, topZ, bottomY, topY, normalX: nx, normalZ: nz, leanOffset, topExitDist, width };
+    this.ladders.push(lad);
+    return lad;
+  }
+
+  /**
+   * Returns true if a fighter at (x, y, z) is submerged in deep water without a walkable deck/bridge supporting them.
+   */
+  isSubmergedInWater(x, y, z) {
+    if (this.hasWalkableSurface(x, z, y, 0.05)) return false;
+    if (this.waterLevel !== null && y < this.waterLevel - 0.35) return true;
+    for (const b of this.boxes) {
+      if (b.tag !== 'water') continue;
+      if (x >= b.minX && x <= b.maxX && z >= b.minZ && z <= b.maxZ && y < b.maxY - 0.35) {
+        return true;
+      }
+    }
+    return false;
   }
 
   addWalkable(cx, cz, sx, sz, topY, navIgnore = false) {
@@ -122,8 +168,10 @@ export class CollisionWorld {
         if (feetY + height <= b.minY + 0.05) continue;
         const closestX = Math.max(b.minX, Math.min(pos.x, b.maxX));
         const closestZ = Math.max(b.minZ, Math.min(pos.z, b.maxZ));
-        // Ignore water boxes when standing on OR stepping onto a bridge, jetty, gangplank, or ship deck at the contact point
+        // Ignore water boxes when standing on OR stepping onto a bridge, jetty, gangplank, or ship deck at the contact point,
+        // or if the fighter has already fallen below water surface (handled by the ~1s deep-water rescue!)
         if (b.tag === 'water' && (
+          feetY < -0.15 ||
           onElevatedSurface ||
           this.hasWalkableSurface(pos.x, pos.z, feetY, b.minY + 0.05) ||
           this.hasWalkableSurface(closestX, closestZ, feetY, b.minY + 0.05)
@@ -152,6 +200,36 @@ export class CollisionWorld {
             else if (m === penFront) pos.z = b.minZ - radius;
             else pos.z = b.maxZ + radius;
           }
+        }
+      }
+
+      // Oriented solid boxes (tight body-aligned animals, etc.)
+      for (const ob of this.orientedBoxes) {
+        if (feetY + height <= ob.minY + 0.05) continue;
+        if (ob.maxY <= feetY + STEP_MAX) continue;
+        if (feetY >= ob.maxY - 0.05) continue;
+        const rx = pos.x - ob.cx;
+        const rz = pos.z - ob.cz;
+        const lx = rx * ob.cos - rz * ob.sin;
+        const lz = rx * ob.sin + rz * ob.cos;
+        const cx = Math.max(-ob.hx, Math.min(lx, ob.hx));
+        const cz = Math.max(-ob.hz, Math.min(lz, ob.hz));
+        const dx = lx - cx;
+        const dz = lz - cz;
+        const distSq = dx * dx + dz * dz;
+        if (distSq < radius * radius) {
+          let px = 0, pz = 0;
+          if (distSq > 0.000001) {
+            const dist = Math.sqrt(distSq);
+            const push = radius - dist;
+            px = (dx / dist) * push;
+            pz = (dz / dist) * push;
+          } else {
+            px = (lx >= 0 ? 1 : -1) * (ob.hx - Math.abs(lx) + radius);
+          }
+          // Rotate push back to world space (+rotY => cos, -sin)
+          pos.x += px * ob.cos + pz * ob.sin;
+          pos.z += -px * ob.sin + pz * ob.cos;
         }
       }
     }
@@ -215,6 +293,18 @@ export class CollisionWorld {
       const dz = z - cz;
       if (dx * dx + dz * dz < radius * radius) return false;
     }
+    for (const ob of this.orientedBoxes) {
+      if (ob.maxY <= checkMinY || ob.minY >= checkMaxY) continue;
+      const rx = x - ob.cx;
+      const rz = z - ob.cz;
+      const lx = rx * ob.cos - rz * ob.sin;
+      const lz = rx * ob.sin + rz * ob.cos;
+      const cx = Math.max(-ob.hx, Math.min(lx, ob.hx));
+      const cz = Math.max(-ob.hz, Math.min(lz, ob.hz));
+      const dx = lx - cx;
+      const dz = lz - cz;
+      if (dx * dx + dz * dz < radius * radius) return false;
+    }
     return true;
   }
 
@@ -258,6 +348,20 @@ export class CollisionWorld {
       const dz = z - cz;
       if (dx * dx + dz * dz < radius * radius) return false;
     }
+    for (const ob of this.orientedBoxes) {
+      if (feetY + height <= ob.minY + 0.05) continue;
+      if (ob.maxY <= feetY + STEP_MAX) continue;
+      if (feetY >= ob.maxY - 0.05) continue;
+      const rx = x - ob.cx;
+      const rz = z - ob.cz;
+      const lx = rx * ob.cos - rz * ob.sin;
+      const lz = rx * ob.sin + rz * ob.cos;
+      const cx = Math.max(-ob.hx, Math.min(lx, ob.hx));
+      const cz = Math.max(-ob.hz, Math.min(lz, ob.hz));
+      const dx = lx - cx;
+      const dz = lz - cz;
+      if (dx * dx + dz * dz < radius * radius) return false;
+    }
     return true;
   }
 
@@ -299,6 +403,36 @@ export class CollisionWorld {
         if (tmin === tminX) hitNormal.set(dir.x > 0 ? -1 : 1, 0, 0);
         else if (tmin === tminY) hitNormal.set(0, dir.y > 0 ? -1 : 1, 0);
         else hitNormal.set(0, 0, dir.z > 0 ? -1 : 1);
+      }
+    }
+
+    // Oriented solid boxes (tight raycast for rotated animals!)
+    for (const ob of this.orientedBoxes) {
+      const rx = origin.x - ob.cx;
+      const rz = origin.z - ob.cz;
+      const ox = rx * ob.cos - rz * ob.sin;
+      const oz = rx * ob.sin + rz * ob.cos;
+      const dx = dir.x * ob.cos - dir.z * ob.sin;
+      const dz = dir.x * ob.sin + dir.z * ob.cos;
+      const ix = dx !== 0 ? 1 / dx : 1e9;
+      const iz = dz !== 0 ? 1 / dz : 1e9;
+      const t1 = (-ob.hx - ox) * ix, t2 = (ob.hx - ox) * ix;
+      const t3 = (ob.minY - origin.y) * invY, t4 = (ob.maxY - origin.y) * invY;
+      const t5 = (-ob.hz - oz) * iz, t6 = (ob.hz - oz) * iz;
+      const tminX = Math.min(t1, t2), tmaxX = Math.max(t1, t2);
+      const tminY = Math.min(t3, t4), tmaxY = Math.max(t3, t4);
+      const tminZ = Math.min(t5, t6), tmaxZ = Math.max(t5, t6);
+      const tmin = Math.max(tminX, tminY, tminZ);
+      const tmax = Math.min(tmaxX, tmaxY, tmaxZ);
+      if (tmax >= 0 && tmin <= tmax && tmin > 0.02 && tmin < closest) {
+        closest = tmin;
+        hitBox = ob;
+        if (tmin === tminY) hitNormal.set(0, dir.y > 0 ? -1 : 1, 0);
+        else {
+          const lnx = tmin === tminX ? (dx > 0 ? -1 : 1) : 0;
+          const lnz = tmin === tminZ ? (dz > 0 ? -1 : 1) : 0;
+          hitNormal.set(lnx * ob.cos + lnz * ob.sin, 0, -lnx * ob.sin + lnz * ob.cos);
+        }
       }
     }
 

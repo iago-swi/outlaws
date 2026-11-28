@@ -8,7 +8,7 @@ import { CollisionWorld } from './engine/collision.js';
 import { ParticleSystem } from './engine/particles.js';
 import { SoundEngine } from './engine/audio.js';
 import { DuelController } from './engine/duelController.js';
-import { ERA_WEAPONS, buildWeaponViewmodel } from './entities/weapons.js';
+import { ERA_WEAPONS, buildWeaponViewmodel, buildEightPointShuriken } from './entities/weapons.js';
 import { ERA_HEROES, getHeroById, buildHeroFigure } from './entities/heroes.js';
 import { Enemy } from './entities/enemies.js';
 import { LEVEL1_META, buildLevel1 } from './levels/level1_west.js';
@@ -19,6 +19,7 @@ import { LEVEL5_META, buildLevel5 } from './levels/level5_scandinavia.js';
 import { LEVEL6_META, buildLevel6 } from './levels/level6_normandy.js';
 import { LEVEL7_META, buildLevel7 } from './levels/level7_soviet.js';
 import { LEVEL8_META, buildLevel8 } from './levels/level8_tibet.js';
+import { LEVEL9_META, buildLevel9 } from './levels/level9_aztec.js';
 
 const LEVELS = [
   { meta: LEVEL1_META, builder: buildLevel1 },
@@ -28,7 +29,8 @@ const LEVELS = [
   { meta: LEVEL5_META, builder: buildLevel5 },
   { meta: LEVEL6_META, builder: buildLevel6 },
   { meta: LEVEL7_META, builder: buildLevel7 },
-  { meta: LEVEL8_META, builder: buildLevel8 }
+  { meta: LEVEL8_META, builder: buildLevel8 },
+  { meta: LEVEL9_META, builder: buildLevel9 }
 ];
 
 const DIFFICULTY = {
@@ -96,6 +98,13 @@ class OutlawsGame {
     this.state = 'title'; // 'title' | 'intro' | 'playing' | 'paused' | 'ended'
     this.levelIndex = 0;
     this.difficultyKey = 'bad';
+    // Single-player enemy count preference (5..30, default 15, remembered across chapters, retries & visits)
+    let savedEnemyCount = 15;
+    try {
+      const raw = parseInt(localStorage.getItem('eight_horizons_enemy_count'), 10);
+      if ([5, 10, 15, 20, 25, 30].includes(raw)) savedEnemyCount = raw;
+    } catch {}
+    this.enemyCountPref = savedEnemyCount;
     // Remember chosen hero per level (preserved on retry after death!)
     this.selectedHeroIds = {
       west: ERA_HEROES.west[0].id,
@@ -105,7 +114,8 @@ class OutlawsGame {
       scandinavia: ERA_HEROES.scandinavia[0].id,
       normandy: ERA_HEROES.normandy[0].id,
       soviet: ERA_HEROES.soviet[0].id,
-      tibet: ERA_HEROES.tibet[0].id
+      tibet: ERA_HEROES.tibet[0].id,
+      aztec: ERA_HEROES.aztec[0].id
     };
     this.activeHero = ERA_HEROES.west[0];
     this.timeSinceLastDamage = 999;
@@ -129,6 +139,9 @@ class OutlawsGame {
     this.pickups = [];
     this.enemyProjectiles = [];
     this.playerThrowables = [];
+    this.playerProjectiles = [];
+    this.stuckProjectiles = [];
+    this.pendingFlailSwing = null;
     this.tellApple = null;
 
     // Player State
@@ -142,6 +155,12 @@ class OutlawsGame {
       stamina: 100,
       grounded: true,
       crouched: false,
+      sneaking: false,
+      onLadder: null,
+      ladderRungDist: 0,
+      lastDryPos: new THREE.Vector3(),
+      submergedTimer: 0,
+      stepTimer: 0,
       eyeHeight: 1.68,
       bobPhase: 0
     };
@@ -176,7 +195,7 @@ class OutlawsGame {
     // Support URL params / hash (?duel=CODE, ?level=, #west..#tibet); default to a random level behind the title!
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4, normandy: 5, soviet: 6, tibet: 7 };
+    const mapIdx = { west: 0, japan: 1, swiss: 2, greece: 3, scandinavia: 4, normandy: 5, soviet: 6, tibet: 7, aztec: 8 };
     let initialLevel = Math.floor(Math.random() * LEVELS.length);
     if (hash in mapIdx) initialLevel = mapIdx[hash];
     else if (params.has('level')) {
@@ -233,6 +252,7 @@ class OutlawsGame {
       heroName: document.getElementById('hud-hero-name'),
       heroPerk: document.getElementById('hud-hero-perk'),
       crouchBadge: document.getElementById('hud-crouch-badge'),
+      sneakBadge: document.getElementById('hud-sneak-badge'),
       hpText: document.getElementById('hud-hp-text'),
       hpBar: document.getElementById('hud-hp-bar'),
       staminaBar: document.getElementById('hud-stamina-bar'),
@@ -247,6 +267,7 @@ class OutlawsGame {
       comicTitle: document.getElementById('comic-title'),
       comicQuote: document.getElementById('comic-quote'),
       heroHistoricalNote: document.getElementById('hero-historical-note'),
+      heroEnemiesSelect: document.getElementById('hero-enemies-select'),
       heroCardsList: document.getElementById('hero-cards-list'),
       heroPreviewName: document.getElementById('hero-preview-name'),
       heroPreviewBio: document.getElementById('hero-preview-bio'),
@@ -269,6 +290,14 @@ class OutlawsGame {
       this.camera.updateProjectionMatrix();
       this.renderer.setSize(window.innerWidth, window.innerHeight);
       this.composer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Safeguard against accidentally closing the tab/browser while a chapter or online game is active
+    window.addEventListener('beforeunload', (e) => {
+      if (this.state === 'playing' || this.state === 'paused' || (this.duel && this.duel.active)) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
     });
 
     // Level Cards on Title Screen (instantly live-preview the 3D world!)
@@ -297,6 +326,17 @@ class OutlawsGame {
     });
 
     // Start Mission from Hero Selection -> Pointer Lock & Play!
+    if (this.dom.heroEnemiesSelect) {
+      this.dom.heroEnemiesSelect.value = String(this.enemyCountPref);
+      this.dom.heroEnemiesSelect.addEventListener('change', (e) => {
+        const val = parseInt(e.target.value, 10);
+        if ([5, 10, 15, 20, 25, 30].includes(val)) {
+          this.enemyCountPref = val;
+          try { localStorage.setItem('eight_horizons_enemy_count', String(val)); } catch {}
+        }
+      });
+    }
+
     document.getElementById('btn-start-mission').addEventListener('click', () => {
       this.startMission();
     });
@@ -376,12 +416,11 @@ class OutlawsGame {
 
       if (this.state !== 'playing') return;
 
-      // Crouching: C toggles crouch; CapsLock syncs to its real hardware on/off state!
+      // Crouching: C ONLY toggles crouch; X toggles sneaking; Space stands up from crouch!
       if (e.code === 'KeyC' && !e.repeat) {
         this.setCrouch(!this.player.crouched);
-      } else if (e.code === 'CapsLock') {
-        const capsOn = typeof e.getModifierState === 'function' ? e.getModifierState('CapsLock') : !this.player.crouched;
-        this.setCrouch(capsOn);
+      } else if (e.code === 'KeyX' && !e.repeat) {
+        this.setSneak(!this.player.sneaking);
       } else if (e.code === 'Space' && this.player.crouched) {
         // Space stands the player up when crouched (if there is headroom!)
         this.setCrouch(false);
@@ -405,9 +444,6 @@ class OutlawsGame {
 
     window.addEventListener('keyup', (e) => {
       this.keys[e.code] = false;
-      if (e.code === 'CapsLock' && this.state === 'playing' && typeof e.getModifierState === 'function') {
-        this.setCrouch(e.getModifierState('CapsLock'));
-      }
     });
 
     // Mouse Wheel Weapon Switch
@@ -479,6 +515,9 @@ class OutlawsGame {
     this.pickups = [];
     this.enemyProjectiles = [];
     this.playerThrowables = [];
+    this.playerProjectiles = [];
+    this.stuckProjectiles = [];
+    this.pendingFlailSwing = null;
     this.tellApple = null;
     this.setScope(false);
   }
@@ -492,6 +531,49 @@ class OutlawsGame {
     this.usedPracticeThisRun = false;
     document.body.classList.remove('pax-active');
     if (this.dom.paxBadge) this.dom.paxBadge.classList.add('hidden');
+  }
+
+  _selectChapterEnemies(allSpawns, desiredTotal) {
+    const cap = Math.max(1, Math.min(30, parseInt(desiredTotal, 10) || 15));
+    const bosses = allSpawns.filter((s) => s.isBossWave);
+    const regulars = allSpawns.filter((s) => !s.isBossWave);
+    const maxRegulars = Math.max(0, cap - bosses.length);
+
+    const kept = regulars.slice();
+    while (kept.length > maxRegulars && kept.length > 0) {
+      const counts = new Map();
+      for (const sp of kept) {
+        counts.set(sp.type, (counts.get(sp.type) || 0) + 1);
+      }
+      // Keep kinds with <= 2 remaining as late as possible; otherwise thin the commonest kind first
+      let pool = [...counts.entries()].filter(([, c]) => c > 2);
+      if (pool.length === 0) pool = [...counts.entries()].filter(([, c]) => c > 1);
+      if (pool.length === 0) pool = [...counts.entries()];
+      const maxCount = Math.max(...pool.map(([, c]) => c));
+      const commonest = new Set(pool.filter(([, c]) => c === maxCount).map(([t]) => t));
+
+      // Drop whichever enemy of the commonest kind stands closest to another comrade
+      let dropIdx = -1;
+      let minDistSq = Infinity;
+      for (let i = 0; i < kept.length; i++) {
+        if (!commonest.has(kept[i].type)) continue;
+        let nearestSq = Infinity;
+        for (let j = 0; j < kept.length; j++) {
+          if (i === j) continue;
+          const dx = kept[i].pos.x - kept[j].pos.x;
+          const dz = kept[i].pos.z - kept[j].pos.z;
+          const dSq = dx * dx + dz * dz;
+          if (dSq < nearestSq) nearestSq = dSq;
+        }
+        if (nearestSq < minDistSq) {
+          minDistSq = nearestSq;
+          dropIdx = i;
+        }
+      }
+      if (dropIdx < 0) dropIdx = kept.length - 1;
+      kept.splice(dropIdx, 1);
+    }
+    return [...kept, ...bosses];
   }
 
   loadLevel(index, isPreviewOnly = false, duelOpts = null) {
@@ -541,8 +623,15 @@ class OutlawsGame {
     this.player.stamina = 100;
     this.player.grounded = true;
     this.player.crouched = false;
+    this.player.sneaking = false;
+    this.player.onLadder = null;
+    this.player.ladderRungDist = 0;
+    this.player.lastDryPos.copy(meta.spawnPos);
+    this.player.submergedTimer = 0;
+    this.player.stepTimer = 0;
     this.player.eyeHeight = 1.68;
     if (this.dom.crouchBadge) this.dom.crouchBadge.classList.add('hidden');
+    if (this.dom.sneakBadge) this.dom.sneakBadge.classList.add('hidden');
     this.timeSinceLastDamage = 999;
 
     this.stats = { score: 0, shots: 0, hits: 0, headshots: 0, kills: 0 };
@@ -564,7 +653,8 @@ class OutlawsGame {
         }
       }
     } else {
-      for (const sp of built.enemySpawns) {
+      const selectedSpawns = this._selectChapterEnemies(built.enemySpawns, this.enemyCountPref);
+      for (const sp of selectedSpawns) {
         if (sp.isBossWave) {
           this.bossSpawnPending = sp;
         } else {
@@ -679,6 +769,9 @@ class OutlawsGame {
 
     this.dom.comicAct.textContent = `${meta.act} — ${meta.subtitle}`;
     this.dom.comicTitle.textContent = meta.title;
+    if (this.dom.heroEnemiesSelect) {
+      this.dom.heroEnemiesSelect.value = String(this.enemyCountPref);
+    }
     this.dom.comicQuote.textContent = meta.quote;
     if (this.dom.heroHistoricalNote) {
       if (meta.historicalNote) {
@@ -809,6 +902,7 @@ class OutlawsGame {
     if (idx === this.currentWeaponIdx || idx < 0 || idx >= this.weapons.length) return;
     this.setScope(false);
     this.reloading = false;
+    this.pendingFlailSwing = null;
     this.weaponMeshes[this.currentWeaponIdx].visible = false;
     this.currentWeaponIdx = idx;
     this.weaponMeshes[idx].visible = true;
@@ -867,8 +961,23 @@ class OutlawsGame {
       return;
     }
 
-    // Melee Weapon (Katana / Swiss Halberd / Sword / Knife)
+    // Melee Weapon (Katana / Swiss Halberd / Iron Flail / Sword / Knife)
     if (w.kind === 'melee') {
+      if (w.meleeStyle === 'flail') {
+        this.fireTimer = w.fireRate;
+        this.pendingFlailSwing = {
+          elapsed: 0,
+          duration: w.fireRate,
+          hitAt: w.fireRate * (w.hitPhase || 0.6),
+          hitDone: false,
+          damage: w.damage,
+          range: w.range,
+          arcCos: w.arcCos !== undefined ? w.arcCos : 0.208,
+          slashColor: w.slashColor || 0xb8d4e8
+        };
+        return;
+      }
+
       const heavy = isAlt && w.altMode === 'heavy_slash';
       this.fireTimer = heavy ? w.fireRate * 1.45 : w.fireRate;
       this.slashAnim = 1.0;
@@ -885,6 +994,7 @@ class OutlawsGame {
 
       const dmg = heavy ? w.damage * 1.65 : w.damage;
       const range = heavy ? w.range + 1.0 : w.range;
+      const arcDot = w.arcCos !== undefined ? w.arcCos : 0.35;
       let hitAny = false;
 
       // Duel melee vs Remote Opponent (respecting wall LOS!)
@@ -894,7 +1004,7 @@ class OutlawsGame {
         const toR = new THREE.Vector3().subVectors(targetChest, origin);
         if (toR.length() <= range + rf.radius * 0.6) {
           toR.normalize();
-          if (toR.dot(forward) > 0.35 && this.collision.hasLineOfSight(origin, targetChest)) {
+          if (toR.dot(forward) > arcDot && this.collision.hasLineOfSight(origin, targetChest)) {
             hitAny = true;
             this.duel.onLocalHitOpponent(dmg, heavy, targetChest);
           }
@@ -912,7 +1022,7 @@ class OutlawsGame {
         const dist = toE.length();
         if (dist <= range) {
           toE.normalize();
-          if (toE.dot(forward) > 0.35 && this.collision.hasLineOfSight(origin, targetChest)) {
+          if (toE.dot(forward) > arcDot && this.collision.hasLineOfSight(origin, targetChest)) {
             hitAny = true;
             if (this.duel && this.duel.isPlaying() && this.duel.role === 'guest') {
               this.duel.onGuestHitAI(enemy.duelIndex, dmg, heavy, targetChest);
@@ -923,6 +1033,88 @@ class OutlawsGame {
         }
       }
       if (hitAny) this._flashHitmarker(heavy);
+      return;
+    }
+
+    // Physical Thrown Projectiles (3-Star Shuriken Fan, Poisoned Darts, Heavy Stones)
+    if (w.kind === 'projectile') {
+      w.mag--;
+      this.fireTimer = w.fireRate;
+      this.recoilOffset = w.recoil;
+      this.stats.shots++;
+      this.sound.playShot(w.sound);
+
+      const origin = this.camera.getWorldPosition(new THREE.Vector3());
+      const baseDir = new THREE.Vector3();
+      this.camera.getWorldDirection(baseDir);
+      const upAxis = new THREE.Vector3(0, 1, 0);
+      const right = new THREE.Vector3().crossVectors(baseDir, upAxis).normalize();
+      const count = w.fanCount || 1;
+      const halfAngle = w.fanHalfAngle || 0;
+      const speed = w.projSpeed || 52;
+      const grav = w.projGravity !== undefined ? w.projGravity : 2.8;
+
+      for (let k = 0; k < count; k++) {
+        const frac = count === 1 ? 0 : (k / (count - 1)) * 2 - 1;
+        const yawOff = frac * halfAngle;
+        const dir = baseDir.clone().applyAxisAngle(upAxis, yawOff).normalize();
+        const startPos = origin.clone()
+          .addScaledVector(dir, 0.72)
+          .addScaledVector(right, 0.14 + frac * 0.06)
+          .add(new THREE.Vector3(0, -0.08, 0));
+
+        let mesh;
+        if (w.projType === 'shuriken') {
+          mesh = buildEightPointShuriken(1.18);
+        } else if (w.projType === 'poison_dart') {
+          mesh = new THREE.Group();
+          const shaft = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.012, 0.012, 0.65, 6),
+            new THREE.MeshStandardMaterial({ color: 0x4a2c16, roughness: 0.85 })
+          );
+          shaft.rotation.x = Math.PI / 2;
+          const tip = new THREE.Mesh(
+            new THREE.ConeGeometry(0.028, 0.14, 4),
+            new THREE.MeshBasicMaterial({ color: 0x35f078 })
+          );
+          tip.rotation.x = Math.PI / 2;
+          tip.position.z = 0.36;
+          mesh.add(shaft, tip);
+          mesh.lookAt(startPos.clone().add(dir));
+        } else if (w.projType === 'heavy_stone') {
+          mesh = new THREE.Mesh(
+            new THREE.DodecahedronGeometry(0.15, 0),
+            new THREE.MeshStandardMaterial({ color: 0x7f786d, roughness: 0.92 })
+          );
+        } else {
+          mesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.11, 8, 8),
+            new THREE.MeshStandardMaterial({ color: w.projColor || 0x9aa3ad, roughness: 0.7 })
+          );
+        }
+        mesh.position.copy(startPos);
+        this.worldGroup.add(mesh);
+
+        this.playerProjectiles.push({
+          mesh,
+          vel: dir.clone().multiplyScalar(speed),
+          gravity: grav,
+          damage: w.damage,
+          headMult: w.headMult || 2.0,
+          projType: w.projType || 'shuriken',
+          sticks: w.sticks !== undefined ? w.sticks : (w.projType === 'shuriken' || w.projType === 'poison_dart'),
+          spinRate: w.projType === 'shuriken' ? 28 : (w.projType === 'heavy_stone' ? 9 : 0),
+          poison: w.poison || null,
+          life: 4.5
+        });
+
+        if (k === Math.floor(count / 2) && this.duel && this.duel.isPlaying()) {
+          this.duel.onLocalShot(startPos, startPos.clone().addScaledVector(dir, 26), w.sound, w.tracerColor || 0xd0ecff);
+        }
+      }
+
+      if (w.mag === 0 && w.curReserve > 0) this.startReload();
+      this._updateHud();
       return;
     }
 
@@ -1254,11 +1446,11 @@ class OutlawsGame {
 
     if (victory) {
       const isFinal = this.levelIndex === LEVELS.length - 1;
-      const baseEyebrow = isFinal ? 'ALL EIGHT HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
+      const baseEyebrow = isFinal ? 'ALL NINE HORIZONS CONQUERED' : `${meta.act} COMPLETE`;
       this.dom.endEyebrow.textContent = wasPractice ? `${baseEyebrow} • PRACTICE MODE` : baseEyebrow;
-      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF EIGHT ERAS' : 'HORIZON CLEARED';
+      this.dom.endTitle.textContent = isFinal ? 'LEGEND OF NINE ERAS' : 'HORIZON CLEARED';
       this.dom.endSummary.textContent = isFinal
-        ? 'From Red Gulch and Kyoto Mist through the Alps, Aegean, Fjord, Normandy, and Stalnogorsk to the ridge monastery of Tibet — your legend endures across eight eras!'
+        ? 'From Red Gulch and Kyoto Mist through the Alps, Aegean, Fjord, Normandy, Stalnogorsk, and Tibet to Lake Texcoco — your legend endures across nine eras!'
         : `${meta.title} is free. Ready your gear for the next horizon!`;
       this.dom.btnNextLevel.classList.remove('hidden');
       this.dom.btnNextLevel.textContent = isFinal ? 'REPLAY FROM ACT I ▶' : `PROCEED TO ACT ${this.levelIndex + 2} ▶`;
@@ -1371,6 +1563,15 @@ class OutlawsGame {
     return true;
   }
 
+  setSneak(wantSneak) {
+    const want = !!wantSneak;
+    this.player.sneaking = want;
+    if (this.dom.sneakBadge) {
+      this.dom.sneakBadge.classList.toggle('hidden', !want);
+    }
+    return true;
+  }
+
   // ---------------- Main Frame Update ----------------
   _updatePlayer(dt) {
     // Smooth FOV transition for Sniper Scope Zoom!
@@ -1381,7 +1582,7 @@ class OutlawsGame {
       this.camera.updateProjectionMatrix();
     }
 
-    // Horizontal Movement (with Hero movement speed modifier & Crouching: half speed, no sprint!)
+    // Horizontal Movement (with Hero movement speed modifier, Crouching & Sneaking!)
     const mods = (this.activeHero && this.activeHero.mods) || {};
     const speedMult = mods.moveSpeedMult || 1;
     const moveFwd = (this.keys['KeyW'] || this.keys['ArrowUp'] ? 1 : 0) - (this.keys['KeyS'] || this.keys['ArrowDown'] ? 1 : 0);
@@ -1389,8 +1590,14 @@ class OutlawsGame {
 
     const crouched = !!this.player.crouched;
     const wantsSprint = !crouched && (this.keys['ShiftLeft'] || this.keys['ShiftRight']) && moveFwd > 0 && !this.scoped && this.player.stamina > 6;
+    // Running suspends sneaking for as long as the player runs
+    const effectiveSneak = !!this.player.sneaking && !wantsSprint;
+    if (this.dom.sneakBadge) {
+      this.dom.sneakBadge.classList.toggle('hidden', !effectiveSneak);
+    }
     const baseSpeed = this.scoped ? 4.2 : wantsSprint ? 11.4 : 7.6;
-    const speed = baseSpeed * speedMult * (crouched ? 0.5 : 1.0);
+    const stanceMult = crouched && effectiveSneak ? 0.42 : (crouched || effectiveSneak) ? 0.5 : 1.0;
+    const speed = baseSpeed * speedMult * stanceMult;
 
     // Out-of-danger health regeneration (Werner Stauffacher)
     this.timeSinceLastDamage += dt;
@@ -1421,24 +1628,129 @@ class OutlawsGame {
     const moving = wish.lengthSq() > 0.01;
     if (moving) wish.normalize().multiplyScalar(speed);
 
-    // Sub-stepped horizontal movement (crouched height = 1.05m fits through 1.25m den doors; upright = 1.75m!)
-    const playerHeight = crouched ? 1.05 : 1.75;
-    this.collision.moveHorizontal(this.player.pos, wish.x * dt, wish.z * dt, 0.52, this.player.pos.y, playerHeight);
-
-    // Gravity & Jump (only jump when standing!)
-    if (this.keys['Space'] && this.player.grounded && !crouched) {
-      this.player.vel.y = 7.4;
-      this.player.grounded = false;
+    // ---- LADDER CLIMBING (No extra key: face ladder within ~1.05m & walk forward; step back near top to slide down!) ----
+    const ladders = this.collision.ladders || [];
+    if (!this.player.onLadder && ladders.length > 0) {
+      for (const lad of ladders) {
+        const span = Math.max(0.2, lad.topY - lad.bottomY);
+        const tCur = Math.max(0, Math.min(1, (this.player.pos.y - lad.bottomY) / span));
+        const rx = lad.x - lad.normalX * lad.leanOffset * tCur;
+        const rz = lad.z - lad.normalZ * lad.leanOffset * tCur;
+        const dHoriz = Math.hypot(this.player.pos.x - rx, this.player.pos.z - rz);
+        const facingLadder = fwd.x * (-lad.normalX) + fwd.z * (-lad.normalZ);
+        // Attach going UP from ground/mid-height when facing ladder & pressing W
+        if (moveFwd > 0 && dHoriz <= 1.08 && facingLadder > 0.35 &&
+            this.player.pos.y >= lad.bottomY - 0.35 && this.player.pos.y < lad.topY - 0.15) {
+          this.player.onLadder = lad;
+          this.player.vel.set(0, 0, 0);
+          this.player.grounded = false;
+          this.player.ladderRungDist = 0;
+          if (this.player.crouched) this.setCrouch(false);
+          break;
+        }
+        // Attach going DOWN from top edge when stepping off backwards near the top of the ladder
+        const dTop = Math.hypot(this.player.pos.x - lad.topX, this.player.pos.z - lad.topZ);
+        if (moveFwd < 0 && dTop <= 1.25 && Math.abs(this.player.pos.y - lad.topY) <= 0.5 && facingLadder < -0.2) {
+          this.player.onLadder = lad;
+          this.player.pos.y = lad.topY - 0.12;
+          this.player.vel.set(0, 0, 0);
+          this.player.grounded = false;
+          this.player.ladderRungDist = 0;
+          break;
+        }
+      }
     }
-    this.player.vel.y -= 20.5 * dt;
-    this.player.pos.y += this.player.vel.y * dt;
 
-    // Floor Height & Climbable Steps
-    const floorY = this.collision.getFloorHeight(this.player.pos.x, this.player.pos.z, this.player.pos.y);
-    if (this.player.pos.y <= floorY) {
-      this.player.pos.y = floorY;
-      this.player.vel.y = 0;
-      this.player.grounded = true;
+    if (this.player.onLadder) {
+      const lad = this.player.onLadder;
+      if (this.keys['Space']) {
+        // Detach from ladder with a small push outward
+        this.player.pos.x += lad.normalX * 0.45;
+        this.player.pos.z += lad.normalZ * 0.45;
+        this.player.onLadder = null;
+        this.keys['Space'] = false;
+      } else {
+        const climbDir = moveFwd !== 0 ? Math.sign(moveFwd) : 0;
+        const climbSpeed = climbDir > 0 ? 3.4 : 3.0;
+        const dy = climbDir * climbSpeed * dt;
+        this.player.pos.y = Math.max(lad.bottomY, Math.min(lad.topY, this.player.pos.y + dy));
+        const span = Math.max(0.2, lad.topY - lad.bottomY);
+        const tNow = Math.max(0, Math.min(1, (this.player.pos.y - lad.bottomY) / span));
+        const standOut = 0.48;
+        this.player.pos.x = lad.x - lad.normalX * (lad.leanOffset * tNow - standOut);
+        this.player.pos.z = lad.z - lad.normalZ * (lad.leanOffset * tNow - standOut);
+        this.player.vel.set(0, 0, 0);
+
+        if (Math.abs(dy) > 0.001) {
+          this.player.ladderRungDist += Math.abs(dy);
+          if (this.player.ladderRungDist >= 0.38) {
+            this.player.ladderRungDist -= 0.38;
+            this.sound.playRung();
+          }
+        }
+
+        // Reached the top: step smoothly forward onto the roof/deck!
+        if (climbDir > 0 && this.player.pos.y >= lad.topY - 0.05) {
+          this.player.pos.x = lad.topX - lad.normalX * (lad.topExitDist || 0.62);
+          this.player.pos.z = lad.topZ - lad.normalZ * (lad.topExitDist || 0.62);
+          this.player.pos.y = lad.topY;
+          this.player.grounded = true;
+          this.player.onLadder = null;
+        } else if (climbDir < 0 && this.player.pos.y <= lad.bottomY + 0.05) {
+          // Reached the bottom: step off cleanly onto ground
+          this.player.pos.x = lad.x + lad.normalX * 0.65;
+          this.player.pos.z = lad.z + lad.normalZ * 0.65;
+          this.player.pos.y = lad.bottomY;
+          this.player.grounded = true;
+          this.player.onLadder = null;
+        }
+      }
+    } else {
+      // Sub-stepped horizontal movement (crouched height = 1.05m fits through 1.25m den doors; upright = 1.75m!)
+      const playerHeight = crouched ? 1.05 : 1.75;
+      this.collision.moveHorizontal(this.player.pos, wish.x * dt, wish.z * dt, 0.52, this.player.pos.y, playerHeight);
+
+      // Gravity & Jump (vel.y = 6.45 lifts feet ~1.01m; STEP_MAX at apex reaches ledges up to ~1.45m!)
+      if (this.keys['Space'] && this.player.grounded && !crouched) {
+        this.player.vel.y = 6.45;
+        this.player.grounded = false;
+      }
+      this.player.vel.y -= 20.5 * dt;
+      this.player.pos.y += this.player.vel.y * dt;
+
+      // Floor Height & Climbable Steps (also applies at top of jump!)
+      const floorY = this.collision.getFloorHeight(this.player.pos.x, this.player.pos.z, this.player.pos.y);
+      if (this.player.pos.y <= floorY) {
+        this.player.pos.y = floorY;
+        this.player.vel.y = 0;
+        this.player.grounded = true;
+      }
+
+      // Track last dry ground & rescue anyone stuck under deep water for ~1s
+      if (this.collision.isSubmergedInWater(this.player.pos.x, this.player.pos.y, this.player.pos.z)) {
+        this.player.submergedTimer += dt;
+        if (this.player.submergedTimer >= 1.0) {
+          this.player.pos.copy(this.player.lastDryPos);
+          this.player.vel.set(0, 0, 0);
+          this.player.grounded = true;
+          this.player.submergedTimer = 0;
+          this.toast('PULLED BACK ONTO DRY GROUND');
+        }
+      } else {
+        this.player.submergedTimer = 0;
+        if (this.player.grounded) {
+          this.player.lastDryPos.copy(this.player.pos);
+        }
+      }
+
+      // Subtle audible footsteps (silent when sneaking or crouched!)
+      if (moving && this.player.grounded && !effectiveSneak && !crouched) {
+        this.player.stepTimer += dt * (wantsSprint ? 2.6 : 1.75);
+        if (this.player.stepTimer >= 1.0) {
+          this.player.stepTimer = 0;
+          this.sound.playFootstep();
+        }
+      }
     }
 
     // Smooth eye height transition (0.95m crouched vs 1.68m standing)
@@ -1477,6 +1789,62 @@ class OutlawsGame {
       this.tryFire(false);
     }
 
+    // Advance two-part Viking Flail swing (0..40% balls whirl, 40..100% wide right-to-left sweep; blow lands at 60% hitting ALL in ±78° arc!)
+    if (this.pendingFlailSwing) {
+      const fl = this.pendingFlailSwing;
+      fl.elapsed += dt;
+      if (!fl.hitDone && fl.elapsed >= fl.hitAt) {
+        fl.hitDone = true;
+        this.sound.playShot('slash');
+        const forward = new THREE.Vector3();
+        this.camera.getWorldDirection(forward);
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+        const origin = this.camera.getWorldPosition(new THREE.Vector3());
+        this.particles.spawnSlashArc(origin, forward, right, fl.slashColor);
+        if (this.duel && this.duel.isPlaying()) {
+          this.duel.onLocalMelee(origin, forward, fl.slashColor);
+        }
+        const fwdHoriz = new THREE.Vector3(forward.x, 0, forward.z).normalize();
+        let hitAny = false;
+        if (this.duel && this.duel.isPlaying() && this.duel.remoteFighter && this.duel.remoteFighter.alive) {
+          const rf = this.duel.remoteFighter;
+          const targetChest = new THREE.Vector3(rf.root.position.x, rf.root.position.y + 1.15 * rf.figureScale, rf.root.position.z);
+          const toR = new THREE.Vector3().subVectors(targetChest, origin);
+          if (toR.length() <= fl.range + rf.radius * 0.6) {
+            const toRHoriz = new THREE.Vector3(toR.x, 0, toR.z).normalize();
+            if (toRHoriz.dot(fwdHoriz) >= fl.arcCos && this.collision.hasLineOfSight(origin, targetChest)) {
+              hitAny = true;
+              this.duel.onLocalHitOpponent(fl.damage, false, targetChest);
+            }
+          }
+        }
+        for (const enemy of this.enemies) {
+          if (!enemy.alive || !enemy.mesh.visible) continue;
+          const targetChest = new THREE.Vector3(
+            enemy.mesh.position.x,
+            enemy.mesh.position.y + (enemy.style === 'dog' ? 0.55 : 1.15),
+            enemy.mesh.position.z
+          );
+          const toE = new THREE.Vector3().subVectors(targetChest, origin);
+          if (toE.length() <= fl.range) {
+            const toEHoriz = new THREE.Vector3(toE.x, 0, toE.z).normalize();
+            if (toEHoriz.dot(fwdHoriz) >= fl.arcCos && this.collision.hasLineOfSight(origin, targetChest)) {
+              hitAny = true;
+              if (this.duel && this.duel.isPlaying() && this.duel.role === 'guest') {
+                this.duel.onGuestHitAI(enemy.duelIndex, fl.damage, false, targetChest);
+              } else {
+                this._damageEnemy(enemy, fl.damage, false, targetChest);
+              }
+            }
+          }
+        }
+        if (hitAny) this._flashHitmarker(true);
+      }
+      if (fl.elapsed >= fl.duration) {
+        this.pendingFlailSwing = null;
+      }
+    }
+
     // Animate 3D Weapon Viewmodel
     this.recoilOffset *= Math.max(0, 1 - dt * 13);
     if (this.slashAnim > 0) this.slashAnim = Math.max(0, this.slashAnim - dt * 4.5);
@@ -1489,18 +1857,54 @@ class OutlawsGame {
       const swayX = moving ? Math.cos(this.player.bobPhase * 0.5) * 0.014 : 0;
       const swayY = moving ? Math.abs(Math.sin(this.player.bobPhase * 0.5)) * 0.014 : 0;
 
-      vm.position.set(
-        bp.x + swayX - this.slashAnim * 0.35,
-        bp.y - swayY - (this.reloading ? 0.14 : 0),
-        bp.z + this.recoilOffset * 0.45
-      );
-      vm.rotation.set(
-        br.x + this.recoilOffset * 1.15 - (this.reloading ? 0.65 : 0) + this.slashAnim * 1.1,
-        br.y + this.slashAnim * 1.25,
-        br.z + this.slashAnim * 0.85
-      );
+      const chain1 = vm.getObjectByName('flailChain1');
+      const chain2 = vm.getObjectByName('flailChain2');
+      if (chain1 && chain2 && this.pendingFlailSwing) {
+        const p = Math.min(1, this.pendingFlailSwing.elapsed / Math.max(0.05, this.pendingFlailSwing.duration));
+        if (p < 0.4) {
+          // Part 1 (0..40%): wind-up & whirl spiked iron balls round overhead!
+          const wFrac = p / 0.4;
+          vm.position.set(bp.x + swayX + wFrac * 0.14, bp.y - swayY + wFrac * 0.12, bp.z + wFrac * 0.05);
+          vm.rotation.set(br.x - wFrac * 0.35, br.y - wFrac * 0.25, br.z - wFrac * 0.35);
+          chain1.rotation.set(0.35, 0, wFrac * Math.PI * 2.6);
+          chain2.rotation.set(-0.25, 0, wFrac * Math.PI * 2.2 - 0.65);
+        } else {
+          // Part 2 (40..100%): sweep haft across screen right-to-left with balls dragging behind!
+          const sFrac = (p - 0.4) / 0.6;
+          const sweep = Math.sin(sFrac * Math.PI);
+          vm.position.set(
+            bp.x + swayX + 0.14 - sFrac * 0.72,
+            bp.y - swayY + 0.12 - sweep * 0.12,
+            bp.z - sweep * 0.18
+          );
+          vm.rotation.set(
+            br.x + sweep * 0.85,
+            br.y + sFrac * 1.45,
+            br.z + sFrac * 1.15
+          );
+          chain1.rotation.set(0.55 * sweep, 0, -1.25 * sweep);
+          chain2.rotation.set(0.45 * sweep, 0, -1.65 * sweep);
+        }
+      } else {
+        vm.position.set(
+          bp.x + swayX - this.slashAnim * 0.35,
+          bp.y - swayY - (this.reloading ? 0.14 : 0),
+          bp.z + this.recoilOffset * 0.45
+        );
+        vm.rotation.set(
+          br.x + this.recoilOffset * 1.15 - (this.reloading ? 0.65 : 0) + this.slashAnim * 1.1,
+          br.y + this.slashAnim * 1.25,
+          br.z + this.slashAnim * 0.85
+        );
+        if (chain1 && chain2) {
+          // Gentle pendulum dangle at rest
+          const sway = Math.sin(this.elapsed * 3.1) * 0.12 + swayX * 4.0;
+          chain1.rotation.set(0.22, 0, 0.28 + sway);
+          chain2.rotation.set(-0.18, 0, -0.22 - sway * 1.25);
+        }
+      }
 
-      // Animate spinning shuriken or flickering dynamite/firepot spark
+      // Animate flickering dynamite/firepot spark
       const spark = vm.getObjectByName('spark');
       if (spark) {
         const s = 0.85 + Math.sin(this.elapsed * 28) * 0.35;
@@ -1537,7 +1941,109 @@ class OutlawsGame {
     }
   }
 
+  _stickProjectile(mesh, worldPos, attachTo = null) {
+    if (attachTo) {
+      attachTo.updateMatrixWorld(true);
+      const localPos = attachTo.worldToLocal(worldPos.clone());
+      if (mesh.parent) mesh.parent.remove(mesh);
+      mesh.position.copy(localPos);
+      attachTo.add(mesh);
+    } else {
+      mesh.position.copy(worldPos);
+    }
+    this.stuckProjectiles.push(mesh);
+    while (this.stuckProjectiles.length > 60) {
+      const old = this.stuckProjectiles.shift();
+      if (old && old.parent) old.parent.remove(old);
+    }
+  }
+
   _updateProjectiles(dt) {
+    // Player Physical Thrown Projectiles (Shuriken 3-Star Fan, Poisoned Darts, Heavy Stones)
+    if (this.playerProjectiles.length > 0) {
+      const enemyMeshes = [];
+      for (const e of this.enemies) {
+        if (e.alive) enemyMeshes.push(...e.getHitMeshes());
+      }
+      if (this.duel && this.duel.isPlaying() && this.duel.remoteFighter && this.duel.remoteFighter.alive) {
+        enemyMeshes.push(...this.duel.remoteFighter.getHitMeshes());
+      }
+      if (this.tellApple && this.tellApple.visible) {
+        enemyMeshes.push(this.tellApple);
+      }
+
+      for (let i = this.playerProjectiles.length - 1; i >= 0; i--) {
+        const pr = this.playerProjectiles[i];
+        pr.life -= dt;
+        if (pr.life <= 0) {
+          this.worldGroup.remove(pr.mesh);
+          this.playerProjectiles.splice(i, 1);
+          continue;
+        }
+        pr.vel.y -= pr.gravity * dt;
+        const step = pr.vel.clone().multiplyScalar(dt);
+        const stepLen = step.length();
+        const dir = stepLen > 1e-5 ? step.clone().divideScalar(stepLen) : new THREE.Vector3(0, 0, -1);
+
+        const wallHit = this.collision.raycast(pr.mesh.position, dir, stepLen + 0.14);
+        const maxDist = wallHit ? wallHit.dist : stepLen + 0.14;
+        this.raycaster.set(pr.mesh.position, dir);
+        this.raycaster.far = maxDist;
+        const hits = enemyMeshes.length > 0 ? this.raycaster.intersectObjects(enemyMeshes, false) : [];
+
+        if (hits.length > 0) {
+          const hit = hits[0];
+          const rf = hit.object.userData.remoteFighter;
+          const enemy = hit.object.userData.enemy;
+          const isHead = hit.object.userData.hitZone === 'head';
+          const dmg = isHead ? pr.damage * pr.headMult : pr.damage;
+          this.stats.hits++;
+          this._flashHitmarker(isHead);
+
+          if (rf && rf.alive && this.duel && this.duel.isPlaying()) {
+            this.duel.onLocalHitOpponent(dmg, isHead, hit.point);
+            if (pr.sticks) this._stickProjectile(pr.mesh, hit.point, rf.root);
+            else this.worldGroup.remove(pr.mesh);
+          } else if (enemy && enemy.alive) {
+            if (this.duel && this.duel.isPlaying() && this.duel.role === 'guest') {
+              this.duel.onGuestHitAI(enemy.duelIndex, dmg, isHead, hit.point);
+            } else {
+              this._damageEnemy(enemy, dmg, isHead, hit.point);
+              if (pr.poison && enemy.alive && typeof enemy.applyPoison === 'function') {
+                enemy.applyPoison(pr.poison.duration, pr.poison.interval, pr.poison.tickDamage);
+              }
+            }
+            if (pr.sticks) this._stickProjectile(pr.mesh, hit.point, enemy.mesh);
+            else this.worldGroup.remove(pr.mesh);
+          } else {
+            this.worldGroup.remove(pr.mesh);
+          }
+          this.playerProjectiles.splice(i, 1);
+          continue;
+        }
+
+        if (wallHit) {
+          this.particles.spawnImpact(wallHit.point, wallHit.tag === 'stone' ? 0xd9d2c5 : 0xcca168, 4, 4);
+          if (pr.sticks) this._stickProjectile(pr.mesh, wallHit.point, null);
+          else this.worldGroup.remove(pr.mesh);
+          this.playerProjectiles.splice(i, 1);
+          continue;
+        }
+
+        pr.mesh.position.add(step);
+        if (pr.spinRate) pr.mesh.rotation.y += dt * pr.spinRate;
+
+        const floorY = this.collision.getFloorHeight(pr.mesh.position.x, pr.mesh.position.z, pr.mesh.position.y + 0.1);
+        if (pr.mesh.position.y <= floorY + 0.04) {
+          pr.mesh.position.y = floorY + 0.03;
+          this.particles.spawnImpact(pr.mesh.position, 0xcca168, 3, 3);
+          if (pr.sticks) this._stickProjectile(pr.mesh, pr.mesh.position, null);
+          else this.worldGroup.remove(pr.mesh);
+          this.playerProjectiles.splice(i, 1);
+        }
+      }
+    }
+
     // Player Thrown Explosives (Dynamite / Fire-Pots)
     for (let i = this.playerThrowables.length - 1; i >= 0; i--) {
       const th = this.playerThrowables[i];
@@ -1592,27 +2098,37 @@ class OutlawsGame {
       }
     }
 
-    // Enemy Projectiles (visible glowing bullets / shuriken / bolts; lowered hit shape while crouched!)
+    // Enemy Projectiles (visible glowing bullets / shuriken / bolts / cannonballs; lowered hit shape while crouched!)
     const playerCenter = new THREE.Vector3(this.player.pos.x, this.player.pos.y + (this.player.crouched ? 0.62 : 1.2), this.player.pos.z);
     const playerHitR = this.player.crouched ? 0.72 : 0.85;
     for (let i = this.enemyProjectiles.length - 1; i >= 0; i--) {
       const pr = this.enemyProjectiles[i];
       pr.life -= dt;
+      if (pr.gravity) pr.vel.y -= pr.gravity * dt;
       const step = pr.vel.clone().multiplyScalar(dt);
       const stepLen = step.length();
-      const dir = step.clone().normalize();
+      const dir = stepLen > 1e-5 ? step.clone().divideScalar(stepLen) : new THREE.Vector3(0, 0, 1);
 
-      // Wall impact check
+      // Wall or floor impact check
       const wall = this.collision.raycast(pr.mesh.position, dir, stepLen + 0.15);
-      if (wall || pr.life <= 0) {
-        if (wall) this.particles.spawnImpact(wall.point, 0xffd27a, 4, 4);
+      const hitFloor = pr.gravity && (pr.mesh.position.y + step.y <= this.collision.getFloorHeight(pr.mesh.position.x, pr.mesh.position.z, pr.mesh.position.y) + 0.18);
+      if (wall || hitFloor || pr.life <= 0) {
+        if (pr.isCannonball && (wall || hitFloor)) {
+          const blastPos = wall ? wall.point : pr.mesh.position;
+          this.particles.spawnExplosion(blastPos, 2.8);
+          if (blastPos.distanceTo(playerCenter) < 3.0) this._damagePlayer(pr.damage);
+        } else if (wall) {
+          this.particles.spawnImpact(wall.point, 0xffd27a, 4, 4);
+        }
         this.worldGroup.remove(pr.mesh);
         this.enemyProjectiles.splice(i, 1);
         continue;
       }
 
       pr.mesh.position.add(step);
-      if (pr.mesh.position.distanceTo(playerCenter) < playerHitR) {
+      if (pr.spinRate) pr.mesh.rotation.y += dt * pr.spinRate;
+      if (pr.mesh.position.distanceTo(playerCenter) < (pr.isCannonball ? playerHitR + 0.35 : playerHitR)) {
+        if (pr.isCannonball) this.particles.spawnExplosion(pr.mesh.position, 2.8);
         this._damagePlayer(pr.damage);
         this.worldGroup.remove(pr.mesh);
         this.enemyProjectiles.splice(i, 1);
@@ -1665,6 +2181,9 @@ class OutlawsGame {
         onDogBark: () => {
           this.sound.playDogBark();
         },
+        onPoisonTick: (en, dmg) => {
+          this._damageEnemy(en, dmg, false, en.mesh.position.clone().add(new THREE.Vector3(0, 1.3, 0)));
+        },
         onMeleeHitPlayer: (dmg) => {
           if (targetIsGuest && inDuel) {
             this.duel.net.send({ type: 'hit', dmg: Math.round(dmg), head: false });
@@ -1674,25 +2193,64 @@ class OutlawsGame {
         },
         onEnemyFire: (en, muzzlePos, tPos) => {
           const dir = new THREE.Vector3().subVectors(tPos, muzzlePos).normalize();
-          const spread = en.isBoss ? 0.04 : 0.07;
+          const spread = en.isBoss ? 0.04 : en.style === 'cannon' ? 0.025 : 0.07;
           dir.x += (Math.random() - 0.5) * spread;
           dir.y += (Math.random() - 0.5) * spread * 0.6;
           dir.z += (Math.random() - 0.5) * spread;
           dir.normalize();
 
-          const mesh = new THREE.Mesh(
-            new THREE.SphereGeometry(0.11, 6, 6),
-            new THREE.MeshBasicMaterial({ color: en.projectileColor })
-          );
+          if (en.smokeOnFire) {
+            this.particles.spawnSmoke(muzzlePos, 0xd9d2c5, en.style === 'cannon' ? 10 : 5, en.style === 'cannon' ? 0.85 : 0.45);
+          }
+
+          let mesh;
+          let projSpeed = en.isBoss ? 38 : 30;
+          let gravity = 0;
+          let isCannonball = false;
+          let projKind = 'bullet';
+
+          if (en.style === 'cannon') {
+            mesh = new THREE.Mesh(
+              new THREE.SphereGeometry(0.24, 10, 8),
+              new THREE.MeshStandardMaterial({ color: 0x1e2126, metalness: 0.78, roughness: 0.35 })
+            );
+            projSpeed = 26;
+            gravity = 2.6;
+            isCannonball = true;
+            projKind = 'cannonball';
+            this.sound.playExplosion();
+          } else if (en.type === 'ninja') {
+            mesh = buildEightPointShuriken(1.05);
+            projKind = 'shuriken';
+          } else if (en.type === 'spanish_crossbow') {
+            mesh = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.025, 0.025, 0.52, 6),
+              new THREE.MeshBasicMaterial({ color: 0xf4f9ff })
+            );
+            mesh.rotation.x = Math.PI / 2;
+            mesh.lookAt(muzzlePos.clone().add(dir));
+            projKind = 'bolt';
+          } else {
+            mesh = new THREE.Mesh(
+              new THREE.SphereGeometry(0.11, 6, 6),
+              new THREE.MeshBasicMaterial({ color: en.projectileColor })
+            );
+          }
           mesh.position.copy(muzzlePos);
           this.worldGroup.add(mesh);
           this.particles.spawnTracer(muzzlePos, muzzlePos.clone().addScaledVector(dir, 3.5), en.projectileColor, 0.08);
           this.enemyProjectiles.push({
             mesh,
-            vel: dir.multiplyScalar(en.isBoss ? 38 : 30),
+            vel: dir.multiplyScalar(projSpeed),
+            gravity,
+            isCannonball,
+            projKind,
             damage: en.damage,
-            life: 2.8
+            life: isCannonball ? 4.2 : 2.8,
+            spinRate: en.type === 'ninja' ? 24 : 0
           });
+          if (!this.firedEnemyProjKinds) this.firedEnemyProjKinds = new Set();
+          this.firedEnemyProjKinds.add(projKind);
           if (inDuel) {
             this.duel.net.send({
               type: 'ai_shot',
@@ -1708,7 +2266,10 @@ class OutlawsGame {
       const targetCrouched = targetIsGuest
         ? !!(this.duel && this.duel.remoteFighter && this.duel.remoteFighter.crouched)
         : !!this.player.crouched;
-      enemy.update(dt, targetPos, this.collision, callbacks, detectMult, targetCrouched);
+      const targetSneaking = targetIsGuest
+        ? !!(this.duel && this.duel.remoteFighter && this.duel.remoteFighter.sneaking)
+        : (!!this.player.sneaking && !(this.keys['ShiftLeft'] || this.keys['ShiftRight']));
+      enemy.update(dt, targetPos, this.collision, callbacks, detectMult, targetCrouched, targetSneaking);
     }
 
     // Solid living bodies: push overlapping player, remote opponent & enemies apart cleanly

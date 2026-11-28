@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { ERA_HEROES, buildHeroFigure } from './heroes.js';
+import { ERA_HEROES, buildHeroFigure, addVikingAnimalSkins } from './heroes.js';
+import { buildEightPointShuriken } from './weapons.js';
 
 /**
  * 27 Playable Villains — strictly for Duel Mode only (never shown in single-player).
@@ -168,10 +169,10 @@ export const ERA_VILLAINS = {
       name: 'Minotaur',
       bio: 'The bull-headed monster of the Cretan labyrinth.',
       strengthLabel: 'Labyrinth Brute',
-      strengthDesc: 'Throwing axes and sword; starts with 160 health.',
-      hudTag: 'AXES · 160 HP',
+      strengthDesc: 'Throwing axes and flail; starts with 160 health.',
+      hudTag: 'AXES & FLAIL · 160 HP',
       defaultWeaponIdx: 0,
-      weaponIds: ['throwing_axe', 'xiphos'],
+      weaponIds: ['throwing_axe', 'viking_flail'],
       mods: { fixedMaxHp: 160, figureScale: 1.24, hitRadius: 0.66 }
     },
     {
@@ -366,6 +367,47 @@ export const ERA_VILLAINS = {
       defaultWeaponIdx: 0,
       weaponIds: ['tibet_pistol', 'combat_knife'],
       mods: { moveSpeedMult: 1.20 }
+    }
+  ],
+  aztec: [
+    {
+      id: 'cortes',
+      era: 'aztec',
+      isVillain: true,
+      name: 'Hernán Cortés',
+      bio: 'Commander of the Spanish expedition to Mexico, 1519–1521.',
+      strengthLabel: 'Steel Cuirass',
+      strengthDesc: 'Crossbow and halberd; takes 20% less damage.',
+      hudTag: '-20% DMG',
+      defaultWeaponIdx: 0,
+      weaponIds: ['crossbow', 'halberd'],
+      mods: { damageTakenMult: 0.80 }
+    },
+    {
+      id: 'alvarado',
+      era: 'aztec',
+      isVillain: true,
+      name: 'Pedro de Alvarado',
+      bio: "Cortés's lieutenant, whom the Mexica called Tonatiuh, the Sun.",
+      strengthLabel: 'Swift Leap',
+      strengthDesc: 'Crossbow and halberd; moves 15% faster.',
+      hudTag: '+15% SPEED',
+      defaultWeaponIdx: 0,
+      weaponIds: ['crossbow', 'halberd'],
+      mods: { moveSpeedMult: 1.15 }
+    },
+    {
+      id: 'guzman',
+      era: 'aztec',
+      isVillain: true,
+      name: 'Nuño de Guzmán',
+      bio: 'Conquistador and harsh governor of New Spain.',
+      strengthLabel: 'Heavy Harness',
+      strengthDesc: 'Crossbow and halberd; starts with 140 health.',
+      hudTag: '140 HP',
+      defaultWeaponIdx: 0,
+      weaponIds: ['crossbow', 'halberd'],
+      mods: { fixedMaxHp: 140 }
     }
   ]
 };
@@ -671,7 +713,12 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     const wildHair = new THREE.Mesh(new THREE.DodecahedronGeometry(0.25, 0), redHair);
     wildHair.position.set(0, 0.14, -0.04);
     p.head.add(mask, wildHair);
-    addSword(p.armR, 0.85);
+    for (let k = -1; k <= 1; k++) {
+      const sh = buildEightPointShuriken(1.1);
+      sh.position.set(k * 0.05, -0.32, 0.16);
+      sh.rotation.set(Math.PI * 0.4, 0, k * -0.25);
+      p.armR.add(sh);
+    }
   } else if (villainId === 'gessler') {
     const p = makeBody({ torsoMat: crimsonMat, legsMat: darkCharcoal, armsMat: steelMat, skin: skinFair });
     const cape = new THREE.Mesh(new THREE.BoxGeometry(0.64, 1.0, 0.08), blackCloth);
@@ -786,9 +833,8 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     addSword(p.armR, 0.96);
     root.add(robe, goldHem, goldSash, goldCollar);
   } else if (villainId === 'bloodaxe') {
-    const p = makeBody({ torsoMat: crimsonMat, legsMat: brownLeather, armsMat: brownLeather, skin: skinWeathered });
-    const fur = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.28, 0.4), brownLeather);
-    fur.position.set(0, 1.5, 0);
+    const p = makeBody({ torsoMat: brownLeather, legsMat: brownLeather, armsMat: brownLeather, skin: skinWeathered });
+    addVikingAnimalSkins(root, { furColor: 0x5c3720, trimColor: 0x2c1a10, withBeastHead: true, shoulderSide: -1 });
     const beard = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.36, 8), redHair);
     beard.rotation.x = Math.PI;
     beard.position.set(0, -0.2, 0.1);
@@ -801,21 +847,18 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     const axeB = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.26, 0.24), crimsonMat);
     axeB.position.set(0, 0.18, 0.5);
     p.armR.add(axeH, axeB);
-    root.add(fur);
   } else if (villainId === 'ivar') {
-    const p = makeBody({ torsoMat: darkSteel, legsMat: darkCharcoal, armsMat: darkSteel, skin: skinPale });
-    const fur = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.9, 0.12), blackCloth);
-    fur.position.set(0, 1.05, -0.22);
+    const p = makeBody({ torsoMat: darkCharcoal, legsMat: darkCharcoal, armsMat: darkCharcoal, skin: skinPale });
+    addVikingAnimalSkins(root, { furColor: 0x2e2a28, trimColor: 0x161414, withBeastHead: true, shoulderSide: 1 });
     const hair = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.3, 0.14), darkHair);
     hair.position.set(0, -0.04, -0.14);
     p.head.add(hair);
     addSword(p.armR, 0.96);
-    root.add(fur);
   } else if (villainId === 'loki') {
-    // Mythic Norse Loki: flame-red/gold hair, russet-and-green traveller cloak, rune clasp (NOT film look!)
-    const p = makeBody({ torsoMat: forestGreen, legsMat: brownLeather, armsMat: forestGreen, skin: skinFair, slim: true });
-    const cloak = new THREE.Mesh(new THREE.BoxGeometry(0.62, 1.08, 0.08), crimsonMat);
-    cloak.position.set(0, 1.02, -0.2);
+    // Mythic Norse Loki in pale wolf-fur animal skins, flame-red hair, rune clasp
+    const paleSkinFur = new THREE.MeshStandardMaterial({ color: 0x76726b, roughness: 0.94 });
+    const p = makeBody({ torsoMat: paleSkinFur, legsMat: brownLeather, armsMat: paleSkinFur, skin: skinFair, slim: true });
+    addVikingAnimalSkins(root, { furColor: 0x8a8478, trimColor: 0x45403a, withBeastHead: false });
     const clasp = new THREE.Mesh(new THREE.OctahedronGeometry(0.07, 0), goldMat);
     clasp.position.set(0, 1.48, 0.17);
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.225, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), redHair);
@@ -824,7 +867,7 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     braids.position.set(0, -0.08, -0.14);
     p.head.add(hair, braids);
     addSword(p.armR, 0.85);
-    root.add(cloak, clasp);
+    root.add(clasp);
   } else if (villainId === 'hitler') {
     // Plain grey-brown coat, white shirt & dark tie, side-parted dark hair, small moustache; strictly ZERO party symbols
     const p = makeBody({ torsoMat: fieldGrey, legsMat: darkCharcoal, armsMat: fieldGrey, bootsMat: blackCloth, skin: skinFair, slim: true });
@@ -987,6 +1030,30 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     p.head.add(bob);
     addGlasses(p.head);
     addPistol(p.armR);
+  } else if (villainId === 'cortes' || villainId === 'alvarado' || villainId === 'guzman') {
+    // 16th-century Spanish conquistadors: steel breastplate, morion helmet, ruff/sash, beard, crossbow/halberd
+    const isAlvarado = villainId === 'alvarado';
+    const isGuzman = villainId === 'guzman';
+    const plateMat = villainId === 'cortes' ? darkSteel : steelMat;
+    const beardCol = isAlvarado ? new THREE.MeshStandardMaterial({ color: 0xd9a038, roughness: 0.85 }) : darkHair;
+    const p = makeBody({ torsoMat: plateMat, legsMat: darkCharcoal, armsMat: isGuzman ? crimsonMat : plateMat, bootsMat: brownLeather, skin: skinWeathered });
+    const sash = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.14, 0.34), crimsonMat);
+    sash.position.set(0, 0.96, 0);
+    const cape = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.96, 0.08), villainId === 'cortes' ? blackCloth : crimsonMat);
+    cape.position.set(0, 1.0, -0.2);
+    // Pointed Spanish morion helmet with comb crest
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.235, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), plateMat);
+    helm.position.y = 0.09;
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.34, 0.04, 14), plateMat);
+    brim.position.y = 0.09;
+    const comb = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.14, 0.44), villainId === 'cortes' ? goldMat : plateMat);
+    comb.position.set(0, 0.32, 0);
+    const beard = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.28, 8), beardCol);
+    beard.rotation.x = Math.PI;
+    beard.position.set(0, -0.2, 0.11);
+    p.head.add(helm, brim, comb, beard);
+    addSword(p.armR, 1.05);
+    root.add(sash, cape);
   }
 
   if (withPlinth) {
