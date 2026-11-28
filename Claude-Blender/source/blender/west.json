@@ -1,0 +1,254 @@
+[
+ {
+  "x": -40,
+  "w": 12,
+  "d": 12,
+  "h": 5.4,
+  "dir": 1,
+  "wall": 9062964,
+  "interior": true,
+  "panel": 11040856,
+  "floorC": 13152394,
+  "ceilC": 13154456,
+  "back": -1,
+  "text": "LIVERY & FEED",
+  "signO": {
+   "bg": "#e8d8b0",
+   "fg": "#4a1c10"
+  },
+  "roofC": 8018500
+ },
+ {
+  "x": -24,
+  "w": 11,
+  "d": 10,
+  "h": 4.7,
+  "dir": 1,
+  "wall": 13219466,
+  "interior": true,
+  "panel": 13154448,
+  "floorC": 13152394,
+  "ceilC": 13154456,
+  "flat": true,
+  "back": 3.2,
+  "text": "GENERAL STORE",
+  "signO": {
+   "bg": "#2a4a3a",
+   "fg": "#f0e2b0"
+  }
+ },
+ {
+  "x": -4,
+  "w": 16,
+  "d": 13,
+  "h": 7.4,
+  "dir": 1,
+  "wall": 10107434,
+  "trim": 15259824,
+  "balcony": true,
+  "interior": true,
+  "up": true,
+  "well": [
+   2.3,
+   3.8,
+   -15,
+   -10.4
+  ],
+  "back": 6.7,
+  "ceilC": 13149312,
+  "text": "SALOON",
+  "signO": {
+   "bg": "#f0e0b0",
+   "fg": "#7a1810",
+   "size": 100
+  }
+ },
+ {
+  "x": 12.5,
+  "w": 10,
+  "d": 11,
+  "h": 4.9,
+  "dir": 1,
+  "wall": 10129536,
+  "trim": 2763306,
+  "interior": true,
+  "panel": 9077364,
+  "text": "JAIL",
+  "signO": {
+   "bg": "#1c1c1c",
+   "fg": "#e8e0d0",
+   "size": 100
+  }
+ },
+ {
+  "x": 26,
+  "w": 8,
+  "d": 8,
+  "h": 4.3,
+  "dir": 1,
+  "wall": 9075300,
+  "interior": true,
+  "panel": 12099704,
+  "floorC": 13152394,
+  "ceilC": 13154456,
+  "flat": true,
+  "text": "SHERIFF",
+  "signO": {
+   "bg": "#e8d8b0",
+   "fg": "#1c1c1c"
+  }
+ },
+ {
+  "x": 38,
+  "w": 9,
+  "d": 9,
+  "h": 5,
+  "dir": 1,
+  "wall": 12100746,
+  "trim": 3815994,
+  "interior": true,
+  "panel": 4084292,
+  "back": 3,
+  "text": "BANK",
+  "signO": {
+   "bg": "#1c1c1c",
+   "fg": "#d9b23a"
+  }
+ },
+ {
+  "x": 38,
+  "w": 9,
+  "d": 9,
+  "h": 5,
+  "dir": 1,
+  "wall": 12100746,
+  "trim": 3815994,
+  "interior": true,
+  "panel": 4084292,
+  "back": 3,
+  "text": "BANK",
+  "signO": {
+   "bg": "#1c1c1c",
+   "fg": "#d9b23a"
+  }
+ },
+ {
+  "x": -38,
+  "w": 10,
+  "d": 9,
+  "h": 4.5,
+  "dir": -1,
+  "wall": 5917246,
+  "interior": true,
+  "panel": 6969930,
+  "floorC": 11049088,
+  "ceilC": 11049088,
+  "flat": true,
+  "text": "BLACKSMITH",
+  "signO": {
+   "bg": "#1c1410",
+   "fg": "#e0a040"
+  }
+ },
+ {
+  "x": -21,
+  "w": 14,
+  "d": 11,
+  "h": 7.6,
+  "dir": -1,
+  "wall": 14208688,
+  "trim": 5925466,
+  "balcony": true,
+  "interior": true,
+  "panel": 13153424,
+  "floorC": 14206112,
+  "ceilC": 14207144,
+  "up": true,
+  "well": [
+   -27.8,
+   -26.3,
+   12.4,
+   17
+  ],
+  "back": 2,
+  "text": "GRAND HOTEL",
+  "signO": {
+   "bg": "#3a5a4a",
+   "fg": "#f0e2b0"
+  }
+ },
+ {
+  "x": -4,
+  "w": 8,
+  "d": 8,
+  "h": 4.5,
+  "dir": -1,
+  "wall": 3816000,
+  "trim": 1842204,
+  "interior": true,
+  "panel": 10132136,
+  "floorC": 11049088,
+  "ceilC": 11051160,
+  "back": 2.4,
+  "text": "UNDERTAKER",
+  "signO": {
+   "bg": "#1c1c1c",
+   "fg": "#c9c9c9"
+  }
+ },
+ {
+  "x": 8,
+  "w": 7,
+  "d": 8,
+  "h": 4.3,
+  "dir": -1,
+  "wall": 12109000,
+  "trim": 9054762,
+  "interior": true,
+  "panel": 13161680,
+  "floorC": 14206112,
+  "ceilC": 14207144,
+  "text": "BARBER",
+  "signO": {
+   "bg": "#f0f0e8",
+   "fg": "#8a1c1c"
+  }
+ },
+ {
+  "x": 21,
+  "w": 8,
+  "d": 8,
+  "h": 4.5,
+  "dir": -1,
+  "wall": 11045466,
+  "interior": true,
+  "panel": 13150328,
+  "floorC": 13152394,
+  "ceilC": 13154456,
+  "flat": true,
+  "text": "TELEGRAPH",
+  "signO": {
+   "bg": "#e8d8b0",
+   "fg": "#3a2a1a"
+  }
+ },
+ {
+  "x": 35,
+  "w": 9,
+  "d": 9,
+  "h": 4.7,
+  "dir": -1,
+  "wall": 13154464,
+  "trim": 4872810,
+  "interior": true,
+  "panel": 14474448,
+  "floorC": 14206112,
+  "ceilC": 14207144,
+  "back": -2.5,
+  "text": "DOCTOR",
+  "signO": {
+   "bg": "#f0f0e8",
+   "fg": "#1c3a5a"
+  }
+ }
+]
