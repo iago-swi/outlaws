@@ -450,6 +450,7 @@ export function makeMaterials() {
   // what breaks: wood, paper and bamboo walls can be broken through; ground, rock, roofing, leaves, glass and light are never "small things"
   M.wood.userData.breakable = M.woodH.userData.breakable = M.bamboo.userData.breakable = 'wood'; M.shoji.userData.breakable = 'paper';
   for (const k of ['ground', 'raked', 'cobble', 'rock', 'glow', 'leaf', 'bambooLeaf', 'window', 'shoji', 'kawara', 'shingle', 'thatch']) if (M[k]) M[k].userData.noTrinket = true;
+  for (const k of Object.keys(M)) M[k].userData.key = k;          // Blender trial: a material knows its own name
   M.glow.color.setScalar(4);
   M.glow.userData = { tile: 1, noShadow: true };
   M.window.userData.noShadow = true;

@@ -2,7 +2,7 @@
 # deflated. A figure library of 14 000 vertices takes about a tenth of what glTF needs.
 #   file  = zlib( u32 length of the header | header (JSON, utf-8) | arrays, one after the other, in the header's order )
 #   positions: int16 * q;  normals: int8 / 127;  colours: uint8, v = (c / 255) ^ 2;  texture coordinates: int16 / 1024
-import bpy, json, math, random, struct, zlib
+import bpy, json, math, os, random, struct, zlib
 from array import array
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
@@ -167,3 +167,56 @@ def export_building(path, objects, extra=None):
     arrays = [('pos', 'h', 3, pos), ('uv', 'h', 2, uv), ('idx', 'H' if v0 < 65536 else 'I', 1, idx), ('nrm', 'b', 3, nrm), ('col', 'B', 3, col)]
     raw, z = _write(path, head, arrays)
     print('LHM', path.replace('\\', '/').split('/')[-1], 'groups', len(groups), 'vertices', v0, 'triangles', len(idx) // 3, 'bytes', raw, 'deflated', z)
+
+
+def export_scenery(path, ob, prims):
+    """The reworked shapes of a chapter. Each shape of the dump is one or more rows (one per material it uses): a range
+    of triangles with its own origin and scale. The game finds a shape by its signature and takes all its rows."""
+    me = ob.data
+    me.calc_loop_triangles()
+    pa = me.attributes['prim'].data
+    colattr = me.color_attributes['Col']
+    uvl = me.uv_layers.active.data
+    mats = [m.name for m in me.materials]
+    by = {}
+    for t in me.loop_triangles:
+        by.setdefault((pa[t.polygon_index].value, mats[t.material_index]), []).append(t)
+    groups = []
+    pos, nrm, col, uv, idx = [], [], [], [], []
+    rp, po, pq, pg, ps, pc = [], [], [], [], [], []
+    sig = [0] * len(prims)
+    enc = lambda c: int(round(math.sqrt(max(0.0, min(1.0, c))) * 255))
+    v0 = 0
+    for (pid, mat) in sorted(by):
+        tl = by[(pid, mat)]
+        if mat not in groups: groups.append(mat)
+        vs = {vi for t in tl for vi in t.vertices}
+        P = {vi: (me.vertices[vi].co.x, me.vertices[vi].co.z, -me.vertices[vi].co.y) for vi in vs}
+        lo = [min(q[k] for q in P.values()) for k in range(3)]; hi = [max(q[k] for q in P.values()) for k in range(3)]
+        c0 = [(lo[k] + hi[k]) / 2 for k in range(3)]
+        scale = max(max(hi[k] - lo[k] for k in range(3)) / 2 / 32000.0, 1e-5)
+        ix = {}; start = len(idx)
+        for t in tl:
+            uvs = [(uvl[li].uv[0], 1.0 - uvl[li].uv[1]) for li in t.loops]
+            su = math.floor(min(u[0] for u in uvs)) if max(abs(u[0]) for u in uvs) > 30 else 0
+            sv = math.floor(min(u[1] for u in uvs)) if max(abs(u[1]) for u in uvs) > 30 else 0
+            for vi, li, u in zip(t.vertices, t.loops, uvs):
+                n = me.corner_normals[li].vector
+                rec = (vi, int(round(n.x * 127)), int(round(n.z * 127)), int(round(-n.y * 127)),
+                       max(-32768, min(32767, int(round((u[0] - su) * 1024)))), max(-32768, min(32767, int(round((u[1] - sv) * 1024)))))
+                k = ix.get(rec)
+                if k is None:
+                    k = ix[rec] = v0 + len(ix)
+                    q = P[vi]; cc = colattr.data[vi].color
+                    pos += [int(round((q[j] - c0[j]) / scale)) for j in range(3)]
+                    nrm += [rec[1], rec[2], rec[3]]; uv += [rec[4], rec[5]]; col += [enc(cc[0]), enc(cc[1]), enc(cc[2])]
+                idx.append(k)
+        v0 += len(ix)
+        rp.append(pid); po += c0; pq.append(scale); pg.append(groups.index(mat)); ps.append(start); pc.append(len(idx) - start)
+        sig[pid] = int(prims[pid]['sig'])
+    done = sum(1 for v in sig if v)
+    head = {'kind': 'scenery', 'groups': [{'mat': g} for g in groups], 'np': len(prims), 'nv': v0, 'ni': len(idx)}
+    arrays = [('po', 'f', 3, po), ('pq', 'f', 1, pq), ('rp', 'I', 1, rp), ('ps', 'I', 1, ps), ('pc', 'I', 1, pc), ('sig', 'I', 1, sig), ('idx', 'I', 1, idx),
+              ('pos', 'h', 3, pos), ('uv', 'h', 2, uv), ('nrm', 'b', 3, nrm), ('col', 'B', 3, col), ('pg', 'B', 1, pg)]
+    raw, z = _write(path, head, arrays)
+    print('LHM', os.path.basename(path), 'shapes', done, 'of', len(prims), 'rows', len(rp), 'vertices', v0, 'triangles', len(idx) // 3, 'bytes', raw, 'deflated', z)

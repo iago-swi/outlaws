@@ -24,3 +24,7 @@ if not want or 'swiss' in want:
     import village
     reset()
     export_building(os.path.join(OUT, 'swiss.lhm'), village.build_swiss())
+for ch in ('west', 'japan', 'swiss'):
+    if not want or 'scenery' in want or (ch + '-scenery') in want:
+        import refine
+        refine.build(ch, os.path.join(OUT, ch + '-scenery.lhm'))
