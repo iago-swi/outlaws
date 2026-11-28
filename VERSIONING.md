@@ -6,7 +6,7 @@ the number of the other.
 | Game | Folder | Tag | Changelog | Where the number lives |
 | --- | --- | --- | --- | --- |
 | Lone Hand (Claude version) | `Claude/` | `lone-hand-vX.Y.Z` | `Claude/CHANGELOG.md` | `Claude/source/package.json` |
-| Eight Horizons (Gemini version) | `Gemini/` | `eight-horizons-vX.Y.Z` | `Gemini/CHANGELOG.md` | `Gemini/package.json` |
+| Nine Horizons (Gemini version) | `Gemini/` | `eight-horizons-vX.Y.Z` | `Gemini/CHANGELOG.md` | `Gemini/package.json` |
 
 ## The number
 

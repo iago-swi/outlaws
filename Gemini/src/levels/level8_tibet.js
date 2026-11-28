@@ -215,7 +215,7 @@ export function buildLevel8(scene, collision, particles) {
       }
     }
     scene.add(g);
-    collision.addBox(x, 0.95, z, 1.5, 1.9, 2.3, 'solid');
+    collision.addOrientedBox(x, 0.95, z, isYak ? 1.12 : 0.84, 1.9, isYak ? 2.15 : 2.0, rotY, 'solid');
   }
   addHorseOrYak(-14.0, 74, 0.4, 0x6b4226, false);
   addHorseOrYak(-16.5, 70, 0.25, 0x3b2a1e, false);

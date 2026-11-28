@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OUTLAWS: Eight Horizons</title>
+  <title>OUTLAWS: Nine Horizons</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%231b0e08'/><text x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-size='38' fill='%23f2b755'>★</text></svg>" />
-  <script type="module" crossorigin src="./assets/index-DJoIgqIA.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-DCVRMBoT.css">
+  <script type="module" crossorigin src="./assets/index-2HRgJ3rU.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-C_KOB3xF.css">
 </head>
 <body>
   <div id="game-container"></div>
@@ -100,6 +100,7 @@
       <div class="hud-controls-hint">
         <span id="hud-esc-hint">[ESC] Menu</span>
         <span>[C] Crouch</span>
+        <span>[X] Sneak</span>
         <span>[M] Mute</span>
         <span>[R] Reload</span>
         <span>[RMB] Zoom / Alt</span>
@@ -116,6 +117,7 @@
         <div class="hud-hero-perk-row">
           <div class="hud-hero-perk" id="hud-hero-perk">-25% DMG</div>
           <div class="hud-crouch-badge hidden" id="hud-crouch-badge">CROUCHING</div>
+          <div class="hud-crouch-badge hidden" id="hud-sneak-badge">SNEAKING</div>
         </div>
         <div class="bar-track health-track">
           <div class="bar-fill health-fill" id="hud-hp-bar"></div>
@@ -162,8 +164,8 @@
     <div class="title-content">
       <div class="title-eyebrow">A MODERN TRIBUTE TO LUCASARTS' 1997 CLASSIC</div>
       <h1 class="title-logo">OUTLAWS</h1>
-      <div class="title-subtitle">EIGHT HORIZONS</div>
-      <div class="title-tagline">Eight frontiers — Twenty-four legends</div>
+      <div class="title-subtitle">NINE HORIZONS</div>
+      <div class="title-tagline">Nine frontiers — Twenty-seven legends</div>
 
       <div class="level-cards">
         <button class="level-card active" data-level="0" style="--card-accent:#e89b3c">
@@ -214,6 +216,12 @@
           <div class="card-meta">Tibet · March 1959</div>
           <div class="card-desc">High ochre valley, village houses, ruined fort, camp and ridge monastery.</div>
         </button>
+        <button class="level-card" data-level="8" style="--card-accent:#1fb89a">
+          <div class="card-num">IX</div>
+          <div class="card-title">TENOCHTITLAN</div>
+          <div class="card-meta">Aztec Empire · 30 June 1520</div>
+          <div class="card-desc">Great Temple, canal city, chinampas, aqueduct and western causeway over Lake Texcoco.</div>
+        </button>
       </div>
 
       <div class="title-controls-row">
@@ -236,7 +244,8 @@
         <span><b>WASD</b> Move</span>
         <span><b>SHIFT</b> Sprint</span>
         <span><b>SPACE</b> Jump</span>
-        <span><b>C / CAPS</b> Crouch</span>
+        <span><b>C</b> Crouch</span>
+        <span><b>X</b> Sneak</span>
         <span><b>MOUSE</b> Aim</span>
         <span><b>LMB</b> Shoot / Strike</span>
         <span><b>RMB</b> Scope / Alt-Fire</span>
@@ -244,7 +253,7 @@
         <span><b>1-4 / SCROLL</b> Weapons</span>
       </div>
     </div>
-    <div id="title-version" class="title-version" aria-label="Game version">v1.1.0</div>
+    <div id="title-version" class="title-version" aria-label="Game version">v1.6.0</div>
   </div>
 
   <!-- Duel Lobby Screen (Host / Join via 5-letter Invite Link or Copy-Paste Backup) -->
@@ -282,6 +291,7 @@
               <option value="5">VI · Normandy (Occupied France, 1944)</option>
               <option value="6">VII · Stalnogorsk (Soviet Russia, 1974)</option>
               <option value="7">VIII · Road to Lhasa (Tibet, 1959)</option>
+              <option value="8">IX · Tenochtitlan (Aztec Empire, 1520)</option>
             </select>
           </label>
 
@@ -425,6 +435,20 @@
         </div>
         <p class="comic-quote" id="comic-quote"></p>
         <p class="hero-historical-note hidden" id="hero-historical-note"></p>
+
+        <div class="hero-options-row">
+          <label class="hero-option-field" for="hero-enemies-select">
+            <span>Enemies</span>
+            <select id="hero-enemies-select" class="plain-select">
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="15" selected>15</option>
+              <option value="20">20</option>
+              <option value="25">25</option>
+              <option value="30">30</option>
+            </select>
+          </label>
+        </div>
 
         <div class="hero-cards-list" id="hero-cards-list" role="radiogroup" aria-label="Select Hero"></div>
 

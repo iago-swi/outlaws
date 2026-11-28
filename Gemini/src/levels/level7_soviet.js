@@ -11,7 +11,7 @@ import { createSkyDome } from '../engine/shaders.js';
 import {
   buildHollowRoom,
   buildBarredWall,
-  buildJumpCrateStack,
+  buildLadder,
   buildCrawlDen,
   addSolidBox,
   addDesk,
@@ -229,12 +229,8 @@ export function buildLevel7(scene, collision, particles) {
   scene.add(garRoofBridge);
   collision.addBox(21, 2.94, 40, 10.2, 0.28, 3.3, 'solid');
   collision.addWalkable(21, 40, 10.4, 21.4, 3.08, true);
-  const garageJumpCrates = buildJumpCrateStack(scene, collision, {
-    startX: 21, startZ: 53.0, dirX: 0, dirZ: -1,
-    heights: [1.06, 2.10],
-    size: 1.7,
-    spacing: 1.72,
-    mat: matWood
+  const garageLadder = buildLadder(scene, collision, {
+    x: 21, z: 50.62, bottomY: 0, topY: 3.08, normalX: 0, normalZ: 1, mat: matSteel
   });
 
   // ---- CONCRETE CELLAR HATCH CROUCH-IN DEN (West of South Avenue, 1.25m door!) ----
@@ -753,7 +749,7 @@ export function buildLevel7(scene, collision, particles) {
     raisedHide: {
       deckY: 3.08,
       deckPos: new THREE.Vector3(21, 3.08, 40),
-      jumpBlocks: garageJumpCrates
+      ladder: garageLadder
     },
     crawlDen: cellarDen
   };
