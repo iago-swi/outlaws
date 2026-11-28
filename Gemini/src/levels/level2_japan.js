@@ -10,6 +10,8 @@ import {
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildRaisedHide,
+  buildCrawlDen,
   addSolidBox,
   addAltar,
   addDesk
@@ -179,9 +181,8 @@ export function buildLevel2(scene, collision, particles) {
   scene.add(pond.mesh);
   animated.push((t) => { pond.uniforms.uTime.value = t; });
 
-  // Water colliders on left and right sides of the bridge so player crosses ON the bridge
-  collision.addBox(9.5, 0.8, 4, 8.2, 1.6, 13.5, 'water');
-  collision.addBox(22.5, 0.8, 4, 8.2, 1.6, 13.5, 'water');
+  // Full pond water collider (bridges/decks above water automatically allow crossing!)
+  collision.addBox(16, 0.8, 4, 21.6, 1.6, 13.5, 'water');
 
   const koiMat = new THREE.MeshBasicMaterial({ color: 0xff6e2e });
   const koiMatW = new THREE.MeshBasicMaterial({ color: 0xfff0e6 });
@@ -199,14 +200,31 @@ export function buildLevel2(scene, collision, particles) {
     });
   }
 
-  // Arched bridge with climbable gentle end steps (<= 0.4m)
-  const deck = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.35, 16), matDarkWood);
-  deck.position.set(16, 0.25, 4);
-  deck.receiveShadow = true;
-  scene.add(deck);
-  collision.addWalkable(16, 4, 4.8, 16.4, 0.42);
-  for (const bx of [13.8, 18.2]) {
-    addSolidBox(scene, collision, bx, 1.0, 4, 0.22, 1.35, 15.6, matVermilion, 'wood');
+  // True Arched Vermilion Bridge (9 smooth stepped deck planks rising gently <= 0.25m per step to 1.15m crest!)
+  const archSegs = 9;
+  const bridgeLen = 16.4;
+  const segLen = bridgeLen / archSegs;
+  for (let i = 0; i < archSegs; i++) {
+    const t = (i + 0.5) / archSegs; // 0..1
+    const archY = 0.22 + Math.sin(t * Math.PI) * 0.94;
+    const segZ = 4 - bridgeLen * 0.5 + (i + 0.5) * segLen;
+    const plank = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.26, segLen + 0.14), matDarkWood);
+    plank.position.set(16, archY - 0.13, segZ);
+    plank.receiveShadow = true;
+    plank.castShadow = true;
+    scene.add(plank);
+    collision.addWalkable(16, segZ, 4.7, segLen + 0.35, archY);
+    // Vermilion arched side railings & posts
+    for (const bx of [13.8, 18.2]) {
+      addSolidBox(scene, collision, bx, archY + 0.58, segZ, 0.22, 1.16, segLen + 0.05, matVermilion, 'wood');
+      if (i % 2 === 0) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.35, 0.3), matVermilion);
+        post.position.set(bx, archY + 0.68, segZ);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), matGold);
+        cap.position.set(bx, archY + 1.42, segZ);
+        scene.add(post, cap);
+      }
+    }
   }
 
   // ---- ZEN ROCK GARDEN (West Courtyard) ----
@@ -316,6 +334,232 @@ export function buildLevel2(scene, collision, particles) {
   });
   addDesk(scene, collision, -54.5, hermit.floorY, 32, 1.4, 0.85, matDarkWood, 1);
 
+  // ---- 5. ENTERABLE FIVE-TIER PAGODA (Ground floor hollow with pillar, incense burner & scroll shelves!) ----
+  const pagoda = buildHollowRoom(scene, collision, {
+    cx: -26, cz: -38, w: 10.2, d: 10.2, h: 4.3, floorY: 0.3,
+    wallMat: matVermilion, floorMat: matTatami, roofMat: matRoof, roofStyle: 'flat',
+    south: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
+    east: [{ type: 'door', offset: 0, width: 2.4, height: 2.9 }],
+    west: [{ type: 'window', offset: 0, width: 2.0 }],
+    stepMat: matStone,
+    interiorLight: { color: 0xffbe6b, intensity: 2.0, distance: 16 }
+  });
+  // Four upper tapered pagoda tiers + curved eaves + golden sōrin spire
+  for (let tier = 0; tier < 4; tier++) {
+    const tw = 8.4 - tier * 1.45;
+    const th = 2.6 - tier * 0.2;
+    const ty = pagoda.roofY + 0.6 + tier * 2.95;
+    const eave = new THREE.Mesh(new THREE.ConeGeometry(tw * 0.92, 1.45, 4), matRoof);
+    eave.rotation.y = Math.PI / 4;
+    eave.position.set(-26, ty + th * 0.48, -38);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(tw * 0.72, th, tw * 0.72), matVermilion);
+    body.position.set(-26, ty, -38);
+    scene.add(body, eave);
+  }
+  const pagSpire = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.16, 3.6, 8), matGold);
+  pagSpire.position.set(-26, pagoda.roofY + 13.8, -38);
+  scene.add(pagSpire);
+  // Pagoda interior: central shinbashira pillar, bronze incense burner & scroll rack
+  addSolidBox(scene, collision, -26, pagoda.floorY + 2.15, -38, 0.7, 4.3, 0.7, matDarkWood, 'wood');
+  addSolidBox(scene, collision, -28.8, pagoda.floorY + 0.55, -40.8, 1.4, 1.1, 1.2, matDarkWood, 'wood');
+  const censer = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.24, 0.45, 10), matGold);
+  censer.position.set(-28.8, pagoda.floorY + 1.32, -40.8);
+  scene.add(censer);
+
+  // ---- 6. ENTERABLE KURA STOREHOUSE (Thick white plaster walls, dark roof, rice bales & sake casks!) ----
+  const kura = buildHollowRoom(scene, collision, {
+    cx: 22, cz: 24, w: 10.0, d: 9.0, h: 4.2, floorY: 0.26,
+    wallMat: matPlaster, floorMat: matDarkWood, roofMat: matRoof, roofStyle: 'gable',
+    west: [{ type: 'door', offset: 0, width: 2.5, height: 2.9 }],
+    north: [{ type: 'window', offset: 0, width: 1.4, barred: true }],
+    stepMat: matStone,
+    interiorLight: { color: 0xffcf88, intensity: 1.5, distance: 13 }
+  });
+  // Heavy dark plaster wainscot band around exterior + rice bales, sake casks & chests inside
+  const matStraw = new THREE.MeshStandardMaterial({ color: 0xd4b668, roughness: 0.94 });
+  addSolidBox(scene, collision, 25.0, kura.floorY + 0.55, 21.2, 2.2, 1.1, 1.4, matStraw, 'wood');
+  addSolidBox(scene, collision, 25.0, kura.floorY + 0.55, 26.8, 2.0, 1.1, 1.6, matDarkWood, 'wood');
+  for (const cz of [23.2, 24.8]) {
+    const cask = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.95, 10), matStraw);
+    cask.position.set(25.2, kura.floorY + 0.48, cz);
+    scene.add(cask);
+    collision.addBox(25.2, kura.floorY + 0.48, cz, 0.95, 0.96, 0.95, 'wood');
+  }
+
+  // ---- 7. WALKABLE BELL TOWER (SHŌRŌ — Open pavilion with huge cast-bronze temple bell!) ----
+  const btX = 37, btZ = 4;
+  const btFloorY = 0.68;
+  const btBase = new THREE.Mesh(new THREE.BoxGeometry(7.8, btFloorY, 7.8), matStone);
+  btBase.position.set(btX, btFloorY * 0.5, btZ);
+  btBase.receiveShadow = true;
+  scene.add(btBase);
+  collision.addWalkable(btX, btZ, 8.0, 8.0, btFloorY);
+  // Two gentle stone steps on West & South sides (0.34m rise each <= STEP_MAX)
+  for (const [sx, sz, sw, sd] of [[btX - 4.4, btZ, 1.1, 3.0], [btX, btZ + 4.4, 3.0, 1.1]]) {
+    const st = new THREE.Mesh(new THREE.BoxGeometry(sw, 0.34, sd), matStone);
+    st.position.set(sx, 0.17, sz);
+    scene.add(st);
+    collision.addWalkable(sx, sz, sw + 0.2, sd + 0.2, 0.34);
+  }
+  for (const [px, pz] of [[-3.1, -3.1], [3.1, -3.1], [-3.1, 3.1], [3.1, 3.1]]) {
+    addSolidBox(scene, collision, btX + px, btFloorY + 2.4, btZ + pz, 0.45, 4.8, 0.45, matVermilion, 'wood');
+  }
+  const btRoof = new THREE.Mesh(new THREE.ConeGeometry(6.6, 2.8, 4), matRoof);
+  btRoof.rotation.y = Math.PI / 4;
+  btRoof.position.set(btX, btFloorY + 6.0, btZ);
+  scene.add(btRoof);
+  // Huge Cast-Bronze Temple Bell (Bonshō) suspended overhead + horizontal wooden striking log!
+  const matBronzeBell = new THREE.MeshStandardMaterial({ color: 0x3b4d3e, metalness: 0.72, roughness: 0.38 });
+  const bell = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.96, 1.95, 16), matBronzeBell);
+  bell.position.set(btX, btFloorY + 3.05, btZ);
+  const bellCap = new THREE.Mesh(new THREE.SphereGeometry(0.68, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), matBronzeBell);
+  bellCap.position.set(btX, btFloorY + 4.02, btZ);
+  const striker = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 2.8, 8), matDarkWood);
+  striker.rotation.z = Math.PI / 2;
+  striker.position.set(btX - 2.1, btFloorY + 2.55, btZ);
+  scene.add(bell, bellCap, striker);
+
+  // ---- BYSTANDER CHARACTERS IN JAPAN (Solid, Peaceful, Never Fight!) ----
+  // 1. Komuso (Wandering Flute Monks): woven reed basket hat covering whole head, black robe with white collar,
+  //    gold stole (kesa) over one shoulder, white socks, bamboo shakuhachi flute held to mouth with both hands
+  function addKomuso(kx, kz, rotY) {
+    const g = new THREE.Group();
+    g.position.set(kx, 0, kz);
+    g.rotation.y = rotY;
+    const blackRobe = new THREE.MeshStandardMaterial({ color: 0x16161a, roughness: 0.86 });
+    const whiteCloth = new THREE.MeshStandardMaterial({ color: 0xf4f1e8, roughness: 0.82 });
+    const reedHat = new THREE.MeshStandardMaterial({ color: 0xc9a865, roughness: 0.92 });
+    const bambooFlute = new THREE.MeshStandardMaterial({ color: 0x9c7b3b, roughness: 0.55 });
+    const skinM = new THREE.MeshStandardMaterial({ color: 0xe3b490, roughness: 0.74 });
+
+    // White tabi socks & sandals
+    for (const lx of [-0.13, 0.13]) {
+      const sock = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.18, 0.24), whiteCloth);
+      sock.position.set(lx, 0.09, 0.03);
+      g.add(sock);
+    }
+    // Black kimono robe + wide sleeves + crisp white inner collar
+    const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.36, 1.38, 12), blackRobe);
+    robe.position.y = 0.84;
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.045, 6, 14), whiteCloth);
+    collar.rotation.x = Math.PI / 2;
+    collar.position.set(0, 1.5, 0.02);
+    // Gold kesa stole draped diagonally over one shoulder
+    const stole = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.92, 0.34), matGold);
+    stole.position.set(0.12, 1.15, 0.02);
+    stole.rotation.z = 0.28;
+    // Woven deep reed basket hat (tengai) covering the ENTIRE head!
+    const tengai = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.25, 0.44, 14), reedHat);
+    tengai.position.set(0, 1.78, 0);
+    const tengaiTop = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), reedHat);
+    tengaiTop.position.set(0, 2.0, 0);
+    // Both arms raised holding bamboo shakuhachi flute to mouth beneath basket hat
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.56, 8), blackRobe);
+    armL.position.set(-0.26, 1.32, 0.16);
+    armL.rotation.set(-0.85, 0, -0.35);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.56, 8), blackRobe);
+    armR.position.set(0.26, 1.32, 0.16);
+    armR.rotation.set(-0.85, 0, 0.35);
+    const handL = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 6), skinM);
+    handL.position.set(-0.04, 1.35, 0.34);
+    const handR = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 6), skinM);
+    handR.position.set(0.04, 1.24, 0.38);
+    const flute = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.024, 0.62, 8), bambooFlute);
+    flute.position.set(0, 1.38, 0.31);
+    flute.rotation.x = 0.52;
+    g.add(robe, collar, stole, tengai, tengaiTop, armL, armR, handL, handR, flute);
+    scene.add(g);
+    collision.addBox(kx, 1.0, kz, 0.85, 2.0, 0.85, 'solid');
+    animated.push((t) => { g.rotation.y = rotY + Math.sin(t * 1.1 + kx) * 0.08; });
+  }
+  addKomuso(-7.2, 31, 0.55);
+  addKomuso(8.2, 17, -0.75);
+  addKomuso(-8.4, -20, 0.65);
+
+  // 2. Geisha carrying an oil-paper umbrella (wagasa) on the shoulder:
+  //    white face, red lips, black swept-up hair with pins & flowers, narrow ankle kimono, wide obi bow in back
+  function addGeisha(gx, gz, rotY, opts) {
+    const g = new THREE.Group();
+    g.position.set(gx, 0, gz);
+    g.rotation.y = rotY;
+    const whiteFace = new THREE.MeshStandardMaterial({ color: 0xfbf8f4, roughness: 0.65 });
+    const redLip = new THREE.MeshStandardMaterial({ color: 0xc91828, roughness: 0.4 });
+    const blackHair = new THREE.MeshStandardMaterial({ color: 0x121114, roughness: 0.45 });
+    const kimonoMat = new THREE.MeshStandardMaterial({ color: opts.kimonoColor, roughness: 0.72 });
+    const obiMat = new THREE.MeshStandardMaterial({ color: opts.obiColor, roughness: 0.6 });
+    const umbrellaMat = new THREE.MeshStandardMaterial({ color: opts.umbrellaColor, roughness: 0.75, side: THREE.DoubleSide });
+    const whiteCloth = new THREE.MeshStandardMaterial({ color: 0xf8f6f0, roughness: 0.78 });
+
+    // Narrow floor-length kimono to the ankles + white tabi feet
+    const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.24, 1.4, 12), kimonoMat);
+    skirt.position.y = 0.76;
+    const collar = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.032, 6, 12), whiteCloth);
+    collar.rotation.x = Math.PI / 2;
+    collar.position.set(0, 1.46, 0.02);
+    // Wide obi sash & large knotted drum bow (taiko musubi) at the back!
+    const obi = new THREE.Mesh(new THREE.CylinderGeometry(0.225, 0.225, 0.34, 12), obiMat);
+    obi.position.y = 1.02;
+    const obiBow = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.3, 0.16), obiMat);
+    obiBow.position.set(0, 1.05, -0.24);
+    // Flowing kimono sleeves
+    const sleeveL = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.52, 0.22), kimonoMat);
+    sleeveL.position.set(-0.24, 1.18, 0.02);
+    const sleeveR = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.52, 0.22), kimonoMat);
+    sleeveR.position.set(0.24, 1.24, 0.08);
+    sleeveR.rotation.x = -0.5;
+    // White face, dark eyes & crisp red lips
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.175, 14, 12), whiteFace);
+    head.position.set(0, 1.66, 0);
+    const eyeM = new THREE.MeshBasicMaterial({ color: 0x161214 });
+    const eL = new THREE.Mesh(new THREE.SphereGeometry(0.019, 6, 6), eyeM);
+    eL.position.set(-0.058, 0.02, 0.16);
+    const eR = eL.clone();
+    eR.position.x = 0.058;
+    const lips = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.02), redLip);
+    lips.position.set(0, -0.055, 0.168);
+    head.add(eL, eR, lips);
+    // Black swept-up shimada hair with gold pins & flowers (or white silk hood for all-white bridal geisha!)
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(0.185, 12, 10), blackHair);
+    bun.scale.set(1.08, 0.92, 1.05);
+    bun.position.set(0, 0.07, -0.04);
+    const topKnot = new THREE.Mesh(new THREE.SphereGeometry(0.105, 10, 8), blackHair);
+    topKnot.position.set(0, 0.22, -0.06);
+    const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.36, 6), matGold);
+    pin.rotation.z = Math.PI / 2 - 0.2;
+    pin.position.set(0, 0.2, -0.04);
+    const flower = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 7), opts.allWhite ? whiteCloth : matSakura);
+    flower.position.set(0.13, 0.15, 0.06);
+    head.add(bun, topKnot, pin, flower);
+    if (opts.allWhite) {
+      // Draped white silk watabōshi hood framing face and shoulders
+      const hood = new THREE.Mesh(new THREE.SphereGeometry(0.245, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.62), whiteCloth);
+      hood.position.set(0, 0.08, -0.03);
+      const hoodBack = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.34, 0.14), whiteCloth);
+      hoodBack.position.set(0, -0.05, -0.18);
+      head.add(hood, hoodBack);
+    }
+    // Oil-paper umbrella (wagasa) resting gracefully over right shoulder!
+    const wagasa = new THREE.Group();
+    wagasa.position.set(0.24, 1.54, -0.04);
+    wagasa.rotation.set(-0.42, 0, -0.28);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 1.15, 6), matDarkWood);
+    handle.position.y = 0.28;
+    const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.76, 0.26, 16, 1, true), umbrellaMat);
+    canopy.position.y = 0.82;
+    const finial = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.04, 0.09, 8), matDarkWood);
+    finial.position.y = 0.96;
+    wagasa.add(handle, canopy, finial);
+
+    g.add(skirt, collar, obi, obiBow, sleeveL, sleeveR, head, wagasa);
+    scene.add(g);
+    collision.addBox(gx, 0.95, gz, 0.82, 1.9, 0.82, 'solid');
+    animated.push((t) => { wagasa.rotation.y = Math.sin(t * 0.9 + gx) * 0.22; });
+  }
+  addGeisha(7.4, 33, -0.6, { kimonoColor: 0xb51e2c, obiColor: 0xe6b83e, umbrellaColor: 0xc92c24 });
+  addGeisha(-8.6, 15, 0.7, { kimonoColor: 0x22417a, obiColor: 0xf4a8c0, umbrellaColor: 0xf4b6c8 });
+  addGeisha(9.8, -18, -0.8, { kimonoColor: 0x1e6b52, obiColor: 0x702652, umbrellaColor: 0xdca438 });
+  addGeisha(-10.2, -28, 0.5, { kimonoColor: 0xf7f5ef, obiColor: 0xf2eee2, umbrellaColor: 0xf8f6f0, allWhite: true });
+
   // ---- STONE LANTERNS, SAKURA TREES & BAMBOO GROVES (ALL SOLID!) ----
   function addStoneLantern(lx, lz) {
     const g = new THREE.Group();
@@ -357,7 +601,7 @@ export function buildLevel2(scene, collision, particles) {
   }
   for (const [sx, sz, sc] of [
     [-12, -26, 1.2], [12, -26, 1.25], [-10, 16, 1.05], [10, 18, 1.1],
-    [-33, 4, 1.3], [32, -4, 1.2], [-14, -6, 1.0], [38, -46, 1.15], [-40, 26, 1.1]
+    [-33, 4, 1.3], [30, -9, 1.15], [-14, -6, 1.0], [38, -46, 1.15], [-40, 26, 1.1]
   ]) addSakuraTree(sx, sz, sc);
 
   function addBambooCluster(cx, cz, count = 12, radius = 4.2) {
@@ -395,12 +639,26 @@ export function buildLevel2(scene, collision, particles) {
 
   particles.initAmbient('petals', collision.bounds);
 
+  // ---- 6.4 RAISED TIMBER WATCH HIDE (2 jump blocks) & CROUCH-ONLY GARDEN DEN (1.25m door!) ----
+  const japanHide = buildRaisedHide(scene, collision, {
+    cx: -12, cz: 29, deckY: 2.2, w: 4.2, d: 4.2, openSide: 'south',
+    wallMat: matDarkWood, floorMat: matTatami, postMat: matVermilion, jumpMat: matDarkWood
+  });
+  const japanDen = buildCrawlDen(scene, collision, {
+    cx: 15, cz: -32, w: 5.2, d: 4.8, doorSide: 'south',
+    wallMat: matStone, floorMat: matTatami, roofMat: matRoof
+  });
+
   // ---- STRATEGIC PICKUPS ----
   const pickupDefs = [
     { type: 'health', pos: new THREE.Vector3(-23.0, 0.9, -16.0), label: 'TEA HOUSE HERBS (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(-51.5, 0.9, 32.0),  label: 'HERMITAGE TONIC (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(48.0, 0.9, -39.0),  label: 'DOJO SALVE (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(0, 1.1, -34.0),     label: 'SHRINE ELIXIR (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-24.2, 1.0, -37.2), label: 'PAGODA INCENSE TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(21.0, 1.0, 24.0),   label: 'KURA SAKE ELIXIR (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(37.0, 1.4, 4.0),    label: 'BELL TOWER HERBS (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(japanDen.insidePos.x, japanDen.floorY + 0.55, japanDen.insidePos.z), label: 'HIDDEN DEN ELIXIR (+35 HP)', inDen: true },
     { type: 'ammo',   pos: new THREE.Vector3(23.0, 0.9, -16.0),  label: 'ARROW & SHURIKEN QUIVER' },
     { type: 'ammo',   pos: new THREE.Vector3(-24.0, 0.9, 24.0),  label: 'POWDER & STARS' }
   ];
@@ -411,23 +669,26 @@ export function buildLevel2(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- 25 ENEMIES (Courtyard, Walk-through Houses, Zen Garden, Koi Bridge, Hermitage, Dojo Compound, Shrine, Boss) ----
+  // ---- 28 ENEMIES (Courtyard, Houses, Pagoda, Kura, Bell Tower, Koi Bridge, Hermitage, Dojo, Shrine, Boss) ----
   const enemySpawns = [
     { type: 'ninja', pos: new THREE.Vector3(-8, 0, 32) },
     { type: 'ninja', pos: new THREE.Vector3(8, 0, 30) },
     { type: 'ronin', pos: new THREE.Vector3(0, 0, 18) },
     { type: 'ninja', pos: new THREE.Vector3(-12, 0, 12) },
     { type: 'ronin', pos: new THREE.Vector3(-23, 0.25, 24) }, // Inside south-west house
+    { type: 'ronin', pos: new THREE.Vector3(21.2, 0.26, 24) }, // Inside Kura Storehouse
     { type: 'ninja', pos: new THREE.Vector3(-36, 0, 28) },
     { type: 'ronin', pos: new THREE.Vector3(-50, 0.22, 32) }, // Inside Bamboo Hermitage
     { type: 'ninja', pos: new THREE.Vector3(-25, 0, 4) },
-    { type: 'ronin', pos: new THREE.Vector3(16, 0.42, 4) },    // On Koi Bridge
+    { type: 'ronin', pos: new THREE.Vector3(16, 1.16, 4) },    // On Arched Koi Bridge crest!
+    { type: 'ninja', pos: new THREE.Vector3(36.2, 0.68, 5.2) }, // Inside Bell Tower pavilion
     { type: 'ninja', pos: new THREE.Vector3(16, 0, 16) },
     { type: 'ronin', pos: new THREE.Vector3(0, 0, -4) },
     { type: 'ninja', pos: new THREE.Vector3(-12, 0, -10) },
     { type: 'ronin', pos: new THREE.Vector3(-22, 0.25, -16) }, // Inside West Tea House
     { type: 'ninja', pos: new THREE.Vector3(14, 0, -10) },
     { type: 'ronin', pos: new THREE.Vector3(22, 0.25, -16) },  // Inside East Tea House
+    { type: 'ronin', pos: new THREE.Vector3(-24.2, 0.3, -36.5) }, // Inside Pagoda Ground Floor!
     { type: 'ninja', pos: new THREE.Vector3(26, 0, -34) },
     { type: 'ronin', pos: new THREE.Vector3(39, 0, -38) },     // Dojo courtyard
     { type: 'ninja', pos: new THREE.Vector3(41, 0, -46) },
@@ -442,10 +703,14 @@ export function buildLevel2(scene, collision, particles) {
 
   const enterableBuildings = [
     { name: 'Shinto Shrine Hall', inside: new THREE.Vector3(0, 0.36, -33.5), outside: new THREE.Vector3(0, 0, -26.5) },
+    { name: 'Five-Tier Pagoda', inside: new THREE.Vector3(-24.2, 0.3, -37.2), outside: new THREE.Vector3(-26, 0, -31) },
+    { name: 'Kura Storehouse', inside: new THREE.Vector3(21, 0.26, 24), outside: new THREE.Vector3(15, 0, 24) },
+    { name: 'Bell Tower', inside: new THREE.Vector3(37, 0.68, 4), outside: new THREE.Vector3(31, 0, 4) },
     { name: 'West Tea House', inside: new THREE.Vector3(-23, 0.25, -16), outside: new THREE.Vector3(-16, 0, -16) },
     { name: 'Dojo Hall', inside: new THREE.Vector3(48, 0.28, -39), outside: new THREE.Vector3(40, 0, -39) },
     { name: 'Bamboo Hermitage', inside: new THREE.Vector3(-51.5, 0.22, 32), outside: new THREE.Vector3(-45.5, 0, 32) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
+  const specialSpots = { raisedHide: japanHide, crawlDen: japanDen };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }

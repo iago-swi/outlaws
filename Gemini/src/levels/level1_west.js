@@ -10,6 +10,10 @@ import { createSkyDome } from '../engine/shaders.js';
 import {
   buildHollowRoom,
   buildBarredWall,
+  buildJumpCrateStack,
+  buildRaisedHide,
+  buildCrawlDen,
+  buildZigzagHill,
   addSolidBox,
   addDesk,
   addBunk,
@@ -281,21 +285,173 @@ export function buildLevel1(scene, collision, particles) {
   }
   addSolidBox(scene, collision, 24.4, barn.floorY + 0.55, 1.2, 1.8, 1.1, 1.3, matHay, 'wood');
   addSolidBox(scene, collision, 24.4, barn.floorY + 0.55, 10.8, 1.8, 1.1, 1.3, matHay, 'wood');
+  // Sculpted Horse standing in the south livery stall!
+  {
+    const horseGrp = new THREE.Group();
+    horseGrp.position.set(19.5, barn.floorY, 10.6);
+    horseGrp.rotation.y = Math.PI * 0.5;
+    const coatMat = new THREE.MeshStandardMaterial({ color: 0x6b3c1f, roughness: 0.88 });
+    const maneMat = new THREE.MeshStandardMaterial({ color: 0x1d140f, roughness: 0.92 });
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.85, 1.95), coatMat);
+    body.position.y = 1.22;
+    const neck = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.78, 0.5), coatMat);
+    neck.position.set(0, 1.72, 0.92);
+    neck.rotation.x = 0.25;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.34, 0.65), coatMat);
+    head.position.set(0, 2.02, 1.16);
+    head.rotation.x = 0.35;
+    const mane = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.68, 0.16), maneMat);
+    mane.position.set(0, 1.78, 0.68);
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.1, 0.78, 6), maneMat);
+    tail.position.set(0, 1.05, -1.04);
+    tail.rotation.x = -0.25;
+    horseGrp.add(body, neck, head, mane, tail);
+    for (const [lx, lz] of [[-0.26, -0.72], [0.26, -0.72], [-0.26, 0.72], [0.26, 0.72]]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.07, 0.96, 6), coatMat);
+      leg.position.set(lx, 0.48, lz);
+      horseGrp.add(leg);
+    }
+    scene.add(horseGrp);
+    collision.addBox(19.5, barn.floorY + 1.0, 10.6, 2.1, 2.0, 1.0, 'solid');
+  }
 
-  // ---- 5. ENTERABLE GENERAL STORE (East side north of Barn) ----
+  // ---- 5. ENTERABLE GENERAL STORE (East side north of Barn — counter, shelves & walkable flat roof + 3 jump crates!) ----
   const gen = buildHollowRoom(scene, collision, {
-    cx: 20, cz: -14, w: 10, d: 11, h: 4.5, floorY: 0.16,
+    cx: 20, cz: -14, w: 10, d: 11, h: 3.35, floorY: 0.16,
     wallMat: matWeathered, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'parapet',
     west: [
       { type: 'window', offset: -3.2, width: 1.8 },
-      { type: 'door', offset: 0, width: 2.3, height: 2.9 },
+      { type: 'door', offset: 0, width: 2.3, height: 2.8 },
       { type: 'window', offset: 3.2, width: 1.8 }
     ],
     interiorLight: { color: 0xffc472, intensity: 1.6, distance: 13 }
   });
-  addSign(14.8, 5.4, -14, 6.8, 1.8, -Math.PI / 2, 'GENERAL', 'DRY GOODS & AMMO');
-  addLantern(14.3, 3.8, -14);
+  const genRoofY = gen.roofY + 0.28;
+  collision.addWalkable(20, -14, 10.2, 11.2, genRoofY, true);
+  // Street-facing false front sniper parapet on west edge of roof
+  addSolidBox(scene, collision, 15.1, genRoofY + 0.55, -14, 0.35, 1.1, 11.0, matWeathered, 'wood');
+  const genCrates = buildJumpCrateStack(scene, collision, {
+    startX: 28.6, startZ: -14, dirX: -1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  });
+  addSign(14.8, 5.1, -14, 6.8, 1.6, -Math.PI / 2, 'GENERAL', 'DRY GOODS & AMMO');
+  addLantern(14.3, 3.4, -14);
   addSolidBox(scene, collision, 22.8, gen.floorY + 0.55, -14, 1.1, 1.1, 6.0, matWood, 'wood');
+  // Stocked display shelves along north & south walls
+  for (const sz of [-18.7, -9.3]) {
+    addSolidBox(scene, collision, 20.5, gen.floorY + 1.1, sz, 5.6, 2.2, 0.7, matDarkWood, 'wood');
+    for (let i = 0; i < 4; i++) {
+      const jar = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.36, 0.34), i % 2 === 0 ? matGold : matSaloon);
+      jar.position.set(18.4 + i * 1.4, gen.floorY + 1.55, sz + (sz < -14 ? 0.25 : -0.25));
+      scene.add(jar);
+    }
+  }
+
+  // ---- 5B. ENTERABLE SHERIFF'S OFFICE WITH ONE BARRED CELL & WALKABLE FLAT ROOF + 3 JUMP CRATES ----
+  const sheriff = buildHollowRoom(scene, collision, {
+    cx: -21, cz: -12, w: 10, d: 10, h: 3.35, floorY: 0.16,
+    wallMat: matWood, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'parapet',
+    east: [
+      { type: 'window', offset: -3.0, width: 1.7 },
+      { type: 'door', offset: 0.4, width: 2.3, height: 2.8 }
+    ],
+    west: [{ type: 'window', offset: -2.2, width: 1.4, barred: true }],
+    interiorLight: { color: 0xffc87a, intensity: 1.7, distance: 13 }
+  });
+  const sheriffRoofY = sheriff.roofY + 0.28;
+  collision.addWalkable(-21, -12, 10.2, 10.2, sheriffRoofY, true);
+  addSolidBox(scene, collision, -16.1, sheriffRoofY + 0.55, -12, 0.35, 1.1, 10.0, matWood, 'wood');
+  buildJumpCrateStack(scene, collision, {
+    startX: -29.6, startZ: -12, dirX: 1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  });
+  addSign(-15.75, 5.0, -12, 6.4, 1.55, Math.PI / 2, 'SHERIFF', 'LAW & ORDER', '#2e1d12');
+  addLantern(-15.2, 3.4, -11.6);
+  // One barred holding cell in north-west corner (open 2.3m cell door!)
+  buildBarredWall(scene, collision, {
+    axis: 'x', center: { x: -23.0, z: -12.6 }, baseY: sheriff.floorY, length: 5.2, height: 3.15,
+    doors: [{ offset: 0.9, width: 2.3 }]
+  });
+  buildBarredWall(scene, collision, {
+    axis: 'z', center: { x: -20.4, z: -14.6 }, baseY: sheriff.floorY, length: 4.0, height: 3.15, doors: []
+  });
+  addBunk(scene, collision, -24.7, sheriff.floorY, -15.2, true, matMetal, 0x5c4635);
+  addDesk(scene, collision, -23.2, sheriff.floorY, -9.2, 1.7, 0.85, matDarkWood, -1);
+  const shPoster = new THREE.Mesh(new THREE.PlaneGeometry(0.75, 0.95), wantedMat);
+  shPoster.position.set(-25.55, sheriff.floorY + 1.95, -9.2);
+  shPoster.rotation.y = Math.PI / 2;
+  scene.add(shPoster);
+
+  // ---- 5C. ENTERABLE BLACKSMITH (Forge, anvil & walkable flat roof behind false front + 3 jump crates!) ----
+  const smithy = buildHollowRoom(scene, collision, {
+    cx: -21, cz: 22, w: 10, d: 10, h: 3.35, floorY: 0.14,
+    wallMat: matStone, floorMat: matStone, roofMat: matDarkWood, roofStyle: 'parapet',
+    east: [{ type: 'door', offset: 0, width: 3.0, height: 2.85 }],
+    south: [{ type: 'window', offset: 0, width: 1.8 }],
+    interiorLight: { color: 0xff7b2e, intensity: 2.0, distance: 14 }
+  });
+  const smithyRoofY = smithy.roofY + 0.28;
+  collision.addWalkable(-21, 22, 10.2, 10.2, smithyRoofY, true);
+  addSolidBox(scene, collision, -16.1, smithyRoofY + 0.55, 22, 0.35, 1.1, 10.0, matStone, 'stone');
+  buildJumpCrateStack(scene, collision, {
+    startX: -29.6, startZ: 22, dirX: 1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  });
+  addSign(-15.75, 5.0, 22, 6.8, 1.55, Math.PI / 2, 'BLACKSMITH', 'FORGE & SHOEING', '#2b1812');
+  // Brick Forge & glowing coal bed + chimney
+  addSolidBox(scene, collision, -24.4, smithy.floorY + 0.65, 22, 2.0, 1.3, 2.8, matStone, 'stone');
+  const coals = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.2, 1.6), new THREE.MeshBasicMaterial({ color: 0xff5a12 }));
+  coals.position.set(-24.2, smithy.floorY + 1.36, 22);
+  const smithChim = new THREE.Mesh(new THREE.BoxGeometry(1.4, 5.6, 1.4), matStone);
+  smithChim.position.set(-24.8, smithy.floorY + 4.0, 22);
+  scene.add(coals, smithChim);
+  // Heavy Iron Anvil on timber stump block
+  addSolidBox(scene, collision, -21.2, smithy.floorY + 0.35, 24.4, 0.85, 0.7, 0.85, matDarkWood, 'wood');
+  const anvil = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.34, 0.42), matMetal);
+  anvil.position.set(-21.2, smithy.floorY + 0.86, 24.4);
+  const horn = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.42, 6), matMetal);
+  horn.rotation.z = -Math.PI / 2;
+  horn.position.set(-20.58, smithy.floorY + 0.9, 24.4);
+  scene.add(anvil, horn);
+
+  // ---- 5D. ENTERABLE TELEGRAPH OFFICE (Counter, safe & walkable flat roof + 3 jump crates!) ----
+  const teleg = buildHollowRoom(scene, collision, {
+    cx: 21, cz: 23, w: 9.5, d: 9.5, h: 3.35, floorY: 0.16,
+    wallMat: matWeathered, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'parapet',
+    west: [
+      { type: 'window', offset: -2.8, width: 1.6 },
+      { type: 'door', offset: 0.5, width: 2.3, height: 2.8 }
+    ],
+    interiorLight: { color: 0xffd088, intensity: 1.5, distance: 13 }
+  });
+  const telegRoofY = teleg.roofY + 0.28;
+  collision.addWalkable(21, 23, 9.7, 9.7, telegRoofY, true);
+  addSolidBox(scene, collision, 16.3, telegRoofY + 0.55, 23, 0.35, 1.1, 9.5, matWeathered, 'wood');
+  buildJumpCrateStack(scene, collision, {
+    startX: 29.4, startZ: 23, dirX: -1, dirZ: 0, heights: [1.12, 2.24, 3.36], size: 1.65, spacing: 1.82, mat: matWood
+  });
+  addSign(16.05, 4.95, 23, 6.4, 1.5, -Math.PI / 2, 'TELEGRAPH', 'WESTERN WIRE', '#24221e');
+  addSolidBox(scene, collision, 22.6, teleg.floorY + 0.55, 22.0, 1.0, 1.1, 4.6, matDarkWood, 'wood');
+  const wireKey = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.14, 0.24), matGold);
+  wireKey.position.set(22.6, teleg.floorY + 1.16, 22.0);
+  scene.add(wireKey);
+  addSolidBox(scene, collision, 24.2, teleg.floorY + 0.75, 26.2, 1.35, 1.5, 1.35, matMetal, 'solid');
+  // Telegraph pole outside
+  addSolidBox(scene, collision, 15.2, 4.2, 27.6, 0.28, 8.4, 0.28, matDarkWood, 'wood');
+
+  // ---- 5E. ENTERABLE UNDERTAKER (Wooden coffins — East of Saloon toward Boot Hill!) ----
+  const under = buildHollowRoom(scene, collision, {
+    cx: 17.5, cz: -30, w: 10, d: 9.5, h: 4.3, floorY: 0.16,
+    wallMat: matDarkWood, floorMat: matFloor, roofMat: matDarkWood, roofStyle: 'parapet',
+    south: [
+      { type: 'door', offset: 0, width: 2.4, height: 2.9 },
+      { type: 'window', offset: 3.0, width: 1.6 }
+    ],
+    west: [{ type: 'window', offset: 0, width: 1.6 }],
+    interiorLight: { color: 0xffb878, intensity: 1.4, distance: 13 }
+  });
+  addSign(17.5, 5.1, -25.05, 6.6, 1.65, 0, 'UNDERTAKER', 'COFFINS & BURIALS', '#181414');
+  // Display coffins on trestles + upright pine coffin
+  addSolidBox(scene, collision, 14.4, under.floorY + 0.52, -32.2, 0.9, 1.04, 2.2, matWood, 'wood');
+  addSolidBox(scene, collision, 20.6, under.floorY + 0.52, -32.2, 0.9, 1.04, 2.2, matSaloon, 'wood');
+  addSolidBox(scene, collision, 21.4, under.floorY + 1.15, -28.0, 0.8, 2.3, 0.55, matWood, 'wood');
 
   // ---- 6. SMALL HOMESTEAD WITH FENCE SOUTH OF TOWN ----
   const home = buildHollowRoom(scene, collision, {
@@ -542,10 +698,27 @@ export function buildLevel1(scene, collision, particles) {
     collision.addBox(cx, 2.1 * scale, cz, 0.9 * scale, 4.2 * scale, 0.9 * scale, 'solid');
   }
   const cactiCoords = [
-    [-46, 38, 1.1], [42, 40, 1.2], [-48, -22, 1.3], [58, -24, 1.1],
-    [-52, 6, 1.15], [50, 12, 1.25], [16, 52, 0.95], [-42, 62, 1.1], [34, 58, 1.15]
+    [-46, 38, 1.1], [42, 40, 1.2], [-48, -28, 1.3], [58, -24, 1.1],
+    [50, 12, 1.25], [16, 52, 0.95], [-42, 62, 1.1], [34, 58, 1.15]
   ];
   for (const [cx, cz, sc] of cactiCoords) addCactus(cx, cz, sc);
+
+  // ---- 6.1 CLIMBABLE 12m FLAT-TOPPED BUTTE WITH 4-LEG ZIGZAG ROCK PATH OVERLOOKING MAIN STREET! ----
+  const butte = buildZigzagHill(scene, collision, {
+    cx: -58, cz: 2, topW: 13, topD: 13, topY: 12.0,
+    legs: 4, stepsPerLeg: 8, faceSide: 'east',
+    rockMat: matRedRock, boulderMat: matStone
+  });
+
+  // ---- 6.4 RAISED TIMBER LOOKOUT HIDE (2 jump blocks) & CROUCH-ONLY CRAWL DEN (1.25m door!) ----
+  const westHide = buildRaisedHide(scene, collision, {
+    cx: 35, cz: 38, deckY: 2.2, w: 4.2, d: 4.2, openSide: 'west',
+    wallMat: matWood, floorMat: matFloor, postMat: matDarkWood, jumpMat: matWeathered
+  });
+  const westDen = buildCrawlDen(scene, collision, {
+    cx: 38, cz: 10, w: 5.4, d: 5.0, doorSide: 'west',
+    wallMat: matStone, floorMat: matFloor, roofMat: matRedRock
+  });
 
   // Monument Valley Distant Mesas
   const mesaSpecs = [
@@ -565,13 +738,18 @@ export function buildLevel1(scene, collision, particles) {
   particles.addTumbleweed(new THREE.Vector3(-25, 0.7, 22), 1);
   particles.addTumbleweed(new THREE.Vector3(24, 0.7, -4), -1);
 
-  // ---- STRATEGIC PICKUPS (including inside JAIL cell and inside BOOT HILL crypt!) ----
+  // ---- STRATEGIC PICKUPS (including inside JAIL cell, BOOT HILL crypt & every new town building!) ----
   const pickupDefs = [
     { type: 'health', pos: new THREE.Vector3(-12.8, 0.9, -30.5), label: 'JAIL CELL TONIC (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(45.0, 0.9, -62.5),  label: 'CRYPT ELIXIR (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(-23.5, 0.9, 46.5),  label: 'HOMESTEAD TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-22.2, 0.9, -14.2), label: 'SHERIFF CELL TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-19.5, 0.9, 22.0),  label: 'BLACKSMITH TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(20.0, 0.9, 23.0),   label: 'TELEGRAPH TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(17.5, 0.9, -29.5),  label: 'UNDERTAKER ELIXIR (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(westDen.insidePos.x, westDen.floorY + 0.55, westDen.insidePos.z), label: 'HIDDEN CELLAR TONIC (+35 HP)', inDen: true },
     { type: 'ammo',   pos: new THREE.Vector3(-19.5, 0.9, 4.0),   label: 'BANK AMMO BOX' },
-    { type: 'ammo',   pos: new THREE.Vector3(21.0, 0.9, 6.0),    label: 'BARN SHELL CRATE' },
+    { type: 'ammo',   pos: new THREE.Vector3(21.0, 0.9, 6.0),    label: 'LIVERY SHELL CRATE' },
     { type: 'health', pos: new THREE.Vector3(3.5, 0.9, -29.0),   label: 'SALOON WHISKEY (+35 HP)' },
     { type: 'ammo',   pos: new THREE.Vector3(19.0, 0.9, -14.0),  label: 'GENERAL STORE AMMO' }
   ];
@@ -597,7 +775,11 @@ export function buildLevel1(scene, collision, particles) {
     { type: 'cowboy',  pos: new THREE.Vector3(0, 0, 10) },
     { type: 'bandito', pos: new THREE.Vector3(-10, 0, -4) },
     { type: 'cowboy',  pos: new THREE.Vector3(10, 0, -6) },
-    { type: 'bandito', pos: new THREE.Vector3(19, 0.16, -14) }, // Inside General Store
+    { type: 'bandito', pos: new THREE.Vector3(19, 0.16, -14) },    // Inside General Store
+    { type: 'cowboy',  pos: new THREE.Vector3(-18.8, 0.16, -11.5) }, // Inside Sheriff's Office
+    { type: 'bandito', pos: new THREE.Vector3(-19.5, 0.14, 21.5) },  // Inside Blacksmith
+    { type: 'cowboy',  pos: new THREE.Vector3(19.5, 0.16, 23.0) },   // Inside Telegraph Office
+    { type: 'bandito', pos: new THREE.Vector3(17.5, 0.16, -29.0) },  // Inside Undertaker
     // Jail & Saloon
     { type: 'cowboy',  pos: new THREE.Vector3(-14.5, 0.16, -25.8) }, // Outlaw inside JAIL!
     { type: 'bandito', pos: new THREE.Vector3(-2.5, 0.16, -28.0) },  // Inside Saloon
@@ -605,11 +787,13 @@ export function buildLevel1(scene, collision, particles) {
     { type: 'bandito', pos: new THREE.Vector3(-8, 0, -18) },
     { type: 'cowboy',  pos: new THREE.Vector3(9, 0, -21) },
     // North road & Boot Hill Cemetery (3 outlaws: 2 in graveyard + 1 hidden in Crypt!)
-    { type: 'cowboy',  pos: new THREE.Vector3(18, 0, -34) },
+    { type: 'cowboy',  pos: new THREE.Vector3(17, 0, -37) },
     { type: 'bandito', pos: new THREE.Vector3(28, 0, -44) },
     { type: 'cowboy',  pos: new THREE.Vector3(38, 0, -49) },
     { type: 'bandito', pos: new THREE.Vector3(45, 0.16, -61.5), options: { hideUntilClose: true, ambushDist: 14 } },
     { type: 'bandito', pos: new THREE.Vector3(10, 0, -34) },
+    // Marksman holding the 12m flat-topped Butte summit!
+    { type: 'cowboy',  pos: butte.summitPos.clone() },
     // Boss El Diablo
     { type: 'boss_west', pos: new THREE.Vector3(0, 0, -19), isBossWave: true }
   ];
@@ -617,12 +801,24 @@ export function buildLevel1(scene, collision, particles) {
   const enterableBuildings = [
     { name: 'Saloon', inside: new THREE.Vector3(0, 0.16, -27.5), outside: new THREE.Vector3(0, 0, -20.5) },
     { name: 'Jail', inside: new THREE.Vector3(-15.0, 0.16, -26.0), outside: new THREE.Vector3(-14.9, 0, -20.5) },
+    { name: "Sheriff's Office", inside: new THREE.Vector3(-19.5, 0.16, -11.5), outside: new THREE.Vector3(-14.0, 0, -11.5) },
     { name: 'Bank', inside: new THREE.Vector3(-19.2, 0.16, 4.0), outside: new THREE.Vector3(-14.0, 0, 4.0) },
-    { name: 'Barn', inside: new THREE.Vector3(20.0, 0.12, 6.0), outside: new THREE.Vector3(13.5, 0, 6.0) },
+    { name: 'Blacksmith', inside: new THREE.Vector3(-19.5, 0.14, 22.0), outside: new THREE.Vector3(-14.0, 0, 22.0) },
+    { name: 'Livery Stable', inside: new THREE.Vector3(20.0, 0.12, 6.0), outside: new THREE.Vector3(13.5, 0, 6.0) },
+    { name: 'General Store', inside: new THREE.Vector3(19.5, 0.16, -14.0), outside: new THREE.Vector3(13.5, 0, -14.0) },
+    { name: 'Telegraph Office', inside: new THREE.Vector3(19.5, 0.16, 23.0), outside: new THREE.Vector3(14.0, 0, 23.0) },
+    { name: 'Undertaker', inside: new THREE.Vector3(17.5, 0.16, -29.0), outside: new THREE.Vector3(17.5, 0, -23.5) },
     { name: 'Boot Hill Crypt', inside: new THREE.Vector3(45.0, 0.16, -61.8), outside: new THREE.Vector3(45.0, 0, -56.5) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
+  const specialSpots = {
+    zigzagHill: butte,
+    jumpRoof: { roofPos: new THREE.Vector3(20, genRoofY, -14), crates: genCrates },
+    raisedHide: westHide,
+    crawlDen: westDen
+  };
+
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }
 
 export function createPickupMesh(type, variant = 'default') {

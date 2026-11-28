@@ -1226,3 +1226,193 @@ export function createThangkaTexture() {
   cache.set(key, tex);
   return tex;
 }
+
+/**
+ * Soviet Hammer & Sickle (yellow on red) for Level 7 flags & architecture only.
+ */
+export function createHammerSickleTexture(asFlag = false) {
+  const key = `soviet_hs_${asFlag ? 'flag' : 'emblem'}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const w = asFlag ? 512 : 256;
+  const h = 256;
+  const c = makeCanvas(w, h);
+  const ctx = c.getContext('2d');
+
+  ctx.fillStyle = '#b41919';
+  ctx.fillRect(0, 0, w, h);
+
+  if (!asFlag) {
+    ctx.strokeStyle = '#f2c836';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(10, 10, w - 20, h - 20);
+  }
+
+  const cx = asFlag ? 112 : w * 0.5;
+  const cy = asFlag ? 96 : h * 0.54;
+  const s = asFlag ? 0.62 : 0.92;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(s, s);
+  ctx.fillStyle = '#f4cb38';
+  ctx.strokeStyle = '#f4cb38';
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // Sickle crescent blade
+  ctx.beginPath();
+  ctx.arc(0, -4, 52, -Math.PI * 0.55, Math.PI * 0.68, false);
+  ctx.arc(-8, -8, 38, Math.PI * 0.65, -Math.PI * 0.52, true);
+  ctx.closePath();
+  ctx.fill();
+  // Sickle handle
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.moveTo(-30, 32);
+  ctx.lineTo(-56, 56);
+  ctx.stroke();
+
+  // Hammer handle crossing diagonally
+  ctx.lineWidth = 13;
+  ctx.beginPath();
+  ctx.moveTo(-26, -24);
+  ctx.lineTo(52, 54);
+  ctx.stroke();
+  // Hammer head
+  ctx.save();
+  ctx.translate(-26, -24);
+  ctx.rotate(-Math.PI * 0.25);
+  ctx.fillRect(-26, -12, 48, 22);
+  ctx.beginPath();
+  ctx.moveTo(22, -12);
+  ctx.lineTo(34, -2);
+  ctx.lineTo(22, 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Small 5-point star above hammer & sickle
+  ctx.translate(0, -72);
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 === 0 ? 18 : 7.5;
+    const a = -Math.PI / 2 + (i * Math.PI) / 5;
+    if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  const tex = finalizeTexture(c, 1, 1, true);
+  tex.wrapS = THREE.ClampToEdgeWrapping;
+  tex.wrapT = THREE.ClampToEdgeWrapping;
+  cache.set(key, tex);
+  return tex;
+}
+
+/**
+ * Ancient Greek Mosaic Floor Texture (meander border + geometric tesserae & central medallion).
+ */
+export function createGreekMosaicTexture(variant = 'agora', repeatX = 1, repeatY = 1) {
+  const key = `greek_mosaic_${variant}_${repeatX}_${repeatY}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const size = 512;
+  const c = makeCanvas(size, size);
+  const ctx = c.getContext('2d');
+
+  // Warm limestone tesserae base
+  ctx.fillStyle = '#e7ddc8';
+  ctx.fillRect(0, 0, size, size);
+
+  // Subtle tile grid lines
+  ctx.strokeStyle = 'rgba(110, 96, 76, 0.22)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= size; i += 16) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+  }
+
+  const primary = variant === 'temple' ? '#1e5a94' : variant === 'villa' ? '#24758c' : variant === 'theatre' ? '#9c3f28' : '#2a5c8a';
+  const accent = variant === 'temple' ? '#c99732' : variant === 'villa' ? '#b85a32' : '#d49e3c';
+
+  // Outer border bands
+  ctx.strokeStyle = primary;
+  ctx.lineWidth = 22;
+  ctx.strokeRect(26, 26, size - 52, size - 52);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 8;
+  ctx.strokeRect(48, 48, size - 96, size - 96);
+
+  // Greek key / meander blocks along border
+  ctx.fillStyle = primary;
+  for (let k = 64; k < size - 64; k += 32) {
+    ctx.fillRect(k, 60, 16, 12);
+    ctx.fillRect(k + 12, 68, 12, 12);
+    ctx.fillRect(k, size - 72, 16, 12);
+    ctx.fillRect(k + 12, size - 80, 12, 12);
+    ctx.fillRect(60, k, 12, 16);
+    ctx.fillRect(68, k + 12, 12, 12);
+    ctx.fillRect(size - 72, k, 12, 16);
+    ctx.fillRect(size - 80, k + 12, 12, 12);
+  }
+
+  // Central rosette / star medallion
+  const cx = size * 0.5, cy = size * 0.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 134, 0, Math.PI * 2);
+  ctx.fillStyle = '#efe7d6';
+  ctx.fill();
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = primary;
+  ctx.stroke();
+
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(a);
+    ctx.fillStyle = i % 2 === 0 ? primary : accent;
+    ctx.beginPath();
+    ctx.moveTo(0, -18);
+    ctx.lineTo(24, -68);
+    ctx.lineTo(0, -122);
+    ctx.lineTo(-24, -68);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.beginPath();
+  ctx.arc(cx, cy, 32, 0, Math.PI * 2);
+  ctx.fillStyle = accent;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 16, 0, Math.PI * 2);
+  ctx.fillStyle = '#efe7d6';
+  ctx.fill();
+
+  const tex = finalizeTexture(c, repeatX, repeatY, true);
+  cache.set(key, tex);
+  return tex;
+}
+
+/**
+ * Red-and-white striped wool tent texture for Viking Chieftain's longship.
+ */
+export function createStripedTentTexture() {
+  const key = 'viking_striped_tent';
+  if (cache.has(key)) return cache.get(key);
+  const c = makeCanvas(256, 256);
+  const ctx = c.getContext('2d');
+  const stripes = 8;
+  const sw = 256 / stripes;
+  for (let i = 0; i < stripes; i++) {
+    ctx.fillStyle = i % 2 === 0 ? '#a82222' : '#ece5d5';
+    ctx.fillRect(i * sw, 0, sw, 256);
+  }
+  const tex = finalizeTexture(c, 1, 1, true);
+  cache.set(key, tex);
+  return tex;
+}

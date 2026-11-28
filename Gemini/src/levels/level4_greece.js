@@ -4,11 +4,14 @@ import {
   getMarbleTexture,
   getRoofTileTexture,
   getStoneTexture,
-  createSailTexture
+  createSailTexture,
+  createGreekMosaicTexture
 } from '../engine/textures.js';
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildRaisedHide,
+  buildCrawlDen,
   addSolidBox,
   addDesk,
   addBunk,
@@ -114,7 +117,59 @@ export function buildLevel4(scene, collision, particles) {
   const sailMat = new THREE.MeshStandardMaterial({ map: createSailTexture('greece'), side: THREE.DoubleSide, roughness: 0.8 });
   const flameMat = new THREE.MeshBasicMaterial({ color: 0xffb338 });
 
-  // ---- 1. ENTERABLE MARBLE ACROPOLIS TEMPLE WITH INNER CELLA & GREAT GOLDEN STATUE ----
+  const goldAthenaMat = new THREE.MeshStandardMaterial({ color: 0xf4c842, metalness: 0.88, roughness: 0.22 });
+  const bronzePatinaMat = new THREE.MeshStandardMaterial({ color: 0x8f6e34, metalness: 0.78, roughness: 0.34 });
+  const mosaicAgoraMat = new THREE.MeshStandardMaterial({ map: createGreekMosaicTexture('agora', 2, 2), roughness: 0.74 });
+  const mosaicTempleMat = new THREE.MeshStandardMaterial({ map: createGreekMosaicTexture('temple', 1, 1), roughness: 0.7 });
+  const mosaicVillaMat = new THREE.MeshStandardMaterial({ map: createGreekMosaicTexture('villa', 2, 2), roughness: 0.72 });
+  const mosaicTheatreMat = new THREE.MeshStandardMaterial({ map: createGreekMosaicTexture('theatre', 1, 1), roughness: 0.72 });
+
+  // Sculpted Athena Statue helper (gold inside the temple, larger weathered bronze outdoors!)
+  function buildAthenaStatue(statMat, scale = 1.0) {
+    const g = new THREE.Group();
+    const peplos = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.66, 2.0, 14), statMat);
+    peplos.position.y = 1.0;
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.76, 0.95, 0.44), statMat);
+    torso.position.y = 2.35;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 12, 10), statMat);
+    head.position.y = 3.12;
+    // Crested Corinthian Helmet
+    const helm = new THREE.Mesh(new THREE.SphereGeometry(0.35, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), statMat);
+    helm.position.y = 3.22;
+    const crest = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.42, 0.78), statMat);
+    crest.position.set(0, 3.65, -0.05);
+    // Arms, tall spear & round Aegis shield
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.95, 8), statMat);
+    armL.position.set(-0.54, 2.3, 0.12);
+    armL.rotation.z = 0.25;
+    const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.09, 20), statMat);
+    shield.rotation.z = Math.PI / 2;
+    shield.position.set(-0.78, 1.55, 0.22);
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.95, 8), statMat);
+    armR.position.set(0.54, 2.45, 0.18);
+    armR.rotation.x = -0.6;
+    const spear = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 4.4, 8), statMat);
+    spear.position.set(0.66, 2.4, 0.48);
+    const spearTip = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.36, 4), statMat);
+    spearTip.position.set(0.66, 4.72, 0.48);
+    g.add(peplos, torso, head, helm, crest, armL, shield, armR, spear, spearTip);
+    g.scale.setScalar(scale);
+    return g;
+  }
+
+  // ---- AGORA MOSAIC PLAZA & LARGER OUTDOOR BRONZE STATUE OF ATHENA ----
+  const agoraMosaic = new THREE.Mesh(new THREE.PlaneGeometry(16, 16), mosaicAgoraMat);
+  agoraMosaic.rotation.x = -Math.PI / 2;
+  agoraMosaic.position.set(0, 0.06, -12);
+  agoraMosaic.receiveShadow = true;
+  scene.add(agoraMosaic);
+  // Larger Bronze Athena Promachos on marble plinth in the Agora
+  addSolidBox(scene, collision, 0, 0.85, -14, 2.6, 1.7, 2.6, marbleMat, 'stone');
+  const outerAthena = buildAthenaStatue(bronzePatinaMat, 1.55);
+  outerAthena.position.set(0, 1.7, -14);
+  scene.add(outerAthena);
+
+  // ---- 1. ENTERABLE MARBLE ACROPOLIS TEMPLE WITH INNER CELLA, MOSAIC FLOOR & GOLD STATUE OF ATHENA ----
   // Wide walkable stylobate plinth (0.38m climbable)
   const stylobate = new THREE.Mesh(new THREE.BoxGeometry(24, 0.38, 22), marbleMat);
   stylobate.position.set(0, 0.19, -40);
@@ -131,6 +186,12 @@ export function buildLevel4(scene, collision, particles) {
     east: [{ type: 'window', offset: 0, width: 2.0 }],
     interiorLight: { color: 0xffe4a8, intensity: 2.0, distance: 18 }
   });
+  // Temple Cella Mosaic Floor!
+  const templeMosaic = new THREE.Mesh(new THREE.PlaneGeometry(12.6, 11.6), mosaicTempleMat);
+  templeMosaic.rotation.x = -Math.PI / 2;
+  templeMosaic.position.set(0, cella.floorY + 0.03, -40);
+  templeMosaic.receiveShadow = true;
+  scene.add(templeMosaic);
 
   // Outer Ring of Fluted Doric Marble Columns (EVERY column has solid collision!)
   const colPositions = [
@@ -157,15 +218,11 @@ export function buildLevel4(scene, collision, particles) {
     scene.add(beam);
   }
 
-  // Great Golden Cult Statue inside the Temple inner room!
-  addSolidBox(scene, collision, 0, cella.floorY + 0.6, -43.5, 2.4, 1.2, 2.2, marbleMat, 'stone');
-  const statTorso = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.72, 2.4, 10), bronzeMat);
-  statTorso.position.set(0, cella.floorY + 2.4, -43.5);
-  const statHead = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 10), bronzeMat);
-  statHead.position.set(0, cella.floorY + 3.9, -43.5);
-  const statSpear = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.2, 6), bronzeMat);
-  statSpear.position.set(0.9, cella.floorY + 2.8, -43.2);
-  scene.add(statTorso, statHead, statSpear);
+  // Gold Statue of Athena (Athena Parthenos) inside the Temple inner room!
+  addSolidBox(scene, collision, 0, cella.floorY + 0.55, -43.5, 2.2, 1.1, 2.0, marbleMat, 'stone');
+  const innerAthena = buildAthenaStatue(goldAthenaMat, 0.98);
+  innerAthena.position.set(0, cella.floorY + 1.1, -43.5);
+  scene.add(innerAthena);
 
   // ---- 2. EVERY WHITEWASHED GREEK VILLAGE HOUSE IS ENTERABLE ----
   function buildGreekHouse(cx, cz, w, d, doorSide) {
@@ -234,7 +291,140 @@ export function buildLevel4(scene, collision, particles) {
   addGreekShip(-36, 54, 0.3);
   addGreekShip(34, 56, -0.35);
 
-  // Olive Trees, Cypresses, Marble Columns & Low Walls (ALL solid!)
+  // ---- 4. ENTERABLE GREEK VILLA WITH COLONNADED COURT (PERISTYLE), POOL & MOSAIC FLOOR (North-West!) ----
+  {
+    const vx = -42, vz = -42, vw = 18, vd = 16;
+    const villa = buildHollowRoom(scene, collision, {
+      cx: vx, cz: vz, w: vw, d: vd, h: 4.2, floorY: 0.2,
+      wallMat: plasterMat, floorMat: marbleMat, roofMat: terraMat, roofStyle: 'none',
+      east: [
+        { type: 'window', offset: -4.5, width: 1.8 },
+        { type: 'door', offset: 0, width: 2.8, height: 3.1 },
+        { type: 'window', offset: 4.5, width: 1.8 }
+      ],
+      south: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
+      interiorLight: { color: 0xffe4b8, intensity: 1.6, distance: 18 }
+    });
+    // Villa Mosaic Floor across peristyle court
+    const vMosaic = new THREE.Mesh(new THREE.PlaneGeometry(vw - 1.2, vd - 1.2), mosaicVillaMat);
+    vMosaic.rotation.x = -Math.PI / 2;
+    vMosaic.position.set(vx, villa.floorY + 0.03, vz);
+    vMosaic.receiveShadow = true;
+    scene.add(vMosaic);
+    // Open-sky peristyle walkway roof strips around perimeter (leaving central court open to sky!)
+    for (const [rx, rz, rw, rd] of [
+      [vx, vz - 6.2, vw + 0.6, 3.8], [vx, vz + 6.2, vw + 0.6, 3.8],
+      [vx - 7.1, vz, 3.8, vd - 7.0], [vx + 7.1, vz, 3.8, vd - 7.0]
+    ]) {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(rw, 0.35, rd), terraMat);
+      strip.position.set(rx, villa.roofY + 0.18, rz);
+      scene.add(strip);
+    }
+    // 8 Colonnaded Peristyle Marble Columns framing central courtyard & shallow pool (impluvium)
+    for (const [cx, cz] of [
+      [-4.6, -3.8], [0, -3.8], [4.6, -3.8],
+      [-4.6, 3.8], [0, 3.8], [4.6, 3.8],
+      [-4.6, 0], [4.6, 0]
+    ]) {
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.34, 4.2, 10), marbleMat);
+      col.position.set(vx + cx, villa.floorY + 2.1, vz + cz);
+      scene.add(col);
+      collision.addBox(vx + cx, villa.floorY + 2.1, vz + cz, 0.72, 4.2, 0.72, 'stone');
+    }
+    // Shallow Turquoise Courtyard Pool (Impluvium) with low marble rim
+    const poolWater = createWaterMesh(5.6, 4.2, {
+      deepColor: 0x16809e, shallowColor: 0x4de6e8, foamColor: 0xeaffff,
+      sunColor: 0xfffce0, sunDir, opacity: 0.88, waveScale: 0.04
+    });
+    poolWater.mesh.position.set(vx, villa.floorY + 0.18, vz);
+    scene.add(poolWater.mesh);
+    animated.push((t) => { poolWater.uniforms.uTime.value = t; });
+    addSolidBox(scene, collision, vx, villa.floorY + 0.25, vz, 6.2, 0.5, 4.8, marbleMat, 'stone');
+    // Dining couch (kline) & amphorae along west gallery
+    addBunk(scene, collision, vx - 7.2, villa.floorY, vz - 1.5, true, woodMat, 0x8f2424);
+    addDesk(scene, collision, vx - 7.0, villa.floorY, vz + 2.5, 1.4, 0.8, woodMat, 1);
+  }
+
+  // ---- 5. GREEK THEATRE (Rows of Stone Seats, Mosaic Orchestra & 3-Door Stage House / Skene — North-East!) ----
+  {
+    const tx = 44, tz = -46;
+    // Circular Mosaic Orchestra Floor
+    const orch = new THREE.Mesh(new THREE.CircleGeometry(6.5, 28), mosaicTheatreMat);
+    orch.rotation.x = -Math.PI / 2;
+    orch.position.set(tx, 0.06, tz);
+    orch.receiveShadow = true;
+    scene.add(orch);
+    // 5 Curved Semicircular Tiered Rows of Stone Seats (Theatron — north half, climbable!)
+    const tiers = 5;
+    for (let r = 0; r < tiers; r++) {
+      const rad = 7.6 + r * 1.45;
+      const topY = 0.42 * (r + 1);
+      const segs = 11;
+      for (let s = 0; s < segs; s++) {
+        const ang = Math.PI + (s + 0.5) * (Math.PI / segs); // North semicircle (z <= tz)
+        const sx = tx + Math.cos(ang) * rad;
+        const sz = tz + Math.sin(ang) * rad;
+        const segW = (Math.PI * rad) / segs + 0.35;
+        const seat = new THREE.Mesh(new THREE.BoxGeometry(segW, topY, 1.35), marbleMat);
+        seat.position.set(sx, topY * 0.5, sz);
+        seat.rotation.y = -ang + Math.PI / 2;
+        seat.receiveShadow = true;
+        scene.add(seat);
+        collision.addWalkable(sx, sz, 1.85, 1.85, topY);
+      }
+    }
+    // Enterable Stage House (Skene) on south edge of Orchestra with THREE WIDE DOORS!
+    const skene = buildHollowRoom(scene, collision, {
+      cx: tx, cz: tz + 9.2, w: 16.0, d: 7.2, h: 4.6, floorY: 0.32,
+      wallMat: marbleMat, floorMat: marbleMat, roofMat: terraMat, roofStyle: 'gable',
+      north: [
+        { type: 'door', offset: -4.8, width: 2.2, height: 3.1 },
+        { type: 'door', offset: 0,    width: 2.6, height: 3.3 },
+        { type: 'door', offset: 4.8,  width: 2.2, height: 3.1 }
+      ],
+      south: [
+        { type: 'door', offset: 0, width: 2.6, height: 3.0 },
+        { type: 'window', offset: -4.6, width: 1.6 },
+        { type: 'window', offset: 4.6, width: 1.6 }
+      ],
+      interiorLight: { color: 0xffd599, intensity: 1.7, distance: 16 }
+    });
+    // Theatrical prop table & painted backdrop columns inside Skene
+    addDesk(scene, collision, tx - 5.2, skene.floorY, tz + 10.8, 1.5, 0.8, woodMat, -1);
+    addSolidBox(scene, collision, tx + 5.2, skene.floorY + 0.5, tz + 10.8, 1.4, 1.0, 1.0, clayMat, 'stone');
+  }
+
+  // ---- 6. OLIVE GROVE (25 OLIVE TREES) & ENTERABLE OLIVE OIL PRESS (West Hillside!) ----
+  const press = buildHollowRoom(scene, collision, {
+    cx: -48, cz: 10, w: 10.0, d: 9.5, h: 4.0, floorY: 0.16,
+    wallMat: rockMat, floorMat: rockMat, roofMat: terraMat, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
+    south: [{ type: 'door', offset: 0, width: 2.4, height: 2.9 }],
+    west: [{ type: 'window', offset: 0, width: 1.8 }],
+    interiorLight: { color: 0xffcc80, intensity: 1.5, distance: 13 }
+  });
+  // Circular stone olive millstone basin (trapetum), timber press beam, hanging stone weights & clay oil amphorae!
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.25, 0.72, 14), rockMat);
+  basin.position.set(-50.2, press.floorY + 0.36, 8.2);
+  const wheelStone = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.58, 0.34, 12), marbleMat);
+  wheelStone.rotation.x = Math.PI / 2;
+  wheelStone.position.set(-50.2, press.floorY + 0.96, 8.2);
+  const pressBeam = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.34, 0.34), woodMat);
+  pressBeam.position.set(-49.2, press.floorY + 1.85, 12.6);
+  pressBeam.rotation.z = -0.14;
+  const weightStone = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.75, 0.75), rockMat);
+  weightStone.position.set(-47.4, press.floorY + 0.42, 12.6);
+  scene.add(basin, wheelStone, pressBeam, weightStone);
+  collision.addBox(-50.2, press.floorY + 0.65, 8.2, 2.3, 1.3, 2.3, 'stone');
+  collision.addBox(-47.4, press.floorY + 0.42, 12.6, 0.9, 0.9, 0.9, 'stone');
+  for (const [ax, az] of [[-51.6, 12.6], [-51.6, 11.4]]) {
+    const amph = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.35, 1.05, 10), clayMat);
+    amph.position.set(ax, press.floorY + 0.52, az);
+    scene.add(amph);
+    collision.addBox(ax, press.floorY + 0.52, az, 0.74, 1.05, 0.74, 'stone');
+  }
+
+  // Olive Trees (25-tree West Olive Grove + Scenic Island Trees) & Cypresses (ALL solid!)
   function addOliveTree(tx, tz) {
     const tr = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.42, 3.0, 7), woodMat);
     tr.position.set(tx, 1.5, tz);
@@ -252,25 +442,50 @@ export function buildLevel4(scene, collision, particles) {
     scene.add(tr, leaf);
     collision.addBox(tx, 2.2, tz, 1.1, 4.4, 1.1, 'wood');
   }
-  for (const [ox, oz] of [[-12, 34], [12, 36], [-36, 12], [-44, -18], [36, 4], [40, -28], [-28, -32], [28, -34]]) addOliveTree(ox, oz);
-  for (const [cx, cz] of [[-10, 12], [10, 12], [-12, -20], [12, -20], [-34, -40], [34, -40], [56, 28], [-50, 26]]) addCypress(cx, cz);
+  // 25 Olive Trees forming the sunlit West Olive Grove around the Oil Press (spaced cleanly for combat!)
+  const oliveGroveCoords = [
+    [-64, 36], [-56, 36], [-48, 36], [-40, 36], [-34, 36],
+    [-64, 28], [-56, 28], [-48, 28], [-40, 28], [-34, 28],
+    [-64, 20], [-56, 20], [-40, 20], [-34, 20],
+    [-64, 10], [-58, 10], [-36, 10],
+    [-64, 0],  [-56, 0],  [-46, 0],  [-36, 0],
+    [-64, -10],[-56, -10],[-46, -10],[-36, -10],
+    // Extra scenic eastern olive trees
+    [-12, 34], [12, 36], [36, 4], [28, -26]
+  ];
+  for (const [ox, oz] of oliveGroveCoords) addOliveTree(ox, oz);
+  for (const [cx, cz] of [[-10, 12], [10, 12], [-12, -20], [12, -20], [-26, -40], [24, -40], [56, 28], [-24, 42]]) addCypress(cx, cz);
 
   // Low Marble Cover Parapets
   for (const [wx, wz, ww, wd] of [
     [-7, 30, 4.5, 1.0], [8, 26, 4.5, 1.0], [-8, 4, 4.5, 1.0], [8, 0, 4.5, 1.0],
-    [-8, -18, 4.8, 1.0], [8, -18, 4.8, 1.0], [34, 24, 1.0, 4.5]
+    [-8, -22, 4.8, 1.0], [8, -22, 4.8, 1.0], [34, 24, 1.0, 4.5]
   ]) addSolidBox(scene, collision, wx, 0.65, wz, ww, 1.3, wd, marbleMat, 'stone');
 
   particles.initAmbient('dust', collision.bounds);
 
-  // ---- PICKUPS ----
+  // ---- 6.4 RAISED MARBLE WATCH HIDE (2 jump blocks) & CROUCH-ONLY CELLAR DEN (1.25m door!) ----
+  const greeceHide = buildRaisedHide(scene, collision, {
+    cx: -14, cz: 42, deckY: 2.2, w: 4.2, d: 4.2, openSide: 'south',
+    wallMat: marbleMat, floorMat: marbleMat, postMat: marbleMat, jumpMat: rockMat
+  });
+  const greeceDen = buildCrawlDen(scene, collision, {
+    cx: 15, cz: 42, w: 5.2, d: 4.8, doorSide: 'west',
+    wallMat: rockMat, floorMat: marbleMat, roofMat: terraMat
+  });
+
+  // ---- PICKUPS (including Villa, Theatre Skene, Olive Oil Press & Crouch-Only Den!) ----
   const pickupDefs = [
-    { type: 'health', pos: new THREE.Vector3(-22, 0.9, 22),  label: 'AEGEAN WINE & OLIVES (+35 HP)' },
-    { type: 'health', pos: new THREE.Vector3(44, 0.9, 34),   label: 'FISHERMAN STEW (+35 HP)' },
-    { type: 'health', pos: new THREE.Vector3(56, 0.9, -14),  label: 'BEACON TOWER TONIC (+35 HP)' },
-    { type: 'health', pos: new THREE.Vector3(0, 1.1, -39),   label: 'TEMPLE AMBROSIA (+35 HP)' },
-    { type: 'ammo',   pos: new THREE.Vector3(22, 0.9, 22),   label: 'BRONZE JAVELIN BUNDLE' },
-    { type: 'ammo',   pos: new THREE.Vector3(-22, 0.9, -6),  label: 'SPARTAN JAVELIN RACK' }
+    { type: 'health', pos: new THREE.Vector3(-22, 0.9, 22),   label: 'AEGEAN WINE & OLIVES (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(44, 0.9, 34),    label: 'FISHERMAN STEW (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(56, 0.9, -14),   label: 'BEACON TOWER TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(0, 1.1, -39),    label: 'TEMPLE AMBROSIA (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-42, 1.0, -37),  label: 'VILLA PERISTYLE WINE (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(44, 1.1, -36.8), label: 'THEATRE SKENE TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-46, 0.9, 10),   label: 'OLIVE PRESS OIL & FIGS (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(greeceDen.insidePos.x, greeceDen.floorY + 0.55, greeceDen.insidePos.z), label: 'AMPHORA DEN WINE (+35 HP)', inDen: true },
+    { type: 'ammo',   pos: new THREE.Vector3(22, 0.9, 22),    label: 'BRONZE JAVELIN BUNDLE' },
+    { type: 'ammo',   pos: new THREE.Vector3(-22, 0.9, -6),   label: 'SPARTAN JAVELIN RACK' }
   ];
   for (const pd of pickupDefs) {
     const mesh = createPickupMesh(pd.type);
@@ -279,12 +494,14 @@ export function buildLevel4(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- 25 ENEMIES (Shore, Village Houses, Fishermen's Cape, Beacon Tower, Acropolis Temple, Boss Archidamos) ----
+  // ---- 29 ENEMIES (Shore, Olive Grove & Press, Village, Cape, Beacon, Villa, Theatre, Acropolis Temple, Boss Archidamos) ----
   const enemySpawns = [
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(-8, 0, 36) },
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(8, 0, 34) },
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(-21, 0.16, 22) }, // House 1
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(21, 0.16, 22) },  // House 2
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-46, 0.16, 9.5) }, // Inside Olive Oil Press
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(-44, 0, 24) },     // Inside Olive Grove
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(0, 0, 16) },
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(-12, 0, 10) },
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(12, 0, 8) },
@@ -299,20 +516,26 @@ export function buildLevel4(scene, collision, particles) {
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(8, 0, -14) },
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(-16, 0, -24) },
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(16, 0, -24) },
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(-37, 0.2, -42) }, // Inside Colonnaded Villa
+    { type: 'spartan_skirmisher', pos: new THREE.Vector3(44, 0.32, -36.8) }, // Inside Theatre Stage House
+    { type: 'spartan_hoplite',    pos: new THREE.Vector3(44, 0, -46) },    // Theatre Orchestra
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(-6, 0, -26) },
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(6, 0, -26) },
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(-3, 0.38, -38) }, // Inside Temple Cella
     { type: 'spartan_skirmisher', pos: new THREE.Vector3(3, 0.38, -38) },  // Inside Temple Cella
     { type: 'spartan_hoplite',    pos: new THREE.Vector3(-16, 0, -40) },
-    { type: 'spartan_skirmisher', pos: new THREE.Vector3(16, 0, -40) },
     { type: 'boss_greece',        pos: new THREE.Vector3(0, 0.38, -32), isBossWave: true }
   ];
 
   const enterableBuildings = [
     { name: 'Marble Temple Cella', inside: new THREE.Vector3(0, 0.38, -39), outside: new THREE.Vector3(0, 0.38, -31) },
+    { name: 'Colonnaded Villa', inside: new THREE.Vector3(-37, 0.2, -42), outside: new THREE.Vector3(-30, 0, -42) },
+    { name: 'Theatre Stage House', inside: new THREE.Vector3(44, 0.32, -36.8), outside: new THREE.Vector3(44, 0, -43) },
+    { name: 'Olive Oil Press', inside: new THREE.Vector3(-46, 0.16, 10), outside: new THREE.Vector3(-41, 0, 10) },
     { name: 'Beacon Tower', inside: new THREE.Vector3(56, 0.2, -14), outside: new THREE.Vector3(49, 0, -14) },
     { name: 'Village House', inside: new THREE.Vector3(-22, 0.16, 22), outside: new THREE.Vector3(-14.5, 0, 22) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
+  const specialSpots = { raisedHide: greeceHide, crawlDen: greeceDen };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }

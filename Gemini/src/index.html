@@ -98,6 +98,7 @@
       </div>
       <div class="hud-controls-hint">
         <span id="hud-esc-hint">[ESC] Menu</span>
+        <span>[C] Crouch</span>
         <span>[M] Mute</span>
         <span>[R] Reload</span>
         <span>[RMB] Zoom / Alt</span>
@@ -111,7 +112,10 @@
           <span id="hud-hero-name">WYATT EARP</span>
           <span id="hud-hp-text">100 / 100</span>
         </div>
-        <div class="hud-hero-perk" id="hud-hero-perk">-25% DMG</div>
+        <div class="hud-hero-perk-row">
+          <div class="hud-hero-perk" id="hud-hero-perk">-25% DMG</div>
+          <div class="hud-crouch-badge hidden" id="hud-crouch-badge">CROUCHING</div>
+        </div>
         <div class="bar-track health-track">
           <div class="bar-fill health-fill" id="hud-hp-bar"></div>
         </div>
@@ -231,6 +235,7 @@
         <span><b>WASD</b> Move</span>
         <span><b>SHIFT</b> Sprint</span>
         <span><b>SPACE</b> Jump</span>
+        <span><b>C / CAPS</b> Crouch</span>
         <span><b>MOUSE</b> Aim</span>
         <span><b>LMB</b> Shoot / Strike</span>
         <span><b>RMB</b> Scope / Alt-Fire</span>
@@ -238,6 +243,7 @@
         <span><b>1-4 / SCROLL</b> Weapons</span>
       </div>
     </div>
+    <div id="title-version" class="title-version" aria-label="Game version">v%APP_VERSION%</div>
   </div>
 
   <!-- Duel Lobby Screen (Host / Join via 5-letter Invite Link or Copy-Paste Backup) -->
@@ -290,12 +296,21 @@
           <label class="duel-field">
             <span>Computer enemies</span>
             <select id="duel-enemies-select">
-              <option value="none">None (only the two players)</option>
-              <option value="few">A few, hostile to both (6 enemies)</option>
+              <option value="0">None</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
             </select>
           </label>
 
           <button id="btn-duel-host" class="btn-primary-western btn-full">CREATE INVITE LINK</button>
+          <button id="btn-duel-rematch-start" class="btn-primary-western btn-full hidden">START NEXT DUEL ▶</button>
 
           <div id="duel-invite-box" class="duel-invite-box hidden">
             <div class="duel-code-row">
@@ -444,6 +459,7 @@
       <p class="end-summary" id="end-summary"></p>
       <div class="end-stats" id="end-stats"></div>
       <div class="modal-buttons">
+        <button id="btn-duel-again" class="btn-primary-western hidden">NEXT DUEL (SAME CONNECTION) ▶</button>
         <button id="btn-next-level" class="btn-primary-western">NEXT HORIZON ▶</button>
         <button id="btn-end-restart" class="btn-secondary-western">PLAY AGAIN</button>
         <button id="btn-end-change-hero" class="btn-secondary-western">CHANGE HERO</button>

@@ -8,6 +8,7 @@ export class CollisionWorld {
     this.walkables = [];  // Elevated surfaces { minX, maxX, minZ, maxZ, topY }
     this.bounds = bounds;
     this.heightFn = () => 0;
+    this.waterLevel = null; // Optional deep-water surface Y (terrain below waterLevel - 0.35 blocks walkers unless a walkable bridge/jetty/deck spans it)
 
     // Navigation grid (built from the exact collision shapes after level construction)
     this.nav = null;
@@ -15,6 +16,10 @@ export class CollisionWorld {
 
   setHeightFunction(fn) {
     this.heightFn = fn;
+  }
+
+  setWaterLevel(y) {
+    this.waterLevel = y;
   }
 
   addBox(cx, cy, cz, sx, sy, sz, tag = 'solid') {
@@ -33,14 +38,38 @@ export class CollisionWorld {
     this.boxes.push({ minX, minY, minZ, maxX, maxY, maxZ, tag });
   }
 
-  addWalkable(cx, cz, sx, sz, topY) {
+  addWalkable(cx, cz, sx, sz, topY, navIgnore = false) {
     this.walkables.push({
       minX: cx - sx * 0.5,
       maxX: cx + sx * 0.5,
       minZ: cz - sz * 0.5,
       maxZ: cz + sz * 0.5,
-      topY
+      topY,
+      navIgnore
     });
+  }
+
+  /**
+   * Returns true if (x, z) has a solid walkable surface (bridge, jetty, gangplank, ship deck, etc.)
+   * within stepping reach of currentFeetY that rises above deep water.
+   */
+  hasWalkableSurface(x, z, currentFeetY = 0, minTopY = -1e9) {
+    for (const w of this.walkables) {
+      if (x >= w.minX && x <= w.maxX && z >= w.minZ && z <= w.maxZ) {
+        if (w.topY <= currentFeetY + STEP_MAX && w.topY >= minTopY) {
+          return true;
+        }
+      }
+    }
+    for (const b of this.boxes) {
+      if (b.tag === 'water' || b.tag === 'bars') continue;
+      if (x >= b.minX - 0.1 && x <= b.maxX + 0.1 && z >= b.minZ - 0.1 && z <= b.maxZ + 0.1) {
+        if (b.maxY <= currentFeetY + STEP_MAX && b.maxY >= minTopY) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -68,24 +97,40 @@ export class CollisionWorld {
   }
 
   /**
+   * Returns true if (x, z) at feetY is deep water without any reachable solid deck/bridge above it.
+   */
+  isDeepWater(x, z, feetY = 0) {
+    if (this.waterLevel === null) return false;
+    const floor = this.getFloorHeight(x, z, feetY);
+    return floor < this.waterLevel - 0.35;
+  }
+
+  /**
    * Resolves horizontal circle vs AABB collisions.
    * Boxes whose top is <= feetY + STEP_MAX are climbable steps (unless tagged water/bars);
-   * everything higher stops bodies solidly.
+   * water boxes are ignored whenever the walker is on (or stepping onto) a solid bridge/deck/jetty above water.
    */
   resolveHorizontal(pos, radius, feetY, height = 1.75) {
     pos.x = Math.max(this.bounds.minX + radius, Math.min(this.bounds.maxX - radius, pos.x));
     pos.z = Math.max(this.bounds.minZ + radius, Math.min(this.bounds.maxZ - radius, pos.z));
 
+    const onElevatedSurface = this.hasWalkableSurface(pos.x, pos.z, feetY, 0.08);
+
     for (let iter = 0; iter < 3; iter++) {
       for (const b of this.boxes) {
         // Ignore boxes strictly above head
         if (feetY + height <= b.minY + 0.05) continue;
+        const closestX = Math.max(b.minX, Math.min(pos.x, b.maxX));
+        const closestZ = Math.max(b.minZ, Math.min(pos.z, b.maxZ));
+        // Ignore water boxes when standing on OR stepping onto a bridge, jetty, gangplank, or ship deck at the contact point
+        if (b.tag === 'water' && (
+          onElevatedSurface ||
+          this.hasWalkableSurface(pos.x, pos.z, feetY, b.minY + 0.05) ||
+          this.hasWalkableSurface(closestX, closestZ, feetY, b.minY + 0.05)
+        )) continue;
         // Ignore boxes strictly below feet or climbable low steps (except water/bars)
         if (b.tag !== 'water' && b.tag !== 'bars' && b.maxY <= feetY + STEP_MAX) continue;
         if (feetY >= b.maxY - 0.05) continue;
-
-        const closestX = Math.max(b.minX, Math.min(pos.x, b.maxX));
-        const closestZ = Math.max(b.minZ, Math.min(pos.z, b.maxZ));
         const dx = pos.x - closestX;
         const dz = pos.z - closestZ;
         const distSq = dx * dx + dz * dz;
@@ -113,7 +158,7 @@ export class CollisionWorld {
   }
 
   /**
-   * Sub-stepped horizontal movement so fast runners never tunnel through thin walls or bars.
+   * Sub-stepped horizontal movement so fast runners never tunnel through thin walls, bars, or into deep water.
    */
   moveHorizontal(pos, dx, dz, radius, feetY, height = 1.75) {
     const dist = Math.hypot(dx, dz);
@@ -127,26 +172,84 @@ export class CollisionWorld {
     const sz = dz / steps;
     let curY = feetY;
     for (let i = 0; i < steps; i++) {
+      const prevX = pos.x;
+      const prevZ = pos.z;
       pos.x += sx;
       pos.z += sz;
       this.resolveHorizontal(pos, radius, curY, height);
+
+      // Block stepping into deep water unless a solid surface (bridge/jetty/deck) is within stepping reach
+      if (this.waterLevel !== null && this.isDeepWater(pos.x, pos.z, curY)) {
+        const tryX = !this.isDeepWater(pos.x, prevZ, curY);
+        const tryZ = !this.isDeepWater(prevX, pos.z, curY);
+        if (tryX) {
+          pos.z = prevZ;
+        } else if (tryZ) {
+          pos.x = prevX;
+        } else {
+          pos.x = prevX;
+          pos.z = prevZ;
+        }
+        this.resolveHorizontal(pos, radius, curY, height);
+      }
+
       const nextFloor = this.getFloorHeight(pos.x, pos.z, curY);
-      if (nextFloor > curY && nextFloor <= curY + STEP_MAX) {
+      if (nextFloor <= curY + STEP_MAX) {
         curY = nextFloor;
       }
     }
   }
 
   /**
-   * Checks whether a circle at (x, z, feetY) is clear of all non-step obstacles
+   * Returns true if standing up to targetHeight (e.g. 1.75m) at (x, z, feetY) is unobstructed by ceilings/lintels.
    */
-  isClear(x, z, radius, feetY, height = 1.75) {
+  hasHeadroom(x, z, radius, feetY, targetHeight = 1.75) {
+    const checkMinY = feetY + 0.95;
+    const checkMaxY = feetY + targetHeight - 0.04;
+    for (const b of this.boxes) {
+      if (b.tag === 'water') continue;
+      if (b.maxY <= checkMinY || b.minY >= checkMaxY) continue;
+      const cx = Math.max(b.minX, Math.min(x, b.maxX));
+      const cz = Math.max(b.minZ, Math.min(z, b.maxZ));
+      const dx = x - cx;
+      const dz = z - cz;
+      if (dx * dx + dz * dz < radius * radius) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Checks whether a circle at (x, z, feetY) is clear of all non-step obstacles & deep water
+   */
+  isClear(x, z, radius, feetY, height = 1.75, boxesList = null, walkablesList = null) {
     if (x < this.bounds.minX + radius || x > this.bounds.maxX - radius ||
         z < this.bounds.minZ + radius || z > this.bounds.maxZ - radius) {
       return false;
     }
-    for (const b of this.boxes) {
+    if (this.waterLevel !== null && feetY < this.waterLevel - 0.35) {
+      return false;
+    }
+    const boxes = boxesList || this.boxes;
+    const walkables = walkablesList || this.walkables;
+    let onSurface = false;
+    for (const w of walkables) {
+      if (x >= w.minX && x <= w.maxX && z >= w.minZ && z <= w.maxZ) {
+        if (w.topY <= feetY + STEP_MAX && w.topY >= 0.08) { onSurface = true; break; }
+      }
+    }
+    for (const b of boxes) {
       if (feetY + height <= b.minY + 0.05) continue;
+      if (b.tag === 'water') {
+        if (onSurface) continue;
+        let hasDeck = false;
+        for (const w of walkables) {
+          if (x >= w.minX && x <= w.maxX && z >= w.minZ && z <= w.maxZ &&
+              w.topY <= feetY + STEP_MAX && w.topY >= b.minY + 0.05) {
+            hasDeck = true; break;
+          }
+        }
+        if (hasDeck) continue;
+      }
       if (b.tag !== 'water' && b.tag !== 'bars' && b.maxY <= feetY + STEP_MAX) continue;
       if (feetY >= b.maxY - 0.05) continue;
       const cx = Math.max(b.minX, Math.min(x, b.maxX));
@@ -224,36 +327,94 @@ export class CollisionWorld {
   }
 
   /**
-   * Builds a 2D navigation grid directly from the registered collision shapes
-   * so enemies route cleanly around walls, through doorways (>= 1.6m) and up stairs (<= 0.5m).
+   * Builds a 2D navigation grid directly from the registered collision shapes using coarse spatial buckets
+   * so building stays well under 100 ms per level while enemies route cleanly around walls, across bridges/ship decks,
+   * through doorways (>= 1.6m), and up stepped hills/stairs (<= 0.48m per step).
    */
-  buildNavGrid(cellSize = 1.35) {
+  buildNavGrid(cellSize = 1.2) {
+    const t0 = performance.now();
     const minX = this.bounds.minX;
     const minZ = this.bounds.minZ;
-    const cols = Math.ceil((this.bounds.maxX - minX) / cellSize);
-    const rows = Math.ceil((this.bounds.maxZ - minZ) / cellSize);
+    const maxX = this.bounds.maxX;
+    const maxZ = this.bounds.maxZ;
+    const cols = Math.ceil((maxX - minX) / cellSize);
+    const rows = Math.ceil((maxZ - minZ) / cellSize);
     const walkable = new Uint8Array(cols * rows);
     const heights = new Float32Array(cols * rows);
-    const agentRadius = 0.44;
+    const agentRadius = 0.48;
+
+    // Sort colliders & nav-eligible walkables into coarse 2D spatial buckets (6m x 6m) for O(1) local queries
+    const bucketSize = 6.0;
+    const bCols = Math.max(1, Math.ceil((maxX - minX) / bucketSize));
+    const bRows = Math.max(1, Math.ceil((maxZ - minZ) / bucketSize));
+    const boxBuckets = Array.from({ length: bCols * bRows }, () => []);
+    const walkBuckets = Array.from({ length: bCols * bRows }, () => []);
+
+    const pad = agentRadius + 0.2;
+    for (const b of this.boxes) {
+      const c0 = Math.max(0, Math.floor((b.minX - pad - minX) / bucketSize));
+      const c1 = Math.min(bCols - 1, Math.floor((b.maxX + pad - minX) / bucketSize));
+      const r0 = Math.max(0, Math.floor((b.minZ - pad - minZ) / bucketSize));
+      const r1 = Math.min(bRows - 1, Math.floor((b.maxZ + pad - minZ) / bucketSize));
+      for (let br = r0; br <= r1; br++) {
+        for (let bc = c0; bc <= c1; bc++) {
+          boxBuckets[br * bCols + bc].push(b);
+        }
+      }
+    }
+    for (const w of this.walkables) {
+      if (w.navIgnore) continue; // Jump-only roofs, crates & raised hides must not hide ground floors underneath!
+      const c0 = Math.max(0, Math.floor((w.minX - 0.1 - minX) / bucketSize));
+      const c1 = Math.min(bCols - 1, Math.floor((w.maxX + 0.1 - minX) / bucketSize));
+      const r0 = Math.max(0, Math.floor((w.minZ - 0.1 - minZ) / bucketSize));
+      const r1 = Math.min(bRows - 1, Math.floor((w.maxZ + 0.1 - minZ) / bucketSize));
+      for (let br = r0; br <= r1; br++) {
+        for (let bc = c0; bc <= c1; bc++) {
+          walkBuckets[br * bCols + bc].push(w);
+        }
+      }
+    }
 
     for (let r = 0; r < rows; r++) {
       const wz = minZ + (r + 0.5) * cellSize;
+      const br = Math.max(0, Math.min(bRows - 1, Math.floor((wz - minZ) / bucketSize)));
       for (let c = 0; c < cols; c++) {
         const wx = minX + (c + 0.5) * cellSize;
-        // Iteratively find highest climbable surface at (wx, wz)
+        const bc = Math.max(0, Math.min(bCols - 1, Math.floor((wx - minX) / bucketSize)));
+        const bIdx = br * bCols + bc;
+        const localBoxes = boxBuckets[bIdx];
+        const localWalks = walkBuckets[bIdx];
+
         let fy = this.heightFn(wx, wz);
-        for (let k = 0; k < 8; k++) {
-          const next = this.getFloorHeight(wx, wz, fy);
+        for (const w of localWalks) {
+          if (wx >= w.minX && wx <= w.maxX && wz >= w.minZ && wz <= w.maxZ) {
+            if (w.topY > fy) fy = w.topY;
+          }
+        }
+        for (let k = 0; k < 6; k++) {
+          let next = fy;
+          for (const w of localWalks) {
+            if (wx >= w.minX && wx <= w.maxX && wz >= w.minZ && wz <= w.maxZ) {
+              if (w.topY <= fy + STEP_MAX && w.topY > next) next = w.topY;
+            }
+          }
+          for (const b of localBoxes) {
+            if (b.tag === 'water' || b.tag === 'bars') continue;
+            if (wx >= b.minX - 0.12 && wx <= b.maxX + 0.12 && wz >= b.minZ - 0.12 && wz <= b.maxZ + 0.12) {
+              if (b.maxY <= fy + STEP_MAX && b.maxY > next) next = b.maxY;
+            }
+          }
           if (next <= fy + 0.001) break;
           fy = next;
         }
         const idx = r * cols + c;
         heights[idx] = fy;
-        walkable[idx] = this.isClear(wx, wz, agentRadius, fy, 1.65) ? 1 : 0;
+        walkable[idx] = this.isClear(wx, wz, agentRadius, fy, 1.65, localBoxes, localWalks) ? 1 : 0;
       }
     }
 
-    this.nav = { minX, minZ, cellSize, cols, rows, walkable, heights };
+    const buildMs = +(performance.now() - t0).toFixed(1);
+    this.nav = { minX, minZ, cellSize, cols, rows, walkable, heights, buildMs };
   }
 
   _worldToCell(x, z) {
@@ -282,7 +443,7 @@ export class CollisionWorld {
   /**
    * Fast A* route finder returning array of world-space THREE.Vector3 waypoints
    */
-  findPath(startPos, goalPos, maxExpanded = 1800) {
+  findPath(startPos, goalPos, maxExpanded = 9000) {
     if (!this.nav) return null;
     const { minX, minZ, cellSize, cols, rows, walkable, heights } = this.nav;
     const sc0 = this._worldToCell(startPos.x, startPos.z);
@@ -372,8 +533,8 @@ export class CollisionWorld {
         if (dc !== 0 && dr !== 0) {
           if (!walkable[cr * cols + nc] || !walkable[nr * cols + cc]) continue;
         }
-        // Step height check: <= 0.5m climbable
-        if (Math.abs(heights[nIdx] - ch) > STEP_MAX) continue;
+        // Step height check: strictly match walking uphill limit with small safety margin (0.48m < STEP_MAX 0.52m)
+        if (Math.abs(heights[nIdx] - ch) > STEP_MAX - 0.04) continue;
 
         const tentative = gScore[cur] + cost;
         if (tentative < gScore[nIdx]) {
@@ -404,6 +565,6 @@ export class CollisionWorld {
    * Checks reachability from a reference point (e.g., player spawn) to a target point via A*
    */
   canReach(fromPos, toPos) {
-    return this.findPath(fromPos, toPos, 6000) !== null;
+    return this.findPath(fromPos, toPos, 12000) !== null;
   }
 }

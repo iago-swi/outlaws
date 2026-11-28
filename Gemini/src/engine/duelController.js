@@ -51,7 +51,7 @@ export class DuelController {
     this.config = {
       levelIndex: 0,
       rule: 'first3',
-      enemiesOpt: 'none' // 'none' | 'few'
+      enemiesCount: 0 // 0..9 computer enemies, hostile to both players
     };
 
     // Fighter selection state
@@ -89,6 +89,9 @@ export class DuelController {
       levelSelect: document.getElementById('duel-level-select'),
       ruleSelect: document.getElementById('duel-rule-select'),
       enemiesSelect: document.getElementById('duel-enemies-select'),
+      btnHostCreate: document.getElementById('btn-duel-host'),
+      btnRematchStart: document.getElementById('btn-duel-rematch-start'),
+      btnDuelAgain: document.getElementById('btn-duel-again'),
       inviteBox: document.getElementById('duel-invite-box'),
       codeDisplay: document.getElementById('duel-code-display'),
       inviteUrl: document.getElementById('duel-invite-url'),
@@ -152,12 +155,29 @@ export class DuelController {
       this.config.rule = this.dom.ruleSelect.value;
     });
     this.dom.enemiesSelect.addEventListener('change', () => {
-      this.config.enemiesOpt = this.dom.enemiesSelect.value;
+      this.config.enemiesCount = Math.max(0, Math.min(9, parseInt(this.dom.enemiesSelect.value, 10) || 0));
     });
 
     // Primary Method A: PeerJS 5-letter Invite Link
-    document.getElementById('btn-duel-host').addEventListener('click', () => {
+    this.dom.btnHostCreate.addEventListener('click', () => {
       this.startHostPeerJS();
+    });
+
+    // Stay-connected rematch flow (no new link/code needed!)
+    this.dom.btnDuelAgain.addEventListener('click', () => {
+      if (this.net && this.net.isOpen()) {
+        this.net.send({ type: 'rematch_lobby' });
+        this.returnToConnectedLobby();
+      } else {
+        this.leaveDuelToTitle();
+      }
+    });
+
+    this.dom.btnRematchStart.addEventListener('click', () => {
+      if (this.role !== 'host' || !this.net || !this.net.isOpen()) return;
+      this._readHostConfig();
+      this.net.send({ type: 'cfg', config: this.config });
+      this.openFighterSelect();
     });
 
     document.getElementById('btn-duel-copy-link').addEventListener('click', () => {
@@ -239,7 +259,63 @@ export class DuelController {
   _readHostConfig() {
     this.config.levelIndex = parseInt(this.dom.levelSelect.value, 10) || 0;
     this.config.rule = this.dom.ruleSelect.value || 'first3';
-    this.config.enemiesOpt = this.dom.enemiesSelect.value || 'none';
+    this.config.enemiesCount = Math.max(0, Math.min(9, parseInt(this.dom.enemiesSelect.value, 10) || 0));
+  }
+
+  _setLobbyConnectedMode(isConnectedRematch) {
+    const cols = this.dom.lobbyScreen.querySelectorAll('.duel-panel');
+    const hostPanel = cols[0];
+    const joinPanel = cols[1];
+    if (isConnectedRematch) {
+      if (this.role === 'host') {
+        if (hostPanel) hostPanel.classList.remove('hidden');
+        if (joinPanel) joinPanel.classList.add('hidden');
+        this.dom.btnHostCreate.classList.add('hidden');
+        this.dom.btnRematchStart.classList.remove('hidden');
+        this.dom.inviteBox.classList.add('hidden');
+        this._setStatus('connected', 'Still connected to your opponent! Pick the next chapter, rules and enemies, then start.');
+      } else {
+        if (hostPanel) hostPanel.classList.add('hidden');
+        if (joinPanel) joinPanel.classList.add('hidden');
+        this._setStatus('connected', 'Still connected! Waiting for the host to pick the next chapter and rules…');
+      }
+      this.dom.backupDetails.classList.add('hidden');
+    } else {
+      if (hostPanel) hostPanel.classList.remove('hidden');
+      if (joinPanel) joinPanel.classList.remove('hidden');
+      this.dom.btnHostCreate.classList.remove('hidden');
+      this.dom.btnRematchStart.classList.add('hidden');
+      this.dom.backupDetails.classList.remove('hidden');
+    }
+  }
+
+  returnToConnectedLobby() {
+    this.phase = 'lobby';
+    this.game.state = 'duel_lobby';
+    this.myLocked = false;
+    this.oppLocked = false;
+    this.myDead = false;
+    this.remoteFighter = null;
+    clearTimeout(this.roundResetTimer);
+    clearInterval(this._clockInterval);
+    this._clockInterval = null;
+    this.game.setScope(false);
+    if (document.pointerLockElement) document.exitPointerLock();
+
+    this.game.dom.endScreen.classList.add('hidden');
+    this.game.dom.hud.classList.add('hidden');
+    this.game.dom.crosshair.classList.add('hidden');
+    this.dom.selectScreen.classList.add('hidden');
+    this.dom.hudTop.classList.add('hidden');
+    this.dom.unlockBar.classList.add('hidden');
+    this.dom.respawnBanner.classList.add('hidden');
+    this.dom.lobbyScreen.classList.remove('hidden');
+
+    this.dom.levelSelect.value = String(this.config.levelIndex);
+    this.dom.ruleSelect.value = this.config.rule;
+    this.dom.enemiesSelect.value = String(this.config.enemiesCount || 0);
+    this._setLobbyConnectedMode(true);
+    this.game.loadLevel(this.config.levelIndex, true);
   }
 
   _setStatus(state, text) {
@@ -270,7 +346,9 @@ export class DuelController {
 
     this.dom.levelSelect.value = String(this.game.levelIndex);
     this.config.levelIndex = this.game.levelIndex;
+    this.dom.enemiesSelect.value = String(this.config.enemiesCount || 0);
     this.dom.inviteBox.classList.add('hidden');
+    this._setLobbyConnectedMode(false);
 
     if (autoJoinCode) {
       const code = normalizeDuelCode(autoJoinCode);
@@ -355,7 +433,8 @@ export class DuelController {
 
     this.dom.stageLevel.textContent = `${meta.act} · ${meta.title}`;
     const rInfo = DUEL_RULES[this.config.rule] || DUEL_RULES.first3;
-    const enemyTxt = this.config.enemiesOpt === 'few' ? ' · 6 computer enemies active' : ' · No computer enemies';
+    const ec = Math.max(0, Math.min(9, parseInt(this.config.enemiesCount, 10) || 0));
+    const enemyTxt = ec > 0 ? ` · ${ec} computer ${ec === 1 ? 'enemy' : 'enemies'} active` : ' · No computer enemies';
     this.dom.ruleTitle.textContent = rInfo.name + enemyTxt;
     this.dom.ruleDesc.textContent = rInfo.desc;
 
@@ -372,6 +451,12 @@ export class DuelController {
 
     this.dom.heroesRow.innerHTML = heroes.map(renderCard).join('');
     this.dom.villainsRow.innerHTML = villains.map(renderCard).join('');
+    const pickerPane = this.dom.selectScreen.querySelector('.duel-picker-pane');
+    if (pickerPane) {
+      pickerPane.classList.toggle('compact-roster', villains.length >= 5);
+    }
+    this.dom.villainsRow.classList.toggle('grid-cols-4', villains.length === 4);
+    this.dom.villainsRow.classList.toggle('grid-cols-3', villains.length !== 4);
 
     const bindRow = (container) => {
       container.querySelectorAll('.duel-fighter-card').forEach((btn) => {
@@ -484,11 +569,11 @@ export class DuelController {
     this.dom.unlockBar.classList.add('hidden');
     this.dom.respawnBanner.classList.add('hidden');
 
-    // Load level in Duel mode (passes custom fighter & 0 or 6 ordinary AI enemies)
+    // Load level in Duel mode (passes custom fighter & 0..9 ordinary AI enemies)
     this.game.loadLevel(this.config.levelIndex, false, {
       duelMode: true,
       duelRole: this.role,
-      duelEnemiesOpt: this.config.enemiesOpt,
+      duelEnemiesCount: Math.max(0, Math.min(9, parseInt(this.config.enemiesCount, 10) || 0)),
       fighter: myFighter
     });
 
@@ -791,10 +876,13 @@ export class DuelController {
       <div class="stat-card"><div class="stat-val">${rInfo.name}</div><div class="stat-lbl">RULES</div></div>
     `;
 
-    // Hide SP-only end-screen buttons; leave Main Menu clearly visible
+    // Hide SP-only end-screen buttons; show "Next Duel (Same Connection)" if still connected!
     g.dom.btnNextLevel.classList.add('hidden');
     document.getElementById('btn-end-restart').classList.add('hidden');
     document.getElementById('btn-end-change-hero').classList.add('hidden');
+    const canRematch = outcome !== 'left' && !!(this.net && this.net.isOpen());
+    this.dom.btnDuelAgain.classList.toggle('hidden', !canRematch);
+    document.getElementById('btn-end-menu').textContent = canRematch ? 'LEAVE DUEL / MAIN MENU' : 'MAIN MENU';
   }
 
   leaveDuelToTitle() {
@@ -814,6 +902,9 @@ export class DuelController {
     this.dom.hudTop.classList.add('hidden');
     this.dom.respawnBanner.classList.add('hidden');
     this.dom.unlockBar.classList.add('hidden');
+    this.dom.btnDuelAgain.classList.add('hidden');
+    document.getElementById('btn-end-menu').textContent = 'MAIN MENU';
+    this._setLobbyConnectedMode(false);
     // Restore single-player HUD & end-screen buttons cleanly
     document.getElementById('hud-sp-left').classList.remove('hidden');
     document.getElementById('hud-score-box').classList.remove('hidden');
@@ -847,6 +938,11 @@ export class DuelController {
       if (this.myLocked && this.myFighterId) {
         this.net.send({ type: 'pick', fighterId: this.myFighterId });
       }
+      return;
+    }
+
+    if (msg.type === 'rematch_lobby') {
+      this.returnToConnectedLobby();
       return;
     }
 
@@ -982,6 +1078,7 @@ export class DuelController {
         yaw: +p.yaw.toFixed(3),
         pitch: +p.pitch.toFixed(3),
         moving,
+        cr: p.crouched ? 1 : 0,
         hp: Math.ceil(p.hp),
         maxHp: p.maxHp,
         alive: !this.myDead
@@ -991,8 +1088,8 @@ export class DuelController {
     // 3. Timed 5-minute clock & 3-second respawn (also ticked via 200ms wall-clock interval so backgrounding cannot stall the duel!)
     this._tickWallTimers();
 
-    // 4. Host broadcasts compact 6-AI snapshot at ~12 Hz
-    if (this.role === 'host' && this.config.enemiesOpt === 'few' && this.game.enemies.length > 0) {
+    // 4. Host broadcasts compact AI snapshot at ~12 Hz (for 1..9 computer enemies)
+    if (this.role === 'host' && (this.config.enemiesCount || 0) > 0 && this.game.enemies.length > 0) {
       this.aiSyncAccum += dt;
       if (this.aiSyncAccum >= 0.085) {
         this.aiSyncAccum = 0;

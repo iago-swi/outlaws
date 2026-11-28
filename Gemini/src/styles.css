@@ -554,6 +554,25 @@ body.pax-active .health-fill {
   margin-bottom: 3px;
 }
 
+.hud-hero-perk-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hud-crouch-badge {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(232, 168, 56, 0.25);
+  border: 1px solid var(--accent-bright);
+  color: #fff2cc;
+}
+
 .hud-hero-perk {
   font-size: 10px;
   letter-spacing: 1.5px;
@@ -1743,11 +1762,11 @@ body.theme-normandy .hero-card.active {
 
 /* Duel Fighter Selection Screen (Heroes ★ Row + Villains ☠ Row) */
 .duel-select-shell {
-  width: min(1220px, 96vw);
-  height: min(670px, 92vh);
+  width: min(1290px, 96vw);
+  height: min(710px, 94vh);
   display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 18px;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
   align-items: stretch;
 }
 
@@ -1755,12 +1774,53 @@ body.theme-normandy .hero-card.active {
   background: rgba(15, 11, 9, 0.9);
   border: 1.5px solid var(--border-glow);
   border-radius: 8px;
-  padding: 16px 20px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
   overflow-y: auto;
   backdrop-filter: blur(10px);
+}
+
+.duel-picker-pane.compact-roster {
+  padding: 11px 15px;
+  gap: 7px;
+}
+
+.duel-picker-pane.compact-roster .duel-rule-banner {
+  padding: 6px 10px;
+}
+
+.duel-picker-pane.compact-roster .duel-roster-section {
+  gap: 5px;
+}
+
+.duel-picker-pane.compact-roster .duel-cards-grid {
+  gap: 6px;
+}
+
+.duel-picker-pane.compact-roster .duel-fighter-card {
+  padding: 7px 9px;
+}
+
+.duel-picker-pane.compact-roster .dfc-head {
+  font-size: 13px;
+}
+
+.duel-picker-pane.compact-roster .dfc-bio {
+  font-size: 10.5px;
+  margin: 2px 0 3px;
+  line-height: 1.24;
+}
+
+.duel-picker-pane.compact-roster .dfc-strength {
+  font-size: 10.5px;
+  line-height: 1.22;
+}
+
+.duel-picker-pane.compact-roster .duel-ready-status {
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 .duel-rule-banner {
@@ -1804,8 +1864,12 @@ body.theme-normandy .hero-card.active {
 
 .duel-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+}
+
+.duel-cards-grid.grid-cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .duel-fighter-card {
@@ -1910,4 +1974,18 @@ body.theme-normandy .hero-card.active {
   .duel-select-shell {
     grid-template-columns: 1fr;
   }
+}
+
+.title-version {
+  position: fixed;
+  right: 18px;
+  bottom: 12px;
+  z-index: 5;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: rgba(255, 244, 218, 0.72);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  pointer-events: none;
 }
