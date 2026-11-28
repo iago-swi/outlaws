@@ -1,6 +1,6 @@
 # Lone Hand — Claude version
 
-**Version 2.7.0** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
+**Version 2.7.1** · [What changed (changelog)](CHANGELOG.md) · [All releases](https://github.com/iago-swi/outlaws/releases)
 
 A first-person shooter in nine chapters, built with Claude (Anthropic) in the spirit of
 late-1990s Western shooters. From a frontier town to a Japanese shrine, an alpine valley,
@@ -32,7 +32,7 @@ files.
 | :---: | :---: | :---: |
 | <img src="screenshot-online.jpg" width="280" alt="The Online screen of the host over Stalnogorsk: the chapter, the game (Duel, first to 5 rounds), the computer enemies, their wits and the map size in five lists, the Start the game button, the code of five letters in large plain type with the invite link and a Copy the link button below it, and the Players list with two names, Marshal (host, you) and Cousin"> | <img src="screenshot-duel-pick.jpg" width="280" alt="The fighter selection of a duel in Stalnogorsk: three heroes marked with gold stars (Aleksandr Solzhenitsyn, Andrei Sakharov, Rudolf Nureyev) above four villains marked with red skulls (Joseph Stalin, Yuri Andropov, Lavrentiy Beria, Leonid Brezhnev), each card with its strength and special skill, and Andrei Sakharov standing in the snowy street between the housing blocks"> | <img src="screenshot-duel.jpg" width="280" alt="A duel on Revolution Square in falling snow: the other player, named Cousin, as Joseph Stalin in a white tunic, stands before the red plinth of the monument with its hammer and sickle; the score line reads You 0 · 0 Cousin, round 1; a gust of snow drifts over the square; the pistol in the foreground"> |
 
-![The title screen: the game's name over a Japanese garden at dusk, nine chapter cards in three rows, the Online button for two players (duel or together), the Sound button and the Graphics list in the bottom left corner and the version number in the bottom right corner](screenshot-title.jpg)
+![The title screen: the game's name over a Japanese garden at dusk, the words Choose a chapter over nine chapter cards in three rows, and in one row at the foot of the screen the Sound button and the Graphics list on the left, the Online button for two players (duel or together) in the middle and the version number on the right](screenshot-title.jpg)
 
 ## Run it
 

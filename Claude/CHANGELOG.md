@@ -20,6 +20,17 @@ Versions 1.6.0 to 2.5.0 were made by raphfleury in
 [his own repository](https://github.com/raphfleury/Outlaws); they have no tag and no release
 here. Since 2.6.0 the game is developed in this repository again.
 
+## [2.7.1] - 2026-11-28
+
+### Fixed
+
+- **The foot of the title screen no longer runs into itself.** In a low or narrow window the
+  Online button sat on the chapter cards and over the version number, and the Sound button
+  and the Graphics list crowded it. Now they stand in one row at the foot of the screen:
+  Sound and Graphics on the left, the game for two in the middle, the version on the right.
+  "Choose a chapter" stands above the chapters, and in a low window the title and the cards
+  draw closer so that everything still fits.
+
 ## [2.7.0] - 2026-11-27
 
 ### Changed
@@ -684,6 +695,7 @@ The rounds published before versions were numbered, by date.
 - Duel mode for two players online, with twenty-five villains to play, and a new title
   screen.
 
+[2.7.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v2.7.1
 [2.7.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v2.7.0
 [2.6.0]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v2.6.0
 [1.5.1]: https://github.com/iago-swi/outlaws/releases/tag/lone-hand-v1.5.1
