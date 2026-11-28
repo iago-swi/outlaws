@@ -14,6 +14,70 @@ export class CollisionWorld {
 
     // Navigation grid (built from the exact collision shapes after level construction)
     this.nav = null;
+    // Stage 14 Item 91: Drawn-geometry mesh ray collider & walkable roofs
+    this.solidMeshRecords = [];
+    this._meshRaycaster = new THREE.Raycaster();
+  }
+
+  /**
+   * Stage 14 Item 91: Collects opaque static world meshes (roofs, rocks, carts, arches)
+   * with world AABB broadphase so shots & LOS stop at drawn geometry (windows/cloth/leaves pass through)
+   * and roofs can be stood on cleanly!
+   */
+  buildMeshRayCollider(worldGroup) {
+    this.solidMeshRecords = [];
+    if (!worldGroup) return;
+    worldGroup.updateMatrixWorld(true);
+    const box3 = new THREE.Box3();
+    const size = new THREE.Vector3();
+    const center = new THREE.Vector3();
+
+    worldGroup.traverse((obj) => {
+      if (!obj.isMesh || !obj.geometry || !obj.material) return;
+      if (obj.userData.isTerrain || obj.userData.enemy || obj.userData.bystander || obj.userData.animal || obj.userData.noSolidRay) return;
+      let p = obj.parent;
+      while (p && p !== worldGroup) {
+        if (p.userData && (p.userData.enemy || p.userData.bystander || p.userData.animal || p.userData.noSolidRay)) return;
+        p = p.parent;
+      }
+      // Windows, paper screens, cloth, water, transparent & wireframe meshes let shots & LOS pass through!
+      const mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
+      if (!mat || mat.transparent || mat.opacity < 0.92 || mat.wireframe) return;
+      // Skip leaf/foliage green cones & spheres so leaves let shots/LOS through!
+      const geoType = obj.geometry.type;
+      const hex = (mat.color && typeof mat.color.getHex === 'function') ? mat.color.getHex() : 0x808080;
+      const r = (hex >> 16) & 255, g = (hex >> 8) & 255, b = hex & 255;
+      if ((geoType === 'ConeGeometry' || geoType === 'SphereGeometry' || geoType === 'DodecahedronGeometry') && g > r + 18 && g > b + 15) return;
+
+      box3.setFromObject(obj);
+      box3.getSize(size);
+      box3.getCenter(center);
+      if (size.x < 0.35 && size.y < 0.35 && size.z < 0.35) return;
+      if (size.x > 160 || size.z > 160) return; // skip sky domes / giant ground planes
+
+      // Register flat/sloped high roofs as walkable surfaces (navIgnore=true so interiors underneath remain navigable!)
+      const isRoofLike = (center.y >= 2.4 && size.x >= 2.2 && size.z >= 2.2 && (geoType === 'BoxGeometry' || geoType === 'ConeGeometry' || geoType === 'CylinderGeometry') && size.y <= 3.6);
+      if (isRoofLike && !obj.userData.collisionBox) {
+        this.walkables.push({
+          minX: box3.min.x + 0.1,
+          maxX: box3.max.x - 0.1,
+          minZ: box3.min.z + 0.1,
+          maxZ: box3.max.z - 0.1,
+          topY: box3.max.y,
+          navIgnore: true
+        });
+      }
+
+      // Skip meshes already represented by an identical AABB collider box (avoids redundant ray work)
+      if (obj.userData.collisionBox) return;
+
+      this.solidMeshRecords.push({
+        mesh: obj,
+        minX: box3.min.x, maxX: box3.max.x,
+        minY: box3.min.y, maxY: box3.max.y,
+        minZ: box3.min.z, maxZ: box3.max.z
+      });
+    });
   }
 
   setHeightFunction(fn) {
@@ -28,12 +92,24 @@ export class CollisionWorld {
     const hx = sx * 0.5;
     const hy = sy * 0.5;
     const hz = sz * 0.5;
-    this.boxes.push({
+    const box = {
       minX: cx - hx, maxX: cx + hx,
       minY: cy - hy, maxY: cy + hy,
       minZ: cz - hz, maxZ: cz + hz,
       tag
-    });
+    };
+    this.boxes.push(box);
+    return box;
+  }
+
+  removeBox(box) {
+    if (!box) return false;
+    const idx = this.boxes.indexOf(box);
+    if (idx >= 0) {
+      this.boxes.splice(idx, 1);
+      return true;
+    }
+    return false;
   }
 
   addBoxMinMax(minX, minY, minZ, maxX, maxY, maxZ, tag = 'solid') {
@@ -443,6 +519,39 @@ export class CollisionWorld {
         closest = tg;
         hitBox = { tag: 'ground' };
         hitNormal.set(0, 1, 0);
+      }
+    }
+
+    // Stage 14 Item 91: Also test drawn solid world meshes (roofs, rocks, carts, stalls) using fast AABB broadphase!
+    if (this.solidMeshRecords.length > 0) {
+      const candidates = [];
+      for (const rec of this.solidMeshRecords) {
+        if (!rec.mesh.visible) continue;
+        const t1 = (rec.minX - origin.x) * invX;
+        const t2 = (rec.maxX - origin.x) * invX;
+        const t3 = (rec.minY - origin.y) * invY;
+        const t4 = (rec.maxY - origin.y) * invY;
+        const t5 = (rec.minZ - origin.z) * invZ;
+        const t6 = (rec.maxZ - origin.z) * invZ;
+        const tmin = Math.max(Math.min(t1, t2), Math.min(t3, t4), Math.min(t5, t6));
+        const tmax = Math.min(Math.max(t1, t2), Math.max(t3, t4), Math.max(t5, t6));
+        if (tmax >= 0 && tmin <= tmax && tmin < closest) {
+          candidates.push(rec.mesh);
+        }
+      }
+      if (candidates.length > 0) {
+        this._meshRaycaster.set(origin, dir);
+        this._meshRaycaster.near = 0.05;
+        this._meshRaycaster.far = closest;
+        const hits = this._meshRaycaster.intersectObjects(candidates, false);
+        if (hits.length > 0 && hits[0].distance < closest) {
+          return {
+            dist: hits[0].distance,
+            point: hits[0].point.clone(),
+            normal: hits[0].face ? hits[0].face.normal.clone() : hitNormal,
+            tag: 'mesh'
+          };
+        }
       }
     }
 

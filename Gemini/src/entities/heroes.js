@@ -504,6 +504,96 @@ export const ERA_HEROES = {
   ]
 };
 
+export const SKILLS = {
+  dash:        { id: 'dash',        name: 'Dash',        desc: 'Burst of speed (+80% faster)',                         duration: 3, cooldown: 16, tint: 'rgba(80, 195, 255, 0.16)' },
+  stand_fast:  { id: 'stand_fast',  name: 'Stand fast',  desc: 'Wounds hurt five times less',                          duration: 5, cooldown: 28, tint: 'rgba(220, 178, 76, 0.18)' },
+  dead_eye:    { id: 'dead_eye',    name: 'Dead eye',    desc: 'Every shot flies true and hits 80% harder',            duration: 6, cooldown: 28, tint: 'rgba(255, 198, 92, 0.18)' },
+  second_wind: { id: 'second_wind', name: 'Second wind', desc: '+50 health back over 4 seconds',                       duration: 4, cooldown: 36, tint: 'rgba(72, 224, 130, 0.18)' },
+  vanish:      { id: 'vanish',      name: 'Vanish',      desc: 'Enemies lose sight of you',                            duration: 6, cooldown: 32, tint: 'rgba(130, 110, 215, 0.22)' },
+  fury:        { id: 'fury',        name: 'Fury',        desc: 'Blows 2× harder, 60% quicker, +20% speed',             duration: 7, cooldown: 26, tint: 'rgba(235, 56, 42, 0.20)' },
+  eagle_eye:   { id: 'eagle_eye',   name: 'Eagle eye',   desc: 'Every enemy within 90 m marked through walls & map',   duration: 9, cooldown: 30, tint: 'rgba(255, 232, 110, 0.16)' }
+};
+
+const FIGHTER_SKILL_OVERRIDES = {
+  // Snipers -> Eagle eye
+  pavlichenko: 'eagle_eye',
+  gompo: 'eagle_eye',
+  goring: 'eagle_eye',
+  // Stealthy -> Vanish
+  hall: 'vanish',
+  nureyev: 'vanish',
+  fuma: 'vanish',
+  loki: 'vanish',
+  // Blade masters -> Fury
+  musashi: 'fury',
+  ragnar: 'fury',
+  kojiro: 'fury',
+  leopold: 'fury',
+  // Fast -> Dash
+  jane: 'dash',
+  pachen: 'dash',
+  nezahualcoyotl: 'dash',
+  jesse_james: 'dash',
+  antinous: 'dash',
+  andropov: 'dash',
+  jiang_qing: 'dash',
+  alvarado: 'dash',
+  // Armoured -> Stand fast
+  earp: 'stand_fast',
+  masamune: 'stand_fast',
+  achilles: 'stand_fast',
+  leif: 'stand_fast',
+  solzhenitsyn: 'stand_fast',
+  songtsen: 'stand_fast',
+  nobunaga: 'stand_fast',
+  gessler: 'stand_fast',
+  xerxes: 'stand_fast',
+  ivar: 'stand_fast',
+  hitler: 'stand_fast',
+  stalin: 'stand_fast',
+  mao: 'stand_fast',
+  cortes: 'stand_fast',
+  // High health / recovery -> Second wind
+  winkelried: 'second_wind',
+  stauffacher: 'second_wind',
+  heracles: 'second_wind',
+  tzilacatzin: 'second_wind',
+  ike_clanton: 'second_wind',
+  charles_bold: 'second_wind',
+  polyphemus: 'second_wind',
+  minotaur: 'second_wind',
+  mussolini: 'second_wind',
+  brezhnev: 'second_wind',
+  langdarma: 'second_wind',
+  guzman: 'second_wind',
+  // Faster/harder shooters & throwers -> Dead eye
+  billy: 'dead_eye',
+  tomoe: 'dead_eye',
+  tell: 'dead_eye',
+  ulysses: 'dead_eye',
+  erik: 'dead_eye',
+  bavaud: 'dead_eye',
+  sakharov: 'dead_eye',
+  cuauhtemoc: 'dead_eye',
+  belle_starr: 'dead_eye',
+  medusa: 'dead_eye',
+  bloodaxe: 'dead_eye',
+  beria: 'dead_eye'
+};
+
+export function getFighterSkill(fighter) {
+  if (!fighter) return SKILLS.dead_eye;
+  const key = fighter.skillId || FIGHTER_SKILL_OVERRIDES[fighter.id];
+  if (key && SKILLS[key]) return SKILLS[key];
+  const m = fighter.mods || {};
+  if (m.stealthMult) return SKILLS.vanish;
+  if (m.meleeDamageMult || m.meleeFireRateMult || m.meleeRangeBonus) return SKILLS.fury;
+  if (m.moveSpeedMult) return SKILLS.dash;
+  if (m.damageTakenMult) return SKILLS.stand_fast;
+  if (m.maxHpMult || m.fixedMaxHp || m.regenRate) return SKILLS.second_wind;
+  return SKILLS.dead_eye;
+}
+
 export function getHeroById(era, heroId) {
   const list = ERA_HEROES[era] || ERA_HEROES.west;
   return list.find((h) => h.id === heroId) || list[0];

@@ -1298,6 +1298,32 @@ export class Enemy {
     this.path = null;
     this.pathIdx = 0;
     this.pathTimer = Math.random() * 0.5;
+
+    // Stage 12 Wits AI state (Low / Medium / Genius)
+    this.lastKnownPos = null;
+    this.timeSinceSeen = 999;
+    this.searchTimer = 0;
+    this.searchPoint = null;
+    this.climbingLadder = null;
+    this.crouched = false;
+    this.coverPos = null;
+    this.coverTimer = 0;
+    this.shotsFromCover = 0;
+    this.coversTaken = 0;
+    this.onNoiseHeard = (noisePos, loudnessM, wits = 'medium') => {
+      if (!this.alive || !this.mesh.visible || this.hideUntilClose) return false;
+      if (wits === 'low') return false;
+      const hearRange = wits === 'genius' ? loudnessM * 1.8 : loudnessM;
+      const d = Math.hypot(this.mesh.position.x - noisePos.x, this.mesh.position.z - noisePos.z);
+      if (d <= hearRange) {
+        this.alert = true;
+        this.lastKnownPos = noisePos.clone();
+        this.searchTimer = 12.0;
+        this.path = null;
+        return true;
+      }
+      return false;
+    };
   }
 
   getHitMeshes() {
@@ -1320,13 +1346,30 @@ export class Enemy {
     this.poisonTickTimer = interval;
   }
 
-  takeDamage(amount, isHeadshot = false) {
+  takeDamage(amount, isHeadshot = false, hitPoint = null, pushDir = null) {
     if (!this.alive) return false;
     this.alert = true;
     this.hideUntilClose = false;
     this.mesh.visible = true;
     this.hp -= amount;
     this.hurtFlash = 0.16;
+    this.hpBarTimer = 4.0; // Stage 13 Item 85: show floating HP bar for 4 seconds after each hit!
+
+    // Visible dark wound mark on the body & slight knockback push!
+    if (hitPoint && this.mesh) {
+      this.mesh.updateMatrixWorld(true);
+      const localPt = this.mesh.worldToLocal(hitPoint.clone());
+      const wound = new THREE.Mesh(
+        new THREE.SphereGeometry(0.055, 5, 5),
+        new THREE.MeshBasicMaterial({ color: 0x3b0909 })
+      );
+      wound.position.copy(localPt);
+      this.mesh.add(wound);
+    }
+    if (pushDir && this.speed > 0) {
+      this.mesh.position.x += pushDir.x * 0.22;
+      this.mesh.position.z += pushDir.z * 0.22;
+    }
 
     if (!this.isBoss) {
       this.parts.hpBg.visible = true;
@@ -1344,7 +1387,7 @@ export class Enemy {
     return false;
   }
 
-  update(dt, playerPos, collision, callbacks, detectMult = 1.0, playerCrouched = false, playerSneaking = false) {
+  update(dt, playerPos, collision, callbacks, detectMult = 1.0, playerCrouched = false, playerSneaking = false, wits = 'medium') {
     if (!this.alive) {
       // Pick a wall-free fall direction on the first death frame, or slump cleanly in place
       if (!this.fallChecked) {
@@ -1400,7 +1443,11 @@ export class Enemy {
       }
     }
 
-    // Billboard mini HP bar toward player
+    // Billboard mini HP bar toward player (visible for 4s after hit!)
+    if (this.hpBarTimer > 0) {
+      this.hpBarTimer -= dt;
+      if (this.hpBarTimer <= 0 && !this.isBoss) this.parts.hpBg.visible = false;
+    }
     if (this.parts.hpBg.visible) {
       this.parts.hpBg.lookAt(playerPos.x, this.mesh.position.y + (this.style === 'dog' ? 1.15 : 2.3), playerPos.z);
     }
@@ -1446,20 +1493,33 @@ export class Enemy {
       this.submergedTimer = 0;
     }
 
-    // Wake up when player gets close or enters sight (scaled by hero stealth, crouching -40% & sneaking!)
-    const eyeY = this.style === 'dog' ? 0.7 : 1.55;
+    // Wake up when player gets close or enters sight (scaled by hero stealth, crouching -40%, sneaking & Wits!)
+    const witsSightMult = wits === 'genius' ? 1.18 : 1.0;
+    const eyeY = this.style === 'dog' ? 0.7 : (this.crouched ? 0.98 : 1.55);
     const eyePos = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + eyeY, this.mesh.position.z);
-    // Crouching lowers the LOS target to ~0.88m so waist-high (~1m) cover hides a crouching player!
     const playerEye = new THREE.Vector3(playerPos.x, playerPos.y + (playerCrouched ? 0.88 : 1.45), playerPos.z);
     const crouchMult = playerCrouched ? 0.60 : 1.0;
     const sneakMult = playerSneaking ? 0.67 : 1.0;
-    const combinedMult = detectMult * crouchMult * sneakMult;
+    const combinedMult = detectMult * crouchMult * sneakMult * witsSightMult;
     const sightRange = 42 * combinedMult;
     const proxRange = (this.style === 'dog' ? 28 : 26) * combinedMult;
-    const canSee = horizDist < 54 && collision.hasLineOfSight(eyePos, playerEye);
+    const canSee = horizDist < 54 * witsSightMult && collision.hasLineOfSight(eyePos, playerEye);
+
+    if (canSee && horizDist < sightRange) {
+      this.timeSinceSeen = 0;
+      this.lastKnownPos = playerPos.clone();
+      this.searchTimer = 12.0;
+      if (!this.alert) {
+        this.alert = true;
+        if (callbacks && callbacks.onSpottedPlayer) callbacks.onSpottedPlayer(this);
+        if (this.style === 'dog' && callbacks.onDogBark) callbacks.onDogBark(this);
+        if (wits === 'genius' && callbacks && callbacks.onAlertAllies) callbacks.onAlertAllies(this, playerPos, 60);
+      }
+    } else {
+      this.timeSinceSeen += dt;
+    }
 
     if (!this.alert) {
-      // Check whether the player is behind this idle enemy
       const eFwdX = Math.sin(this.mesh.rotation.y);
       const eFwdZ = Math.cos(this.mesh.rotation.y);
       const toLen = horizDist || 1;
@@ -1469,15 +1529,142 @@ export class Enemy {
         : (horizDist < proxRange || (canSee && horizDist < sightRange));
       if (detected) {
         this.alert = true;
-        if (this.style === 'dog' && callbacks.onDogBark) {
-          callbacks.onDogBark(this);
-        }
+        this.lastKnownPos = playerPos.clone();
+        this.searchTimer = 12.0;
+        if (callbacks && callbacks.onSpottedPlayer) callbacks.onSpottedPlayer(this);
+        if (this.style === 'dog' && callbacks.onDogBark) callbacks.onDogBark(this);
+        if (wits === 'genius' && callbacks && callbacks.onAlertAllies) callbacks.onAlertAllies(this, playerPos, 60);
       } else {
         const baseTorsoY = this.style === 'dog' ? 0.50 : 1.16;
         this.parts.torso.position.y = baseTorsoY + Math.sin(performance.now() * 0.002 + this.walkPhase) * 0.02;
         return;
       }
     }
+
+    // Low Wits gives up after 2.5s out of sight and walks back to spawnPos!
+    // Medium/Genius search around lastKnownPos for 12s before returning to post!
+    let goalPos = this.lastKnownPos || playerPos;
+    if (!canSee) {
+      if (wits === 'low') {
+        if (this.timeSinceSeen >= 2.5) {
+          this.alert = false;
+          this.lastKnownPos = null;
+          goalPos = this.spawnPos;
+        }
+      } else {
+        this.searchTimer -= dt;
+        if (this.searchTimer <= 0) {
+          this.alert = false;
+          this.lastKnownPos = null;
+          goalPos = this.spawnPos;
+        } else if (this.lastKnownPos && Math.hypot(this.mesh.position.x - this.lastKnownPos.x, this.mesh.position.z - this.lastKnownPos.z) < 2.2) {
+          if (!this.searchPoint || Math.hypot(this.mesh.position.x - this.searchPoint.x, this.mesh.position.z - this.searchPoint.z) < 1.6) {
+            const ang = Math.random() * Math.PI * 2;
+            const r = 3 + Math.random() * 5;
+            this.searchPoint = new THREE.Vector3(this.lastKnownPos.x + Math.cos(ang) * r, this.lastKnownPos.y, this.lastKnownPos.z + Math.sin(ang) * r);
+          }
+          goalPos = this.searchPoint;
+        }
+      }
+    } else {
+      this.searchPoint = null;
+      goalPos = playerPos;
+    }
+
+    // Medium & Genius Ladder Climbing when target is on a higher elevation!
+    const isMelee = this.style === 'melee' || this.style === 'dog' || this.style === 'horseman';
+    const isTurret = this.style === 'turret' || this.style === 'cannon';
+    const isHybrid = this.style === 'hybrid' || this.style === 'boss_hybrid';
+    if (this.climbingLadder) {
+      const lad = this.climbingLadder;
+      this.mesh.position.y = Math.min(lad.topY, this.mesh.position.y + 3.2 * dt);
+      const span = Math.max(0.2, lad.topY - lad.bottomY);
+      const tNow = Math.max(0, Math.min(1, (this.mesh.position.y - lad.bottomY) / span));
+      this.mesh.position.x = lad.x - lad.normalX * (lad.leanOffset * tNow - 0.45);
+      this.mesh.position.z = lad.z - lad.normalZ * (lad.leanOffset * tNow - 0.45);
+      if (this.mesh.position.y >= lad.topY - 0.08) {
+        this.mesh.position.set(lad.topX - lad.normalX * 0.75, lad.topY, lad.topZ - lad.normalZ * 0.75);
+        this.climbingLadder = null;
+        this.path = null;
+      }
+      return;
+    }
+    if (wits !== 'low' && !isTurret && this.style !== 'dog' && this.style !== 'horseman' && this.speed > 0 && goalPos.y > this.mesh.position.y + 1.6 && collision.ladders && collision.ladders.length > 0) {
+      let bestLad = null;
+      let bestScore = Infinity;
+      for (const lad of collision.ladders) {
+        if (lad.topY < goalPos.y - 1.5) continue;
+        const dBot = Math.hypot(lad.x - this.mesh.position.x, lad.z - this.mesh.position.z);
+        const dTop = Math.hypot(lad.topX - goalPos.x, lad.topZ - goalPos.z);
+        if (dBot + dTop < bestScore) {
+          bestScore = dBot + dTop;
+          bestLad = lad;
+        }
+      }
+      if (bestLad) {
+        const dBot = Math.hypot(bestLad.x - this.mesh.position.x, bestLad.z - this.mesh.position.z);
+        if (dBot < 1.35) {
+          this.climbingLadder = bestLad;
+          return;
+        }
+        goalPos = new THREE.Vector3(bestLad.x + bestLad.normalX * 0.6, bestLad.bottomY, bestLad.z + bestLad.normalZ * 0.6);
+      }
+    }
+
+    // Genius Tactical Cover Picker (22 sample points within 12m: crouching LOS blocked, standing LOS clear!)
+    const isRanged = !isMelee && !isTurret;
+    if (wits === 'genius' && isRanged && canSee) {
+      this.coverTimer -= dt;
+      if (!this.coverPos || this.coverTimer <= 0 || this.shotsFromCover >= 3) {
+        let bestCover = null;
+        let bestCoverDist = Infinity;
+        for (let ci = 0; ci < 22; ci++) {
+          const ang = (ci / 22) * Math.PI * 2 + Math.random() * 0.25;
+          const r = 3.5 + (ci % 3) * 2.8;
+          const cx = this.mesh.position.x + Math.cos(ang) * r;
+          const cz = this.mesh.position.z + Math.sin(ang) * r;
+          const cy = collision.getFloorHeight(cx, cz, this.mesh.position.y + 0.5);
+          if (collision.isSubmergedInWater(cx, cy, cz)) continue;
+          const crouchEye = new THREE.Vector3(cx, cy + 0.85, cz);
+          const standEye = new THREE.Vector3(cx, cy + 1.55, cz);
+          const blockedLow = !collision.hasLineOfSight(crouchEye, playerEye);
+          const clearHigh = collision.hasLineOfSight(standEye, playerEye);
+          if (blockedLow && clearHigh) {
+            const dC = Math.hypot(cx - this.mesh.position.x, cz - this.mesh.position.z);
+            if (dC < bestCoverDist) {
+              bestCoverDist = dC;
+              bestCover = new THREE.Vector3(cx, cy, cz);
+            }
+          }
+        }
+        // Fallback flanking cover point even in open streets so Genius constantly repositions!
+        if (!bestCover) {
+          const sideAng = Math.atan2(toPlayer.x, toPlayer.z) + (Math.random() < 0.5 ? 1.15 : -1.15);
+          const fx = this.mesh.position.x + Math.sin(sideAng) * 6.5;
+          const fz = this.mesh.position.z + Math.cos(sideAng) * 6.5;
+          bestCover = new THREE.Vector3(fx, collision.getFloorHeight(fx, fz, this.mesh.position.y + 0.5), fz);
+        }
+        this.coverPos = bestCover;
+        this.coverTimer = 4.2 + Math.random() * 2.2;
+        this.shotsFromCover = 0;
+        this.coversTaken++;
+      }
+      if (this.coverPos) {
+        const dToCover = Math.hypot(this.coverPos.x - this.mesh.position.x, this.coverPos.z - this.mesh.position.z);
+        if (dToCover > 1.2) {
+          goalPos = this.coverPos;
+          this.crouched = false;
+        } else {
+          // Crouch between shots, rise to shoot!
+          this.crouched = this.fireCooldown > 0.35;
+        }
+      }
+    } else {
+      // Crouch when moving through a low gap (Medium/Genius) or sneaking unseen (Genius)
+      const needsLowHeadroom = wits !== 'low' && !collision.hasHeadroom(this.mesh.position.x, this.mesh.position.z, 0.45, this.mesh.position.y, 1.75);
+      this.crouched = needsLowHeadroom || (wits === 'genius' && !canSee && horizDist < 22);
+    }
+    this.mesh.scale.y = this.crouched ? 0.74 : 1.0;
 
     // Movement logic with real A* route-finding around walls, through doors, and up stairs
     this.strafeTimer -= dt;
@@ -1486,23 +1673,24 @@ export class Enemy {
       this.strafeDir *= -1;
     }
 
-    const isMelee = this.style === 'melee' || this.style === 'dog' || this.style === 'horseman';
-    const isTurret = this.style === 'turret' || this.style === 'cannon';
-    const isHybrid = this.style === 'hybrid' || this.style === 'boss_hybrid';
     const desiredMin = this.style === 'dog' ? 1.55 : this.style === 'horseman' ? 2.4 : isMelee ? 2.0 : isHybrid ? 7.0 : 12.5;
     const desiredMax = this.style === 'dog' ? 2.0 : this.style === 'horseman' ? 3.2 : isMelee ? 2.5 : isHybrid ? 15.0 : 25.0;
 
     const move = new THREE.Vector3();
-    let lookTargetX = playerPos.x;
-    let lookTargetZ = playerPos.z;
+    let lookTargetX = canSee ? playerPos.x : goalPos.x;
+    let lookTargetZ = canSee ? playerPos.z : goalPos.z;
+    const lowHpRetreat = wits === 'genius' && !isMelee && this.hp < this.maxHp * 0.35 && horizDist < 16;
 
-    if (!isTurret && this.speed > 0) {
-      const needsRoute = !canSee || (isMelee && horizDist > 4.0) || horizDist > desiredMax;
-      if (needsRoute && collision.nav) {
+    if (!isTurret && this.speed > 0 && !this.holdPost) {
+      const distGoal = Math.hypot(goalPos.x - this.mesh.position.x, goalPos.z - this.mesh.position.z);
+      const needsRoute = !canSee || goalPos !== playerPos || (isMelee && horizDist > 4.0) || horizDist > desiredMax;
+      if (lowHpRetreat) {
+        move.set(-toPlayer.x, 0, -toPlayer.z);
+      } else if (needsRoute && distGoal > 1.1 && collision.nav) {
         this.pathTimer -= dt;
         if (this.pathTimer <= 0 || !this.path || this.pathIdx >= this.path.length) {
           this.pathTimer = 0.55 + Math.random() * 0.3;
-          this.path = collision.findPath(this.mesh.position, playerPos, 2400);
+          this.path = collision.findPath(this.mesh.position, goalPos, 2400);
           this.pathIdx = 0;
         }
         if (this.path && this.pathIdx < this.path.length) {
@@ -1523,44 +1711,45 @@ export class Enemy {
             }
           }
         } else {
-          // Fallback steering if outside nav budget
-          move.set(toPlayer.x, 0, toPlayer.z);
+          move.set(goalPos.x - this.mesh.position.x, 0, goalPos.z - this.mesh.position.z);
         }
-      } else {
+      } else if (canSee) {
         const directYaw = Math.atan2(toPlayer.x, toPlayer.z);
         const forward = new THREE.Vector3(Math.sin(directYaw), 0, Math.cos(directYaw));
         const right = new THREE.Vector3(Math.cos(directYaw), 0, -Math.sin(directYaw));
-        if (!canSee || horizDist > desiredMax) {
+        if (horizDist > desiredMax) {
           move.add(forward);
         } else if (horizDist < desiredMin && !isMelee) {
           move.addScaledVector(forward, -0.55);
         }
-        if (horizDist < desiredMax + 6 && this.style !== 'dog') {
+        if (horizDist < desiredMax + 6 && this.style !== 'dog' && !this.crouched) {
           move.addScaledVector(right, this.strafeDir * (this.style === 'skirmisher' ? 1.15 : 0.65));
         }
       }
     }
 
-    // Face either the player (when visible) or the next route waypoint (stationary cannon does not turn its carriage!)
+    // Face either the player (when visible) or the next route waypoint
     if (this.style !== 'cannon') {
       const targetYaw = Math.atan2(lookTargetX - this.mesh.position.x, lookTargetZ - this.mesh.position.z);
       let diffYaw = targetYaw - this.mesh.rotation.y;
       while (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
       while (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
-      this.mesh.rotation.y += diffYaw * Math.min(1, dt * 8);
+      this.mesh.rotation.y += diffYaw * Math.min(1, dt * (wits === 'genius' ? 11 : 8));
     }
 
     if (move.lengthSq() > 0.001 && this.speed > 0) {
-      move.normalize().multiplyScalar(this.speed * dt);
-      // Sub-stepped movement prevents fast runners from skipping thin walls or bars
-      collision.moveHorizontal(this.mesh.position, move.x, move.z, this.radius, this.mesh.position.y);
+      const limpMult = this.hp < this.maxHp * 0.4 ? 0.72 : 1.0;
+      const moveSpd = this.speed * (this.crouched ? 0.55 : 1.0) * limpMult;
+      move.normalize().multiplyScalar(moveSpd * dt);
+      const eHeight = (wits !== 'low' && this.crouched) ? 1.05 : 1.75;
+      collision.moveHorizontal(this.mesh.position, move.x, move.z, this.radius, this.mesh.position.y, eHeight);
       const fy = collision.getFloorHeight(this.mesh.position.x, this.mesh.position.z, this.mesh.position.y);
       this.mesh.position.y += (fy - this.mesh.position.y) * Math.min(1, dt * 14);
 
-      // Animate legs running (including 4-legged gallop for Spanish horseman!)
-      this.walkPhase += dt * this.speed * (this.style === 'dog' ? 2.8 : this.style === 'horseman' ? 1.85 : 2.2);
-      this.parts.legL.rotation.x = Math.sin(this.walkPhase) * 0.6;
-      this.parts.legR.rotation.x = -Math.sin(this.walkPhase) * 0.6;
+      this.walkPhase += dt * moveSpd * (this.style === 'dog' ? 2.8 : this.style === 'horseman' ? 1.85 : 2.2);
+      const limpAmp = this.hp < this.maxHp * 0.4 ? 0.35 : 0.62;
+      this.parts.legL.rotation.x = Math.sin(this.walkPhase) * limpAmp;
+      this.parts.legR.rotation.x = -Math.sin(this.walkPhase) * (this.hp < this.maxHp * 0.4 ? 0.25 : 0.62);
       if (this.style === 'dog' || this.style === 'horseman') {
         this.parts.armL.rotation.x = -Math.sin(this.walkPhase) * 0.6;
         this.parts.armR.rotation.x = Math.sin(this.walkPhase) * 0.6;
@@ -1569,13 +1758,13 @@ export class Enemy {
       }
     }
 
-    // Attack logic (melee strictly requires unobstructed line of sight!)
+    // Attack logic (melee strictly requires unobstructed line of sight; Genius shoots faster & rises from crouch!)
     this.fireCooldown -= dt;
     if (this.fireCooldown <= 0) {
       const biteRange = this.style === 'dog' ? 2.45 : this.style === 'horseman' ? 4.1 : 3.5;
       if (isMelee || (isHybrid && horizDist < 3.6)) {
         if (horizDist < biteRange && collision.hasLineOfSight(eyePos, playerEye)) {
-          this.fireCooldown = this.fireRate;
+          this.fireCooldown = this.fireRate * (wits === 'genius' ? 0.85 : 1.0);
           if (this.style === 'dog') {
             this.parts.head.rotation.x = 0.35;
             setTimeout(() => { if (this.parts.head) this.parts.head.rotation.x = 0; }, 160);
@@ -1586,7 +1775,10 @@ export class Enemy {
           callbacks.onMeleeHitPlayer(this.damage, this);
         }
       } else if (canSee && horizDist <= this.range) {
-        this.fireCooldown = this.fireRate * (0.85 + Math.random() * 0.35);
+        this.crouched = false;
+        this.mesh.scale.y = 1.0;
+        this.shotsFromCover++;
+        this.fireCooldown = this.fireRate * (wits === 'genius' ? 0.78 : (0.85 + Math.random() * 0.35));
         this.muzzleFlash = 0.14;
         const muzzleWorld = new THREE.Vector3();
         this.parts.muzzle.getWorldPosition(muzzleWorld);

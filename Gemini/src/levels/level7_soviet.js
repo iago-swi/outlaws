@@ -17,9 +17,12 @@ import {
   addDesk,
   addBunk,
   addPiano,
-  addPewRow
+  addPewRow,
+  addCrawlPassage,
+  addTableAndChairs
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL7_META = {
   id: 'soviet',
@@ -745,14 +748,111 @@ export function buildLevel7(scene, collision, particles) {
     { name: 'Committee Building', inside: new THREE.Vector3(0, 0.25, -61), outside: new THREE.Vector3(0, 0, -50) }
   ];
 
+  // ---- STAGE 7 EXPANSION: CLOSED ORTHODOX CHURCH WITH OLD PRIEST (ITEM 42), FLATS WITH SAMOVAR, GOODS SIDING, BOILER HOUSE, COMMITTEE DRAIN & 29 BYSTANDERS ----
+  const s7Plaster = new THREE.MeshStandardMaterial({ color: 0xded9cf, roughness: 0.88 });
+  const s7Board = new THREE.MeshStandardMaterial({ color: 0x5c432c, roughness: 0.9 });
+  const s7Roof = new THREE.MeshStandardMaterial({ color: 0x4b555c, roughness: 0.85 });
+  const s7Floor = new THREE.MeshStandardMaterial({ color: 0x55524d, roughness: 0.92 });
+  const s7Brass = new THREE.MeshStandardMaterial({ color: 0xd9a838, metalness: 0.85, roughness: 0.25 });
+
+  // 1. Item 42: Small Closed Orthodox Church used as a store (cross removed from dome, boarded windows, crates inside; respectful!)
+  const closedChurch = buildHollowRoom(scene, collision, {
+    cx: 50, cz: 34, w: 10.5, d: 11.5, h: 4.8, floorY: 0.22,
+    wallMat: s7Plaster, floorMat: s7Floor, roofMat: s7Roof, roofStyle: 'hip',
+    west: [{ type: 'door', offset: 0, width: 2.5, height: 3.0 }],
+    south: [{ type: 'window', offset: 0, width: 1.5 }],
+    interiorLight: { color: 0xffd08a, intensity: 1.6, distance: 14 }
+  });
+  // Onion-dome cupola with its cross removed (empty stub) + wooden boards across the south window
+  const domeDrum = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.5, 1.6, 12), s7Plaster);
+  domeDrum.position.set(50, 6.2, 34);
+  const domeBulb = new THREE.Mesh(new THREE.SphereGeometry(1.75, 12, 10), s7Roof);
+  domeBulb.scale.set(1.0, 1.25, 1.0);
+  domeBulb.position.set(50, 7.8, 34);
+  const boardWin = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.4, 0.14), s7Board);
+  boardWin.position.set(50, 1.85, 39.85);
+  scene.add(domeDrum, domeBulb, boardWin);
+  // Storage crates stacked respectfully near the north-west corner (leaving space around the priest at east apse)
+  addSolidBox(scene, collision, 47.4, closedChurch.floorY + 0.65, 30.2, 1.4, 1.3, 1.4, s7Board, 'wood');
+  addSolidBox(scene, collision, 49.0, closedChurch.floorY + 0.55, 30.0, 1.2, 1.1, 1.2, s7Board, 'wood');
+  // Committee agent posted near the church doorway, clearly away from the old priest!
+  enemySpawns.push({ type: 'kgb_agent', pos: new THREE.Vector3(46.2, closedChurch.floorY, 35.6) });
+
+  // 2. Walk-Through Block of Flats with Furnished Room & Brass Samovar (x = -52, z = 44)
+  const flatWalk = buildHollowRoom(scene, collision, {
+    cx: -52, cz: 44, w: 11.0, d: 10.0, h: 3.8, floorY: 0.16,
+    wallMat: s7Plaster, floorMat: s7Floor, roofMat: s7Roof, roofStyle: 'flat',
+    east: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    west: [{ type: 'door', offset: 0, width: 2.3, height: 2.8 }],
+    interiorLight: { color: 0xffd288, intensity: 1.5, distance: 13 }
+  });
+  addTableAndChairs(scene, collision, -52, flatWalk.floorY, 47.0, s7Board);
+  const samovar = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.48, 10), s7Brass);
+  samovar.position.set(-52, flatWalk.floorY + 1.08, 47.0);
+  scene.add(samovar);
+
+  // 3. Goods Siding Crawl-Under Boxcar (1.24m) + Drain Tunnel under Committee Side Wall (1.24m) + Crane Perch Ladder!
+  const sovietBoxcar = addCrawlPassage(scene, collision, {
+    cx: 56, cz: -14, floorY: 0, w: 3.2, d: 8.6, clearH: 1.24, bodyH: 2.4, mat: s7Roof, postMat: s7Board
+  });
+  const committeeDrain = addCrawlPassage(scene, collision, {
+    cx: -19, cz: -52, floorY: 0, w: 3.0, d: 2.4, clearH: 1.24, bodyH: 1.8, mat: s7Floor, postMat: s7Floor, tag: 'stone'
+  });
+  // Perch platform & ladder on the Building Site Tower Crane (x = 42, z = -66)
+  collision.addWalkable(42, -66, 3.6, 3.6, 7.2, true);
+  const craneDeck = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.22, 3.6), s7Roof);
+  craneDeck.position.set(42, 7.09, -66);
+  scene.add(craneDeck);
+  buildLadder(scene, collision, { x: 42, z: -64.05, bottomY: 0, topY: 7.2, normalX: 0, normalZ: 1, mat: s7Board });
+
+  // 4. Twenty-Nine Period Soviet Bystanders (14 women + 14 men + Item 42 Old Orthodox Priest!)
+  const bystanders = spawnBystanders(scene, collision, animated, 'soviet', [
+    // Item 42: Old Orthodox Priest inside the closed church (east apse, lit taper & raised blessing hand!)
+    { gender: 'male',   role: 'orthodox_priest', pos: new THREE.Vector3(53.2, closedChurch.floorY, 34.0), yaw: -Math.PI / 2 },
+    // Saleswoman & queue outside Food Shop
+    { gender: 'female', role: 'saleswoman', pos: new THREE.Vector3(-21.2, 0.16, 48.0), yaw: 1.4 },
+    { gender: 'female', role: 'shopper', pos: new THREE.Vector3(-14.2, 0, 49.0), yaw: -1.4, prop: 'tote' },
+    { gender: 'male',   role: 'shopper', pos: new THREE.Vector3(-13.8, 0, 50.6), yaw: -1.5 },
+    { gender: 'female', role: 'shopper', pos: new THREE.Vector3(-14.4, 0, 52.1), yaw: -1.3, prop: 'tote' },
+    { gender: 'male',   role: 'shopper', pos: new THREE.Vector3(-13.6, 0, 53.6), yaw: -1.5 },
+    { gender: 'female', role: 'shopper', pos: new THREE.Vector3(-14.1, 0, 55.2), yaw: -1.2 },
+    { gender: 'male',   role: 'shopper', pos: new THREE.Vector3(-13.7, 0, 56.7), yaw: -1.5 },
+    // Two men at chess in the courtyard
+    { gender: 'male',   role: 'chess_player', pos: new THREE.Vector3(-34.0, 0, 34.0), yaw: 1.5, seated: true },
+    { gender: 'male',   role: 'chess_player', pos: new THREE.Vector3(-32.2, 0, 34.0), yaw: -1.5, seated: true },
+    // Yard-keeper, librarian, market stallholders, ice fisherman, lathe worker
+    { gender: 'female', role: 'yard_keeper', pos: new THREE.Vector3(-40.0, 0, 40.0), yaw: 0.7, prop: 'staff' },
+    { gender: 'female', role: 'librarian', pos: new THREE.Vector3(-26.0, 0.18, 12.2), yaw: 1.4 },
+    { gender: 'female', role: 'stallholder', pos: new THREE.Vector3(34.0, 0, 22.0), yaw: -1.3 },
+    { gender: 'female', role: 'stallholder', pos: new THREE.Vector3(34.0, 0, 26.5), yaw: -1.4 },
+    { gender: 'male',   role: 'ice_fisherman', pos: new THREE.Vector3(44.0, 0, 6.0), yaw: -0.6, seated: true },
+    { gender: 'male',   role: 'lathe_worker', pos: new THREE.Vector3(54.0, 0.16, -34.0), yaw: -1.5 },
+    // Two anonymous prisoners in plain grey on Committee cell bunks
+    { gender: 'male',   role: 'prisoner', pos: new THREE.Vector3(11.5, 0.25, -67.5), yaw: -1.5, seated: true },
+    { gender: 'male',   role: 'prisoner', pos: new THREE.Vector3(11.5, 0.25, -63.0), yaw: -1.5, seated: true },
+    // Citizens around Metro pavilion, Palace of Culture, walk-through flat & snowy avenue
+    { gender: 'female', role: 'commuter', pos: new THREE.Vector3(16.0, 0, 22.0), yaw: -1.2, prop: 'tote' },
+    { gender: 'male',   role: 'commuter', pos: new THREE.Vector3(16.5, 0, 11.5), yaw: -1.0 },
+    { gender: 'female', role: 'commuter', pos: new THREE.Vector3(12.2, 0, 26.0), yaw: -0.8 },
+    { gender: 'female', role: 'resident', pos: new THREE.Vector3(-54.0, flatWalk.floorY, 41.2), yaw: 0.4 },
+    { gender: 'male',   role: 'resident', pos: new THREE.Vector3(-49.5, flatWalk.floorY, 47.0), yaw: -0.8 },
+    { gender: 'female', role: 'visitor', pos: new THREE.Vector3(-36.5, 0.25, -42.5), yaw: 0.6 },
+    { gender: 'male',   role: 'visitor', pos: new THREE.Vector3(-41.0, 0.25, -34.0), yaw: 1.2 },
+    { gender: 'female', role: 'pedestrian', pos: new THREE.Vector3(-12.5, 0, 34.0), yaw: 0.3 },
+    { gender: 'male',   role: 'pedestrian', pos: new THREE.Vector3(12.5, 0, 38.0), yaw: -0.4 },
+    { gender: 'female', role: 'pedestrian', pos: new THREE.Vector3(36.0, 0, 14.0), yaw: -1.1 },
+    { gender: 'male',   role: 'pedestrian', pos: new THREE.Vector3(-28.0, 0, 2.0), yaw: 0.5 }
+  ]);
+
   const specialSpots = {
     raisedHide: {
       deckY: 3.08,
       deckPos: new THREE.Vector3(21, 3.08, 40),
       ladder: garageLadder
     },
-    crawlDen: cellarDen
+    crawlDen: cellarDen,
+    extraCrawls: [sovietBoxcar, committeeDrain]
   };
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }

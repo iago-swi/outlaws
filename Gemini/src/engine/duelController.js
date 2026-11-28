@@ -1,21 +1,21 @@
 import * as THREE from 'three';
 import { DuelConnection, generateDuelCode, normalizeDuelCode, buildInviteUrl } from './duelNet.js';
-import { ERA_HEROES } from '../entities/heroes.js';
+import { ERA_HEROES, getFighterSkill } from '../entities/heroes.js';
 import { ERA_VILLAINS, getFighterById, buildFighterFigure } from '../entities/villains.js';
 import { RemoteFighter } from '../entities/remoteFighter.js';
 
 export const DUEL_RULES = {
-  first3: {
-    name: 'First to 3 rounds',
-    desc: 'Each kill ends a round; both start again with full health at opposite ends and swap ends every round.'
+  first5: {
+    name: 'Duel · first to 5 rounds',
+    desc: 'Each fall ends a round; both start again with full health at opposite ends and swap ends every round.'
   },
-  onelife: {
-    name: 'One life',
-    desc: 'Single showdown — the first kill decides the duel.'
+  timed7: {
+    name: 'Duel · 7 minutes, most kills',
+    desc: 'Seven minutes on the clock; a fallen fighter returns 3 seconds later at the end farther from the opponent.'
   },
-  timed5: {
-    name: '5 minutes, most kills',
-    desc: 'Five minutes on the clock; a slain fighter returns 3 seconds later at the end farther from the opponent.'
+  coop: {
+    name: 'Together against the enemy',
+    desc: 'Start side by side against 3–24 enemies and the boss. No friendly fire, 5 s respawn, shared map, marks & drops.'
   }
 };
 
@@ -47,12 +47,22 @@ export class DuelController {
     this.phase = 'idle'; // 'idle' | 'lobby' | 'select' | 'playing' | 'round_wait' | 'ended'
     this.role = null; // 'host' | 'guest'
 
-    // Match settings chosen by host
+    // Match settings chosen by host (synced live to guest!)
     this.config = {
       levelIndex: 0,
-      rule: 'first3',
-      enemiesCount: 0 // 0..9 computer enemies, hostile to both players
+      rule: 'first5',
+      enemiesCount: 6, // 0 or 3..24 by 3s (>=3 in coop)
+      wits: 'medium',
+      mapSize: 'medium',
+      seed: 12345
     };
+    let savedName = 'Outlaw';
+    try {
+      const rn = (localStorage.getItem('nine_horizons_player_name') || '').trim().slice(0, 16);
+      if (rn) savedName = rn;
+    } catch {}
+    this.myName = savedName;
+    this.oppName = 'Player 2';
 
     // Fighter selection state
     this.myFighterId = null;
@@ -89,6 +99,12 @@ export class DuelController {
       levelSelect: document.getElementById('duel-level-select'),
       ruleSelect: document.getElementById('duel-rule-select'),
       enemiesSelect: document.getElementById('duel-enemies-select'),
+      witsSelect: document.getElementById('duel-wits-select'),
+      mapSizeSelect: document.getElementById('duel-mapsize-select'),
+      nameInput: document.getElementById('online-player-name'),
+      playersList: document.getElementById('online-players-list'),
+      guestSummary: document.getElementById('online-guest-summary'),
+      partnerTag: document.getElementById('coop-partner-tag'),
       btnHostCreate: document.getElementById('btn-duel-host'),
       btnRematchStart: document.getElementById('btn-duel-rematch-start'),
       btnDuelAgain: document.getElementById('btn-duel-again'),
@@ -96,11 +112,6 @@ export class DuelController {
       codeDisplay: document.getElementById('duel-code-display'),
       inviteUrl: document.getElementById('duel-invite-url'),
       joinCodeInput: document.getElementById('duel-join-code'),
-      backupDetails: document.getElementById('duel-backup-details'),
-      manualHostOffer: document.getElementById('manual-host-offer'),
-      manualHostAnswer: document.getElementById('manual-host-answer'),
-      manualGuestOffer: document.getElementById('manual-guest-offer'),
-      manualGuestAnswer: document.getElementById('manual-guest-answer'),
 
       stageLevel: document.getElementById('duel-stage-level'),
       ruleTitle: document.getElementById('duel-rule-title'),
@@ -116,7 +127,6 @@ export class DuelController {
 
       hudTop: document.getElementById('duel-hud-top'),
       scoreline: document.getElementById('duel-scoreline'),
-      compassTrack: document.getElementById('compass-track'),
       respawnBanner: document.getElementById('duel-respawn-banner'),
       unlockBar: document.getElementById('duel-unlock-bar')
     };
@@ -145,20 +155,41 @@ export class DuelController {
       this.leaveDuelToTitle();
     });
 
-    // Host level dropdown previews that level live in background!
+    if (this.dom.nameInput) {
+      this.dom.nameInput.value = this.myName;
+      this.dom.nameInput.addEventListener('input', () => {
+        this.myName = (this.dom.nameInput.value || '').trim().slice(0, 16) || 'Outlaw';
+        try { localStorage.setItem('nine_horizons_player_name', this.myName); } catch {}
+        this._updatePlayersList();
+        if (this.net && this.net.isOpen()) {
+          this.net.send({ type: 'name', name: this.myName });
+        }
+      });
+    }
+
+    const syncHostConfigLive = () => {
+      this._readHostConfig();
+      if (this.role === 'host' && this.net && this.net.isOpen()) {
+        this.net.send({ type: 'lobby_cfg', config: this.config });
+      }
+    };
+
+    // Host dropdowns preview live & sync to connected guest!
     this.dom.levelSelect.addEventListener('change', () => {
-      const idx = parseInt(this.dom.levelSelect.value, 10) || 0;
-      this.config.levelIndex = idx;
-      this.game.loadLevel(idx, true);
+      syncHostConfigLive();
+      this.game.loadLevel(this.config.levelIndex, true);
     });
     this.dom.ruleSelect.addEventListener('change', () => {
-      this.config.rule = this.dom.ruleSelect.value;
+      if (this.dom.ruleSelect.value === 'coop' && (parseInt(this.dom.enemiesSelect.value, 10) || 0) < 3) {
+        this.dom.enemiesSelect.value = '6';
+      }
+      syncHostConfigLive();
     });
-    this.dom.enemiesSelect.addEventListener('change', () => {
-      this.config.enemiesCount = Math.max(0, Math.min(9, parseInt(this.dom.enemiesSelect.value, 10) || 0));
-    });
+    this.dom.enemiesSelect.addEventListener('change', syncHostConfigLive);
+    if (this.dom.witsSelect) this.dom.witsSelect.addEventListener('change', syncHostConfigLive);
+    if (this.dom.mapSizeSelect) this.dom.mapSizeSelect.addEventListener('change', syncHostConfigLive);
 
-    // Primary Method A: PeerJS 5-letter Invite Link
+    // Primary Method: PeerJS 5-character Invite Link
     this.dom.btnHostCreate.addEventListener('click', () => {
       this.startHostPeerJS();
     });
@@ -176,6 +207,7 @@ export class DuelController {
     this.dom.btnRematchStart.addEventListener('click', () => {
       if (this.role !== 'host' || !this.net || !this.net.isOpen()) return;
       this._readHostConfig();
+      this.config.seed = Math.floor(Math.random() * 1e9) + 1;
       this.net.send({ type: 'cfg', config: this.config });
       this.openFighterSelect();
     });
@@ -198,56 +230,9 @@ export class DuelController {
     this.dom.joinCodeInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const code = normalizeDuelCode(this.dom.joinCodeInput.value);
+        this.dom.joinCodeInput.value = code;
         this.startJoinPeerJS(code);
       }
-    });
-
-    // Backup Method B: Copy-Paste Manual WebRTC Codes (zero external service)
-    document.getElementById('btn-manual-make-offer').addEventListener('click', async () => {
-      try {
-        this._readHostConfig();
-        this._initNet('host');
-        const offer = await this.net.createManualOffer();
-        this.dom.manualHostOffer.value = offer;
-      } catch {
-        this._setStatus('failed', 'Could not generate offer code.');
-      }
-    });
-
-    document.getElementById('btn-manual-copy-offer').addEventListener('click', () => {
-      const v = this.dom.manualHostOffer.value;
-      if (navigator.clipboard && v) navigator.clipboard.writeText(v).catch(() => {});
-      this.dom.manualHostOffer.select();
-      this.game.toast('OFFER CODE COPIED');
-    });
-
-    document.getElementById('btn-manual-apply-answer').addEventListener('click', async () => {
-      try {
-        const ans = this.dom.manualHostAnswer.value.trim();
-        if (!ans) return;
-        await this.net.applyManualAnswer(ans);
-      } catch {
-        this._setStatus('failed', 'Invalid reply code. Make sure you pasted the entire reply code.');
-      }
-    });
-
-    document.getElementById('btn-manual-make-answer').addEventListener('click', async () => {
-      try {
-        const offer = this.dom.manualGuestOffer.value.trim();
-        if (!offer) return;
-        this._initNet('guest');
-        const answer = await this.net.acceptManualOffer(offer);
-        this.dom.manualGuestAnswer.value = answer;
-      } catch {
-        this._setStatus('failed', 'Invalid offer code. Paste the full host offer code.');
-      }
-    });
-
-    document.getElementById('btn-manual-copy-answer').addEventListener('click', () => {
-      const v = this.dom.manualGuestAnswer.value;
-      if (navigator.clipboard && v) navigator.clipboard.writeText(v).catch(() => {});
-      this.dom.manualGuestAnswer.select();
-      this.game.toast('REPLY CODE COPIED');
     });
 
     // Fighter Selection Lock-in
@@ -258,14 +243,45 @@ export class DuelController {
 
   _readHostConfig() {
     this.config.levelIndex = parseInt(this.dom.levelSelect.value, 10) || 0;
-    this.config.rule = this.dom.ruleSelect.value || 'first3';
-    this.config.enemiesCount = Math.max(0, Math.min(9, parseInt(this.dom.enemiesSelect.value, 10) || 0));
+    this.config.rule = this.dom.ruleSelect.value || 'first5';
+    let ec = Math.max(0, Math.min(24, parseInt(this.dom.enemiesSelect.value, 10) || 0));
+    if (this.config.rule === 'coop' && ec < 3) {
+      ec = 6;
+      this.dom.enemiesSelect.value = '6';
+    }
+    this.config.enemiesCount = ec;
+    this.config.wits = (this.dom.witsSelect && this.dom.witsSelect.value) || 'medium';
+    this.config.mapSize = (this.dom.mapSizeSelect && this.dom.mapSizeSelect.value) || 'medium';
+  }
+
+  _updatePlayersList() {
+    if (!this.dom.playersList) return;
+    const connected = !!(this.net && this.net.isOpen());
+    if (connected) {
+      this.dom.playersList.textContent = `Players (2 of 2): ${this.myName} · ${this.oppName}`;
+    } else {
+      this.dom.playersList.textContent = `Players (1 of 2): ${this.myName}`;
+    }
+  }
+
+  _renderGuestConfigBanner() {
+    if (!this.dom.guestSummary || this.role !== 'guest') return;
+    const meta = this.game.getLevelMeta(this.config.levelIndex);
+    const rInfo = DUEL_RULES[this.config.rule] || DUEL_RULES.first5;
+    const ec = this.config.enemiesCount || 0;
+    this.dom.guestSummary.innerHTML = `
+      <div><b>Host's selection (live):</b></div>
+      <div>• Chapter: <b>${meta.act} · ${meta.title}</b></div>
+      <div>• Mode: <b>${rInfo.name}</b></div>
+      <div>• Enemies: <b>${ec === 0 ? 'None' : ec}</b> · Wits: <b>${this.config.wits}</b> · Map: <b>${this.config.mapSize}</b></div>
+    `;
   }
 
   _setLobbyConnectedMode(isConnectedRematch) {
     const cols = this.dom.lobbyScreen.querySelectorAll('.duel-panel');
     const hostPanel = cols[0];
     const joinPanel = cols[1];
+    this._updatePlayersList();
     if (isConnectedRematch) {
       if (this.role === 'host') {
         if (hostPanel) hostPanel.classList.remove('hidden');
@@ -273,19 +289,18 @@ export class DuelController {
         this.dom.btnHostCreate.classList.add('hidden');
         this.dom.btnRematchStart.classList.remove('hidden');
         this.dom.inviteBox.classList.add('hidden');
-        this._setStatus('connected', 'Still connected to your opponent! Pick the next chapter, rules and enemies, then start.');
+        this._setStatus('connected', `Connected with ${this.oppName} (2 of 2). Choose settings and click "Start the game".`);
       } else {
         if (hostPanel) hostPanel.classList.add('hidden');
-        if (joinPanel) joinPanel.classList.add('hidden');
-        this._setStatus('connected', 'Still connected! Waiting for the host to pick the next chapter and rules…');
+        if (joinPanel) joinPanel.classList.remove('hidden');
+        this._renderGuestConfigBanner();
+        this._setStatus('connected', `Connected with ${this.oppName} (2 of 2). Waiting for host to click "Start the game"…`);
       }
-      this.dom.backupDetails.classList.add('hidden');
     } else {
       if (hostPanel) hostPanel.classList.remove('hidden');
       if (joinPanel) joinPanel.classList.remove('hidden');
       this.dom.btnHostCreate.classList.remove('hidden');
       this.dom.btnRematchStart.classList.add('hidden');
-      this.dom.backupDetails.classList.remove('hidden');
     }
   }
 
@@ -321,9 +336,6 @@ export class DuelController {
   _setStatus(state, text) {
     this.dom.statusBar.textContent = text;
     this.dom.statusBar.className = `duel-status-bar status-${state}`;
-    if (state === 'failed') {
-      this.dom.backupDetails.open = true;
-    }
   }
 
   openLobby(autoJoinCode = '') {
@@ -368,6 +380,7 @@ export class DuelController {
       onMessage: (msg) => this._onMessage(msg),
       onDisconnect: () => this._onOpponentDisconnected()
     });
+    this.net.canAcceptConnection = () => this.phase === 'lobby';
   }
 
   startHostPeerJS(customCode) {
@@ -390,14 +403,14 @@ export class DuelController {
   }
 
   _onConnected() {
+    this.net.send({ type: 'name', name: this.myName });
     if (this.role === 'host') {
-      // Send authoritative match config to guest & enter fighter selection
-      this.net.send({ type: 'cfg', config: this.config });
-      this.openFighterSelect();
+      this._readHostConfig();
+      this.net.send({ type: 'lobby_cfg', config: this.config });
+      this._setLobbyConnectedMode(true);
     } else {
-      this._setStatus('connected', 'Connected! Waiting for match settings from host…');
-      // Request config cleanly in case host opened slightly before guest's handler attached
-      this.net.send({ type: 'hello' });
+      this._setLobbyConnectedMode(true);
+      this.net.send({ type: 'hello', name: this.myName });
     }
   }
 
@@ -432,25 +445,32 @@ export class DuelController {
     const villains = ERA_VILLAINS[era] || [];
 
     this.dom.stageLevel.textContent = `${meta.act} · ${meta.title}`;
-    const rInfo = DUEL_RULES[this.config.rule] || DUEL_RULES.first3;
-    const ec = Math.max(0, Math.min(9, parseInt(this.config.enemiesCount, 10) || 0));
-    const enemyTxt = ec > 0 ? ` · ${ec} computer ${ec === 1 ? 'enemy' : 'enemies'} active` : ' · No computer enemies';
+    const rInfo = DUEL_RULES[this.config.rule] || DUEL_RULES.first5;
+    const isCoop = this.config.rule === 'coop';
+    const ec = Math.max(0, Math.min(24, parseInt(this.config.enemiesCount, 10) || 0));
+    const enemyTxt = isCoop ? ` · ${Math.max(3, ec)} enemies + boss` : (ec > 0 ? ` · ${ec} computer enemies` : ' · No computer enemies');
     this.dom.ruleTitle.textContent = rInfo.name + enemyTxt;
     this.dom.ruleDesc.textContent = rInfo.desc;
 
-    const renderCard = (f) => `
+    const renderCard = (f) => {
+      const sk = getFighterSkill(f);
+      return `
       <button type="button" class="duel-fighter-card ${f.isVillain ? 'villain-card' : ''}" data-fid="${f.id}">
         <div class="dfc-head">
           <span class="${f.isVillain ? 'dfc-icon-villain' : 'dfc-icon-hero'}">${f.isVillain ? '☠' : '★'}</span>
           <span>${f.name}</span>
         </div>
         <div class="dfc-bio">${f.bio}</div>
-        <div class="dfc-strength">${f.strengthDesc}</div>
+        <div class="dfc-strength">${f.strengthDesc} · <b>[E] ${sk.name}</b></div>
       </button>
     `;
+    };
 
     this.dom.heroesRow.innerHTML = heroes.map(renderCard).join('');
-    this.dom.villainsRow.innerHTML = villains.map(renderCard).join('');
+    // Item 105: Villains can ONLY be played in a duel (hidden in Together co-op!)
+    const villainSection = this.dom.villainsRow.closest('.duel-roster-section');
+    if (villainSection) villainSection.classList.toggle('hidden', isCoop);
+    this.dom.villainsRow.innerHTML = isCoop ? '' : villains.map(renderCard).join('');
     const pickerPane = this.dom.selectScreen.querySelector('.duel-picker-pane');
     if (pickerPane) {
       pickerPane.classList.toggle('compact-roster', villains.length >= 5);
@@ -551,7 +571,7 @@ export class DuelController {
     this.myScore = 0;
     this.oppScore = 0;
     this.roundNum = 1;
-    this.timeLeft = 300;
+    this.timeLeft = 420; // 7 minutes for timed7!
     this.myDead = false;
     this.respawnTimer = 0;
     this._lastWallMs = performance.now();
@@ -559,6 +579,7 @@ export class DuelController {
 
     const meta = this.game.getLevelMeta(this.config.levelIndex);
     const era = meta.id;
+    const isCoop = this.config.rule === 'coop';
     const myFighter = getFighterById(era, this.myFighterId);
     const oppFighter = getFighterById(era, this.oppFighterId);
 
@@ -568,40 +589,60 @@ export class DuelController {
     this.dom.lobbyScreen.classList.add('hidden');
     this.dom.unlockBar.classList.add('hidden');
     this.dom.respawnBanner.classList.add('hidden');
+    if (this.dom.partnerTag) this.dom.partnerTag.classList.add('hidden');
 
-    // Load level in Duel mode (passes custom fighter & 0..9 ordinary AI enemies)
+    // Load level with shared host seed, wits, mapSize, and 0..24 AI enemies (boss included in coop!)
+    const ec = isCoop
+      ? Math.max(3, Math.min(24, parseInt(this.config.enemiesCount, 10) || 6))
+      : Math.max(0, Math.min(24, parseInt(this.config.enemiesCount, 10) || 0));
+
     this.game.loadLevel(this.config.levelIndex, false, {
       duelMode: true,
+      coopMode: isCoop,
       duelRole: this.role,
-      duelEnemiesCount: Math.max(0, Math.min(9, parseInt(this.config.enemiesCount, 10) || 0)),
+      duelEnemiesCount: ec,
+      wits: this.config.wits || 'medium',
+      mapSize: this.config.mapSize || 'medium',
+      seed: this.config.seed || 12345,
       fighter: myFighter
     });
 
-    // Two opposite ends of the map: normal spawn (End A) and boss end (End B)
+    // Two opposite ends for Duel; side-by-side (2.6m apart) for Together Co-op!
     this.spawnEndA.copy(meta.spawnPos);
     const bossPos = this.game.duelFarSpawnPos || new THREE.Vector3(0, 0, -28);
     this.spawnEndB.copy(bossPos);
     this.spawnEndA.y = this.game.collision.getFloorHeight(this.spawnEndA.x, this.spawnEndA.z, this.spawnEndA.y);
     this.spawnEndB.y = this.game.collision.getFloorHeight(this.spawnEndB.x, this.spawnEndB.z, this.spawnEndB.y);
 
-    // Spawn Remote Fighter
-    const myStart = this._getMySpawnForRound(1);
-    const oppStart = this._getOppSpawnForRound(1);
+    let myStart, oppStart;
+    if (isCoop) {
+      const rightX = Math.cos(meta.spawnYaw);
+      const rightZ = -Math.sin(meta.spawnYaw);
+      const hostPos = this.spawnEndA.clone().add(new THREE.Vector3(-rightX * 1.3, 0, -rightZ * 1.3));
+      const guestPos = this.spawnEndA.clone().add(new THREE.Vector3(rightX * 1.3, 0, rightZ * 1.3));
+      hostPos.y = this.game.collision.getFloorHeight(hostPos.x, hostPos.z, hostPos.y);
+      guestPos.y = this.game.collision.getFloorHeight(guestPos.x, guestPos.z, guestPos.y);
+      myStart = { pos: this.role === 'host' ? hostPos : guestPos, yaw: meta.spawnYaw };
+      oppStart = { pos: this.role === 'host' ? guestPos : hostPos, yaw: meta.spawnYaw };
+    } else {
+      myStart = this._getMySpawnForRound(1);
+      oppStart = this._getOppSpawnForRound(1);
+    }
+
     this.remoteFighter = new RemoteFighter(oppFighter, era, oppStart.pos);
     this.remoteFighter.maxHp = this._fighterMaxHp(oppFighter);
     this.remoteFighter.hp = this.remoteFighter.maxHp;
     this.remoteFighter.teleport(oppStart.pos, oppStart.yaw);
     this.game.worldGroup.add(this.remoteFighter.root);
 
-    // Place local player
     this._placePlayer(myStart.pos, myStart.yaw);
 
-    // Show Duel HUD & Compass (hide SP mission box & bounty)
+    // Show HUD
     this.game.state = 'playing';
     this.game.dom.hud.classList.remove('hidden');
     this.game.dom.crosshair.classList.remove('hidden');
     this.game.weaponHolder.visible = true;
-    document.getElementById('hud-sp-left').classList.add('hidden');
+    document.getElementById('hud-sp-left').classList.toggle('hidden', !isCoop);
     document.getElementById('hud-score-box').classList.add('hidden');
     document.getElementById('hud-esc-hint').textContent = '[ESC] Unlock Mouse';
     this.dom.hudTop.classList.remove('hidden');
@@ -611,7 +652,7 @@ export class DuelController {
     this._clockInterval = setInterval(() => this._tickWallTimers(), 200);
     this.game.sound.startMusic(meta.musicTheme);
     this.game._requestLock();
-    this.game.showCallout(`DUEL: ${myFighter.name.toUpperCase()} VS ${oppFighter.name.toUpperCase()}`);
+    this.game.showCallout(isCoop ? `TOGETHER: ${this.myName.toUpperCase()} & ${this.oppName.toUpperCase()}` : `DUEL: ${this.myName.toUpperCase()} VS ${this.oppName.toUpperCase()}`);
   }
 
   _fighterMaxHp(f) {
@@ -659,17 +700,15 @@ export class DuelController {
   }
 
   _updateScoreline() {
-    if (!this.remoteFighter) return;
-    const oppName = this.remoteFighter.name;
-    let suffix = '';
-    if (this.config.rule === 'first3') {
-      suffix = `round ${this.roundNum}`;
-    } else if (this.config.rule === 'onelife') {
-      suffix = 'one life';
-    } else {
-      suffix = formatClock(this.timeLeft);
+    const oppLbl = this.oppName || (this.remoteFighter ? this.remoteFighter.name : 'Player 2');
+    const myLbl = this.myName || 'You';
+    if (this.config.rule === 'coop') {
+      const rem = this.game.enemies.filter((e) => e.alive).length + (this.game.bossSpawnPending ? 1 : 0);
+      this.dom.scoreline.textContent = `${myLbl}: ${this.myScore} · ${oppLbl}: ${this.oppScore} · ${rem} enemies left`;
+      return;
     }
-    this.dom.scoreline.textContent = `You ${this.myScore}–${this.oppScore} ${oppName} · ${suffix}`;
+    const suffix = this.config.rule === 'first5' ? `round ${this.roundNum}` : formatClock(this.timeLeft);
+    this.dom.scoreline.textContent = `${myLbl} ${this.myScore}–${this.oppScore} ${oppLbl} · ${suffix}`;
   }
 
   // =========================================================================
@@ -713,6 +752,7 @@ export class DuelController {
    */
   onLocalHitOpponent(rawDamage, isHead, hitPoint) {
     if (!this.isPlaying() || !this.remoteFighter || !this.remoteFighter.alive) return;
+    if (this.config.rule === 'coop') return; // Friendly fire strictly OFF in Together co-op!
     const pvpDamage = Math.max(1, Math.round(rawDamage * 0.60));
     this.game.particles.spawnImpact(hitPoint, isHead ? 0xffd24d : 0xd93426, isHead ? 14 : 9, 7);
     this.game.sound.playHit(isHead);
@@ -725,54 +765,50 @@ export class DuelController {
     });
   }
 
-  /**
-   * Called when Guest hits a computer enemy — forward to Host for authoritative resolution
-   */
-  onGuestHitAI(enemyIdx, damage, isHead, hitPoint) {
-    if (!this.isPlaying() || this.role !== 'guest') return;
-    this.game.particles.spawnImpact(hitPoint, isHead ? 0xffd24d : 0xd93426, 9, 6);
-    this.game.sound.playHit(isHead);
-    this.game._flashHitmarker(isHead);
-    this.net.send({
-      type: 'ai_hit',
-      idx: enemyIdx,
-      dmg: Math.round(damage),
-      head: !!isHead
-    });
+  onCoopEnemyKilled(byGuest = false) {
+    if (this.config.rule !== 'coop' || this.role !== 'host') return;
+    if (byGuest) this.oppScore++;
+    else this.myScore++;
+    this.net.send({ type: 'coop_score', hostKills: this.myScore, guestKills: this.oppScore });
+    this._updateScoreline();
+    const alive = this.game.enemies.filter((e) => e.alive).length;
+    if (!this.game.bossSpawnPending && alive === 0) {
+      this.net.send({ type: 'coop_win', hostKills: this.myScore, guestKills: this.oppScore });
+      this._showDuelEnd('coop_win');
+    }
   }
 
-  /**
-   * Called when local player HP reaches 0 in Duel Mode (from opponent OR computer enemy)
-   */
   onLocalPlayerDied(source = 'opponent') {
     if (!this.isPlaying() || this.myDead) return;
     this.myDead = true;
     this.game.setScope(false);
+    if (this.config.rule === 'coop') {
+      // Item 101: In Together co-op, a fallen player respawns at the start 5 seconds later!
+      this.respawnTimer = 5.0;
+      this.dom.respawnBanner.classList.remove('hidden');
+      this.dom.respawnBanner.textContent = 'Back at the start in 5…';
+      this.net.send({ type: 'coop_down' });
+      return;
+    }
     this.net.send({ type: 'died', source });
     this._recordKill('opp');
   }
 
   _recordKill(winner) {
-    if (this.phase === 'ended') return;
+    if (this.phase === 'ended' || this.config.rule === 'coop') return;
     if (winner === 'me') this.myScore++;
     else this.oppScore++;
     this._updateScoreline();
 
-    if (this.config.rule === 'onelife') {
-      this._showDuelEnd(winner === 'me' ? 'win' : 'lose');
-      return;
-    }
-
-    if (this.config.rule === 'first3') {
-      if (this.myScore >= 3) {
+    if (this.config.rule === 'first5') {
+      if (this.myScore >= 5) {
         this._showDuelEnd('win');
         return;
       }
-      if (this.oppScore >= 3) {
+      if (this.oppScore >= 5) {
         this._showDuelEnd('lose');
         return;
       }
-      // Next round after brief intermission (Host coordinates round_reset cleanly)
       this.phase = 'round_wait';
       this.game.showCallout(winner === 'me' ? `ROUND ${this.roundNum} WON!` : `ROUND ${this.roundNum} LOST`);
       if (this.role === 'host') {
@@ -787,12 +823,25 @@ export class DuelController {
       return;
     }
 
-    // Timed 5-minute mode: if local player died, start 3-second respawn countdown!
-    if (this.config.rule === 'timed5' && winner === 'opp') {
+    // Timed 7-minute mode: if local player died, start 3-second respawn countdown!
+    if (this.config.rule === 'timed7' && winner === 'opp') {
       this.respawnTimer = 3.0;
       this.dom.respawnBanner.classList.remove('hidden');
       this.dom.respawnBanner.textContent = 'Respawning in 3…';
     }
+  }
+
+  onGuestHitAI(enemyIdx, damage, isHead, hitPoint) {
+    if (!this.isPlaying() || this.role !== 'guest') return;
+    this.game.particles.spawnImpact(hitPoint, isHead ? 0xffd24d : 0xd93426, 9, 6);
+    this.game.sound.playHit(isHead);
+    this.game._flashHitmarker(isHead);
+    this.net.send({
+      type: 'ai_hit',
+      idx: enemyIdx,
+      dmg: Math.round(damage),
+      head: !!isHead
+    });
   }
 
   _startNextRound(round) {
@@ -848,20 +897,26 @@ export class DuelController {
     g.dom.endScreen.classList.remove('hidden');
     if (g.dom.endPracticeNote) g.dom.endPracticeNote.classList.add('hidden');
 
-    const oppName = this.remoteFighter ? this.remoteFighter.name : 'Opponent';
-    const scoreStr = `You ${this.myScore} – ${this.oppScore} ${oppName}`;
+    const oppName = this.oppName || (this.remoteFighter ? this.remoteFighter.name : 'Player 2');
+    const myName = this.myName || 'You';
+    const scoreStr = `${myName} ${this.myScore} – ${this.oppScore} ${oppName}`;
+    if (this.dom.partnerTag) this.dom.partnerTag.classList.add('hidden');
 
     if (outcome === 'left') {
-      g.dom.endEyebrow.textContent = 'DUEL ENDED';
-      g.dom.endTitle.textContent = 'Your opponent left';
+      g.dom.endEyebrow.textContent = 'ONLINE GAME ENDED';
+      g.dom.endTitle.textContent = `${oppName} left`;
       g.dom.endSummary.textContent = `The connection closed (${scoreStr}).`;
+    } else if (outcome === 'coop_win') {
+      g.dom.endEyebrow.textContent = 'TOGETHER — MISSION COMPLETE';
+      g.dom.endTitle.textContent = 'HORIZON CLEARED TOGETHER';
+      g.dom.endSummary.textContent = `${myName}: ${this.myScore} kills · ${oppName}: ${this.oppScore} kills.`;
     } else if (outcome === 'win') {
       g.dom.endEyebrow.textContent = 'DUEL COMPLETE';
-      g.dom.endTitle.textContent = 'You win the duel';
+      g.dom.endTitle.textContent = `${myName} wins the duel`;
       g.dom.endSummary.textContent = `Final score: ${scoreStr}.`;
     } else if (outcome === 'lose') {
       g.dom.endEyebrow.textContent = 'DUEL COMPLETE';
-      g.dom.endTitle.textContent = 'You lose the duel';
+      g.dom.endTitle.textContent = `${oppName} wins the duel`;
       g.dom.endSummary.textContent = `Final score: ${scoreStr}.`;
     } else {
       g.dom.endEyebrow.textContent = 'TIME UP';
@@ -869,11 +924,11 @@ export class DuelController {
       g.dom.endSummary.textContent = `Final score: ${scoreStr}.`;
     }
 
-    const rInfo = DUEL_RULES[this.config.rule] || DUEL_RULES.first3;
+    const rInfo = DUEL_RULES[this.config.rule] || DUEL_RULES.first5;
     g.dom.endStats.innerHTML = `
-      <div class="stat-card"><div class="stat-val">${this.myScore}</div><div class="stat-lbl">YOUR KILLS</div></div>
-      <div class="stat-card"><div class="stat-val">${this.oppScore}</div><div class="stat-lbl">OPPONENT</div></div>
-      <div class="stat-card"><div class="stat-val">${rInfo.name}</div><div class="stat-lbl">RULES</div></div>
+      <div class="stat-card"><div class="stat-val">${this.myScore}</div><div class="stat-lbl">${myName.toUpperCase()}</div></div>
+      <div class="stat-card"><div class="stat-val">${this.oppScore}</div><div class="stat-lbl">${oppName.toUpperCase()}</div></div>
+      <div class="stat-card"><div class="stat-val">${rInfo.name}</div><div class="stat-lbl">MODE</div></div>
     `;
 
     // Hide SP-only end-screen buttons; show "Next Duel (Same Connection)" if still connected!
@@ -933,11 +988,31 @@ export class DuelController {
   _onMessage(msg) {
     if (!this.active) return;
 
+    if (msg.type === 'rejected') {
+      if (this.net) this.net.close();
+      this._setLobbyConnectedMode(false);
+      this._setStatus('failed', msg.reason || 'Room is full or a game is already in progress.');
+      return;
+    }
+
+    if (msg.type === 'name') {
+      this.oppName = String(msg.name || 'Player 2').trim().slice(0, 16) || 'Player 2';
+      this._updatePlayersList();
+      if (this.phase === 'lobby') this._setLobbyConnectedMode(true);
+      return;
+    }
+
     if (msg.type === 'hello' && this.role === 'host') {
-      this.net.send({ type: 'cfg', config: this.config });
-      if (this.myLocked && this.myFighterId) {
-        this.net.send({ type: 'pick', fighterId: this.myFighterId });
-      }
+      if (msg.name) this.oppName = String(msg.name).trim().slice(0, 16) || 'Player 2';
+      this.net.send({ type: 'name', name: this.myName });
+      this.net.send({ type: 'lobby_cfg', config: this.config });
+      this._setLobbyConnectedMode(true);
+      return;
+    }
+
+    if (msg.type === 'lobby_cfg' && this.role === 'guest') {
+      this.config = { ...this.config, ...msg.config };
+      this._renderGuestConfigBanner();
       return;
     }
 
@@ -951,6 +1026,52 @@ export class DuelController {
       if (this.phase !== 'select' && this.phase !== 'playing') {
         this.openFighterSelect();
       }
+      return;
+    }
+
+    if (msg.type === 'mark' && this.game.minimap) {
+      const p = msg.pos ? { x: msg.pos[0], y: msg.pos[1], z: msg.pos[2] } : null;
+      this.game.minimap.setRemoteMark(p, this.oppName, this.game.worldGroup);
+      if (p) this.game.sound.playPickup();
+      return;
+    }
+
+    if (msg.type === 'drop_item') {
+      this.game._spawnDroppedItem({
+        kind: msg.kind,
+        weaponId: msg.weaponId,
+        bagKey: msg.bagKey,
+        ammo: msg.ammo,
+        label: msg.label,
+        pos: new THREE.Vector3(msg.p[0], msg.p[1], msg.p[2]),
+        requireLeave: false
+      });
+      return;
+    }
+
+    if (msg.type === 'break_prop' && this.game.destructibles) {
+      this.game.destructibles.breakById(msg.id, this.game._destructibleCallbacks(false));
+      return;
+    }
+
+    if (msg.type === 'coop_score') {
+      if (this.role === 'guest') {
+        this.myScore = msg.guestKills || 0;
+        this.oppScore = msg.hostKills || 0;
+      } else {
+        this.myScore = msg.hostKills || 0;
+        this.oppScore = msg.guestKills || 0;
+      }
+      this._updateScoreline();
+      return;
+    }
+
+    if (msg.type === 'coop_win') {
+      if (this.role === 'guest') {
+        this.myScore = msg.guestKills || 0;
+        this.oppScore = msg.hostKills || 0;
+      }
+      this._showDuelEnd('coop_win');
       return;
     }
 
@@ -1046,25 +1167,46 @@ export class DuelController {
     if (msg.type === 'ai_hit' && this.role === 'host') {
       const enemy = this.game.enemies[msg.idx];
       if (enemy && enemy.alive) {
-        this.game._damageEnemy(enemy, msg.dmg, !!msg.head, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.2, 0)));
+        this.game._damageEnemy(enemy, msg.dmg, !!msg.head, enemy.mesh.position.clone().add(new THREE.Vector3(0, 1.2, 0)), true);
       }
       return;
     }
   }
 
   // =========================================================================
-  // PER-FRAME DUEL UPDATE (Sync, Timed Clock, Respawn, Compass, AI Sync)
+  // PER-FRAME ONLINE UPDATE (20Hz State, 10Hz AI Sync, Partner Badge, Respawn)
   // =========================================================================
 
   update(dt) {
     if (!this.isPlaying()) return;
 
-    // 1. Update RemoteFighter smooth interpolation & animations
+    // 1. Update RemoteFighter smooth interpolation, Vanish faintness & Co-op through-wall partner badge!
     if (this.remoteFighter) {
       this.remoteFighter.update(dt, this.game.player.pos);
+      if (this.dom.partnerTag) {
+        if (this.config.rule === 'coop' && this.remoteFighter.alive) {
+          const wp = this.remoteFighter.root.position.clone().add(new THREE.Vector3(0, 2.25, 0));
+          const dist = Math.round(this.game.player.pos.distanceTo(this.remoteFighter.root.position));
+          const p = wp.project(this.game.camera);
+          const inFront = p.z >= -1 && p.z <= 1;
+          let sx = (p.x * 0.5 + 0.5) * window.innerWidth;
+          let sy = (-p.y * 0.5 + 0.5) * window.innerHeight;
+          const offscreen = !inFront || sx < 40 || sx > window.innerWidth - 40 || sy < 40 || sy > window.innerHeight - 40;
+          if (!inFront) { sx = window.innerWidth - sx; sy = window.innerHeight - 36; }
+          sx = Math.max(64, Math.min(window.innerWidth - 64, sx));
+          sy = Math.max(44, Math.min(window.innerHeight - 28, sy));
+          const arrow = offscreen ? (sx <= 70 ? '◀ ' : sx >= window.innerWidth - 70 ? '▶ ' : '▲ ') : '';
+          this.dom.partnerTag.style.left = `${sx}px`;
+          this.dom.partnerTag.style.top = `${sy}px`;
+          this.dom.partnerTag.textContent = `${arrow}${this.oppName} · ${dist} m · ${Math.ceil(this.remoteFighter.hp)} HP`;
+          this.dom.partnerTag.classList.remove('hidden');
+        } else {
+          this.dom.partnerTag.classList.add('hidden');
+        }
+      }
     }
 
-    // 2. Broadcast local player state at ~20 Hz
+    // 2. Broadcast local player state at 20 Hz (drop state if channel is backlogged!)
     this.stateSyncAccum += dt;
     if (this.stateSyncAccum >= 0.05) {
       this.stateSyncAccum = 0;
@@ -1079,19 +1221,21 @@ export class DuelController {
         pitch: +p.pitch.toFixed(3),
         moving,
         cr: p.crouched ? 1 : 0,
+        sn: p.sneaking ? 1 : 0,
+        van: this.game.isSkillActive('vanish') ? 1 : 0,
         hp: Math.ceil(p.hp),
         maxHp: p.maxHp,
         alive: !this.myDead
-      });
+      }, true);
     }
 
-    // 3. Timed 5-minute clock & 3-second respawn (also ticked via 200ms wall-clock interval so backgrounding cannot stall the duel!)
+    // 3. Timed 7-minute clock & 3s/5s respawn
     this._tickWallTimers();
 
-    // 4. Host broadcasts compact AI snapshot at ~12 Hz (for 1..9 computer enemies)
+    // 4. Host broadcasts compact AI snapshot at 10 Hz
     if (this.role === 'host' && (this.config.enemiesCount || 0) > 0 && this.game.enemies.length > 0) {
       this.aiSyncAccum += dt;
-      if (this.aiSyncAccum >= 0.085) {
+      if (this.aiSyncAccum >= 0.10) {
         this.aiSyncAccum = 0;
         const list = this.game.enemies.map((e, idx) => ({
           i: idx,
@@ -1102,37 +1246,47 @@ export class DuelController {
           h: Math.ceil(e.hp),
           a: e.alive ? 1 : 0
         }));
-        this.net.send({ type: 'ai_snap', list });
+        this.net.send({ type: 'ai_snap', list }, true);
       }
     }
-
-    // 5. Update Top Compass (N/E/S/W + large glowing opponent dot + smaller AI dots)
-    this._updateCompass();
   }
 
   _tickWallTimers() {
-    if (!this.isPlaying() || this.config.rule !== 'timed5' || this.phase !== 'playing') return;
+    if (!this.isPlaying() || this.phase !== 'playing') return;
+    if (this.config.rule !== 'timed7' && this.config.rule !== 'coop') return;
     const nowMs = performance.now();
     const realDt = this._lastWallMs ? Math.min(1.0, (nowMs - this._lastWallMs) / 1000) : 0;
     this._lastWallMs = nowMs;
     if (realDt <= 0) return;
 
-    this.timeLeft = Math.max(0, this.timeLeft - realDt);
-    this._updateScoreline();
+    if (this.config.rule === 'timed7') {
+      this.timeLeft = Math.max(0, this.timeLeft - realDt);
+      this._updateScoreline();
+      if (this.timeLeft <= 0 && this.role === 'host') {
+        this.net.send({ type: 'time_end' });
+        const res = this.myScore > this.oppScore ? 'win' : this.myScore < this.oppScore ? 'lose' : 'draw';
+        this._showDuelEnd(res);
+      }
+    }
 
     if (this.myDead && this.respawnTimer > 0) {
       this.respawnTimer -= realDt;
       if (this.respawnTimer <= 0) {
-        this._respawnTimedLocal();
+        if (this.config.rule === 'coop') {
+          this.myDead = false;
+          this.respawnTimer = 0;
+          this.dom.respawnBanner.classList.add('hidden');
+          const meta = this.game.getLevelMeta(this.config.levelIndex);
+          this._placePlayer(this.spawnEndA.clone(), meta.spawnYaw);
+          this.game.toast('BACK AT THE START');
+        } else {
+          this._respawnTimedLocal();
+        }
       } else {
-        this.dom.respawnBanner.textContent = `Respawning in ${Math.ceil(this.respawnTimer)}…`;
+        this.dom.respawnBanner.textContent = this.config.rule === 'coop'
+          ? `Back at the start in ${Math.ceil(this.respawnTimer)}…`
+          : `Respawning in ${Math.ceil(this.respawnTimer)}…`;
       }
-    }
-
-    if (this.timeLeft <= 0 && this.role === 'host') {
-      this.net.send({ type: 'time_end' });
-      const res = this.myScore > this.oppScore ? 'win' : this.myScore < this.oppScore ? 'lose' : 'draw';
-      this._showDuelEnd(res);
     }
   }
 
@@ -1149,45 +1303,5 @@ export class DuelController {
         e.mesh.rotation.x = -Math.PI * 0.48;
       }
     }
-  }
-
-  _updateCompass() {
-    const yaw = this.game.player.yaw; // yaw=0 faces North (-Z); heading angle in compass coords:
-    const heading = -yaw; // positive turning right (East = +PI/2)
-    const fovSpan = Math.PI * 0.95; // ~170 degrees visible across compass bar
-    let html = '';
-
-    for (const c of COMPASS_CARDINALS) {
-      const rel = wrapAngle(c.angle - heading);
-      if (Math.abs(rel) <= fovSpan * 0.52) {
-        const pct = 50 + (rel / fovSpan) * 100;
-        html += `<span class="compass-cardinal" style="left:${pct.toFixed(1)}%">${c.label}</span>`;
-      }
-    }
-
-    // Smaller gold dots for living computer enemies (when enabled)
-    for (const e of this.game.enemies) {
-      if (!e.alive || !e.mesh.visible) continue;
-      const dx = e.mesh.position.x - this.game.player.pos.x;
-      const dz = e.mesh.position.z - this.game.player.pos.z;
-      const bearing = Math.atan2(dx, -dz);
-      const rel = wrapAngle(bearing - heading);
-      const clamped = Math.max(-fovSpan * 0.48, Math.min(fovSpan * 0.48, rel));
-      const pct = 50 + (clamped / fovSpan) * 100;
-      html += `<span class="compass-dot-ai" style="left:${pct.toFixed(1)}%"></span>`;
-    }
-
-    // Prominent larger glowing dot for the opponent!
-    if (this.remoteFighter && this.remoteFighter.alive) {
-      const dx = this.remoteFighter.root.position.x - this.game.player.pos.x;
-      const dz = this.remoteFighter.root.position.z - this.game.player.pos.z;
-      const bearing = Math.atan2(dx, -dz);
-      const rel = wrapAngle(bearing - heading);
-      const clamped = Math.max(-fovSpan * 0.48, Math.min(fovSpan * 0.48, rel));
-      const pct = 50 + (clamped / fovSpan) * 100;
-      html += `<span class="compass-dot-opponent" style="left:${pct.toFixed(1)}%"></span>`;
-    }
-
-    this.dom.compassTrack.innerHTML = html;
   }
 }

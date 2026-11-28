@@ -14,7 +14,8 @@ export const ERA_WEAPONS = {
       spread: 0.012,
       fireRate: 0.28,
       magSize: 6,
-      reserve: 48,
+      reserve: 36,
+      startTotal: 42,
       reloadTime: 1.05,
       recoil: 0.14,
       altMode: 'fan',
@@ -96,11 +97,15 @@ export const ERA_WEAPONS = {
       fireRate: 0.48,
       autoFire: true,
       magSize: 12,
-      reserve: 72,
+      reserve: 0,
+      startTotal: 12,
+      sticks: true,
+      recoverable: true,
+      aimableThrow: true,
       reloadTime: 0.85,
       recoil: 0.09,
-      altMode: 'none',
-      altHint: 'LMB (Hold): 3-Star Fan Throw',
+      altMode: 'aim_throw',
+      altHint: 'LMB: 3-Star Fan · RMB: Aim Throw',
       tracerColor: 0xd0ecff
     },
     {
@@ -134,13 +139,13 @@ export const ERA_WEAPONS = {
       spread: 0.005,
       fireRate: 0.62,
       magSize: 1,
-      reserve: 40,
+      reserve: 19,
+      startTotal: 20,
+      dropRecoverable: 'arrow',
       reloadTime: 0.45,
       recoil: 0.11,
-      altMode: 'scope',
-      scopeLabel: 'KYUDO SPIRIT FOCUS',
-      scopeFov: 30,
-      altHint: 'RMB: Spirit Focus Zoom',
+      altMode: 'sword_cut',
+      altHint: 'RMB: Quick Sword Cut · F: Katana',
       tracerColor: 0xfff0c2
     },
     {
@@ -176,7 +181,9 @@ export const ERA_WEAPONS = {
       spread: 0.003,
       fireRate: 0.65,
       magSize: 1,
-      reserve: 45,
+      reserve: 13,
+      startTotal: 14,
+      dropRecoverable: 'bolt',
       reloadTime: 0.62,
       recoil: 0.14,
       altMode: 'scope',
@@ -246,21 +253,26 @@ export const ERA_WEAPONS = {
       id: 'javelin',
       name: 'BRONZE JAVELIN',
       shortName: 'Javelin',
-      kind: 'hitscan',
+      kind: 'projectile',
+      projType: 'javelin',
       sound: 'javelin',
-      damage: 56,
-      headMult: 2.1,
-      pellets: 1,
-      spread: 0.009,
+      damage: 78,
+      headMult: 2.2,
+      fanCount: 1,
+      fanHalfAngle: 0,
+      projSpeed: 38,
+      projGravity: 9.2,
+      sticks: true,
+      recoverable: true,
+      aimableThrow: true,
       fireRate: 0.56,
-      magSize: 5,
-      reserve: 45,
-      reloadTime: 0.88,
+      magSize: 6,
+      reserve: 0,
+      startTotal: 6,
+      reloadTime: 0.6,
       recoil: 0.16,
-      altMode: 'scope',
-      scopeLabel: 'AEGEAN SPEAR SIGHT',
-      scopeFov: 36,
-      altHint: 'RMB: Steady Aim Focus',
+      altMode: 'aim_throw',
+      altHint: 'LMB: Throw · RMB: Aim Trajectory · F: Sword',
       tracerColor: 0xffe49e
     },
     {
@@ -288,21 +300,26 @@ export const ERA_WEAPONS = {
       id: 'throwing_axe',
       name: 'THROWING AXE',
       shortName: 'Throwing Axe',
-      kind: 'hitscan',
+      kind: 'projectile',
+      projType: 'throwing_axe',
       sound: 'axe_throw',
-      damage: 58,
-      headMult: 2.1,
-      pellets: 1,
-      spread: 0.011,
+      damage: 82,
+      headMult: 2.2,
+      fanCount: 1,
+      fanHalfAngle: 0,
+      projSpeed: 34,
+      projGravity: 10.5,
+      sticks: true,
+      recoverable: true,
+      aimableThrow: true,
       fireRate: 0.54,
-      magSize: 5,
-      reserve: 45,
-      reloadTime: 0.85,
+      magSize: 6,
+      reserve: 0,
+      startTotal: 6,
+      reloadTime: 0.6,
       recoil: 0.17,
-      altMode: 'scope',
-      scopeLabel: 'NORSE RAIDER AIM',
-      scopeFov: 38,
-      altHint: 'RMB: Steady Aim Focus',
+      altMode: 'aim_throw',
+      altHint: 'LMB: Throw · RMB: Aim Trajectory · F: Flail',
       tracerColor: 0xc2f5ff
     },
     {
@@ -342,7 +359,8 @@ export const ERA_WEAPONS = {
       spread: 0.002,
       fireRate: 1.25,
       magSize: 5,
-      reserve: 30,
+      reserve: 20,
+      startTotal: 25,
       reloadTime: 1.65,
       recoil: 0.24,
       altMode: 'scope',
@@ -364,7 +382,8 @@ export const ERA_WEAPONS = {
       spread: 0.032,
       fireRate: 0.11,
       magSize: 32,
-      reserve: 160,
+      reserve: 96,
+      startTotal: 128,
       reloadTime: 1.15,
       recoil: 0.065,
       altMode: 'none',
@@ -523,13 +542,13 @@ export const ERA_WEAPONS = {
       spread: 0.006,
       fireRate: 0.58,
       magSize: 1,
-      reserve: 55,
+      reserve: 19,
+      startTotal: 20,
+      dropRecoverable: 'arrow',
       reloadTime: 0.42,
       recoil: 0.1,
-      altMode: 'scope',
-      scopeLabel: 'ROYAL ARCHER FOCUS',
-      scopeFov: 36,
-      altHint: 'RMB: Aim Focus',
+      altMode: 'sword_cut',
+      altHint: 'RMB: Quick Sword Cut · F: Sword',
       tracerColor: 0xf6d58a
     },
     {
@@ -586,14 +605,17 @@ export const ERA_WEAPONS = {
       projSpeed: 64,
       projGravity: 3.4,
       sticks: true,
+      recoverable: true,
+      aimableThrow: true,
       poison: { duration: 5.0, interval: 0.5, tickDamage: 7 },
       fireRate: 0.56,
-      magSize: 8,
-      reserve: 40,
+      magSize: 12,
+      reserve: 0,
+      startTotal: 12,
       reloadTime: 0.9,
       recoil: 0.14,
-      altMode: 'none',
-      altHint: 'Poison: +7 dmg / 0.5s for 5s',
+      altMode: 'aim_throw',
+      altHint: 'Poison +7/0.5s · RMB: Aim Throw · F: Club',
       tracerColor: 0x45e87c,
       projColor: 0x2ecc71
     },
@@ -610,14 +632,17 @@ export const ERA_WEAPONS = {
       fanHalfAngle: 0,
       projSpeed: 30,
       projGravity: 15.0,
-      sticks: false,
+      sticks: true,
+      recoverable: true,
+      aimableThrow: true,
       fireRate: 1.05,
-      magSize: 4,
-      reserve: 24,
+      magSize: 8,
+      reserve: 0,
+      startTotal: 8,
       reloadTime: 0.85,
       recoil: 0.22,
-      altMode: 'none',
-      altHint: 'Heavy High-Arc Stone (120 dmg)',
+      altMode: 'aim_throw',
+      altHint: 'Heavy Stone (120) · RMB: Aim · F: Club',
       tracerColor: 0xc2b8a3,
       projColor: 0x857c70
     },
@@ -633,13 +658,13 @@ export const ERA_WEAPONS = {
       spread: 0.005,
       fireRate: 0.56,
       magSize: 1,
-      reserve: 45,
+      reserve: 19,
+      startTotal: 20,
+      dropRecoverable: 'arrow',
       reloadTime: 0.42,
       recoil: 0.1,
-      altMode: 'scope',
-      scopeLabel: 'EAGLE EYE AIM',
-      scopeFov: 34,
-      altHint: 'RMB: Aim Focus',
+      altMode: 'sword_cut',
+      altHint: 'RMB: Quick Sword Cut · F: Club',
       tracerColor: 0x7ef2d4
     },
     {
@@ -665,6 +690,308 @@ export const ERA_WEAPONS = {
     }
   ]
 };
+
+export const EXTRA_WEAPONS = {
+  cavalry_sabre: {
+    id: 'cavalry_sabre',
+    name: 'CAVALRY SABRE',
+    shortName: 'Sabre',
+    kind: 'melee',
+    isBlade: true,
+    silent: true,
+    sound: 'slash',
+    damage: 66,
+    headMult: 1.5,
+    range: 3.6,
+    fireRate: 0.36,
+    magSize: 99,
+    reserve: 99,
+    infinite: true,
+    reloadTime: 0.1,
+    recoil: 0.2,
+    altMode: 'heavy_slash',
+    altHint: 'LMB: Silent Sabre Slash · F: Quick Blade',
+    slashColor: 0xffe4b2
+  },
+  swiss_sword: {
+    id: 'swiss_sword',
+    name: 'CONFEDERATE SWORD',
+    shortName: 'Sword',
+    kind: 'melee',
+    isBlade: true,
+    silent: true,
+    sound: 'slash',
+    damage: 70,
+    headMult: 1.5,
+    range: 3.8,
+    fireRate: 0.36,
+    magSize: 99,
+    reserve: 99,
+    infinite: true,
+    reloadTime: 0.1,
+    recoil: 0.2,
+    altMode: 'heavy_slash',
+    altHint: 'LMB: Silent Sword Cut · F: Halberd',
+    slashColor: 0xdff2ff
+  },
+  seax: {
+    id: 'seax',
+    name: 'NORSE SEAX KNIFE',
+    shortName: 'Seax',
+    kind: 'melee',
+    isBlade: true,
+    silent: true,
+    sound: 'slash',
+    damage: 62,
+    headMult: 1.6,
+    range: 3.3,
+    fireRate: 0.30,
+    magSize: 99,
+    reserve: 99,
+    infinite: true,
+    reloadTime: 0.1,
+    recoil: 0.16,
+    altMode: 'heavy_slash',
+    altHint: 'LMB: Fast Silent Seax Cut · F: Flail',
+    slashColor: 0xc2f5ff
+  },
+  blowgun: {
+    id: 'blowgun',
+    name: 'POISON BLOWGUN',
+    shortName: 'Blowgun',
+    kind: 'projectile',
+    projType: 'blowgun_dart',
+    silent: true,
+    sound: 'bow',
+    damage: 34,
+    headMult: 2.3,
+    fanCount: 1,
+    fanHalfAngle: 0,
+    projSpeed: 72,
+    projGravity: 1.2,
+    sticks: true,
+    recoverable: true,
+    poison: { duration: 4.0, interval: 0.5, tickDamage: 7 },
+    fireRate: 0.55,
+    magSize: 1,
+    reserve: 9,
+    startTotal: 10,
+    reloadTime: 0.48,
+    recoil: 0.04,
+    altMode: 'scope',
+    scopeLabel: 'SILENT BLOWGUN SIGHT',
+    scopeFov: 30,
+    altHint: 'RMB: Sniper Sight · Silent Poison Dart',
+    tracerColor: 0x52f28b,
+    projColor: 0x35e675
+  },
+  sling: {
+    id: 'sling',
+    name: 'WOVEN SLING',
+    shortName: 'Sling',
+    kind: 'projectile',
+    projType: 'sling_pellet',
+    sound: 'throw',
+    damage: 54,
+    headMult: 2.1,
+    fanCount: 1,
+    fanHalfAngle: 0,
+    projSpeed: 46,
+    projGravity: 9.8,
+    sticks: true,
+    recoverable: true,
+    aimableThrow: true,
+    fireRate: 0.62,
+    magSize: 1,
+    reserve: 19,
+    startTotal: 20,
+    reloadTime: 0.38,
+    recoil: 0.12,
+    altMode: 'aim_throw',
+    altHint: 'LMB: Whirl & Sling (46 m/s) · RMB: Aim',
+    tracerColor: 0xd9cbb8,
+    projColor: 0x8e8679
+  },
+  fists: {
+    id: 'fists',
+    name: 'BARE FISTS',
+    shortName: 'Fists',
+    kind: 'fists',
+    silent: true,
+    sound: 'slash',
+    damage: 28,
+    hookDamage: 55,
+    headMult: 1.5,
+    range: 1.6,
+    fireRate: 0.30,
+    hookFireRate: 0.52,
+    magSize: 99,
+    reserve: 99,
+    infinite: true,
+    reloadTime: 0.1,
+    recoil: 0.14,
+    altMode: 'hook',
+    altHint: 'LMB: Alternating Jab (28) · RMB: Hook (55)',
+    slashColor: 0xffe4c4
+  },
+  big_stone: {
+    id: 'big_stone',
+    name: 'BIG STONE',
+    shortName: 'Big Stone',
+    kind: 'projectile',
+    projType: 'big_stone',
+    isBagItem: true,
+    sound: 'throw',
+    damage: 130,
+    headMult: 1.8,
+    fanCount: 1,
+    fanHalfAngle: 0,
+    projSpeed: 14,
+    projGravity: 15.5,
+    sticks: true,
+    recoverable: true,
+    aimableThrow: true,
+    fireRate: 0.78,
+    magSize: 1,
+    reserve: 2,
+    startTotal: 3,
+    reloadTime: 0.3,
+    recoil: 0.18,
+    altMode: 'aim_throw',
+    altHint: 'LMB: Heavy Arc (130 dmg) · RMB: Aim',
+    projColor: 0x7e786c
+  },
+  molotov: {
+    id: 'molotov',
+    name: 'MOLOTOV COCKTAIL',
+    shortName: 'Molotov',
+    kind: 'throwable',
+    isBagItem: true,
+    isMolotov: true,
+    sound: 'throw',
+    damage: 32,
+    blastRadius: 3.0,
+    burnDuration: 7.0,
+    throwSpeed: 18,
+    throwUp: 4.8,
+    aimableThrow: true,
+    fireRate: 0.85,
+    magSize: 1,
+    reserve: 2,
+    startTotal: 2,
+    reloadTime: 0.4,
+    recoil: 0.14,
+    altMode: 'aim_throw',
+    altHint: 'LMB: Throw Fire Pool (3m, 7s) · RMB: Aim',
+    projColor: 0xff7a22
+  },
+  bomb: {
+    id: 'bomb',
+    name: 'BOMB',
+    shortName: 'Bomb',
+    kind: 'throwable',
+    isBagItem: true,
+    sound: 'throw',
+    damage: 140,
+    blastRadius: 6.5,
+    fuseTime: 2.0,
+    throwSpeed: 20,
+    throwUp: 5.2,
+    aimableThrow: true,
+    fireRate: 0.85,
+    magSize: 1,
+    reserve: 2,
+    startTotal: 2,
+    reloadTime: 0.4,
+    recoil: 0.14,
+    altMode: 'aim_throw',
+    altHint: 'LMB: Throw (2s fuse) · RMB: Aim Bounce',
+    projColor: 0xd93622
+  },
+  heal_item: {
+    id: 'heal_item',
+    name: 'PROVISIONS',
+    shortName: 'Heal',
+    kind: 'heal',
+    isBagItem: true,
+    healAmount: 35,
+    fireRate: 0.6,
+    magSize: 1,
+    reserve: 0,
+    infinite: false,
+    reloadTime: 0.1,
+    recoil: 0.05,
+    altMode: 'none',
+    altHint: 'LMB or [H]: Restore +35 Health'
+  }
+};
+
+export const CHAPTER_GEAR = {
+  west:        { second: 'cavalry_sabre', blade: 'cavalry_sabre', healName: 'Whiskey Flask',  bombName: 'Dynamite',        powder: true,  startBag: { bomb: 2 } },
+  japan:       { second: 'blowgun',       blade: 'katana',        healName: 'Tea & Herbs',    bombName: 'Clay Fire Bomb',  powder: true,  startBag: {} },
+  swiss:       { second: 'swiss_sword',   blade: 'halberd',       healName: 'Alpine Cheese',  bombName: 'Fire-Pot',        powder: false, startBag: { big_stone: 3 } },
+  greece:      { second: 'sling',         blade: 'xiphos',        healName: 'Olives & Wine',  bombName: 'Greek Fire Pot',  powder: false, startBag: {} },
+  scandinavia: { second: 'seax',          blade: 'viking_flail',  healName: 'Mead Horn',      bombName: 'Pitch Pot',       powder: false, startBag: { big_stone: 3 } },
+  normandy:    { second: 'heavy_pistol',  blade: 'combat_knife',  healName: 'Cider & Bread',  bombName: 'Grenade',         powder: true,  startBag: { molotov: 2 } },
+  soviet:      { second: 'soviet_pistol', blade: 'combat_knife',  healName: 'Black Bread',    bombName: 'Grenade',         powder: true,  startBag: { molotov: 3 } },
+  tibet:       { second: 'sling',         blade: 'combat_knife',  healName: 'Butter Tea',     bombName: 'Grenade',         powder: true,  startBag: {} },
+  aztec:       { second: 'blowgun',       blade: 'macuahuitl',    healName: 'Cup of Cacao',   bombName: 'Fire Pot',        powder: false, startBag: {} }
+};
+
+export const ENEMY_WEAPON_DROPS = {
+  cowboy:             { weaponId: 'revolver',     ammo: 12 },
+  bandito:            { weaponId: 'rifle',        ammo: 10 },
+  ninja:              { weaponId: 'shuriken',     ammo: 6 },
+  ronin:              { weaponId: 'katana',       ammo: 1, isBlade: true },
+  arquebusier:        { weaponId: 'crossbow',     ammo: 5 },
+  halberdier:         { weaponId: 'halberd',      ammo: 1, isBlade: true },
+  spartan_hoplite:    { weaponId: 'xiphos',       ammo: 1, isBlade: true },
+  spartan_skirmisher: { weaponId: 'javelin',      ammo: 3 },
+  viking_archer:      { weaponId: 'yumi',         ammo: 6 },
+  viking_warrior:     { weaponId: 'throwing_axe', ammo: 3 },
+  viking_berserker:   { weaponId: 'viking_flail', ammo: 1, isBlade: true },
+  viking_chieftain:   { weaponId: 'seax',         ammo: 1, isBlade: true },
+  german_rifleman:    { weaponId: 'mosin_scoped', ammo: 10 },
+  german_officer:     { weaponId: 'heavy_pistol', ammo: 12 },
+  german_mg:          { weaponId: 'sten_smg',     ammo: 64 },
+  soviet_militia:     { weaponId: 'soviet_smg',   ammo: 64 },
+  kgb_agent:          { weaponId: 'soviet_pistol',ammo: 12 },
+  pla_rifleman:       { weaponId: 'khampa_rifle', ammo: 16 },
+  pla_mg:             { weaponId: 'tibet_pistol', ammo: 12 },
+  red_guard:          { weaponId: 'combat_knife', ammo: 1, isBlade: true },
+  spanish_swordsman:  { weaponId: 'swiss_sword',  ammo: 1, isBlade: true },
+  spanish_crossbow:   { weaponId: 'crossbow',     ammo: 5 },
+  spanish_arquebus:   { weaponId: 'matchlock',    ammo: 8 },
+  spanish_horseman:   { weaponId: 'halberd',      ammo: 1, isBlade: true }
+};
+
+export function getWeaponTemplate(id, eraId = null) {
+  if (EXTRA_WEAPONS[id]) return EXTRA_WEAPONS[id];
+  if (eraId && ERA_WEAPONS[eraId]) {
+    const local = ERA_WEAPONS[eraId].find((w) => w.id === id);
+    if (local) return local;
+  }
+  for (const list of Object.values(ERA_WEAPONS)) {
+    const hit = list.find((w) => w.id === id);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+export function getAmmoDropAmount(weaponId) {
+  const map = {
+    revolver: 12, heavy_pistol: 12, soviet_pistol: 12, tibet_pistol: 12,
+    rifle: 8, khampa_rifle: 8, matchlock: 6,
+    sten_smg: 32, soviet_smg: 32,
+    mosin_scoped: 5,
+    yumi: 5, tibet_bow: 5, aztec_bow: 5,
+    crossbow: 4, repeater: 8,
+    shuriken: 4, blowgun: 4, atlatl_dart: 4,
+    javelin: 2, throwing_axe: 2, sling_stone: 3, sling: 6,
+    shotgun: 6
+  };
+  return map[weaponId] || 8;
+}
 
 let _shurikenCoreGeo = null;
 let _shurikenEdgeGeo = null;
@@ -1305,6 +1632,103 @@ export function buildWeaponViewmodel(weaponId) {
     }
     g.add(rh);
     g.position.set(0, 0, 0);
+  } else if (weaponId === 'cavalry_sabre' || weaponId === 'swiss_sword' || weaponId === 'seax') {
+    const len = weaponId === 'seax' ? 0.56 : 0.88;
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.015, len, 0.052), brightSteel);
+    blade.position.set(0, len * 0.5 + 0.04, 0);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.13, 4), brightSteel);
+    tip.position.set(0, len + 0.1, 0);
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.036, weaponId === 'seax' ? 0.1 : 0.22), brassMat);
+    guard.position.set(0, 0.02, 0);
+    const hilt = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.22, 8), darkWood);
+    hilt.position.set(0, -0.1, 0);
+    g.add(blade, tip, guard, hilt);
+    g.rotation.set(-0.34, -0.24, 0.24);
+    g.position.set(0.32, -0.34, -0.52);
+  } else if (weaponId === 'blowgun') {
+    const bambooMat = new THREE.MeshStandardMaterial({ color: 0x6f8246, roughness: 0.72 });
+    const tube = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.016, 1.05, 10), bambooMat);
+    tube.rotation.x = Math.PI / 2;
+    tube.position.set(0, 0.0, -0.46);
+    const mouth = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.016, 0.07, 10), darkWood);
+    mouth.rotation.x = Math.PI / 2;
+    mouth.position.set(0, 0, 0.06);
+    const wrap = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.12, 8), crimsonMat);
+    wrap.rotation.x = Math.PI / 2;
+    wrap.position.set(0, 0, -0.28);
+    g.add(tube, mouth, wrap);
+    g.position.set(0.20, -0.20, -0.26);
+  } else if (weaponId === 'sling') {
+    const cordMat = new THREE.MeshStandardMaterial({ color: 0xc2a878, roughness: 0.9 });
+    const leatherMat = new THREE.MeshStandardMaterial({ color: 0x5c361c, roughness: 0.85 });
+    const stoneMat = new THREE.MeshStandardMaterial({ color: 0x7e786c, roughness: 0.9 });
+    const cordL = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.42, 6), cordMat);
+    cordL.position.set(-0.04, -0.14, 0);
+    cordL.rotation.z = -0.16;
+    const cordR = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.42, 6), cordMat);
+    cordR.position.set(0.04, -0.14, 0);
+    cordR.rotation.z = 0.16;
+    const pouch = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.06, 0.05), leatherMat);
+    pouch.position.set(0, -0.34, 0);
+    const pebble = new THREE.Mesh(new THREE.DodecahedronGeometry(0.048, 0), stoneMat);
+    pebble.position.set(0, -0.32, 0);
+    g.add(cordL, cordR, pouch, pebble);
+    g.position.set(0.24, -0.06, -0.44);
+  } else if (weaponId === 'fists') {
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xdca884, roughness: 0.78 });
+    const cuffMat = new THREE.MeshStandardMaterial({ color: 0x3b281c, roughness: 0.85 });
+    const makeFist = (side, name) => {
+      const fg = new THREE.Group();
+      fg.name = name;
+      const fist = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.10, 0.12), skinMat);
+      const thumb = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, 0.075), skinMat);
+      thumb.position.set(-side * 0.055, 0.01, -0.02);
+      const wrist = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.058, 0.22, 8), cuffMat);
+      wrist.rotation.x = Math.PI / 2;
+      wrist.position.set(0, -0.02, 0.14);
+      fg.add(fist, thumb, wrist);
+      fg.position.set(side * 0.25, -0.24, -0.42);
+      fg.userData.restPos = fg.position.clone();
+      return fg;
+    };
+    g.add(makeFist(-1, 'fistL'), makeFist(1, 'fistR'));
+    g.position.set(0, 0, 0);
+  } else if (weaponId === 'big_stone') {
+    const stone = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(0.135, 0),
+      new THREE.MeshStandardMaterial({ color: 0x7b756b, roughness: 0.94 })
+    );
+    stone.scale.set(1.15, 0.88, 1.05);
+    g.add(stone);
+    g.position.set(0.26, -0.24, -0.46);
+  } else if (weaponId === 'molotov') {
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x4b7d3b, roughness: 0.22, metalness: 0.15, transparent: true, opacity: 0.88 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.058, 0.22, 10), glassMat);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.045, 0.11, 10), glassMat);
+    neck.position.y = 0.15;
+    const rag = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.11, 6), new THREE.MeshStandardMaterial({ color: 0xe8dcc4, roughness: 0.9 }));
+    rag.position.set(0.01, 0.23, 0);
+    rag.rotation.z = -0.35;
+    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.038, 7, 7), glowMat);
+    flame.position.set(0.03, 0.29, 0);
+    flame.name = 'spark';
+    g.add(body, neck, rag, flame);
+    g.position.set(0.24, -0.26, -0.46);
+  } else if (weaponId === 'bomb') {
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.082, 10, 8), crimsonMat);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.05, 8), steelMat);
+    cap.position.y = 0.085;
+    const spark = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), glowMat);
+    spark.position.set(0.01, 0.13, 0);
+    spark.name = 'spark';
+    g.add(body, cap, spark);
+    g.position.set(0.24, -0.24, -0.46);
+  } else if (weaponId === 'heal_item') {
+    const flask = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.072, 0.2, 10), new THREE.MeshStandardMaterial({ color: 0x2e8b57, roughness: 0.45 }));
+    const cork = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.05, 8), woodMat);
+    cork.position.y = 0.12;
+    g.add(flask, cork);
+    g.position.set(0.24, -0.24, -0.46);
   }
 
   g.userData.basePos = g.position.clone();

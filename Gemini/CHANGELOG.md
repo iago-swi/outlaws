@@ -14,6 +14,255 @@ Each version is an annotated Git tag named `eight-horizons-vX.Y.Z` and a
 [release on GitHub](https://github.com/iago-swi/outlaws/releases). The version number is shown
 in the bottom-right corner of the title screen.
 
+## [1.16.0] - 2026-11-28
+
+### Added
+
+- **Unified Online 2-Player Screen (`Online · 2 players · duel or together`):** Single peer-to-peer
+  screen supporting both competitive duels and cooperative play over one persistent connection.
+  - **Remembered player names** (up to 16 characters) displayed in the `Players (2 of 2)` list,
+    scoreline, messages, and over the partner's head in co-op.
+  - **Three online modes:**
+    - **Duel · first to 5 rounds** (swap ends each round).
+    - **Duel · 7 minutes, most kills** (3 s respawn at the farther end).
+    - **Together against the enemy (Co-op):** Both heroes start side by side (2.6 m apart) against
+      3 to 24 chapter enemies plus the boss, with friendly fire disabled, individual kill counts,
+      5 s respawn at start, through-wall partner name/distance/HP indicator (and screen-edge arrow
+      when out of view), green partner map dot, shared fog of war and discovered landmark names,
+      shared colored marks with ping, shared `G` weapon/bag drops, and a host-shared seed for
+      identical randomized enemies and outskirts.
+  - **Live host settings & clean room rules:** Chapter, game mode, computer enemies (None or 3–24
+    by threes; at least 3 in co-op), Wits, and Map Size sync live to the joining player. A third
+    browser or mid-game joiner is turned away with a clear message, and direct connections time out
+    cleanly after 15 seconds. Both players stay connected across consecutive games until the host
+    leaves.
+
+### Removed
+
+- **One life duel mode:** Replaced by the three unified online modes above.
+
+## [1.15.0] - 2026-11-28
+
+### Added
+
+- **4-Slider Sound Settings panel:** Added a dedicated Sound Settings dialog opened from the Title
+  screen, the Online screen, or the Pause screen (`O`) with remembered sliders for **General**,
+  **Effects**, **Voices**, and **Music**, plus a Music On/Off switch.
+- **Complete menu buttons & `Esc` navigation:** Pause screen now offers Resume, Sound settings,
+  Graphics, Restart chapter, Another hero, and Main menu; death screen offers Try again, Another
+  hero, and Main menu; victory screen offers Next chapter, Play this chapter again, and Main menu;
+  Hero screen offers Main menu. Pressing `Esc` returns to the Main menu from the Hero, Death, and
+  End screens, and hidden screens no longer catch clicks.
+
+### Changed
+
+- **`M` toggles Music only:** Pressing `M` now switches background music on or off independently
+  without muting gunshots, effects, or voices.
+- **Final key map:** Updated key hints on the title screen, hero screen, and HUD to match the
+  complete control layout.
+
+## [1.14.0] - 2026-11-28
+
+### Added
+
+- **Drawn-geometry shots, line of sight & walkable roofs:** Static solid world meshes (roofs, rocks,
+  carts, arches) now participate in shot raycasts, enemy line-of-sight blocking (preventing enemies
+  from seeing through roofs), and walkable roof landings while letting windows, leaves, and cloth
+  pass through.
+- **Stalnogorsk underground Metro, 5-floor block & open Church of St Nicholas:** Added a deep
+  underground metro station (`-10 m`) with navigable marble stairs, chandeliers, standing train, and
+  passengers; a 5-floor courtyard stairwell with furnished flats on every landing that enemies can
+  climb; an open Church of St Nicholas with five blue-and-gold onion domes, gilded iconostasis,
+  priest, and worshippers; and the yellow `КВАС` kvas tanker with soda-water machines.
+- **Cultural landmarks across all nine chapters (named on the map):** San Xavier Sonoran Mission
+  (West), three-storey Kiri Castle keep (Japan), Devil's Bridge with grazing goat (Switzerland),
+  Contest of the Twelve Axes (Greece), the Thing Field with twelve standing stones (Vikings),
+  paratrooper hung on the ruined church tower (Normandy), Kvas Tanker (Soviet city), Thangtong
+  Gyalpo Iron Chain Bridge (Tibet), and Moctezuma's House of Birds aviary (Tenochtitlan).
+- **Japan *shishi-odoshi* bamboo deer scarer:** Pivoting water-filled bamboo tube in the tea garden
+  that tips and knocks sharply on stone every 6 seconds (audible up to 34 m).
+- **Tibet prostrating pilgrim:** Performs full prostrations round the chorten near the start;
+  responds peacefully and flees danger, never taking up arms.
+- **Swiss 100 m Valais *Suone* (*bisse*):** Irrigation channel from the waterfall across cliffside
+  planks, six timber trestles, and a meadow ditch with five sluices (two open watering the grass) to
+  the keeper's shingle hut and knocking water-wheel hammer; breaking any upstream wood trough halts
+  the water downstream and silences the hammer.
+
+## [1.13.0] - 2026-11-28
+
+### Added
+
+- **Living bystanders (fright, greetings, 30 HP & fighting back):** Every bystander now performs an
+  active period task (hammering, churning, weaving, strolling, praying, paddling, or drinking).
+  Nearby shots or blasts frighten them into crying out, running arms-up, crouching with hands over
+  their heads, and returning once quiet. Approaching peacefully triggers waves and era-language
+  greetings; aiming at them makes them raise their hands. Bystanders have 30 HP (tracked on the end
+  screen if killed), and roughly one in four hurt bystanders who survive in single-player draws the
+  chapter's commonest enemy weapon and fights back.
+- **Living animals & retaliation:** Added grazing horses, mules, hens (West), ox (Japan), cows and
+  pack mules (Switzerland), goats, pigs, and Argos the dog (Greece), ponies and sheep (Vikings),
+  and yaks and horses (Tibet). They flee nearby gunfire, bleed and fall with colliders removed when
+  killed, and retaliate when wounded according to species (sheep and hens never retaliate).
+- **Wounds, floating hit bars & ambient life:** Hits leave dark wound marks, push enemies back, and
+  display a 4-second floating health bar (enemies limp below 40% HP). Added flocks of pecking birds
+  that take wing, dust devils in the West and Tibet, a moving West steam train on the depot line, a
+  moving Soviet tank and avenue car, high thin cirrus clouds, and era-language voices via
+  SpeechSynthesis with a synthesized formant fallback.
+
+## [1.12.0] - 2026-11-28
+
+### Added
+
+- **Enemy Wits (`Low`, `Medium`, `Genius`):** Remembered selector on the hero screen beside Enemies.
+  - **Low:** Fights on direct sight or damage only; ignores noises, never climbs ladders or crawls,
+    and gives up after 2.5 s out of sight.
+  - **Medium (default):** Hears noises, follows routes, climbs ladders to reach higher elevations,
+    crouches through low passages, and searches around the last known spot for 12 s.
+  - **Genius:** Hears 80% further and sees further, alerts allies within 60 m, selects crouched
+    cover from 22 candidate points within 12 m (blocked low, clear high), rises to shoot and
+    repositions frequently, flanks, sneaks crouched when unseen, retreats when badly hurt, and fires
+    faster and straighter.
+- **Noise propagation:** Gunshots alert within 35 m, bows/slings/throws 10 m, sprinting 11 m,
+  walking 4 m (through walls), and breaking wood 12 m; blades, fists, blowgun, sneaking, and
+  crouching remain silent.
+- **Map Size (`Small`, `Medium`, `Large`):** Remembered third selector on the hero screen. `Small`
+  trims each chapter to its core corridor framed with rope and red-and-white boundary flags; `Large`
+  expands the map by 1.5× with seven era-styled furnished outskirts hamlets (smoking chimneys,
+  fences, trees, bystanders, boats on water, extra enemies, and named map landmarks) and raises the
+  Enemies selector up to 45.
+- **Randomized enemy spawns per game:** Ground-walking enemies start in varied valid reachable
+  positions each run (seeded deterministically for Online sync), always at least 20 m from the
+  player's start, while bosses, perched guards, and ambush foes keep their posts.
+
+## [1.11.0] - 2026-11-28
+
+### Added
+
+- **Destructible props across all nine chapters:** Wooden crates, barrels, fence bays, tables,
+  chests, stalls, shelves, benches, doors, and small vessels break under gunfire, melee/fists,
+  thrown weapons, Molotov fire, and explosions while stone, rock, plaster, and trees stand firm.
+  Small items shatter in one hit and let bullets continue through; larger props shed color-matched
+  chips, darken, and lean until collapsing in splinters and dust, dropping items placed atop them,
+  removing their colliders, and rebuilding the enemy navigation grid so enemies walk through newly
+  opened gaps. Enemy fire also breaks player cover.
+- **Explosive Powder Kegs:** In gunpowder and fuel chapters (all except Switzerland, Greece, and
+  Scandinavia), red banded powder kegs with pale lids detonate in a 6 m blast (140 damage at center,
+  reduced with distance and walls, 60% for bystanders/animals), break nearby props, and
+  chain-detonate adjacent kegs.
+
+## [1.10.0] - 2026-11-28
+
+### Added
+
+- **Round rotating mini-map & `Tab` full chapter map:** Added a top-right circular mini-map showing
+  ~55 m around the player (rotating with heading, with a live `N` indicator on its rim) and a
+  north-up full chapter map held open with `Tab`, pre-rendered once per chapter onto a 512 × 512
+  offscreen canvas from terrain slope shading, water, walkable decks/bridges, solid buildings, and
+  tall cylinders.
+- **Fog of war & enemy dots:** Both maps start dark and uncover within ~30 m of everywhere the
+  player visits; active, moving, or firing enemies appear as red dots (boss larger) only inside
+  uncovered ground (or within 90 m during Eagle Eye).
+- **World & map mark (Middle Mouse Button):** Clicking the middle mouse button places, moves, or
+  clears a glowing 3D pin in the world with a through-wall distance readout and a map dot (clamped
+  to the mini-map rim when out of range).
+- **Named landmarks across all nine chapters:** Added 9–12 named places per chapter that appear on
+  both maps once discovered and announce their name on first arrival.
+
+### Removed
+
+- **Top compass bar:** Removed the top compass strip in both single-player and Online modes (keeping
+  the enemies-remaining counter, boss bar, and scoreline intact).
+
+## [1.9.0] - 2026-11-28
+
+### Added
+
+- **Arsenal list, Bag & finite ammunition:** Up to six weapons carried (hero's own first, Fists
+  always last), displayed on the right above the active weapon name with key and shots left; mouse
+  wheel and keys `1`–`9` cycle smoothly through arsenal and bag. Every ranged/thrown weapon starts
+  with finite ammunition (max carry 2× start) and automatically switches to **Bare Fists** when dry
+  (LMB alternating jab 28, RMB hook 55, 1.6 m reach, silent).
+- **Chapter second weapons & new gear:** Every hero now sets out with a second weapon of their
+  chapter — Cavalry Sabre (West), silent Poison Blowgun with sniper sight (Japan & Tenochtitlan),
+  Confederate Sword (Switzerland), Woven Sling (Greece & Tibet), Norse Seax (Vikings), and a
+  pistol/rifle pair (Normandy & Stalnogorsk) — plus starting bag items (3 Big Stones in Switzerland
+  and Vikings; 2 Molotov Cocktails in Normandy; 3 Molotovs in Stalnogorsk; 2 Dynamite in West).
+- **Molotov fire pools, enemy drops, recoverable missiles & `G` drop:** Molotov cocktails burst into
+  a 3 m burning fire pool lasting 7 s that hurts both enemies and the player. Fallen enemies drop
+  glowing weapons/blades (emptied enemy weapons leave the arsenal), ammo boxes (60% of melee foes),
+  bag healing provisions (20%, up to 9, `+35 HP` via `H` or bag-in-hand LMB), and chapter bombs
+  (30% in powder chapters, 2 s fuse). Thrown missiles (arrows, bolts, stars, javelins, axes, darts,
+  stones, sling pellets, big stones) stick or lie glowing and can be walked over to recover (40
+  most recent kept). Press `G` to put down the held weapon or one bag item.
+- **Special Skill (`E`) for every hero and villain:** Assigned by each fighter's strength from seven
+  skills (**Dash**, **Stand fast**, **Dead eye**, **Second wind**, **Vanish**, **Fury**, **Eagle
+  eye**) with HUD status under the health bar, hero/fighter card labels, active screen tint, and
+  through-wall Eagle Eye markers.
+- **Aimed throws (RMB) & quick chapter blade (`F`):** Holding RMB with any thrown weapon narrows the
+  view and renders an exact physics-stepped dotted trajectory line with landing ring (and blast
+  circle for bombs/Molotovs), turning red when striking an enemy. Every chapter's signature blade
+  now strikes immediately on `F` (keeping bow RMB sword-cut and fists RMB hook).
+
+## [1.8.0] - 2026-11-28
+
+### Added
+
+- **Graphics setting (`Automatic`, `High`, `Medium`, `Low`):** Added a remembered `"Graphics"`
+  selector at the bottom left of the title screen and a live mid-chapter toggle (`G` on the pause
+  screen, without rebuilding the world). `Medium` draws at 75% resolution; `Low` draws at 50%
+  resolution, disables bloom, pulls shadow range to 60%, and thins decorative foliage. `Automatic`
+  starts on `High`, averages frame times over 80 frames, steps down below 42 fps, and reverts the
+  step until the next chapter if it does not shorten frame time by at least 7%.
+- **`?fps` frame counter:** Opening the game with `?fps` in the address displays a compact corner
+  readout with live frames per second, active graphics level, and render buffer dimensions.
+
+### Changed
+
+- **Readable online codes:** The 5-character invite code, join input, and invite link now use plain
+  upright monospace typography (large bold for the code). Generated codes use only 22 unambiguous
+  characters (`34679ACDEFHJKLMNPRTWXY` — omitting `0/O/Q`, `1/I`, `2/Z`, `5/S`, `8/B`, `G`, `U/V`)
+  and accept lowercase and spaces when typed.
+
+### Removed
+
+- **Copy-paste backup handshake:** Removed the manual offer/answer copy-paste fallback from the
+  Online lobby and connection module so every game connects through the single 5-character code or
+  invite link.
+
+## [1.7.0] - 2026-11-28
+
+### Added
+
+- **Non-combatant bystanders across all nine chapters:** 12–29 peaceful period townsfolk per chapter
+  (about half of them women in period skirts, aprons, shawls, plaits, buns, headscarves, Norse
+  twin brooches, or Tibetan striped aprons), solid and unarmed, never in doorways or paths,
+  breathing and looking about (saloon barmaid & pianist, Rütli oath men, Penelope at her loom,
+  women at the well, old dog Argos, Norse weavers & captives, pre-dawn Normandy townsfolk & wounded
+  glider pilot, Soviet shoppers & chess players & prisoners, Tibetan nuns & women traders, Mexica
+  market women, conch-blower & canoe paddlers).
+- **Closed Orthodox Church & Old Priest in Stalnogorsk:** Added a closed Orthodox church used as a
+  store (cross removed, boarded window, crates) where an old Orthodox priest with a waist-length
+  white beard, black habit embroidered with white three-barred crosses, lit glowing taper, and
+  blessing hand stands safely apart from the Committee agent near the door.
+- **Flanking routes, opened buildings, ladders & crawl spaces across all chapters:**
+  - **Red Gulch:** Railroad depot & crawl-under boxcar with roof ladder, Silver Queen Mine crawl
+    drift, Grand Hotel with roof ladder, Barber Shop, Doctor's Office, and dry wash trench.
+  - **Kyoto Mist:** Rice paddies with dike path, stilted granary with crawl-under space & loft
+    ladder, charcoal burners' camp, and low dojo water gate.
+  - **Rütli Valley:** Watermill with turning wheel, lake landing Sust store, 3-ladder keep scaffold,
+    Rütli oath meadow, and palisade crawl gap.
+  - **Aegean Isle:** Two-end stone cistern crawl tunnel, stepped marble quarry, Eumaeus' farm, and
+    Beacon Tower fire-platform ladder.
+  - **Fjord of the North:** Shipyard crawl-under hull on stocks, Beacon Crag ladder, Nordic byre with
+    hayloft ladder, palisade fighting steps with stairs, and low fish-rack crawl tunnel.
+  - **Normandy:** 14 bocage hedgerow crawl holes leading off the road, railway halt with two
+    crawl-under boxcars & ladder, cider farm, school/café, church tower ladder, and crashed glider.
+  - **Stalnogorsk:** Walk-through block of flats with brass samovar, goods siding boxcar crawl,
+    Committee wall drain tunnel, and crane perch ladder.
+  - **Road to Lhasa:** Barley terraces & stone barn with roof ladder, enterable army tent, and
+    ruined fort wall crawl breach.
+  - **Tenochtitlan:** Lake canoes with Mexica paddlers, upright loom, and palace roof conch-blower.
+
 ## [1.6.0] - 2026-11-28
 
 ### Added

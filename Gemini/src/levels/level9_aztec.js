@@ -8,9 +8,11 @@ import {
   addSolidBox,
   addAltar,
   addTableAndChairs,
-  addStairFlight
+  addStairFlight,
+  addUprightLoom
 } from '../engine/buildings.js';
 import { createPickupMesh } from './level1_west.js';
+import { spawnBystanders } from '../entities/bystanders.js';
 
 export const LEVEL9_META = {
   id: 'aztec',
@@ -901,11 +903,38 @@ export function buildLevel9(scene, collision, particles) {
     { name: 'Temazcal Steam Bath', inside: temazcal.insidePos, outside: temazcal.outsidePos }
   ];
 
+  // ---- STAGE 7 EXPANSION: EXTRA LADDERS, LOOM & 13 MEXICA BYSTANDERS (JOINING GREAT TEMPLE DRUMMER -> 14 TOTAL, 7 WOMEN!) ----
+  addUprightLoom(scene, collision, 56, 0, 14, matTimber, 0x1fb89a);
+  // Floating wooden canoes on Lake Texcoco carrying non-combatant Mexica paddlers!
+  for (const [cx, cz] of [[-13, -32], [14, -42], [-15, -60], [16, -68], [-44, -46]]) {
+    const hull = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.42, 4.2), matDarkWood);
+    hull.position.set(cx, 0.04, cz);
+    scene.add(hull);
+  }
+  const bystanders = spawnBystanders(scene, collision, animated, 'aztec', [
+    // Four market women at stalls, woman at grinding stone, weaver woman
+    { gender: 'female', role: 'market_woman', pos: new THREE.Vector3(56.5, 0, 24.0), yaw: -1.4 },
+    { gender: 'female', role: 'market_woman', pos: new THREE.Vector3(56.5, 0, 34.0), yaw: -1.5 },
+    { gender: 'female', role: 'market_woman', pos: new THREE.Vector3(67.5, 0, 24.0), yaw: -1.5 },
+    { gender: 'female', role: 'market_woman', pos: new THREE.Vector3(67.5, 0, 44.0), yaw: -1.4 },
+    { gender: 'female', role: 'grinder', pos: new THREE.Vector3(44.2, 0.16, -5.8), yaw: 0.4, seated: true },
+    { gender: 'female', role: 'weaver', pos: new THREE.Vector3(57.2, 0, 14.0), yaw: -1.5 },
+    // Old man in doorway & conch-blower on Palace of Axayacatl roof!
+    { gender: 'male',   role: 'elder', pos: new THREE.Vector3(62.2, 0.16, -6.2), yaw: 0.2 },
+    { gender: 'male',   role: 'conch_blower', pos: new THREE.Vector3(-58.0, 4.0, 42.0), yaw: 1.2, prop: 'conch' },
+    // Five men & women paddling wooden canoes on Lake Texcoco
+    { gender: 'female', role: 'canoe_paddler', pos: new THREE.Vector3(-13, 0.12, -32), yaw: 0.4, seated: true, prop: 'paddle', noCollider: true },
+    { gender: 'male',   role: 'canoe_paddler', pos: new THREE.Vector3(14, 0.12, -42), yaw: -0.6, seated: true, prop: 'paddle', noCollider: true },
+    { gender: 'male',   role: 'canoe_paddler', pos: new THREE.Vector3(-15, 0.12, -60), yaw: 0.8, seated: true, prop: 'paddle', noCollider: true },
+    { gender: 'male',   role: 'canoe_paddler', pos: new THREE.Vector3(16, 0.12, -68), yaw: -0.3, seated: true, prop: 'paddle', noCollider: true },
+    { gender: 'male',   role: 'canoe_paddler', pos: new THREE.Vector3(-44, 0.12, -46), yaw: 0.5, seated: true, prop: 'paddle', noCollider: true }
+  ]);
+
   const specialSpots = {
     crawlDen: temazcal,
-    greatTempleSummit: new THREE.Vector3(0, pyrTopY, 71.0),
+    greatTempleSummit: new THREE.Vector3(0, pyrTopY, 82.0),
     causewayStart: new THREE.Vector3(0, 0, 12.0),
     farShore: new THREE.Vector3(0, terrainH(0, -92), -92)
   };
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots, bystanders };
 }
