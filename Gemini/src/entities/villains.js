@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { ERA_HEROES, buildHeroFigure } from './heroes.js';
 
 /**
- * 25 Playable Villains — strictly for Duel Mode only (never shown in single-player).
- * Three per level, four in Level 7. Plain factual descriptions; strictly no party symbols.
+ * 27 Playable Villains — strictly for Duel Mode only (never shown in single-player).
+ * Three per level, four in Level 7, five in Level 4 (Greece). Plain factual descriptions; strictly no party symbols.
  */
 export const ERA_VILLAINS = {
   west: [
@@ -160,6 +160,32 @@ export const ERA_VILLAINS = {
       hudTag: '+15% SPEED',
       defaultWeaponIdx: 0,
       mods: { moveSpeedMult: 1.15 }
+    },
+    {
+      id: 'minotaur',
+      era: 'greece',
+      isVillain: true,
+      name: 'Minotaur',
+      bio: 'The bull-headed monster of the Cretan labyrinth.',
+      strengthLabel: 'Labyrinth Brute',
+      strengthDesc: 'Throwing axes and sword; starts with 160 health.',
+      hudTag: 'AXES · 160 HP',
+      defaultWeaponIdx: 0,
+      weaponIds: ['throwing_axe', 'xiphos'],
+      mods: { fixedMaxHp: 160, figureScale: 1.24, hitRadius: 0.66 }
+    },
+    {
+      id: 'xerxes',
+      era: 'greece',
+      isVillain: true,
+      name: 'Xerxes',
+      bio: 'Great King of Persia, who invaded Greece in 480 BC.',
+      strengthLabel: 'Immortal Guard',
+      strengthDesc: 'Bow and sword; takes 20% less damage.',
+      hudTag: 'BOW · -20% DMG',
+      defaultWeaponIdx: 0,
+      weaponIds: ['yumi', 'xiphos'],
+      mods: { damageTakenMult: 0.80 }
     }
   ],
   scandinavia: [
@@ -387,13 +413,21 @@ export function buildVillainFigure(villainId, withPlinth = true) {
   const whiteMat = new THREE.MeshStandardMaterial({ color: 0xeee9dc, roughness: 0.78 });
   const eyeMat = new THREE.MeshBasicMaterial({ color: 0x15100c });
 
-  function makeBody({ torsoMat, legsMat, armsMat, bootsMat = brownLeather, skin = skinFair, slim = false, oneEye = false }) {
-    const legR = slim ? 0.095 : 0.11;
+  const violetMat = new THREE.MeshStandardMaterial({ color: 0x6b2c8c, roughness: 0.72 });
+  const imperialPurple = new THREE.MeshStandardMaterial({ color: 0x571a5c, roughness: 0.68 });
+  const greyGreen = new THREE.MeshStandardMaterial({ color: 0x596250, roughness: 0.82 });
+  const bullBrown = new THREE.MeshStandardMaterial({ color: 0x5c3622, roughness: 0.88 });
+  const hornBone = new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 0.55 });
+  const redEyeMat = new THREE.MeshBasicMaterial({ color: 0xff2820 });
+  const mouthMat = new THREE.MeshStandardMaterial({ color: 0x995246, roughness: 0.72 });
+
+  function makeBody({ torsoMat, legsMat, armsMat, bootsMat = brownLeather, skin = skinFair, slim = false, stout = false, heavyJaw = false, oneEye = false, browMat = darkHair, browThick = 1.0, bullHead = false }) {
+    const legR = slim ? 0.095 : stout ? 0.125 : 0.11;
     const legGeo = new THREE.CylinderGeometry(legR, legR * 0.88, 0.84, 10);
     const legL = new THREE.Mesh(legGeo, legsMat);
-    legL.position.set(-0.15, 0.42, 0);
+    legL.position.set(stout ? -0.17 : -0.15, 0.42, 0);
     const legRMesh = new THREE.Mesh(legGeo, legsMat);
-    legRMesh.position.set(0.15, 0.42, 0);
+    legRMesh.position.set(stout ? 0.17 : 0.15, 0.42, 0);
 
     const bootGeo = new THREE.BoxGeometry(0.16, 0.22, 0.27);
     const bootL = new THREE.Mesh(bootGeo, bootsMat);
@@ -401,11 +435,12 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     legL.add(bootL);
     legRMesh.add(bootL.clone());
 
-    const torsoW = slim ? 0.48 : 0.56;
-    const torso = new THREE.Mesh(new THREE.BoxGeometry(torsoW, 0.74, 0.3), torsoMat);
+    const torsoW = slim ? 0.48 : stout ? 0.68 : 0.56;
+    const torsoD = stout ? 0.40 : 0.30;
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(torsoW, 0.74, torsoD), torsoMat);
     torso.position.set(0, 1.18, 0);
 
-    const armR = slim ? 0.072 : 0.085;
+    const armR = slim ? 0.072 : stout ? 0.098 : 0.085;
     const armGeo = new THREE.CylinderGeometry(armR, armR * 0.86, 0.64, 8);
     const armL = new THREE.Mesh(armGeo, armsMat);
     armL.position.set(-(torsoW * 0.5 + 0.1), 1.18, 0.04);
@@ -415,27 +450,117 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     armRMesh.rotation.x = -0.65;
     armRMesh.rotation.z = -0.1;
 
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 12), skin);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(bullHead ? 0.24 : 0.21, 14, 12), skin);
     head.position.set(0, 1.78, 0);
     head.userData.hitZone = 'head';
 
-    if (oneEye) {
+    if (bullHead) {
+      // Bull snout, nostrils, curved horns, red eyes, bovine ears & gold nose ring
+      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.18, 0.24), skin);
+      snout.position.set(0, -0.06, 0.22);
+      const mouthB = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.025, 0.03), blackCloth);
+      mouthB.position.set(0, -0.11, 0.34);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 8, 16), goldMat);
+      ring.position.set(0, -0.09, 0.35);
+      const eL = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), redEyeMat);
+      eL.position.set(-0.095, 0.04, 0.21);
+      const eR = eL.clone();
+      eR.position.x = 0.095;
+      const bL = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.032, 0.04), blackCloth);
+      bL.position.set(-0.095, 0.09, 0.205);
+      bL.rotation.z = -0.22;
+      const bR = bL.clone();
+      bR.position.x = 0.095;
+      bR.rotation.z = 0.22;
+      for (const s of [-1, 1]) {
+        const ear = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.16, 6), skin);
+        ear.position.set(s * 0.26, 0.08, 0.0);
+        ear.rotation.z = -s * 1.15;
+        const hornBase = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.062, 0.22, 8), hornBone);
+        hornBase.position.set(s * 0.24, 0.22, 0.03);
+        hornBase.rotation.z = -s * 0.95;
+        const hornTip = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.24, 8), hornBone);
+        hornTip.position.set(s * 0.36, 0.33, 0.08);
+        hornTip.rotation.z = -s * 0.22;
+        hornTip.rotation.x = 0.25;
+        head.add(ear, hornBase, hornTip);
+      }
+      head.add(snout, mouthB, ring, eL, eR, bL, bR);
+    } else if (oneEye) {
       const sclera = new THREE.Mesh(new THREE.SphereGeometry(0.068, 10, 8), whiteMat);
       sclera.position.set(0, 0.03, 0.19);
       const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 8), crimsonMat);
       pupil.position.set(0, 0.03, 0.245);
-      head.add(sclera, pupil);
+      const brow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.03, 0.04), browMat);
+      brow.position.set(0, 0.11, 0.195);
+      const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.022, 0.026), mouthMat);
+      mouth.position.set(0, -0.09, 0.195);
+      const earL = new THREE.Mesh(new THREE.SphereGeometry(0.048, 7, 7), skin);
+      earL.scale.set(0.55, 1.15, 0.75);
+      earL.position.set(-0.21, 0, 0);
+      const earR = earL.clone();
+      earR.position.x = 0.21;
+      head.add(sclera, pupil, brow, mouth, earL, earR);
     } else {
       const eL = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), eyeMat);
-      eL.position.set(-0.07, 0.02, 0.195);
+      eL.position.set(-0.07, 0.025, 0.195);
       const eR = eL.clone();
       eR.position.x = 0.07;
-      head.add(eL, eR);
+
+      const browL = new THREE.Mesh(new THREE.BoxGeometry(0.076, 0.021 * browThick, 0.032), browMat);
+      browL.position.set(-0.07, 0.072, 0.192);
+      const browR = browL.clone();
+      browR.position.x = 0.07;
+
+      const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.019, 0.026), mouthMat);
+      mouth.position.set(0, -0.078, 0.195);
+
+      const earL = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 7), skin);
+      earL.scale.set(0.55, 1.15, 0.75);
+      earL.position.set(-0.21, 0, 0);
+      const earR = earL.clone();
+      earR.position.x = 0.21;
+
+      head.add(eL, eR, browL, browR, mouth, earL, earR);
+
+      if (heavyJaw) {
+        const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.13, 0.23), skin);
+        jaw.position.set(0, -0.105, 0.055);
+        head.add(jaw);
+      }
     }
 
     root.add(legL, legRMesh, torso, armL, armRMesh, head);
     root.userData.parts = { legL, legR: legRMesh, armL, armR: armRMesh, torso, head };
     return { legL, legR: legRMesh, armL, armR: armRMesh, torso, head };
+  }
+
+  function addEpaulettes(torsoW, y = 1.56, mat = goldMat) {
+    for (const s of [-1, 1]) {
+      const ep = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.045, 0.13), mat);
+      ep.position.set(s * (torsoW * 0.5 - 0.06), y, 0);
+      root.add(ep);
+    }
+  }
+
+  function addMedals(zOff = 0.205, rows = 2, cols = 4) {
+    const medalCols = [goldMat, crimsonMat, steelMat, goldMat];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.016, 8), medalCols[(r + c) % medalCols.length]);
+        m.rotation.x = Math.PI / 2;
+        m.position.set(0.07 + c * 0.052, 1.38 - r * 0.065, zOff);
+        root.add(m);
+      }
+    }
+  }
+
+  function addTie(zOff = 0.16, tieMat = blackCloth) {
+    const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.28, 0.03), whiteMat);
+    shirt.position.set(0, 1.38, zOff);
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.048, 0.26, 0.04), tieMat);
+    tie.position.set(0, 1.34, zOff + 0.015);
+    root.add(shirt, tie);
   }
 
   function addHat(head, colorMat, brimR = 0.34) {
@@ -615,6 +740,51 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     p.head.add(hair);
     addSword(p.armR, 0.82);
     root.add(cloak);
+  } else if (villainId === 'minotaur') {
+    // Minotaur: bull's head with horns, red eyes & gold nose ring, large muscular body, red kilt, throwing axe
+    const p = makeBody({ torsoMat: bullBrown, legsMat: bullBrown, armsMat: bullBrown, bootsMat: blackCloth, skin: bullBrown, stout: true, bullHead: true });
+    const kilt = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.44, 0.48, 12), crimsonMat);
+    kilt.position.set(0, 0.74, 0);
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.11, 0.42), goldMat);
+    belt.position.set(0, 0.96, 0);
+    // Double-bitted Cretan labrys / throwing axe in right hand
+    const haft = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.034, 1.05, 8), brownLeather);
+    haft.position.set(0, -0.18, 0.24);
+    haft.rotation.x = 0.78;
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.28, 0.34), steelMat);
+    blade.position.set(0, 0.18, 0.58);
+    p.armR.add(haft, blade);
+    root.add(kilt, belt);
+    root.scale.setScalar(1.22);
+  } else if (villainId === 'xerxes') {
+    // Xerxes: tall gold crown, long black beard, imperial purple robe with gold trim, bow & sword
+    const p = makeBody({ torsoMat: imperialPurple, legsMat: imperialPurple, armsMat: imperialPurple, bootsMat: brownLeather, skin: skinWeathered });
+    const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.46, 0.84, 12), imperialPurple);
+    robe.position.set(0, 0.56, 0);
+    const goldHem = new THREE.Mesh(new THREE.CylinderGeometry(0.465, 0.475, 0.11, 12), goldMat);
+    goldHem.position.set(0, 0.2, 0);
+    const goldSash = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.12, 0.34), goldMat);
+    goldSash.position.set(0, 0.96, 0);
+    const goldCollar = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.045, 8, 16), goldMat);
+    goldCollar.rotation.x = Math.PI / 2;
+    goldCollar.position.set(0, 1.54, 0);
+    // Tall fluted gold Achaemenid crown & long sculpted black Persian beard
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.2, 0.36, 12), goldMat);
+    crown.position.y = 0.3;
+    const beard = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.44, 0.15), darkHair);
+    beard.position.set(0, -0.24, 0.12);
+    const stache = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.055, 0.07), darkHair);
+    stache.position.set(0, -0.06, 0.195);
+    p.head.add(crown, beard, stache);
+    // Persian recurve bow in left hand + royal sword in right hand
+    p.armL.rotation.x = -0.75;
+    const bow = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.022, 8, 18, Math.PI * 0.95), goldMat);
+    bow.rotation.y = Math.PI / 2;
+    bow.rotation.z = -Math.PI * 0.48;
+    bow.position.set(0, -0.14, 0.18);
+    p.armL.add(bow);
+    addSword(p.armR, 0.96);
+    root.add(robe, goldHem, goldSash, goldCollar);
   } else if (villainId === 'bloodaxe') {
     const p = makeBody({ torsoMat: crimsonMat, legsMat: brownLeather, armsMat: brownLeather, skin: skinWeathered });
     const fur = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.28, 0.4), brownLeather);
@@ -656,56 +826,96 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     addSword(p.armR, 0.85);
     root.add(cloak, clasp);
   } else if (villainId === 'hitler') {
-    // Plain grey-brown military coat, strictly ZERO party symbols or armbands
+    // Plain grey-brown coat, white shirt & dark tie, side-parted dark hair, small moustache; strictly ZERO party symbols
     const p = makeBody({ torsoMat: fieldGrey, legsMat: darkCharcoal, armsMat: fieldGrey, bootsMat: blackCloth, skin: skinFair, slim: true });
-    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.68, 0.32), fieldGrey);
+    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.68, 0.32), fieldGrey);
     coat.position.y = 0.62;
+    addTie(0.155, blackCloth);
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.215, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.52), darkHair);
     hair.position.set(0.02, 0.07, -0.02);
-    const stache = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.04, 0.05), darkHair);
-    stache.position.set(0, -0.07, 0.205);
-    p.head.add(hair, stache);
+    const lock = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.055, 0.05), darkHair);
+    lock.position.set(-0.04, 0.13, 0.17);
+    lock.rotation.z = -0.28;
+    const stache = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.038, 0.05), darkHair);
+    stache.position.set(0, -0.052, 0.205);
+    p.head.add(hair, lock, stache);
     addPistol(p.armR);
     root.add(coat);
   } else if (villainId === 'mussolini') {
-    // Plain dark grey-black tunic & plain cap, strictly ZERO fasces or party symbols
-    const p = makeBody({ torsoMat: darkCharcoal, legsMat: darkCharcoal, armsMat: darkCharcoal, bootsMat: blackCloth, skin: skinWeathered });
-    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.09, 0.34), blackCloth);
+    // Bald, heavy jaw & jutting chin, black fez with tassel, stout, grey-green tunic with medals; strictly ZERO party symbols
+    const p = makeBody({ torsoMat: greyGreen, legsMat: greyGreen, armsMat: greyGreen, bootsMat: blackCloth, skin: skinWeathered, stout: true, heavyJaw: true });
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.09, 0.42), blackCloth);
     belt.position.y = 0.94;
-    addPeakedCap(p.head, darkCharcoal);
+    // Jutting square chin
+    const chin = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.12), skinWeathered);
+    chin.position.set(0, -0.145, 0.145);
+    // Black Fez sitting high on bald head + hanging black tassel
+    const fez = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.205, 0.21, 14), blackCloth);
+    fez.position.set(0, 0.24, -0.01);
+    const tasselCord = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.24, 6), blackCloth);
+    tasselCord.position.set(-0.2, 0.22, -0.02);
+    tasselCord.rotation.z = 0.18;
+    const tasselTip = new THREE.Mesh(new THREE.ConeGeometry(0.032, 0.09, 8), blackCloth);
+    tasselTip.position.set(-0.22, 0.09, -0.02);
+    p.head.add(chin, fez, tasselCord, tasselTip);
+    addMedals(0.206, 2, 3);
+    addEpaulettes(0.68, 1.56, goldMat);
     const smg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.62, 8), darkSteel);
     smg.rotation.x = Math.PI / 2;
     smg.position.set(0, -0.32, 0.25);
     p.armR.add(smg);
     root.add(belt);
   } else if (villainId === 'goring') {
-    // Plain light blue-grey coat & plain peaked cap, strictly ZERO party symbols
-    const p = makeBody({ torsoMat: airBlue, legsMat: airBlue, armsMat: airBlue, bootsMat: blackCloth, skin: skinFair });
-    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.72, 0.38), airBlue);
+    // Heavy jaw, stout, light blue-grey coat with broad epaulettes & plain peaked cap; strictly ZERO party symbols
+    const p = makeBody({ torsoMat: airBlue, legsMat: airBlue, armsMat: airBlue, bootsMat: blackCloth, skin: skinFair, stout: true, heavyJaw: true });
+    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.72, 0.44), airBlue);
     coat.position.y = 0.64;
+    const belt = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.09, 0.44), brownLeather);
+    belt.position.y = 0.94;
+    addEpaulettes(0.70, 1.56, steelMat);
+    addMedals(0.208, 2, 3);
     addPeakedCap(p.head, airBlue);
     const rifle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 1.05, 8), brownLeather);
     rifle.rotation.x = Math.PI / 2;
     rifle.position.set(0, -0.3, 0.42);
     p.armR.add(rifle);
-    root.add(coat);
+    root.add(coat, belt);
   } else if (villainId === 'stalin') {
-    // Plain grey-olive tunic, full moustache, plain peaked cap without party emblem
-    const p = makeBody({ torsoMat: fieldGrey, legsMat: fieldGrey, armsMat: fieldGrey, bootsMat: blackCloth, skin: skinWeathered });
+    // No cap (swept dark-grey hair), big thick moustache, smoking pipe, gold epaulettes on plain tunic; strictly ZERO party symbols
+    const p = makeBody({ torsoMat: fieldGrey, legsMat: fieldGrey, armsMat: fieldGrey, bootsMat: blackCloth, skin: skinWeathered, browThick: 1.3 });
     const coat = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.66, 0.34), fieldGrey);
     coat.position.y = 0.64;
-    const stache = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.07, 0.07), darkHair);
-    stache.position.set(0, -0.07, 0.2);
-    p.head.add(stache);
-    addPeakedCap(p.head, fieldGrey);
+    addEpaulettes(0.58, 1.56, goldMat);
+    // Thick swept-back dark hair (bareheaded — no cap!)
+    const hairCrown = new THREE.Mesh(new THREE.SphereGeometry(0.225, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), darkHair);
+    hairCrown.position.set(0, 0.08, -0.03);
+    const hairRidge = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.09, 0.24), darkHair);
+    hairRidge.position.set(0, 0.18, -0.02);
+    // Big bushy drooping moustache
+    const stache = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.075, 0.085), darkHair);
+    stache.position.set(0, -0.055, 0.205);
+    const stacheL = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.07, 0.065), darkHair);
+    stacheL.position.set(-0.13, -0.085, 0.19);
+    const stacheR = stacheL.clone();
+    stacheR.position.x = 0.13;
+    // Curved Briar Pipe at corner of mouth
+    const pipeStem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.22, 6), blackCloth);
+    pipeStem.rotation.x = Math.PI / 2 + 0.25;
+    pipeStem.rotation.z = -0.3;
+    pipeStem.position.set(0.09, -0.1, 0.28);
+    const pipeBowl = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.032, 0.085, 8), brownLeather);
+    pipeBowl.position.set(0.14, -0.11, 0.38);
+    p.head.add(hairCrown, hairRidge, stache, stacheL, stacheR, pipeStem, pipeBowl);
     addPistol(p.armR);
     root.add(coat);
   } else if (villainId === 'andropov') {
-    const p = makeBody({ torsoMat: darkCharcoal, legsMat: darkCharcoal, armsMat: darkCharcoal, bootsMat: blackCloth, skin: skinFair, slim: true });
-    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.72, 0.32), darkCharcoal);
-    coat.position.y = 0.62;
-    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.215, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.5), silverHair);
-    hair.position.y = 0.07;
+    // Glasses, crisp white shirt & dark tie, long dark overcoat, combed silver hair
+    const p = makeBody({ torsoMat: darkCharcoal, legsMat: darkCharcoal, armsMat: darkCharcoal, bootsMat: blackCloth, skin: skinFair, slim: true, browMat: silverHair });
+    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.78, 0.32), darkCharcoal);
+    coat.position.y = 0.58;
+    addTie(0.155, blackCloth);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(0.215, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.52), silverHair);
+    hair.position.set(0, 0.07, -0.02);
     p.head.add(hair);
     addGlasses(p.head);
     addPistol(p.armR);
@@ -714,39 +924,51 @@ export function buildVillainFigure(villainId, withPlinth = true) {
     const p = makeBody({ torsoMat: greyCoat, legsMat: darkCharcoal, armsMat: greyCoat, bootsMat: blackCloth, skin: skinFair });
     const coat = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.72, 0.36), greyCoat);
     coat.position.y = 0.62;
+    addTie(0.155, blackCloth);
     addHat(p.head, darkCharcoal, 0.32);
     addGlasses(p.head);
     addPistol(p.armR);
     root.add(coat);
   } else if (villainId === 'brezhnev') {
-    const p = makeBody({ torsoMat: blackCloth, legsMat: blackCloth, armsMat: blackCloth, bootsMat: blackCloth, skin: skinFair });
-    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.7, 0.36), blackCloth);
+    // Very heavy thick eyebrows, heavy jaw, stout, suit with white shirt, tie & rows of medals; strictly ZERO party symbols
+    const p = makeBody({ torsoMat: blackCloth, legsMat: blackCloth, armsMat: blackCloth, bootsMat: blackCloth, skin: skinFair, stout: true, heavyJaw: true, browThick: 2.6 });
+    const coat = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.42), blackCloth);
     coat.position.y = 0.64;
-    const brows = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.045, 0.06), darkHair);
-    brows.position.set(0, 0.065, 0.2);
-    const furHat = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.25, 0.2, 12), greyCoat);
-    furHat.position.y = 0.2;
-    p.head.add(brows, furHat);
+    addTie(0.205, crimsonMat);
+    addMedals(0.208, 3, 4);
+    // Very heavy iconic bushy connected eyebrows + thick combed-back hair
+    const heavyBrows = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.068, 0.068), darkHair);
+    heavyBrows.position.set(0, 0.075, 0.205);
+    const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.228, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.56), darkHair);
+    hairBack.position.set(0, 0.08, -0.04);
+    p.head.add(heavyBrows, hairBack);
     const smg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.64, 8), darkSteel);
     smg.rotation.x = Math.PI / 2;
     smg.position.set(0, -0.32, 0.26);
     p.armR.add(smg);
     root.add(coat);
   } else if (villainId === 'mao') {
-    // Plain grey Zhongshan jacket, strictly ZERO party symbols
-    const p = makeBody({ torsoMat: greyCoat, legsMat: greyCoat, armsMat: greyCoat, bootsMat: blackCloth, skin: skinWeathered });
-    const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.42, 0.34), greyCoat);
+    // Stout, mole on the chin, high receding forehead with dark side/back hair, plain grey Zhongshan jacket; strictly ZERO party symbols
+    const p = makeBody({ torsoMat: greyCoat, legsMat: greyCoat, armsMat: greyCoat, bootsMat: blackCloth, skin: skinWeathered, stout: true, heavyJaw: true });
+    const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.46, 0.42), greyCoat);
     jacket.position.y = 0.78;
-    const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.16, 0.22), darkHair);
-    sideL.position.set(-0.2, 0.05, -0.04);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.2, 0.08, 12), greyCoat);
+    collar.position.y = 1.56;
+    // Distinctive dark mole on lower-left chin!
+    const mole = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), darkHair);
+    mole.position.set(-0.045, -0.125, 0.205);
+    const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.17, 0.22), darkHair);
+    sideL.position.set(-0.205, 0.05, -0.04);
     const sideR = sideL.clone();
-    sideR.position.x = 0.2;
-    p.head.add(sideL, sideR);
+    sideR.position.x = 0.205;
+    const backHair = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 0.1), darkHair);
+    backHair.position.set(0, 0.04, -0.18);
+    p.head.add(mole, sideL, sideR, backHair);
     const rifle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.028, 1.05, 8), brownLeather);
     rifle.rotation.x = Math.PI / 2;
     rifle.position.set(0, -0.3, 0.42);
     p.armR.add(rifle);
-    root.add(jacket);
+    root.add(jacket, collar);
   } else if (villainId === 'langdarma') {
     const p = makeBody({ torsoMat: darkPurple, legsMat: blackCloth, armsMat: darkPurple, bootsMat: brownLeather, skin: skinWeathered });
     const robe = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.45, 0.8, 12), darkPurple);

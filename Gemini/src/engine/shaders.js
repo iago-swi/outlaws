@@ -211,10 +211,11 @@ export function createWaterMesh(width, depth, options = {}) {
 /**
  * Cascading Alpine Waterfall Shader
  */
-export function createWaterfallMesh(width, height) {
+export function createWaterfallMesh(width, height, opacityScale = 1.0) {
   const geo = new THREE.PlaneGeometry(width, height, 12, 24);
   const uniforms = {
-    uTime: { value: 0 }
+    uTime: { value: 0 },
+    uOpacity: { value: opacityScale }
   };
 
   const mat = new THREE.ShaderMaterial({
@@ -234,6 +235,7 @@ export function createWaterfallMesh(width, height) {
     `,
     fragmentShader: /* glsl */ `
       uniform float uTime;
+      uniform float uOpacity;
       varying vec2 vUv;
 
       float hash(vec2 p) {
@@ -262,7 +264,7 @@ export function createWaterfallMesh(width, height) {
         float topCrest = smoothstep(0.85, 1.0, vUv.y);
 
         vec3 waterCol = mix(vec3(0.36, 0.74, 0.86), vec3(0.95, 0.99, 1.0), clamp(streaks + bottomSpray * 0.75 + topCrest * 0.6, 0.0, 1.0));
-        float alpha = (0.58 + streaks * 0.36 + bottomSpray * 0.25) * edgeFade;
+        float alpha = (0.58 + streaks * 0.36 + bottomSpray * 0.25) * edgeFade * uOpacity;
 
         gl_FragColor = vec4(waterCol, clamp(alpha, 0.0, 0.95));
       }

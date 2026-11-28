@@ -141,6 +141,8 @@ class OutlawsGame {
       maxHp: 100,
       stamina: 100,
       grounded: true,
+      crouched: false,
+      eyeHeight: 1.68,
       bobPhase: 0
     };
 
@@ -230,6 +232,7 @@ class OutlawsGame {
       scoreVal: document.getElementById('hud-score'),
       heroName: document.getElementById('hud-hero-name'),
       heroPerk: document.getElementById('hud-hero-perk'),
+      crouchBadge: document.getElementById('hud-crouch-badge'),
       hpText: document.getElementById('hud-hp-text'),
       hpBar: document.getElementById('hud-hp-bar'),
       staminaBar: document.getElementById('hud-stamina-bar'),
@@ -373,6 +376,18 @@ class OutlawsGame {
 
       if (this.state !== 'playing') return;
 
+      // Crouching: C toggles crouch; CapsLock syncs to its real hardware on/off state!
+      if (e.code === 'KeyC' && !e.repeat) {
+        this.setCrouch(!this.player.crouched);
+      } else if (e.code === 'CapsLock') {
+        const capsOn = typeof e.getModifierState === 'function' ? e.getModifierState('CapsLock') : !this.player.crouched;
+        this.setCrouch(capsOn);
+      } else if (e.code === 'Space' && this.player.crouched) {
+        // Space stands the player up when crouched (if there is headroom!)
+        this.setCrouch(false);
+        this.keys['Space'] = false; // Don't jump on the same press that stood up
+      }
+
       if (e.code === 'Digit1') this.switchWeapon(0);
       if (e.code === 'Digit2') this.switchWeapon(1);
       if (e.code === 'Digit3') this.switchWeapon(2);
@@ -390,6 +405,9 @@ class OutlawsGame {
 
     window.addEventListener('keyup', (e) => {
       this.keys[e.code] = false;
+      if (e.code === 'CapsLock' && this.state === 'playing' && typeof e.getModifierState === 'function') {
+        this.setCrouch(e.getModifierState('CapsLock'));
+      }
     });
 
     // Mouse Wheel Weapon Switch
@@ -491,11 +509,12 @@ class OutlawsGame {
 
     const built = builder(this.worldGroup, this.collision, this.particles);
     // Build real 2D A* navigation grid directly from this level's exact collision shapes
-    this.collision.buildNavGrid(1.35);
+    this.collision.buildNavGrid(1.2);
     this.animatedCallbacks = built.animated || [];
     this.pickups = built.pickups || [];
     this.tellApple = built.tellApple || null;
     this.enterableBuildings = built.enterableBuildings || [];
+    this.specialSpots = built.specialSpots || {};
 
     // Remember the far end of the map (boss spawn) for Duel Mode two-end spawning
     const bossSp = built.enemySpawns.find((s) => s.isBossWave);
@@ -521,16 +540,20 @@ class OutlawsGame {
     this.player.hp = effectiveMaxHp;
     this.player.stamina = 100;
     this.player.grounded = true;
+    this.player.crouched = false;
+    this.player.eyeHeight = 1.68;
+    if (this.dom.crouchBadge) this.dom.crouchBadge.classList.add('hidden');
     this.timeSinceLastDamage = 999;
 
     this.stats = { score: 0, shots: 0, hits: 0, headshots: 0, kills: 0 };
 
-    // Spawn Enemies
+    // Spawn Enemies (Duel supports 0..9 ordinary enemies spread evenly across the map!)
     if (isDuel) {
       this.bossSpawnPending = null;
-      if (duelOpts.duelEnemiesOpt === 'few') {
+      const reqCount = Math.max(0, Math.min(9, parseInt(duelOpts.duelEnemiesCount, 10) || 0));
+      if (reqCount > 0) {
         const ordinary = built.enemySpawns.filter((s) => !s.isBossWave && !(s.options && s.options.hideUntilClose));
-        const pickCount = Math.min(6, ordinary.length);
+        const pickCount = Math.min(reqCount, ordinary.length);
         const step = ordinary.length / pickCount;
         for (let i = 0; i < pickCount; i++) {
           const sp = ordinary[Math.floor(i * step)];
@@ -552,10 +575,19 @@ class OutlawsGame {
       }
     }
 
-    // Build Era Weapons (or Hero-specific loadout when hero.weaponIds is defined, e.g. Normandy!)
+    // Build Era Weapons (or Fighter-specific loadout when hero.weaponIds is defined, supporting cross-era weapons e.g. Minotaur/Xerxes!)
     const allEraWeapons = ERA_WEAPONS[meta.id];
+    const findWeaponTemplate = (id) => {
+      const local = allEraWeapons.find((w) => w.id === id);
+      if (local) return local;
+      for (const list of Object.values(ERA_WEAPONS)) {
+        const hit = list.find((w) => w.id === id);
+        if (hit) return hit;
+      }
+      return null;
+    };
     const templates = hero.weaponIds
-      ? hero.weaponIds.map((id) => allEraWeapons.find((w) => w.id === id)).filter(Boolean)
+      ? hero.weaponIds.map((id) => findWeaponTemplate(id)).filter(Boolean)
       : allEraWeapons;
     this.weapons = templates.map((w) => {
       const ov = (mods.weaponOverrides && mods.weaponOverrides[w.id]) || {};
@@ -1324,6 +1356,21 @@ class OutlawsGame {
     setTimeout(() => el.remove(), 1950);
   }
 
+  setCrouch(wantCrouch) {
+    const want = !!wantCrouch;
+    if (!want && this.player.crouched) {
+      // Refuse to stand up where there is no headroom (e.g., inside a 1.25m crawl-in den!)
+      if (!this.collision.hasHeadroom(this.player.pos.x, this.player.pos.z, 0.46, this.player.pos.y, 1.75)) {
+        return false;
+      }
+    }
+    this.player.crouched = want;
+    if (this.dom.crouchBadge) {
+      this.dom.crouchBadge.classList.toggle('hidden', !want);
+    }
+    return true;
+  }
+
   // ---------------- Main Frame Update ----------------
   _updatePlayer(dt) {
     // Smooth FOV transition for Sniper Scope Zoom!
@@ -1334,14 +1381,16 @@ class OutlawsGame {
       this.camera.updateProjectionMatrix();
     }
 
-    // Horizontal Movement (with Hero movement speed modifier e.g. Calamity Jane +18%)
+    // Horizontal Movement (with Hero movement speed modifier & Crouching: half speed, no sprint!)
     const mods = (this.activeHero && this.activeHero.mods) || {};
     const speedMult = mods.moveSpeedMult || 1;
     const moveFwd = (this.keys['KeyW'] || this.keys['ArrowUp'] ? 1 : 0) - (this.keys['KeyS'] || this.keys['ArrowDown'] ? 1 : 0);
     const moveSide = (this.keys['KeyD'] || this.keys['ArrowRight'] ? 1 : 0) - (this.keys['KeyA'] || this.keys['ArrowLeft'] ? 1 : 0);
 
-    const wantsSprint = (this.keys['ShiftLeft'] || this.keys['ShiftRight']) && moveFwd > 0 && !this.scoped && this.player.stamina > 6;
-    const speed = (this.scoped ? 4.2 : wantsSprint ? 11.4 : 7.6) * speedMult;
+    const crouched = !!this.player.crouched;
+    const wantsSprint = !crouched && (this.keys['ShiftLeft'] || this.keys['ShiftRight']) && moveFwd > 0 && !this.scoped && this.player.stamina > 6;
+    const baseSpeed = this.scoped ? 4.2 : wantsSprint ? 11.4 : 7.6;
+    const speed = baseSpeed * speedMult * (crouched ? 0.5 : 1.0);
 
     // Out-of-danger health regeneration (Werner Stauffacher)
     this.timeSinceLastDamage += dt;
@@ -1372,11 +1421,12 @@ class OutlawsGame {
     const moving = wish.lengthSq() > 0.01;
     if (moving) wish.normalize().multiplyScalar(speed);
 
-    // Sub-stepped horizontal movement so fast runners never skip thin walls or iron bars
-    this.collision.moveHorizontal(this.player.pos, wish.x * dt, wish.z * dt, 0.52, this.player.pos.y);
+    // Sub-stepped horizontal movement (crouched height = 1.05m fits through 1.25m den doors; upright = 1.75m!)
+    const playerHeight = crouched ? 1.05 : 1.75;
+    this.collision.moveHorizontal(this.player.pos, wish.x * dt, wish.z * dt, 0.52, this.player.pos.y, playerHeight);
 
-    // Gravity & Jump
-    if (this.keys['Space'] && this.player.grounded) {
+    // Gravity & Jump (only jump when standing!)
+    if (this.keys['Space'] && this.player.grounded && !crouched) {
       this.player.vel.y = 7.4;
       this.player.grounded = false;
     }
@@ -1391,14 +1441,18 @@ class OutlawsGame {
       this.player.grounded = true;
     }
 
+    // Smooth eye height transition (0.95m crouched vs 1.68m standing)
+    const targetEye = crouched ? 0.95 : 1.68;
+    this.player.eyeHeight += (targetEye - this.player.eyeHeight) * Math.min(1, dt * 14);
+
     // Subtle walk head-bob
     if (moving && this.player.grounded) {
-      this.player.bobPhase += dt * (wantsSprint ? 12.5 : 8.5);
+      this.player.bobPhase += dt * (wantsSprint ? 12.5 : crouched ? 6.0 : 8.5);
     }
-    const bobY = moving && this.player.grounded && !this.scoped ? Math.sin(this.player.bobPhase) * 0.055 : 0;
+    const bobY = moving && this.player.grounded && !this.scoped ? Math.sin(this.player.bobPhase) * (crouched ? 0.03 : 0.055) : 0;
 
     // Sync Camera Transform (always clear roll left over from title-screen lookAt!)
-    this.camera.position.set(this.player.pos.x, this.player.pos.y + 1.68 + bobY, this.player.pos.z);
+    this.camera.position.set(this.player.pos.x, this.player.pos.y + this.player.eyeHeight + bobY, this.player.pos.z);
     this.camera.rotation.order = 'YXZ';
     this.camera.rotation.z = 0;
     this.camera.rotation.y = this.player.yaw;
@@ -1538,8 +1592,9 @@ class OutlawsGame {
       }
     }
 
-    // Enemy Projectiles (visible glowing bullets / shuriken / bolts)
-    const playerCenter = new THREE.Vector3(this.player.pos.x, this.player.pos.y + 1.2, this.player.pos.z);
+    // Enemy Projectiles (visible glowing bullets / shuriken / bolts; lowered hit shape while crouched!)
+    const playerCenter = new THREE.Vector3(this.player.pos.x, this.player.pos.y + (this.player.crouched ? 0.62 : 1.2), this.player.pos.z);
+    const playerHitR = this.player.crouched ? 0.72 : 0.85;
     for (let i = this.enemyProjectiles.length - 1; i >= 0; i--) {
       const pr = this.enemyProjectiles[i];
       pr.life -= dt;
@@ -1557,7 +1612,7 @@ class OutlawsGame {
       }
 
       pr.mesh.position.add(step);
-      if (pr.mesh.position.distanceTo(playerCenter) < 0.85) {
+      if (pr.mesh.position.distanceTo(playerCenter) < playerHitR) {
         this._damagePlayer(pr.damage);
         this.worldGroup.remove(pr.mesh);
         this.enemyProjectiles.splice(i, 1);
@@ -1650,7 +1705,10 @@ class OutlawsGame {
         }
       };
 
-      enemy.update(dt, targetPos, this.collision, callbacks, detectMult);
+      const targetCrouched = targetIsGuest
+        ? !!(this.duel && this.duel.remoteFighter && this.duel.remoteFighter.crouched)
+        : !!this.player.crouched;
+      enemy.update(dt, targetPos, this.collision, callbacks, detectMult, targetCrouched);
     }
 
     // Solid living bodies: push overlapping player, remote opponent & enemies apart cleanly
@@ -1725,7 +1783,7 @@ class OutlawsGame {
 
   _loop() {
     requestAnimationFrame(() => this._loop());
-    const dt = Math.min(0.05, this.clock.getDelta());
+    const dt = Math.max(0, Math.min(0.05, this.clock.getDelta()));
     this.elapsed += dt;
 
     // Always animate sky, water, waterfalls, lanterns, flags & ambient particles!

@@ -10,6 +10,9 @@ import {
 import { createSkyDome, createWaterMesh, createWaterfallMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildRaisedHide,
+  buildCrawlDen,
+  buildZigzagHill,
   addSolidBox,
   addAltar,
   addPewRow,
@@ -343,6 +346,58 @@ export function buildLevel3(scene, collision, particles) {
   }
   addDesk(scene, collision, -7.2, tower.floorY, -43.0, 1.8, 0.9, matDarkWood, 1);
 
+  // ---- UNIQUE FEATURE: WALK-BEHIND WATERFALL & STONE GROTTO (West Valley Cliff, x = -56, z = 10!) ----
+  {
+    const gx = -56, gz = 10;
+    const ledgeY = 0.72;
+    // Solid cliff back wall behind the grotto (x = -62.5) + flanking rock pillars
+    addSolidBox(scene, collision, -63.0, 7.5, gz, 4.5, 15.0, 18.0, matCliff, 'stone');
+    addSolidBox(scene, collision, -57.0, 5.5, gz - 10.2, 7.5, 11.0, 3.0, matCliff, 'stone');
+    addSolidBox(scene, collision, -57.0, 5.5, gz + 10.2, 7.5, 11.0, 3.0, matCliff, 'stone');
+    // Dramatic jutting rock overhang high above head height (y = 5.6..14.8, extending out to x = -50.8!)
+    addSolidBox(scene, collision, -56.4, 10.2, gz, 11.2, 9.2, 16.5, matCliff, 'stone');
+    // Dry stone grotto floor ledge behind the falling water (x = -60..-53.5, z = 3.5..16.5)
+    const grottoFloor = new THREE.Mesh(new THREE.BoxGeometry(6.8, ledgeY, 13.4), matStone);
+    grottoFloor.position.set(-56.8, ledgeY * 0.5, gz);
+    grottoFloor.receiveShadow = true;
+    scene.add(grottoFloor);
+    collision.addWalkable(-56.8, gz, 7.0, 13.6, ledgeY);
+    // Gentle stone steps on BOTH north (z = 2.0) and south (z = 18.0) sides leading into the grotto!
+    for (const dirZ of [-1, 1]) {
+      const s1z = gz + dirZ * 7.4;
+      const s2z = gz + dirZ * 8.6;
+      const st1 = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.48, 1.3), matStone);
+      st1.position.set(-56.4, 0.24, s1z);
+      const st2 = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.24, 1.3), matStone);
+      st2.position.set(-56.4, 0.12, s2z);
+      scene.add(st1, st2);
+      collision.addWalkable(-56.4, s1z, 5.5, 1.5, 0.48);
+      collision.addWalkable(-56.4, s2z, 5.5, 1.5, 0.24);
+    }
+    // Grotto warm ambient glow so the stone ledge & cavern read clearly
+    const grottoLight = new THREE.PointLight(0x9ce8ff, 1.8, 16);
+    grottoLight.position.set(-56.8, 3.6, gz);
+    scene.add(grottoLight);
+
+    // Free-falling HALF-TRANSPARENT waterfall leaping out from the overhang (x = -51.4) into the plunge pool!
+    const grottoFalls = createWaterfallMesh(11.6, 13.5, 0.52);
+    grottoFalls.mesh.position.set(-51.4, 6.75, gz);
+    grottoFalls.mesh.rotation.y = Math.PI / 2;
+    scene.add(grottoFalls.mesh);
+    animated.push((t) => { grottoFalls.uniforms.uTime.value = t * 1.15; });
+    particles.addMistEmitter(new THREE.Vector3(-50.5, 0.7, gz), 3.4);
+
+    // Plunge pool right in front of the falling water (x = -51.5..-44.5)
+    const pool = createWaterMesh(8.0, 13.0, {
+      deepColor: 0x126685, shallowColor: 0x52e0eb, foamColor: 0xffffff,
+      sunColor: 0xfffce0, sunDir, opacity: 0.86, waveScale: 0.12
+    });
+    pool.mesh.position.set(-48.0, 0.08, gz);
+    scene.add(pool.mesh);
+    animated.push((t) => { pool.uniforms.uTime.value = t * 1.6; });
+    collision.addBox(-48.2, 0.8, gz, 6.4, 1.6, 11.4, 'water');
+  }
+
   // ---- 4. OUTLYING ALP HUT ABOVE THE VILLAGE (North-West!) ----
   const alpHut = buildHollowRoom(scene, collision, {
     cx: -44, cz: -48, w: 9.5, d: 8.5, h: 3.6, floorY: 0.2,
@@ -353,6 +408,101 @@ export function buildLevel3(scene, collision, particles) {
   });
   addHearth(scene, collision, -47.2, alpHut.floorY, -48, 0.85);
   addBunk(scene, collision, -45.5, alpHut.floorY, -51.0, false, matDarkWood, 0x556b44);
+
+  // ---- 5. ENTERABLE SWISS BARNS ON STONE STILTS (Speicher / Gadä — hay, cheese wheels, tools!) ----
+  const matHay = new THREE.MeshStandardMaterial({ color: 0xd1a847, roughness: 0.94 });
+  const matCheese = new THREE.MeshStandardMaterial({ color: 0xeec448, roughness: 0.62 });
+  const matIron = new THREE.MeshStandardMaterial({ color: 0x3b4046, metalness: 0.72, roughness: 0.38 });
+
+  function buildStiltBarn(cx, cz, w, d, doorSide, content) {
+    const stiltH = 0.88;
+    // Stone stilts with classic flat stone mouse-guard caps ("Mäuseplatten") underneath the barn!
+    for (const sx of [-w * 0.42, 0, w * 0.42]) {
+      for (const sz of [-d * 0.42, d * 0.42]) {
+        const post = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.3, stiltH, 8), matStone);
+        post.position.set(cx + sx, stiltH * 0.5, cz + sz);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 10), matStone);
+        cap.position.set(cx + sx, stiltH - 0.06, cz + sz);
+        scene.add(post, cap);
+      }
+    }
+    const opts = {
+      cx, cz, w, d, h: 3.5, floorY: stiltH,
+      wallMat: matTimber, floorMat: matTimber, roofMat: matRoof, roofStyle: 'gable',
+      stepMat: matTimber,
+      raisedFloorThickness: 0.28,
+      interiorLight: { color: 0xffc67a, intensity: 1.4, distance: 11 }
+    };
+    opts[doorSide] = [{ type: 'door', offset: 0, width: 2.3, height: 2.7 }];
+    const opp = doorSide === 'east' ? 'west' : doorSide === 'west' ? 'east' : 'north';
+    opts[opp] = [{ type: 'window', offset: 0, width: 1.5 }];
+    const room = buildHollowRoom(scene, collision, opts);
+
+    const backX = doorSide === 'east' ? cx - w * 0.3 : doorSide === 'west' ? cx + w * 0.3 : cx;
+    if (content === 'hay') {
+      addSolidBox(scene, collision, backX, room.floorY + 0.55, cz - 1.6, 1.8, 1.1, 1.4, matHay, 'wood');
+      addSolidBox(scene, collision, backX, room.floorY + 0.55, cz + 1.6, 1.8, 1.1, 1.4, matHay, 'wood');
+      const forkPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 1.7, 6), matDarkWood);
+      forkPole.position.set(backX + (doorSide === 'east' ? 1.1 : -1.1), room.floorY + 0.9, cz + 1.6);
+      forkPole.rotation.z = 0.25;
+      scene.add(forkPole);
+    } else if (content === 'cheese') {
+      // Wooden curing racks holding golden Alpine cheese wheels!
+      addSolidBox(scene, collision, backX, room.floorY + 1.0, cz, 1.1, 2.0, d - 2.6, matDarkWood, 'wood');
+      for (let r = 0; r < 2; r++) {
+        for (let c = -2; c <= 2; c++) {
+          const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.22, 14), matCheese);
+          wheel.position.set(backX + (doorSide === 'east' ? 0.45 : -0.45), room.floorY + 0.72 + r * 0.75, cz + c * 0.92);
+          scene.add(wheel);
+        }
+      }
+    } else if (content === 'tools') {
+      // Workbench, barrels & farm tools
+      addDesk(scene, collision, backX, room.floorY, cz - 1.2, 1.6, 0.85, matDarkWood, 1);
+      const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.42, 1.05, 10), matTimber);
+      barrel.position.set(backX, room.floorY + 0.52, cz + 1.8);
+      scene.add(barrel);
+      collision.addBox(backX, room.floorY + 0.52, cz + 1.8, 0.95, 1.05, 0.95, 'wood');
+      const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.55, 0.24), matIron);
+      blade.position.set(backX + (doorSide === 'east' ? 0.5 : -0.5), room.floorY + 1.1, cz - 1.2);
+      scene.add(blade);
+    }
+    return room;
+  }
+
+  buildStiltBarn(-38, 28, 8.8, 7.8, 'east', 'hay');
+  buildStiltBarn(-42, -24, 8.8, 7.8, 'east', 'cheese');
+  buildStiltBarn(12, -40, 8.8, 7.8, 'west', 'tools');
+
+  // ---- 6. DRIVE-THROUGH HAY BARN (Wide open doors on BOTH ends, stacked hay bales & wooden farm cart!) ----
+  const driveBarn = buildHollowRoom(scene, collision, {
+    cx: -26, cz: 40, w: 12.0, d: 10.5, h: 4.5, floorY: 0.14,
+    wallMat: matTimber, floorMat: matTimber, roofMat: matRoof, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 3.6, height: 3.4 }],
+    west: [{ type: 'door', offset: 0, width: 3.6, height: 3.4 }],
+    interiorLight: { color: 0xffc670, intensity: 1.5, distance: 15 }
+  });
+  // Stacked hay bales along north & south bays (keeping wide center drive-through lane open!)
+  addSolidBox(scene, collision, -28.5, driveBarn.floorY + 0.65, 36.6, 2.8, 1.3, 1.8, matHay, 'wood');
+  addSolidBox(scene, collision, -23.5, driveBarn.floorY + 0.65, 36.6, 2.4, 1.3, 1.8, matHay, 'wood');
+  addSolidBox(scene, collision, -28.2, driveBarn.floorY + 0.65, 43.4, 2.6, 1.3, 1.8, matHay, 'wood');
+  // Wooden farm cart parked inside the south bay
+  {
+    const cart = new THREE.Group();
+    cart.position.set(-23.2, driveBarn.floorY, 43.2);
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.65, 1.55), matDarkWood);
+    bed.position.y = 0.85;
+    const hayLoad = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.55, 1.25), matHay);
+    hayLoad.position.y = 1.35;
+    cart.add(bed, hayLoad);
+    for (const [wx, wz] of [[-0.9, -0.82], [0.9, -0.82], [-0.9, 0.82], [0.9, 0.82]]) {
+      const wh = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.06, 6, 12), matDarkWood);
+      wh.position.set(wx, 0.5, wz);
+      cart.add(wh);
+    }
+    scene.add(cart);
+    collision.addBox(-23.2, driveBarn.floorY + 0.85, 43.2, 3.0, 1.7, 1.85, 'wood');
+  }
 
   // Stone cover walls & Alpine Pine Trees (ALL solid!)
   for (const [sx, sz, sw, sh, sd] of [
@@ -376,9 +526,24 @@ export function buildLevel3(scene, collision, particles) {
     collision.addBox(tx, 2.0, tz, 1.1 * scale, 4.0 * scale, 1.1 * scale, 'wood');
   }
   for (const [px, pz, sc] of [
-    [-36, 36, 1.25], [-42, 18, 1.35], [-36, -24, 1.2], [-30, -38, 1.3], [-56, -38, 1.3],
-    [16, 36, 1.15], [17, 6, 1.1], [16, -42, 1.3], [-18, -32, 1.2], [-28, 48, 1.2], [10, 48, 1.15]
+    [-48, 38, 1.25], [-36, 12, 1.2], [-34, -28, 1.2], [-56, -38, 1.3],
+    [16, 36, 1.15], [17, 6, 1.1], [19, -46, 1.3], [-16, -24, 1.2], [-18, 49, 1.2], [10, 48, 1.15]
   ]) addPineTree(px, pz, sc);
+
+  // ---- 6.3 SMALL ROCKY HILL (~9m) WITH ZIGZAG STAIR + HUNTER'S HIGH SEAT + 6.4 CRAWL-IN DEN (1.25m!) ----
+  const rockyHill = buildZigzagHill(scene, collision, {
+    cx: -26, cz: -46, topW: 11.5, topD: 12.2, topY: 9.0,
+    legs: 3, stepsPerLeg: 8, faceSide: 'east',
+    rockMat: matCliff, boulderMat: matStone
+  });
+  const hunterSeat = buildRaisedHide(scene, collision, {
+    cx: 8.5, cz: 42, deckY: 2.25, w: 4.0, d: 4.0, openSide: 'south',
+    wallMat: matTimber, floorMat: matTimber, postMat: matDarkWood, jumpMat: matTimber
+  });
+  const swissDen = buildCrawlDen(scene, collision, {
+    cx: 15, cz: 8, w: 5.2, d: 4.8, doorSide: 'west',
+    wallMat: matStone, floorMat: matTimber, roofMat: matRoof
+  });
 
   // Towering Snow-Capped Alps Ring
   for (const [px, pz, r, h] of [
@@ -395,14 +560,19 @@ export function buildLevel3(scene, collision, particles) {
 
   particles.initAmbient('alpine', collision.bounds);
 
-  // ---- PICKUPS ----
+  // ---- PICKUPS (including Waterfall Grotto, Stilt Barns & Drive-Through Barn!) ----
   const pickupDefs = [
     { type: 'health', pos: new THREE.Vector3(-21.5, 0.9, 22),  label: 'CHALET CHEESE & CIDER (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(11.0, 0.9, -22),  label: 'CHAPEL TONIC (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(-43.5, 0.9, -48), label: 'ALP HUT RATIONS (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-56.8, 1.45, 12), label: 'GROTTO SPRING TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-37.0, 1.6, 28),  label: 'HAY BARN CIDER (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(11.0, 1.6, -40),  label: 'TOOL BARN TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-26.0, 0.9, 40),  label: 'HAY WAGON RATIONS (+35 HP)' },
     { type: 'ammo',   pos: new THREE.Vector3(11.0, 0.9, 20),   label: 'STEEL QUARREL BOLTS' },
     { type: 'ammo',   pos: new THREE.Vector3(-4.0, 0.9, -40),  label: 'WATCHTOWER BOLT CRATE' },
-    { type: 'health', pos: new THREE.Vector3(-23.0, 0.9, 4),   label: 'MOUNTAIN HERB TONIC (+35 HP)' }
+    { type: 'health', pos: new THREE.Vector3(-23.0, 0.9, 4),   label: 'MOUNTAIN HERB TONIC (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(swissDen.insidePos.x, swissDen.floorY + 0.55, swissDen.insidePos.z), label: 'ROOT CELLAR CIDER (+35 HP)', inDen: true }
   ];
   for (const pd of pickupDefs) {
     const mesh = createPickupMesh(pd.type);
@@ -411,38 +581,51 @@ export function buildLevel3(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- 22 ENEMIES (Village, Chalets, Bridge, Chapel, Alp Hut, Watchtower, Boss Capt. von Gessler) ----
+  // ---- 27 ENEMIES (Village, Chalets, Stilt Barns, Drive-Through Barn, Waterfall Grotto, Bridge, Chapel, Alp Hut, Watchtower, Boss) ----
   const enemySpawns = [
     { type: 'halberdier',  pos: new THREE.Vector3(-10, 0, 30) },
     { type: 'arquebusier', pos: new THREE.Vector3(6, 0, 26) },
-    { type: 'halberdier',  pos: new THREE.Vector3(-21, 0.18, 22) }, // Inside Chalet 1
-    { type: 'arquebusier', pos: new THREE.Vector3(11, 0.18, 20) },  // Inside Chalet 2
+    { type: 'halberdier',  pos: new THREE.Vector3(-25.5, 0.14, 40) }, // Inside Drive-Through Hay Barn
+    { type: 'arquebusier', pos: new THREE.Vector3(-36.5, 0.88, 28) }, // Inside Hay Stilt Barn
+    { type: 'halberdier',  pos: new THREE.Vector3(-21, 0.18, 22) },   // Inside Chalet 1
+    { type: 'arquebusier', pos: new THREE.Vector3(11, 0.18, 20) },    // Inside Chalet 2
     { type: 'halberdier',  pos: new THREE.Vector3(-4, 0, 12) },
     { type: 'arquebusier', pos: new THREE.Vector3(-15, 0, 4) },
-    { type: 'halberdier',  pos: new THREE.Vector3(-23, 0.18, 4) },  // Inside Chalet 3
+    { type: 'halberdier',  pos: new THREE.Vector3(-23, 0.18, 4) },    // Inside Chalet 3
+    { type: 'halberdier',  pos: new THREE.Vector3(-56.8, 0.72, 8.8) }, // Inside Waterfall Grotto behind falling water!
     { type: 'arquebusier', pos: new THREE.Vector3(8, 0, 2) },
-    { type: 'halberdier',  pos: new THREE.Vector3(-4, 0.42, -8) },  // On Alpine Bridge
+    { type: 'halberdier',  pos: new THREE.Vector3(-4, 0.42, -8) },    // On Alpine Bridge
     { type: 'arquebusier', pos: new THREE.Vector3(-14, 0, -18) },
     { type: 'halberdier',  pos: new THREE.Vector3(2, 0, -18) },
-    { type: 'arquebusier', pos: new THREE.Vector3(10, 0.2, -22) },  // Inside Chapel
-    { type: 'halberdier',  pos: new THREE.Vector3(11, 0.2, -18) },  // Inside Chapel
+    { type: 'arquebusier', pos: new THREE.Vector3(-40.5, 0.88, -24) }, // Inside Cheese Stilt Barn
+    { type: 'arquebusier', pos: new THREE.Vector3(10, 0.2, -22) },     // Inside Chapel
+    { type: 'halberdier',  pos: new THREE.Vector3(11, 0.2, -18) },     // Inside Chapel
+    { type: 'halberdier',  pos: new THREE.Vector3(10.5, 0.88, -40) },  // Inside Tools Stilt Barn
     { type: 'arquebusier', pos: new THREE.Vector3(-24, 0, -30) },
     { type: 'halberdier',  pos: new THREE.Vector3(-34, 0, -40) },
-    { type: 'arquebusier', pos: new THREE.Vector3(-43, 0.2, -48) }, // Inside Alp Hut
+    { type: 'arquebusier', pos: new THREE.Vector3(-43, 0.2, -48) },    // Inside Alp Hut
     { type: 'halberdier',  pos: new THREE.Vector3(-12, 0, -32) },
     { type: 'arquebusier', pos: new THREE.Vector3(4, 0, -32) },
-    { type: 'halberdier',  pos: new THREE.Vector3(-4, 0.22, -39) }, // Inside Watchtower
-    { type: 'arquebusier', pos: new THREE.Vector3(-1, 0.22, -42) }, // Inside Watchtower
+    { type: 'halberdier',  pos: new THREE.Vector3(-4, 0.22, -39) },    // Inside Watchtower
+    { type: 'arquebusier', pos: new THREE.Vector3(-1, 0.22, -42) },    // Inside Watchtower
     { type: 'halberdier',  pos: new THREE.Vector3(-4, 0, -28) },
+    // Arquebusier marksman holding the 9m Rocky Hill summit!
+    { type: 'arquebusier', pos: rockyHill.summitPos.clone() },
     { type: 'boss_swiss',  pos: new THREE.Vector3(-4, 0, -31), isBossWave: true }
   ];
 
   const enterableBuildings = [
+    { name: 'Waterfall Grotto', inside: new THREE.Vector3(-56.8, 0.72, 10), outside: new THREE.Vector3(-56.4, 0, 20.5) },
+    { name: 'Drive-Through Hay Barn', inside: new THREE.Vector3(-26, 0.14, 40), outside: new THREE.Vector3(-18, 0, 40) },
+    { name: 'Hay Stilt Barn', inside: new THREE.Vector3(-37, 0.88, 28), outside: new THREE.Vector3(-31, 0, 28) },
+    { name: 'Cheese Stilt Barn', inside: new THREE.Vector3(-41, 0.88, -24), outside: new THREE.Vector3(-35, 0, -24) },
+    { name: 'Tools Stilt Barn', inside: new THREE.Vector3(11, 0.88, -40), outside: new THREE.Vector3(5, 0, -40) },
     { name: 'Alpine Chapel', inside: new THREE.Vector3(10.5, 0.2, -22), outside: new THREE.Vector3(3.5, 0, -22) },
     { name: 'Habsburg Watchtower', inside: new THREE.Vector3(-4, 0.22, -40), outside: new THREE.Vector3(-4, 0, -32) },
     { name: 'West Chalet', inside: new THREE.Vector3(-22, 0.18, 22), outside: new THREE.Vector3(-14.5, 0, 22) },
     { name: 'Alp Hut', inside: new THREE.Vector3(-43.5, 0.2, -48), outside: new THREE.Vector3(-37, 0, -48) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, tellApple, enterableBuildings };
+  const specialSpots = { zigzagHill: rockyHill, raisedHide: hunterSeat, crawlDen: swissDen };
+  return { enemySpawns, pickups, animated, disposables, tellApple, enterableBuildings, specialSpots };
 }

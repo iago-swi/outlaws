@@ -12,6 +12,7 @@ export class RemoteFighter {
 
     this.root = new THREE.Group();
     this.figure = buildFighterFigure(fighter.id, era, false);
+    this.baseFigScale = this.figure.scale.x || 1.0;
     this.root.add(this.figure);
 
     // Tag meshes for hitscan & melee raycasting (head vs body)
@@ -58,6 +59,8 @@ export class RemoteFighter {
     this.targetYaw = 0;
     this.targetPitch = 0;
     this.moving = false;
+    this.crouched = false;
+    this.crouchBlend = 0;
     this.alive = true;
     this.hp = 100;
     this.maxHp = 100;
@@ -78,6 +81,7 @@ export class RemoteFighter {
     if (typeof state.yaw === 'number') this.targetYaw = state.yaw;
     if (typeof state.pitch === 'number') this.targetPitch = state.pitch;
     if (typeof state.moving === 'boolean') this.moving = state.moving;
+    if (typeof state.cr === 'number' || typeof state.cr === 'boolean') this.crouched = !!state.cr;
     if (typeof state.hp === 'number') this.hp = state.hp;
     if (typeof state.maxHp === 'number' && state.maxHp > 0) this.maxHp = state.maxHp;
     if (typeof state.alive === 'boolean') {
@@ -155,21 +159,31 @@ export class RemoteFighter {
     while (diff < -Math.PI) diff += Math.PI * 2;
     this.root.rotation.y += diff * Math.min(1, dt * 15);
 
-    // Subtle stride & melee swing animation
+    // Smooth kneeling / crouching stance & lowered hit shape!
+    const targetCr = this.crouched ? 1 : 0;
+    this.crouchBlend += (targetCr - this.crouchBlend) * Math.min(1, dt * 14);
+    const cr = this.crouchBlend;
+
+    // Subtle stride, kneeling crouch & melee swing animation
     const parts = this.figure.userData.parts;
-    if (this.moving || dist > 0.12) {
-      this.walkPhase += dt * 10.5;
-      if (parts) {
-        parts.legL.rotation.x = Math.sin(this.walkPhase) * 0.55;
-        parts.legR.rotation.x = -Math.sin(this.walkPhase) * 0.55;
-      } else {
-        this.figure.position.y = Math.abs(Math.sin(this.walkPhase)) * 0.08;
-      }
-    } else if (parts) {
-      parts.legL.rotation.x *= 0.85;
-      parts.legR.rotation.x *= 0.85;
-    } else {
-      this.figure.position.y *= 0.85;
+    const stride = (this.moving || dist > 0.12) ? (this.crouched ? 0.28 : 0.55) : 0;
+    if (stride > 0) this.walkPhase += dt * (this.crouched ? 7.0 : 10.5);
+
+    // Lower the entire 3D figure & hit meshes smoothly when kneeling
+    const baseY = -cr * 0.46 * this.figureScale;
+    this.figure.scale.set(
+      this.baseFigScale,
+      this.baseFigScale * (1 - cr * 0.18),
+      this.baseFigScale
+    );
+    this.figure.position.y = baseY + (stride > 0 && !parts ? Math.abs(Math.sin(this.walkPhase)) * 0.06 : 0);
+    this.muzzle.position.y = (1.32 - cr * 0.55) * this.figureScale;
+    this.hpBg.position.y = (2.38 - cr * 0.65) * this.figureScale;
+
+    if (parts) {
+      const legStride = stride > 0 ? Math.sin(this.walkPhase) * stride : 0;
+      parts.legL.rotation.x = cr * 1.05 + legStride;
+      parts.legR.rotation.x = -cr * 0.92 - legStride;
     }
 
     if (parts && parts.armR) {

@@ -388,7 +388,7 @@ export function buildHeroFigure(heroId) {
   const darkWood = new THREE.MeshStandardMaterial({ color: 0x452817, roughness: 0.82 });
   const eyeMat = new THREE.MeshBasicMaterial({ color: 0x16100c });
 
-  function addBaseBody({ torsoMat, legsMat, armsMat, bootsMat = brownLeather, skin = skinFair, slim = false }) {
+  function addBaseBody({ torsoMat, legsMat, armsMat, bootsMat = brownLeather, skin = skinFair, slim = false, browMat = darkHair, browThick = 1.0 }) {
     const legR = slim ? 0.095 : 0.11;
     const legGeo = new THREE.CylinderGeometry(legR, legR * 0.88, 0.84, 10);
     const legL = new THREE.Mesh(legGeo, legsMat);
@@ -428,11 +428,28 @@ export function buildHeroFigure(heroId) {
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.205, 14, 12), skin);
     head.position.set(0, 1.74, 0);
 
+    // Eyes, Eyebrows, Nose, Mouth & Ears on every hero face
     const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.023, 6, 6), eyeMat);
     eyeL.position.set(-0.07, 0.03, 0.185);
     const eyeR = eyeL.clone();
     eyeR.position.x = 0.07;
-    head.add(eyeL, eyeR);
+
+    const browL = new THREE.Mesh(new THREE.BoxGeometry(0.072, 0.02 * browThick, 0.028), browMat);
+    browL.position.set(-0.07, 0.072, 0.184);
+    const browR = browL.clone();
+    browR.position.x = 0.07;
+
+    const mouthMat = new THREE.MeshStandardMaterial({ color: 0x9c5548, roughness: 0.72 });
+    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.088, 0.018, 0.024), mouthMat);
+    mouth.position.set(0, -0.078, 0.186);
+
+    const earL = new THREE.Mesh(new THREE.SphereGeometry(0.044, 7, 7), skin);
+    earL.scale.set(0.55, 1.15, 0.75);
+    earL.position.set(-0.205, 0.0, 0.0);
+    const earR = earL.clone();
+    earR.position.x = 0.205;
+
+    head.add(eyeL, eyeR, browL, browR, mouth, earL, earR);
 
     root.add(legL, legRMesh, torso, armL, armRMesh, head);
     return { legL, legR: legRMesh, torso, armL, armR: armRMesh, head, eyeL, eyeR };
@@ -535,15 +552,15 @@ export function buildHeroFigure(heroId) {
     badge.position.set(0.16, 1.34, 0.165);
     root.add(shirt, tie, badge);
 
-    // Prominent Handlebar Moustache
-    const stacheC = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.055, 0.07), darkHair);
-    stacheC.position.set(0, -0.055, 0.18);
-    const stacheL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.075, 0.06), darkHair);
-    stacheL.position.set(-0.11, -0.085, 0.17);
-    stacheL.rotation.z = -0.35;
+    // Prominent Large Drooping Handlebar Moustache
+    const stacheC = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.068, 0.085), chestnutHair);
+    stacheC.position.set(0, -0.052, 0.19);
+    const stacheL = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.125, 0.075), chestnutHair);
+    stacheL.position.set(-0.14, -0.10, 0.175);
+    stacheL.rotation.z = -0.32;
     const stacheR = stacheL.clone();
-    stacheR.position.x = 0.11;
-    stacheR.rotation.z = 0.35;
+    stacheR.position.x = 0.14;
+    stacheR.rotation.z = 0.32;
     p.head.add(stacheC, stacheL, stacheR);
 
     // Flat-crowned wide-brimmed Black Gambler Hat
@@ -1211,27 +1228,31 @@ export function buildHeroFigure(heroId) {
     pistol.rotation.x = 0.62;
     p.armR.add(pistol);
   } else if (heroId === 'solzhenitsyn') {
-    // Aleksandr Solzhenitsyn: full beard, winter fur ushanka hat, dark padded telogreika jacket, Soviet SMG
+    // Aleksandr Solzhenitsyn: bald top with side/back hair fringe, full chin beard WITHOUT moustache, padded winter jacket, Soviet SMG
     const paddedMat = new THREE.MeshStandardMaterial({ color: 0x3b4238, roughness: 0.92 });
-    const furMat = new THREE.MeshStandardMaterial({ color: 0x4b3b2f, roughness: 0.96 });
-    const p = addBaseBody({ torsoMat: paddedMat, legsMat: darkCharcoal, armsMat: paddedMat, bootsMat: blackCloth, skin: skinWeathered });
+    const p = addBaseBody({ torsoMat: paddedMat, legsMat: darkCharcoal, armsMat: paddedMat, bootsMat: blackCloth, skin: skinWeathered, browMat: brownBeard });
     const jacketLower = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.34, 0.34), paddedMat);
     jacketLower.position.set(0, 0.82, 0);
     const belt = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.09, 0.36), brownLeather);
     belt.position.set(0, 0.96, 0);
     root.add(jacketLower, belt);
 
-    // Full beard (no upper-lip moustache, characteristic bearded chin)
-    const beard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.24, 0.16), brownBeard);
-    beard.position.set(0, -0.15, 0.14);
-    // Fur ushanka hat with ear flaps
-    const hatCrown = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.25, 0.2, 12), furMat);
-    hatCrown.position.set(0, 0.21, 0);
-    const flapL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 0.16), furMat);
-    flapL.position.set(-0.24, 0.06, -0.02);
-    const flapR = flapL.clone();
-    flapR.position.x = 0.24;
-    p.head.add(beard, hatCrown, flapL, flapR);
+    // Distinctively bald top with short side & back hair fringe
+    const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.13, 0.2), brownBeard);
+    sideL.position.set(-0.2, 0.03, -0.04);
+    const sideR = sideL.clone();
+    sideR.position.x = 0.2;
+    const backHair = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.16, 0.08), brownBeard);
+    backHair.position.set(0, 0.01, -0.18);
+    // Iconic chin-and-jaw beard strictly BELOW the mouth (no upper-lip moustache!)
+    const beardChin = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.28, 10), brownBeard);
+    beardChin.rotation.x = Math.PI;
+    beardChin.position.set(0, -0.22, 0.12);
+    const beardJawL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.16, 0.16), brownBeard);
+    beardJawL.position.set(-0.15, -0.11, 0.05);
+    const beardJawR = beardJawL.clone();
+    beardJawR.position.x = 0.15;
+    p.head.add(sideL, sideR, backHair, beardChin, beardJawL, beardJawR);
 
     // Soviet SMG with drum mag
     const smg = new THREE.Group();
@@ -1299,12 +1320,21 @@ export function buildHeroFigure(heroId) {
     scarfTailB.rotation.x = 0.12;
     root.add(coatSkirt, scarfRing, scarfTailF, scarfTailB);
 
-    // Swept dark hair
-    const hairTop = new THREE.Mesh(new THREE.SphereGeometry(0.225, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), darkHair);
-    hairTop.position.set(0, 0.07, -0.02);
-    const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.24, 0.12), darkHair);
-    hairBack.position.set(0, -0.02, -0.14);
-    p.head.add(hairTop, hairBack);
+    // Thick sculpted mop of dark hair (full sweeping crown, brow wave, sides & back)
+    const hairCrown = new THREE.Mesh(new THREE.DodecahedronGeometry(0.26, 1), darkHair);
+    hairCrown.scale.set(1.08, 0.88, 1.12);
+    hairCrown.position.set(0, 0.14, -0.02);
+    const hairWave = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), darkHair);
+    hairWave.scale.set(1.45, 0.65, 0.95);
+    hairWave.position.set(0.02, 0.18, 0.11);
+    const hairSideL = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), darkHair);
+    hairSideL.scale.set(0.75, 1.35, 1.15);
+    hairSideL.position.set(-0.2, 0.04, -0.03);
+    const hairSideR = hairSideL.clone();
+    hairSideR.position.x = 0.2;
+    const hairBack = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.32, 0.18), darkHair);
+    hairBack.position.set(0, -0.01, -0.15);
+    p.head.add(hairCrown, hairWave, hairSideL, hairSideR, hairBack);
 
     const pistol = new THREE.Group();
     const slide = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.06, 0.25), darkCharcoal);

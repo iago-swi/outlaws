@@ -184,12 +184,11 @@ export function buildBarredWall(scene, collision, opts) {
 export function buildExteriorSteps(scene, collision, x, z, dirX, dirZ, width, topY, groundY, mat) {
   const diff = topY - groundY;
   if (diff <= 0.35) return;
-  const numSteps = Math.max(2, Math.ceil(diff / 0.36));
+  const numSteps = Math.max(2, Math.ceil(diff / 0.34));
   const stepRise = diff / numSteps;
-  const stepDepth = 0.65;
+  const stepDepth = 1.18;
   for (let i = 0; i < numSteps; i++) {
-    const sy = topY - stepRise * (i + 1) + stepRise * 0.5;
-    const stepTop = topY - stepRise * i;
+    const stepTop = topY - stepRise * (i + 1) + stepRise * 0.5;
     const dist = (i + 0.5) * stepDepth;
     const sx = x + dirX * dist;
     const sz = z + dirZ * dist;
@@ -201,7 +200,7 @@ export function buildExteriorSteps(scene, collision, x, z, dirX, dirZ, width, to
     mesh.receiveShadow = true;
     mesh.castShadow = true;
     scene.add(mesh);
-    collision.addWalkable(sx, sz, boxW + 0.18, boxD + 0.18, stepTop);
+    collision.addWalkable(sx, sz, boxW + 0.28, boxD + 0.28, stepTop);
   }
 }
 
@@ -231,7 +230,8 @@ export function buildHollowRoom(scene, collision, opts) {
     east = [],
     stepMat = null,
     interiorLight = null, // { color, intensity, distance }
-    parapetColor = null
+    parapetColor = null,
+    raisedFloorThickness = null
   } = opts;
 
   // Determine floor height: highest terrain corner or provided floorY
@@ -245,8 +245,8 @@ export function buildHollowRoom(scene, collision, opts) {
   );
   const fy = floorY !== null ? floorY : Math.max(gCenter + 0.12, gMax + 0.08);
 
-  // Solid foundation + floor slab
-  const foundH = Math.max(0.4, fy - (collision.heightFn(cx, cz) - 2.2));
+  // Solid foundation + floor slab (or elevated timber deck on stilts when raisedFloorThickness is set)
+  const foundH = raisedFloorThickness !== null ? raisedFloorThickness : Math.max(0.4, fy - (collision.heightFn(cx, cz) - 2.2));
   const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(w, foundH, d), floorMat);
   floorMesh.position.set(cx, fy - foundH * 0.5, cz);
   floorMesh.receiveShadow = true;
@@ -447,4 +447,291 @@ export function addPiano(scene, collision, x, y, z, rotY = 0) {
   const sw = Math.abs(Math.sin(rotY)) > 0.5 ? 0.95 : 1.8;
   const sd = Math.abs(Math.sin(rotY)) > 0.5 ? 1.8 : 0.95;
   collision.addBox(x, y + 0.64, z, sw, 1.28, sd);
+}
+
+/**
+ * Builds a row of rising jump crates/blocks (each jump ~1.1m, > STEP_MAX so enemies cannot step up,
+ * while a jumping player clears every crate cleanly to reach a flat roof or raised hide).
+ */
+export function buildJumpCrateStack(scene, collision, {
+  startX, startZ, dirX, dirZ,
+  heights = [1.12, 2.24, 3.36],
+  size = 1.65,
+  spacing = 1.85,
+  mat
+}) {
+  const groundY = collision.heightFn(startX, startZ);
+  const tops = [];
+  for (let i = 0; i < heights.length; i++) {
+    const h = heights[i];
+    const cx = startX + dirX * (i * spacing);
+    const cz = startZ + dirZ * (i * spacing);
+    const topY = groundY + h;
+    addSolidBox(scene, collision, cx, groundY + h * 0.5, cz, size, h, size, mat, 'wood');
+    collision.addWalkable(cx, cz, size + 0.14, size + 0.14, topY, true);
+    tops.push(new THREE.Vector3(cx, topY, cz));
+  }
+  return tops;
+}
+
+/**
+ * Builds a Raised Hide (lookout deck on 4 posts with a waist-high wall on 3 sides,
+ * reached by TWO jump blocks so enemies cannot climb up while a jumping player can snipe from cover).
+ */
+export function buildRaisedHide(scene, collision, {
+  cx, cz,
+  deckY = 2.2,
+  w = 4.2,
+  d = 4.2,
+  openSide = 'south', // 'north' | 'south' | 'east' | 'west'
+  wallMat,
+  floorMat,
+  postMat,
+  jumpMat
+}) {
+  const gY = collision.heightFn(cx, cz);
+  const fy = gY + deckY;
+  // 4 solid support corner posts
+  for (const [ox, oz] of [[-w * 0.44, -d * 0.44], [w * 0.44, -d * 0.44], [-w * 0.44, d * 0.44], [w * 0.44, d * 0.44]]) {
+    addSolidBox(scene, collision, cx + ox, gY + deckY * 0.5, cz + oz, 0.34, deckY, 0.34, postMat || wallMat, 'wood');
+  }
+  // Walkable raised deck floor slab
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(w, 0.24, d), floorMat || wallMat);
+  deck.position.set(cx, fy - 0.12, cz);
+  deck.castShadow = true;
+  deck.receiveShadow = true;
+  scene.add(deck);
+  collision.addWalkable(cx, cz, w + 0.2, d + 0.2, fy, true);
+
+  // Waist-high parapet wall (~1.05m) on 3 sides (leaving openSide open for jump entry!)
+  const wallH = 1.05;
+  const thick = 0.24;
+  if (openSide !== 'north') addSolidBox(scene, collision, cx, fy + wallH * 0.5, cz - d * 0.5 + thick * 0.5, w, wallH, thick, wallMat, 'wood');
+  if (openSide !== 'south') addSolidBox(scene, collision, cx, fy + wallH * 0.5, cz + d * 0.5 - thick * 0.5, w, wallH, thick, wallMat, 'wood');
+  if (openSide !== 'west')  addSolidBox(scene, collision, cx - w * 0.5 + thick * 0.5, fy + wallH * 0.5, cz, thick, wallH, d, wallMat, 'wood');
+  if (openSide !== 'east')  addSolidBox(scene, collision, cx + w * 0.5 - thick * 0.5, fy + wallH * 0.5, cz, thick, wallH, d, wallMat, 'wood');
+
+  // Two rising jump blocks (1.08m and 2.12m) outside the open side!
+  let dx = 0, dz = 0, bx = cx, bz = cz;
+  if (openSide === 'south') { dz = -1; bz = cz + d * 0.5 + 2.85; }
+  else if (openSide === 'north') { dz = 1; bz = cz - d * 0.5 - 2.85; }
+  else if (openSide === 'east') { dx = -1; bx = cx + w * 0.5 + 2.85; }
+  else { dx = 1; bx = cx - w * 0.5 - 2.85; }
+
+  const jumpBlocks = buildJumpCrateStack(scene, collision, {
+    startX: bx, startZ: bz, dirX: dx, dirZ: dz,
+    heights: [1.08, 2.12],
+    size: 1.6,
+    spacing: 1.85,
+    mat: jumpMat || wallMat
+  });
+
+  return {
+    deckY: fy,
+    deckPos: new THREE.Vector3(cx, fy, cz),
+    jumpBlocks
+  };
+}
+
+/**
+ * Builds a Crouch-Only Crawl-In Den whose doorway is strictly 1.25m high (and interior ceiling 1.48m),
+ * so an upright player (1.75m) and all enemies are stopped, while a crouching player (1.05m) crawls in!
+ */
+export function buildCrawlDen(scene, collision, {
+  cx, cz,
+  w = 5.4,
+  d = 5.0,
+  doorSide = 'south',
+  wallMat,
+  floorMat,
+  roofMat
+}) {
+  const gY = collision.heightFn(cx, cz);
+  const fy = gY + 0.08;
+  const h = 1.52;
+  const doorH = 1.25; // Strictly 1.25m high crawl-in doorway!
+  const doorW = 1.9;
+  const thick = 0.34;
+
+  // Floor
+  const fl = new THREE.Mesh(new THREE.BoxGeometry(w, 0.24, d), floorMat || wallMat);
+  fl.position.set(cx, fy - 0.12, cz);
+  fl.receiveShadow = true;
+  scene.add(fl);
+  collision.addWalkable(cx, cz, w + 0.15, d + 0.15, fy);
+
+  // Walls (doorSide has a 1.25m tall opening with solid lintel from 1.25m..h + solid roof slab!)
+  const opts = { north: [], south: [], west: [], east: [] };
+  opts[doorSide] = [{ type: 'door', offset: 0, width: doorW, height: doorH }];
+
+  buildSegmentedWall(scene, collision, { axis: 'x', center: { x: cx, z: cz - d * 0.5 + thick * 0.5 }, baseY: fy, length: w, height: h, thickness: thick, mat: wallMat, openings: opts.north });
+  buildSegmentedWall(scene, collision, { axis: 'x', center: { x: cx, z: cz + d * 0.5 - thick * 0.5 }, baseY: fy, length: w, height: h, thickness: thick, mat: wallMat, openings: opts.south });
+  buildSegmentedWall(scene, collision, { axis: 'z', center: { x: cx - w * 0.5 + thick * 0.5, z: cz }, baseY: fy, length: d - thick * 2, height: h, thickness: thick, mat: wallMat, openings: opts.west });
+  buildSegmentedWall(scene, collision, { axis: 'z', center: { x: cx + w * 0.5 - thick * 0.5, z: cz }, baseY: fy, length: d - thick * 2, height: h, thickness: thick, mat: wallMat, openings: opts.east });
+
+  // Solid low ceiling slab (starts at fy + 1.46 so upright players cannot stand up inside!)
+  addSolidBox(scene, collision, cx, fy + 1.62, cz, w + 0.2, 0.32, d + 0.2, roofMat || wallMat, 'stone');
+  // Explicit solid door lintel bar strictly from y = fy + 1.25 to fy + 1.58 across doorway!
+  if (doorSide === 'south') addSolidBox(scene, collision, cx, fy + 1.42, cz + d * 0.5 - thick * 0.5, doorW + 0.2, 0.34, thick + 0.08, wallMat, 'stone');
+  else if (doorSide === 'north') addSolidBox(scene, collision, cx, fy + 1.42, cz - d * 0.5 + thick * 0.5, doorW + 0.2, 0.34, thick + 0.08, wallMat, 'stone');
+  else if (doorSide === 'east') addSolidBox(scene, collision, cx + w * 0.5 - thick * 0.5, fy + 1.42, cz, thick + 0.08, 0.34, doorW + 0.2, wallMat, 'stone');
+  else addSolidBox(scene, collision, cx - w * 0.5 + thick * 0.5, fy + 1.42, cz, thick + 0.08, 0.34, doorW + 0.2, wallMat, 'stone');
+
+  const ptOut = new THREE.Vector3(
+    cx + (doorSide === 'east' ? w * 0.5 + 1.6 : doorSide === 'west' ? -(w * 0.5 + 1.6) : 0),
+    gY,
+    cz + (doorSide === 'south' ? d * 0.5 + 1.6 : doorSide === 'north' ? -(d * 0.5 + 1.6) : 0)
+  );
+  return {
+    floorY: fy,
+    insidePos: new THREE.Vector3(cx, fy, cz),
+    outsidePos: ptOut
+  };
+}
+
+/**
+ * Builds a climbable flat-topped rocky Hill / Butte with a 4-leg terraced zigzag rock staircase on one face!
+ * Zero 2D overlap between legs so both walking players and A* enemies climb smoothly without jumping.
+ */
+export function buildZigzagHill(scene, collision, {
+  cx, cz,
+  topW = 12,
+  topD = 12,
+  topY = 12.0,
+  legs = 4,
+  stepsPerLeg = 8,
+  faceSide = 'east', // 'east' (+X face) | 'west' (-X face)
+  rockMat,
+  boulderMat
+}) {
+  const dirX = faceSide === 'east' ? 1 : -1;
+  const gY = collision.heightFn(cx, cz);
+  const totalRise = topY - gY;
+  const legRise = totalRise / legs;
+  const stepRise = legRise / stepsPerLeg; // <= 0.38m (well under 0.48m nav & 0.52m walk!)
+  const stepLen = 1.42;
+  const legRun = stepsPerLeg * stepLen;
+  const legW = 2.8;
+  const legSpacingX = 3.05;
+  const edgeX = cx + dirX * (topW * 0.5);
+
+  // Main flat-topped Butte / Hill rocky body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(topW, totalRise, topD), rockMat);
+  body.position.set(cx, gY + totalRise * 0.5, cz);
+  body.castShadow = true;
+  body.receiveShadow = true;
+  scene.add(body);
+  // Solid blocking walls on non-stair sides (leaving stair top landing cleanly accessible!)
+  collision.addBox(cx, gY + (totalRise - 0.35) * 0.5, cz, topW, totalRise - 0.35, topD, 'stone');
+  collision.addWalkable(cx, cz, topW + 0.4, topD + 0.4, topY);
+
+  // Decorative craggy rock skirts around the 3 sheer sides
+  for (const [ox, oz, rw, rd] of [
+    [-dirX * (topW * 0.5 + 1.4), 0, 2.8, topD * 0.85],
+    [0, -(topD * 0.5 + 1.2), topW * 0.85, 2.4],
+    [0, topD * 0.5 + 1.2, topW * 0.85, 2.4]
+  ]) {
+    const skirtH = totalRise * 0.65;
+    const sk = new THREE.Mesh(new THREE.BoxGeometry(rw, skirtH, rd), rockMat);
+    sk.position.set(cx + ox, gY + skirtH * 0.5, cz + oz);
+    scene.add(sk);
+    collision.addBox(cx + ox, gY + skirtH * 0.5, cz + oz, rw, skirtH, rd, 'stone');
+  }
+
+  // 4-leg terraced zigzag rock staircase (outermost leg = leg 0 starts at ground, innermost leg = leg legs-1 reaches topY!)
+  const waypoints = [];
+  for (let leg = 0; leg < legs; leg++) {
+    const legIdxFromEdge = legs - 1 - leg; // 3, 2, 1, 0
+    const lx = edgeX + dirX * (1.45 + legIdxFromEdge * legSpacingX);
+    const goNorth = (leg % 2) === 0; // Even legs climb -Z, odd legs climb +Z
+    const zStart = goNorth ? cz + legRun * 0.5 : cz - legRun * 0.5;
+    const zDir = goNorth ? -1 : 1;
+
+    if (leg === 0) {
+      // Foot of the zigzag path on flat ground
+      waypoints.push(new THREE.Vector3(lx, gY, zStart + zDir * -1.4));
+    }
+
+    for (let s = 0; s < stepsPerLeg; s++) {
+      const sy = gY + leg * legRise + (s + 1) * stepRise;
+      const sz = zStart + zDir * ((s + 0.5) * stepLen);
+      const stepH = Math.max(0.3, sy - gY);
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(legW, stepH, stepLen + 0.12), rockMat);
+      mesh.position.set(lx, gY + stepH * 0.5, sz);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      if (stepH > 0.55) {
+        collision.addBox(lx, gY + (stepH - 0.12) * 0.5, sz, legW - 0.16, stepH - 0.12, stepLen - 0.08, 'stone');
+      }
+      collision.addWalkable(lx, sz, legW + 0.06, stepLen + 0.08, sy);
+      // Low rock guard curb along the outer drop-off edge of every leg (except leg 0 ground foot) so walkers stay on the path!
+      if (leg > 0 || s >= 2) {
+        const curbX = lx + dirX * (legW * 0.5 + 0.12);
+        const curb = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.72, stepLen + 0.04), rockMat);
+        curb.position.set(curbX, sy + 0.36, sz);
+        scene.add(curb);
+        collision.addBox(curbX, sy + 0.36, sz, 0.24, 0.72, stepLen + 0.04, 'stone');
+      }
+    }
+
+    const endZ = zStart + zDir * (legRun + 1.25);
+    const endY = gY + (leg + 1) * legRise;
+    if (leg < legs - 1) {
+      // Wide flat switchback landing spanning THIS leg and the NEXT inner leg!
+      const nextLx = edgeX + dirX * (1.45 + (legIdxFromEdge - 1) * legSpacingX);
+      const midX = (lx + nextLx) * 0.5;
+      const landW = Math.abs(lx - nextLx) + legW + 0.2;
+      const landD = 2.75;
+      const landH = Math.max(0.4, endY - gY);
+      const land = new THREE.Mesh(new THREE.BoxGeometry(landW, landH, landD), rockMat);
+      land.position.set(midX, gY + landH * 0.5, endZ);
+      land.receiveShadow = true;
+      scene.add(land);
+      if (landH > 0.55) {
+        collision.addBox(midX, gY + (landH - 0.12) * 0.5, endZ, landW - 0.14, landH - 0.12, landD - 0.1, 'stone');
+      }
+      collision.addWalkable(midX, endZ, landW + 0.18, landD + 0.18, endY);
+      // Rock parapet along the far end of the switchback landing so walkers turn cleanly without stepping off!
+      const farZ = endZ + zDir * (landD * 0.5 + 0.12);
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(landW, 0.78, 0.24), rockMat);
+      rail.position.set(midX, endY + 0.39, farZ);
+      scene.add(rail);
+      collision.addBox(midX, endY + 0.39, farZ, landW, 0.78, 0.24, 'stone');
+      waypoints.push(new THREE.Vector3(lx, endY, endZ));
+      waypoints.push(new THREE.Vector3(nextLx, endY, endZ));
+    } else {
+      // Top connector bridge from the final step (already at topY!) sideways onto the flat summit plateau!
+      const lastStepZ = zStart + zDir * ((stepsPerLeg - 0.5) * stepLen);
+      const padZ = lastStepZ + zDir * 0.25;
+      const bridgeX = (lx + (edgeX - dirX * 1.6)) * 0.5;
+      const bridgeW = Math.abs(lx - (edgeX - dirX * 1.6)) + legW;
+      const topPad = new THREE.Mesh(new THREE.BoxGeometry(bridgeW, totalRise, 2.2), rockMat);
+      topPad.position.set(bridgeX, gY + totalRise * 0.5, padZ);
+      topPad.receiveShadow = true;
+      scene.add(topPad);
+      collision.addWalkable(bridgeX, padZ, bridgeW + 0.3, 2.1, topY);
+      waypoints.push(new THREE.Vector3(lx, topY, lastStepZ));
+      waypoints.push(new THREE.Vector3(cx, topY, cz));
+    }
+  }
+
+  // Crouch-height cover boulders (~1.05m tall) along the center rim of the flat summit (leaving stair corners wide open!)
+  const bMat = boulderMat || rockMat;
+  for (const bz of [cz - 2.2, cz, cz + 2.2]) {
+    const bx = cx + dirX * (topW * 0.34);
+    const bld = new THREE.Mesh(new THREE.DodecahedronGeometry(0.75, 1), bMat);
+    bld.scale.set(0.95, 0.78, 1.15);
+    bld.position.set(bx, topY + 0.52, bz);
+    bld.castShadow = true;
+    scene.add(bld);
+    collision.addBox(bx, topY + 0.54, bz, 1.15, 1.08, 1.35, 'stone');
+  }
+
+  return {
+    summitPos: new THREE.Vector3(cx - dirX * 1.2, topY, cz),
+    footPos: waypoints[0],
+    basePos: waypoints[0],
+    waypoints
+  };
 }

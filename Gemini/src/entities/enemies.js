@@ -1042,7 +1042,7 @@ export class Enemy {
     return false;
   }
 
-  update(dt, playerPos, collision, callbacks, detectMult = 1.0) {
+  update(dt, playerPos, collision, callbacks, detectMult = 1.0, playerCrouched = false) {
     if (!this.alive) {
       // Pick a wall-free fall direction on the first death frame, or slump cleanly in place
       if (!this.fallChecked) {
@@ -1116,12 +1116,14 @@ export class Enemy {
       this.parts.muzzle.material.opacity = Math.max(0, this.muzzleFlash * 8);
     }
 
-    // Wake up when player gets close or enters sight (scaled by hero stealth multiplier!)
+    // Wake up when player gets close or enters sight (scaled by hero stealth & crouching -40%!)
     const eyeY = this.style === 'dog' ? 0.7 : 1.55;
     const eyePos = new THREE.Vector3(this.mesh.position.x, this.mesh.position.y + eyeY, this.mesh.position.z);
-    const playerEye = new THREE.Vector3(playerPos.x, playerPos.y + 1.45, playerPos.z);
-    const sightRange = 42 * detectMult;
-    const proxRange = (this.style === 'dog' ? 28 : 26) * detectMult;
+    // Crouching lowers the LOS target to ~0.88m so waist-high (~1m) cover hides a crouching player!
+    const playerEye = new THREE.Vector3(playerPos.x, playerPos.y + (playerCrouched ? 0.88 : 1.45), playerPos.z);
+    const crouchMult = playerCrouched ? 0.60 : 1.0;
+    const sightRange = 42 * detectMult * crouchMult;
+    const proxRange = (this.style === 'dog' ? 28 : 26) * detectMult * crouchMult;
     const canSee = horizDist < 54 && collision.hasLineOfSight(eyePos, playerEye);
 
     if (!this.alert) {
@@ -1160,7 +1162,7 @@ export class Enemy {
         this.pathTimer -= dt;
         if (this.pathTimer <= 0 || !this.path || this.pathIdx >= this.path.length) {
           this.pathTimer = 0.55 + Math.random() * 0.3;
-          this.path = collision.findPath(this.mesh.position, playerPos, 1400);
+          this.path = collision.findPath(this.mesh.position, playerPos, 2400);
           this.pathIdx = 0;
         }
         if (this.path && this.pathIdx < this.path.length) {

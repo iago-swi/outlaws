@@ -8,6 +8,8 @@ import {
 import { createSkyDome } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildRaisedHide,
+  buildCrawlDen,
   addSolidBox,
   addHearth,
   addAltar
@@ -222,6 +224,16 @@ export function buildLevel8(scene, collision, particles) {
   addSolidBox(scene, collision, -4.5, 3.6, 68, 0.2, 7.2, 0.2, matDarkWood, 'wood');
   addPrayerFlagLine(-4.5, 6.8, 68, -14, 4.2, 74, 10);
 
+  // ---- RAISED STONE LOOKOUT HIDE & LOW STONE CROUCH-IN DEN (Near Valley Entrance) ----
+  const tibetHide = buildRaisedHide(scene, collision, {
+    cx: 15, cz: 59, w: 4.4, d: 4.4, deckY: 3.0, openSide: 'south',
+    postMat: matDarkWood, deckMat: matDarkWood, wallMat: matStone, jumpMat: matStone
+  });
+  const tibetDen = buildCrawlDen(scene, collision, {
+    cx: 15, cz: 71.5, w: 5.2, d: 4.8, doorSide: 'west',
+    wallMat: matStone, floorMat: matStone, roofMat: matDarkWood
+  });
+
   // ---- 1. ENTERABLE TIBETAN VILLAGE HOUSES (Whitewashed, dark red parapets, black frames, hearth, bench, altar!) ----
   function buildTibetanHouse(cx, cz, w, d, doorSide) {
     const opts = {
@@ -265,7 +277,81 @@ export function buildLevel8(scene, collision, particles) {
   // Carved Stone Mani Wall (solid!)
   addSolidBox(scene, collision, -11, 0.85, 35, 1.2, 1.7, 9.0, matStone, 'stone');
 
-  // ---- GRAZING YAKS, FROZEN TURQUOISE LAKE, BLACK NOMAD TENT & ENTERABLE RUINED STONE FORT ----
+  // ---- REUSABLE LARGE GILDED SEATED BUDDHA (Lotus throne, crossed legs, right hand touching earth, bowl in left hand, blue hair & halo!) ----
+  const matBlueHair = new THREE.MeshStandardMaterial({ color: 0x162d6e, roughness: 0.72 });
+  const matLotusPink = new THREE.MeshStandardMaterial({ color: 0xc9424b, roughness: 0.65 });
+  const matAlmsBowl = new THREE.MeshStandardMaterial({ color: 0x262936, metalness: 0.65, roughness: 0.35 });
+
+  function buildSeatedBuddha(scale = 1.0) {
+    const g = new THREE.Group();
+    // Carved Lotus Throne Base + Ring of 12 Lotus Petals
+    const dais = new THREE.Mesh(new THREE.CylinderGeometry(1.55, 1.75, 0.72, 16), matMaroon);
+    dais.position.y = 0.36;
+    const lotusCore = new THREE.Mesh(new THREE.CylinderGeometry(1.42, 1.5, 0.42, 16), matGold);
+    lotusCore.position.y = 0.88;
+    g.add(dais, lotusCore);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 8), i % 2 === 0 ? matGold : matLotusPink);
+      petal.scale.set(0.85, 1.15, 0.48);
+      petal.position.set(Math.cos(a) * 1.42, 0.92, Math.sin(a) * 1.42);
+      petal.rotation.y = -a + Math.PI / 2;
+      g.add(petal);
+    }
+    // Crossed Legs (Padmasana lotus posture)
+    const lapBase = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.25, 0.48, 14), matGold);
+    lapBase.position.y = 1.28;
+    const kneeL = new THREE.Mesh(new THREE.SphereGeometry(0.46, 10, 8), matGold);
+    kneeL.scale.set(1.3, 0.65, 1.0);
+    kneeL.position.set(-0.76, 1.24, 0.36);
+    const kneeR = kneeL.clone();
+    kneeR.position.x = 0.76;
+    g.add(lapBase, kneeL, kneeR);
+    // Draped Gilded Torso & Monastic Robe Fold
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.54, 0.68, 1.38, 14), matGold);
+    torso.position.y = 2.15;
+    const shoulderRobe = new THREE.Mesh(new THREE.BoxGeometry(1.22, 0.38, 0.62), matSaffron);
+    shoulderRobe.position.set(-0.08, 2.52, 0.04);
+    shoulderRobe.rotation.z = 0.24;
+    g.add(torso, shoulderRobe);
+    // Right Arm & Hand reaching down to touch the earth (Bhumisparsha Mudra — viewer's left / Buddha's right -X!)
+    const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 1.22, 8), matGold);
+    armR.position.set(-0.68, 1.98, 0.32);
+    armR.rotation.set(0.32, 0, -0.18);
+    const handR = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), matGold);
+    handR.position.set(-0.78, 1.34, 0.56);
+    // Left Arm resting in lap holding dark Alms Bowl!
+    const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.14, 0.92, 8), matGold);
+    armL.position.set(0.54, 1.95, 0.28);
+    armL.rotation.set(-0.55, 0, 0.45);
+    const handL = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), matGold);
+    handL.position.set(0.18, 1.56, 0.58);
+    const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.26, 12, 10, 0, Math.PI * 2, Math.PI * 0.42, Math.PI * 0.58), matAlmsBowl);
+    bowl.position.set(0.08, 1.76, 0.58);
+    g.add(armR, handR, armL, handL, bowl);
+    // Serene Golden Head, Elongated Ears & Deep Blue Curled Hair with Ushnisha Topknot
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.46, 14, 12), matGold);
+    head.position.y = 3.24;
+    for (const s of [-1, 1]) {
+      const ear = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.36, 6), matGold);
+      ear.position.set(s * 0.46, 3.16, 0);
+      g.add(ear);
+    }
+    const blueHair = new THREE.Mesh(new THREE.SphereGeometry(0.48, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.54), matBlueHair);
+    blueHair.position.set(0, 3.32, -0.02);
+    const ushnisha = new THREE.Mesh(new THREE.SphereGeometry(0.21, 10, 8), matBlueHair);
+    ushnisha.position.set(0, 3.84, -0.02);
+    // Ornate Circular Golden Halo behind Head & Shoulders
+    const haloOuter = new THREE.Mesh(new THREE.TorusGeometry(1.18, 0.09, 8, 24), matGold);
+    haloOuter.position.set(0, 3.22, -0.52);
+    const haloInner = new THREE.Mesh(new THREE.TorusGeometry(0.86, 0.05, 8, 20), matSaffron);
+    haloInner.position.set(0, 3.22, -0.52);
+    g.add(head, blueHair, ushnisha, haloOuter, haloInner);
+    g.scale.setScalar(scale);
+    return g;
+  }
+
+  // ---- GRAZING YAKS, FROZEN TURQUOISE LAKE, ENTERABLE BLACK NOMAD TENT, VILLAGE TEMPLE & RUINED FORT ----
   addHorseOrYak(-42, 48, 0.9, 0x241e1a, true);
   addHorseOrYak(-47, 42, -0.4, 0x2e2520, true);
   addHorseOrYak(-39, 36, 1.4, 0x1e1917, true);
@@ -274,12 +360,45 @@ export function buildLevel8(scene, collision, particles) {
   const lake = new THREE.Mesh(new THREE.CylinderGeometry(16, 16, 0.12, 22), matTurqIce);
   lake.position.set(52, 0.06, 24);
   scene.add(lake);
-  // Black Nomad Yak-Hair Tent beside Lake (solid!)
-  const tent = new THREE.Mesh(new THREE.ConeGeometry(4.2, 3.2, 4), matBlack);
-  tent.position.set(44, 1.6, 48);
-  tent.rotation.y = Math.PI / 4;
-  scene.add(tent);
-  collision.addBox(44, 1.4, 48, 5.4, 2.8, 5.4, 'solid');
+
+  // Enterable Black Nomad Yak-Hair Tent beside Lake!
+  const nomadTent = buildHollowRoom(scene, collision, {
+    cx: 44, cz: 48, w: 9.0, d: 8.5, h: 2.9, floorY: 0.1,
+    wallMat: matBlack, floorMat: matStone, roofMat: matBlack, roofStyle: 'hip',
+    west: [{ type: 'door', offset: 0, width: 2.6, height: 2.5 }],
+    south: [{ type: 'window', offset: 0, width: 1.5 }],
+    interiorLight: { color: 0xffa852, intensity: 1.5, distance: 12 }
+  });
+  addHearth(scene, collision, 44.5, nomadTent.floorY, 48.0, 0.72);
+  addSolidBox(scene, collision, 46.8, nomadTent.floorY + 0.35, 45.4, 1.4, 0.7, 2.0, matDarkWood, 'wood');
+  const tentRug = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 2.4), matRedPillar);
+  tentRug.rotation.x = -Math.PI / 2;
+  tentRug.position.set(44.2, nomadTent.floorY + 0.04, 50.6);
+  scene.add(tentRug);
+
+  // New Enterable Village Temple (West side of Village — holds a Large Gilded Seated Buddha!)
+  const vTemple = buildHollowRoom(scene, collision, {
+    cx: -40, cz: 22, w: 12.5, d: 12.0, h: 5.2, floorY: 0.22,
+    wallMat: matWhite, floorMat: matDarkWood, roofMat: matGold, roofStyle: 'parapet',
+    parapetColor: 0x6b1c1f,
+    east: [
+      { type: 'window', offset: -3.8, width: 1.8 },
+      { type: 'door', offset: 0, width: 2.8, height: 3.2 },
+      { type: 'window', offset: 3.8, width: 1.8 }
+    ],
+    south: [{ type: 'door', offset: 0, width: 2.4, height: 3.0 }],
+    interiorLight: { color: 0xffcf70, intensity: 2.0, distance: 18 }
+  });
+  const vtCanopy = new THREE.Mesh(new THREE.ConeGeometry(7.2, 2.4, 4), matGold);
+  vtCanopy.rotation.y = Math.PI / 4;
+  vtCanopy.position.set(-40, vTemple.roofY + 1.8, 22);
+  scene.add(vtCanopy);
+  const vtBuddha = buildSeatedBuddha(0.95);
+  vtBuddha.position.set(-43.6, vTemple.floorY, 22);
+  vtBuddha.rotation.y = Math.PI / 2;
+  scene.add(vtBuddha);
+  collision.addBox(-43.6, vTemple.floorY + 1.8, 22, 3.0, 3.6, 3.2, 'solid');
+  addAltar(scene, collision, -40.2, vTemple.floorY, 22, 1.0, 2.6, matDarkWood, 0xe4b228);
 
   // Enterable Ruined Stone Fort (West Ridge Flank!)
   const fort = buildHollowRoom(scene, collision, {
@@ -351,9 +470,9 @@ export function buildLevel8(scene, collision, particles) {
   plateauMesh.receiveShadow = true;
   scene.add(plateauMesh);
   collision.addWalkable(0, -60, 132, 50.5, plateauY);
-  // Retaining cliff walls on left & right of stairway so you ascend via the stone stairs
-  collision.addBox(-36, plateauY * 0.5, -35.5, 61, plateauY, 1.2, 'stone');
-  collision.addBox(36, plateauY * 0.5, -35.5, 61, plateauY, 1.2, 'stone');
+  // Retaining cliff walls & waist-high terrace parapet on left & right of stairway so walkers stay safely on the ridge!
+  addSolidBox(scene, collision, -36, (plateauY + 0.95) * 0.5, -35.2, 61, plateauY + 0.95, 1.2, matStone, 'stone');
+  addSolidBox(scene, collision, 36, (plateauY + 0.95) * 0.5, -35.2, 61, plateauY + 0.95, 1.2, matStone, 'stone');
 
   // ---- ENTERABLE GREAT MONASTERY ASSEMBLY HALL (White walls, dark red upper band, gilded roof, Dharma wheel & deer, red pillars, prayer wheels, golden Buddha, cushions, thangkas!) ----
   const hall = buildHollowRoom(scene, collision, {
@@ -393,15 +512,11 @@ export function buildLevel8(scene, collision, particles) {
   for (const [px, pz] of [[-5.5, -62], [5.5, -62], [-5.5, -69], [5.5, -69]]) {
     addSolidBox(scene, collision, px, hall.floorY + 3.0, pz, 0.62, 6.0, 0.62, matRedPillar, 'wood');
   }
-  // Assembly Hall Interior: Large Golden Buddha Image, Butter-Lamp Table, Cushions & Thangka Wall Hangings!
-  addSolidBox(scene, collision, 0, hall.floorY + 0.65, -72.2, 3.4, 1.3, 2.2, matMaroon, 'wood');
-  const buddhaBody = new THREE.Mesh(new THREE.ConeGeometry(1.35, 2.6, 12), matGold);
-  buddhaBody.position.set(0, hall.floorY + 2.6, -72.2);
-  const buddhaHead = new THREE.Mesh(new THREE.SphereGeometry(0.58, 12, 10), matGold);
-  buddhaHead.position.set(0, hall.floorY + 4.15, -72.2);
-  const buddhaHalo = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.08, 8, 20), matGold);
-  buddhaHalo.position.set(0, hall.floorY + 3.9, -72.8);
-  scene.add(buddhaBody, buddhaHead, buddhaHalo);
+  // Assembly Hall Interior: Large Gilded Seated Buddha (lotus throne, crossed legs, earth-touching right hand, alms bowl, blue hair & halo!), Butter-Lamp Table, Cushions & Thangkas!
+  const hallBuddha = buildSeatedBuddha(1.22);
+  hallBuddha.position.set(0, hall.floorY, -72.2);
+  scene.add(hallBuddha);
+  collision.addBox(0, hall.floorY + 2.2, -72.2, 4.0, 4.4, 3.6, 'solid');
   // Butter-lamp offering table + floor cushions
   addAltar(scene, collision, 0, hall.floorY, -68.8, 3.2, 0.9, matDarkWood, 0xe4b228);
   for (const [cx, cz] of [[-7.2, -65], [7.2, -65]]) {
@@ -433,6 +548,50 @@ export function buildLevel8(scene, collision, particles) {
     interiorLight: { color: 0xffc670, intensity: 1.5, distance: 12 }
   });
   addAltar(scene, collision, 31.2, mHouseE.floorY, -56, 1.1, 2.0, matDarkWood, 0xe4b228);
+
+  // ---- NEW ENTERABLE SMALL CHAPEL ON RIDGE PLATEAU (Gilded Seated Buddha + ONE HUGE SPINNING PRAYER WHEEL!) ----
+  const chapel = buildHollowRoom(scene, collision, {
+    cx: 46, cz: -56, w: 12.0, d: 12.0, h: 5.2, floorY: plateauY + 0.2,
+    wallMat: matWhite, floorMat: matDarkWood, roofMat: matGold, roofStyle: 'parapet',
+    parapetColor: 0x6b1c1f,
+    south: [
+      { type: 'door', offset: 0, width: 2.8, height: 3.2 },
+      { type: 'window', offset: -3.6, width: 1.6 },
+      { type: 'window', offset: 3.6, width: 1.6 }
+    ],
+    west: [{ type: 'window', offset: 0, width: 1.8 }],
+    interiorLight: { color: 0xffd278, intensity: 2.1, distance: 16 }
+  });
+  const chCanopy = new THREE.Mesh(new THREE.ConeGeometry(6.8, 2.4, 4), matGold);
+  chCanopy.rotation.y = Math.PI / 4;
+  chCanopy.position.set(46, chapel.roofY + 1.7, -56);
+  scene.add(chCanopy);
+  // Gilded Seated Buddha at the north end of the Chapel
+  const chapelBuddha = buildSeatedBuddha(0.92);
+  chapelBuddha.position.set(46, chapel.floorY, -59.8);
+  scene.add(chapelBuddha);
+  collision.addBox(46, chapel.floorY + 1.8, -59.8, 3.0, 3.6, 2.8, 'solid');
+  // ONE HUGE SPINNING GILDED PRAYER WHEEL inside the Chapel!
+  {
+    const wheelGrp = new THREE.Group();
+    wheelGrp.position.set(49.2, chapel.floorY, -54.8);
+    const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 4.6, 8), matDarkWood);
+    axle.position.y = 2.3;
+    const drum = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 2.85, 18), matGold);
+    drum.position.y = 2.15;
+    const bandTop = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.28, 18), matMaroon);
+    bandTop.position.y = 3.35;
+    const bandMid = new THREE.Mesh(new THREE.CylinderGeometry(1.09, 1.09, 0.42, 18), matRedPillar);
+    bandMid.position.y = 2.15;
+    const bandBot = bandTop.clone();
+    bandBot.position.y = 0.95;
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(1.08, 0.65, 14), matGold);
+    cap.position.y = 3.88;
+    wheelGrp.add(axle, drum, bandTop, bandMid, bandBot, cap);
+    scene.add(wheelGrp);
+    collision.addBox(49.2, chapel.floorY + 2.0, -54.8, 2.3, 4.0, 2.3, 'solid');
+    animated.push((t) => { wheelGrp.rotation.y = t * 0.9; });
+  }
 
   // Great Chorten & Tall Monastery Prayer Pole
   addChorten(-22, plateauY, -42, 1.55);
@@ -475,10 +634,14 @@ export function buildLevel8(scene, collision, particles) {
   // ---- PICKUPS: Bowls of Butter Tea (+35 HP) & Ammo ----
   const pickupDefs = [
     { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(-22, 0.9, 46),           label: 'BOWL OF BUTTER TEA (+35 HP)' },
+    { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(-37.5, 0.9, 22),         label: 'VILLAGE TEMPLE TEA (+35 HP)' },
+    { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(42.5, 0.85, 48),         label: 'NOMAD TENT BUTTER TEA (+35 HP)' },
     { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(-50, 0.9, 4),            label: 'FORT BUTTER TEA (+35 HP)' },
     { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(22, 0.9, 24),            label: 'VILLAGE BUTTER TEA (+35 HP)' },
     { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(-28, plateauY + 1.0, -56), label: 'MONKS BUTTER TEA (+35 HP)' },
+    { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(44, plateauY + 1.0, -55),  label: 'CHAPEL BUTTER TEA (+35 HP)' },
     { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(0, plateauY + 1.0, -64),   label: 'ASSEMBLY HALL BUTTER TEA (+35 HP)' },
+    { type: 'health', variant: 'butter_tea', pos: new THREE.Vector3(15, 0.72, 71.5),         label: 'DEN BUTTER TEA (+35 HP)', inDen: true },
     { type: 'ammo',   pos: new THREE.Vector3(22, 0.9, 46),  label: 'KHAMPA CARTRIDGE POUCH' },
     { type: 'ammo',   pos: new THREE.Vector3(28, plateauY + 1.0, -56), label: 'MONASTERY ARROWS & ROUNDS' }
   ];
@@ -489,17 +652,19 @@ export function buildLevel8(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- 32 ENEMIES (PLA Riflemen, PLA MGs, Red Guards with Clubs, Boss Commander Zhao) ----
+  // ---- 35 ENEMIES (PLA Riflemen, PLA MGs, Red Guards, Nomad Tent, Village Temple, Chapel & Boss Commander Zhao) ----
   const enemySpawns = [
-    // Village South & Enterable Houses
+    // Village South & Enterable Houses + Nomad Tent + Village Temple
     { type: 'pla_rifleman', pos: new THREE.Vector3(-6, 0, 56) },
     { type: 'pla_rifleman', pos: new THREE.Vector3(7, 0, 52) },
     { type: 'red_guard',    pos: new THREE.Vector3(0, 0, 44) },
-    { type: 'pla_rifleman', pos: new THREE.Vector3(-21, 0.16, 46) }, // Village House 1
-    { type: 'pla_rifleman', pos: new THREE.Vector3(21, 0.16, 46) },  // Village House 2
-    { type: 'red_guard',    pos: new THREE.Vector3(34, 0, 40) },     // Near nomad tent
-    { type: 'pla_rifleman', pos: new THREE.Vector3(-21, 0.16, 24) }, // Village House 3
-    { type: 'pla_rifleman', pos: new THREE.Vector3(21, 0.16, 24) },  // Village House 4
+    { type: 'pla_rifleman', pos: new THREE.Vector3(-21, 0.16, 46) },  // Village House 1
+    { type: 'pla_rifleman', pos: new THREE.Vector3(21, 0.16, 46) },   // Village House 2
+    { type: 'red_guard',    pos: new THREE.Vector3(34, 0, 40) },      // Near nomad tent
+    { type: 'pla_rifleman', pos: new THREE.Vector3(42.2, 0.1, 48.0) }, // Inside Enterable Nomad Tent
+    { type: 'pla_rifleman', pos: new THREE.Vector3(-21, 0.16, 24) },  // Village House 3
+    { type: 'pla_rifleman', pos: new THREE.Vector3(-37.2, 0.22, 22) }, // Inside Village Temple
+    { type: 'pla_rifleman', pos: new THREE.Vector3(21, 0.16, 24) },   // Village House 4
     { type: 'pla_mg',       pos: new THREE.Vector3(0, 0, 26) },
     // Ruined Stone Fort (West)
     { type: 'pla_rifleman', pos: new THREE.Vector3(-36, 0, 12) },
@@ -523,6 +688,7 @@ export function buildLevel8(scene, collision, particles) {
     { type: 'red_guard',    pos: new THREE.Vector3(5, plateauY, -46) },
     { type: 'pla_rifleman', pos: new THREE.Vector3(-27, plateauY + 0.16, -56) }, // Monks House West
     { type: 'pla_rifleman', pos: new THREE.Vector3(27, plateauY + 0.16, -56) },  // Monks House East
+    { type: 'red_guard',    pos: new THREE.Vector3(44.5, plateauY + 0.2, -55) }, // Inside Small Chapel!
     // Great Assembly Hall Interior
     { type: 'pla_rifleman', pos: new THREE.Vector3(-5, plateauY + 0.2, -64) },
     { type: 'pla_mg',       pos: new THREE.Vector3(5, plateauY + 0.2, -64) },
@@ -533,10 +699,18 @@ export function buildLevel8(scene, collision, particles) {
 
   const enterableBuildings = [
     { name: 'Tibetan Village House', inside: new THREE.Vector3(-22, 0.16, 46), outside: new THREE.Vector3(-14.5, 0, 46) },
+    { name: 'Village Temple', inside: new THREE.Vector3(-37.2, 0.22, 22), outside: new THREE.Vector3(-32, 0, 22) },
+    { name: 'Nomad Yak-Hair Tent', inside: new THREE.Vector3(42.2, 0.1, 48), outside: new THREE.Vector3(37, 0, 48) },
     { name: 'Ruined Stone Fort', inside: new THREE.Vector3(-50, 0.2, 4), outside: new THREE.Vector3(-42, 0, 4) },
     { name: 'Monastery Assembly Hall', inside: new THREE.Vector3(0, plateauY + 0.2, -64), outside: new THREE.Vector3(0, plateauY, -54) },
+    { name: 'Ridge Prayer-Wheel Chapel', inside: new THREE.Vector3(44.5, plateauY + 0.2, -55), outside: new THREE.Vector3(46, plateauY, -47) },
     { name: "Monks' House West", inside: new THREE.Vector3(-28, plateauY + 0.16, -56), outside: new THREE.Vector3(-21, plateauY, -56) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
+  const specialSpots = {
+    raisedHide: tibetHide,
+    crawlDen: tibetDen
+  };
+
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }

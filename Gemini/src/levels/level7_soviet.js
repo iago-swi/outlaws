@@ -4,12 +4,15 @@ import {
   getConcreteTexture,
   getSovietPanelTexture,
   createSloganBannerTexture,
+  createHammerSickleTexture,
   getWoodPlanks
 } from '../engine/textures.js';
 import { createSkyDome } from '../engine/shaders.js';
 import {
   buildHollowRoom,
   buildBarredWall,
+  buildJumpCrateStack,
+  buildCrawlDen,
   addSolidBox,
   addDesk,
   addBunk,
@@ -117,6 +120,8 @@ export function buildLevel7(scene, collision, particles) {
   const matGranite = new THREE.MeshStandardMaterial({ color: 0x6e2420, roughness: 0.55, metalness: 0.12 });
   const matBronze = new THREE.MeshStandardMaterial({ color: 0x3b443e, metalness: 0.65, roughness: 0.42 });
   const matRed = new THREE.MeshStandardMaterial({ color: 0xb21c1c, roughness: 0.65 });
+  const matHsFlag = new THREE.MeshStandardMaterial({ map: createHammerSickleTexture(true), side: THREE.DoubleSide, roughness: 0.62 });
+  const matHsEmblem = new THREE.MeshStandardMaterial({ map: createHammerSickleTexture(false), roughness: 0.55 });
   const matRedGlow = new THREE.MeshStandardMaterial({ color: 0xe62222, emissive: 0xc41212, emissiveIntensity: 1.35, roughness: 0.35 });
   const matSteel = new THREE.MeshStandardMaterial({ color: 0x383d42, metalness: 0.7, roughness: 0.38 });
   const matFloor = new THREE.MeshStandardMaterial({ color: 0x69645e, roughness: 0.88 });
@@ -205,17 +210,43 @@ export function buildLevel7(scene, collision, particles) {
   scene.add(shopSign);
   addSolidBox(scene, collision, -22.2, shop.floorY + 0.55, 46, 1.1, 1.1, 6.0, matWood, 'wood');
 
-  // ---- 2. TWO ENTERABLE GARAGES (East side south!) ----
+  // ---- 2. TWO ENTERABLE GARAGES WITH WALKABLE CONNECTED ROOFS (East side south!) ----
   for (let i = 0; i < 2; i++) {
     const gz = 34 + i * 12;
     const gar = buildHollowRoom(scene, collision, {
-      cx: 21, cz: gz, w: 10, d: 9.0, h: 3.8, floorY: 0.14,
+      cx: 21, cz: gz, w: 10, d: 9.0, h: 2.66, floorY: 0.14,
       wallMat: matConc, floorMat: matConc, roofMat: matSteel, roofStyle: 'flat',
-      west: [{ type: 'door', offset: 0, width: 3.4, height: 3.1 }],
+      west: [{ type: 'door', offset: 0, width: 3.4, height: 2.52 }],
       interiorLight: { color: 0xdde8ff, intensity: 1.2, distance: 11 }
     });
     addDesk(scene, collision, 24.4, gar.floorY, gz, 1.6, 0.85, matSteel, 1);
   }
+  // Connect both garage roofs into one continuous walkable roof row (topY = 3.08m) + 2 jump crates at south end!
+  const garRoofBridge = new THREE.Mesh(new THREE.BoxGeometry(10.2, 0.28, 3.3), matSteel);
+  garRoofBridge.position.set(21, 2.94, 40);
+  garRoofBridge.castShadow = true;
+  garRoofBridge.receiveShadow = true;
+  scene.add(garRoofBridge);
+  collision.addBox(21, 2.94, 40, 10.2, 0.28, 3.3, 'solid');
+  collision.addWalkable(21, 40, 10.4, 21.4, 3.08, true);
+  const garageJumpCrates = buildJumpCrateStack(scene, collision, {
+    startX: 21, startZ: 53.0, dirX: 0, dirZ: -1,
+    heights: [1.06, 2.10],
+    size: 1.7,
+    spacing: 1.72,
+    mat: matWood
+  });
+
+  // ---- CONCRETE CELLAR HATCH CROUCH-IN DEN (West of South Avenue, 1.25m door!) ----
+  const cellarDen = buildCrawlDen(scene, collision, {
+    cx: -14.5, cz: 58, w: 5.4, d: 5.0, doorSide: 'east',
+    wallMat: matConc, floorMat: matFloor, roofMat: matSteel
+  });
+  // Tilted open iron cellar-hatch lid above the low entrance
+  const hatchLid = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.1, 2.1), matSteel);
+  hatchLid.position.set(-11.2, 1.72, 58);
+  hatchLid.rotation.z = 0.55;
+  scene.add(hatchLid);
 
   // ---- BUS SHELTER, NEWS KIOSK & PARKED SOVIET CARS (ALL SOLID!) ----
   // Bus shelter
@@ -270,8 +301,14 @@ export function buildLevel7(scene, collision, particles) {
   addSovietCar(7.2, 16, 0.18, 0xd4b632, true);
 
   // ---- COBBLED SQUARE MONUMENTS & MINISTRY BLOCK WITH ROOFTOP CYRILLIC SLOGAN ----
-  // Massive Statue of a Leader with Outstretched Arm on Red Granite Plinth!
+  // Massive Statue of a Leader with Outstretched Arm on Red Granite Plinth + Hammer & Sickle Emblem!
   addSolidBox(scene, collision, 0, 1.7, -8, 4.4, 3.4, 4.4, matGranite, 'stone');
+  for (const [pz, ry] of [[-5.76, 0], [-10.24, Math.PI]]) {
+    const hsPlinth = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 2.0), matHsEmblem);
+    hsPlinth.position.set(0, 1.85, pz);
+    hsPlinth.rotation.y = ry;
+    scene.add(hsPlinth);
+  }
   const lLegs = new THREE.Mesh(new THREE.BoxGeometry(1.4, 2.2, 1.0), matBronze);
   lLegs.position.set(0, 4.5, -8);
   const lTorso = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.2, 1.1), matBronze);
@@ -283,12 +320,12 @@ export function buildLevel7(scene, collision, particles) {
   lArm.position.set(0.9, 7.6, -6.5);
   scene.add(lLegs, lTorso, lHead, lArm);
 
-  // Red Flags on Poles flanking the Square
+  // Red Soviet Flags with Yellow Hammer & Sickle on Poles flanking the Square
   for (const [fx, fz] of [[-14, -2], [14, -2], [-14, -18], [14, -18]]) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 7.8, 8), matSteel);
     pole.position.set(fx, 3.9, fz);
-    const flag = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.5), matRed);
-    flag.position.set(fx + 1.32, 6.8, fz);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 1.5), matHsFlag);
+    flag.position.set(fx + 1.42, 6.8, fz);
     scene.add(pole, flag);
     collision.addBox(fx, 3.8, fz, 0.45, 7.6, 0.45, 'solid');
     animated.push((t) => { flag.rotation.y = Math.sin(t * 3.0 + fx) * 0.16; });
@@ -307,14 +344,89 @@ export function buildLevel7(scene, collision, particles) {
   archTool.position.set(21, 6.2, -10);
   scene.add(archTool);
 
-  // Ministry Block with Rooftop Cyrillic Slogan ("СЛАВА ТРУДУ!") on West Square Edge
+  // Ministry Block with Rooftop Cyrillic Slogan ("СЛАВА ТРУДУ!") & Hammer-and-Sickle Emblem on West Square Edge
   addSolidBox(scene, collision, -42, 7.0, -8, 16, 14, 26, matCream, 'stone');
+  const hsMinistry = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 4.2), matHsEmblem);
+  hsMinistry.position.set(-33.9, 9.2, -8);
+  hsMinistry.rotation.y = Math.PI / 2;
+  scene.add(hsMinistry);
   const slogan = new THREE.Mesh(
     new THREE.BoxGeometry(0.4, 2.6, 18),
     new THREE.MeshStandardMaterial({ map: createSloganBannerTexture('СЛАВА ТРУДУ!', '#a61c1c', '#fff4cc') })
   );
   slogan.position.set(-34.2, 15.6, -8);
   scene.add(slogan);
+
+  // ---- 2B. ENTERABLE METRO PAVILION (Red M sign, ticket window, turnstiles & iron grille over stairs down!) ----
+  const metro = buildHollowRoom(scene, collision, {
+    cx: 21, cz: 17, w: 11.0, d: 10.5, h: 4.5, floorY: 0.18,
+    wallMat: matCream, floorMat: matFloor, roofMat: matConc, roofStyle: 'parapet',
+    parapetColor: 0x6e2420,
+    west: [
+      { type: 'window', offset: -3.4, width: 1.8 },
+      { type: 'door', offset: 0, width: 3.2, height: 3.3 },
+      { type: 'window', offset: 3.4, width: 1.8 }
+    ],
+    interiorLight: { color: 0xfff0cc, intensity: 1.9, distance: 15 }
+  });
+  // Glowing Red "M" Sign above the Metro Pavilion entrance!
+  const metroSign = new THREE.Mesh(
+    new THREE.BoxGeometry(0.32, 2.2, 2.4),
+    new THREE.MeshStandardMaterial({ map: createSloganBannerTexture('M', '#1b1d20', '#ff2a2a', 256, 256), emissive: 0x6b0c0c, emissiveIntensity: 0.85 })
+  );
+  metroSign.position.set(15.2, metro.roofY + 1.3, 17);
+  scene.add(metroSign);
+  // Ticket Window booth ("КАССА") along south wall + Turnstiles across hall (leaving wide 2.3m center gap!)
+  addSolidBox(scene, collision, 19.6, metro.floorY + 1.2, 21.1, 3.6, 2.4, 1.3, matWood, 'wood');
+  const kassaSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(2.6, 0.55),
+    new THREE.MeshStandardMaterial({ map: createSloganBannerTexture('КАССА', '#1c4f7a', '#fff4d4') })
+  );
+  kassaSign.position.set(19.6, metro.floorY + 2.65, 20.4);
+  kassaSign.rotation.y = Math.PI;
+  scene.add(kassaSign);
+  for (const tz of [13.5, 14.9, 19.1]) {
+    addSolidBox(scene, collision, 21.0, metro.floorY + 0.55, tz, 0.45, 1.1, 0.65, matSteel, 'solid');
+  }
+  // Escalator way down on east end closed off by a solid iron grille!
+  buildBarredWall(scene, collision, {
+    axis: 'z', center: { x: 24.4, z: 17.0 }, baseY: metro.floorY, length: 9.2, height: 4.2, doors: []
+  });
+  const downVoid = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 7.6), new THREE.MeshBasicMaterial({ color: 0x111316 }));
+  downVoid.rotation.x = -Math.PI / 2;
+  downVoid.position.set(25.4, metro.floorY + 0.04, 17.0);
+  scene.add(downVoid);
+
+  // ---- 2C. ENTERABLE DISTRICT LIBRARY ("БИБЛИОТЕКА" — Rows of tall wooden bookshelves to hide between!) ----
+  const library = buildHollowRoom(scene, collision, {
+    cx: -24, cz: 15, w: 13.0, d: 11.5, h: 4.5, floorY: 0.18,
+    wallMat: matCream, floorMat: matWood, roofMat: matConc, roofStyle: 'parapet',
+    east: [
+      { type: 'window', offset: -3.6, width: 2.0 },
+      { type: 'door', offset: 0, width: 2.8, height: 3.1 },
+      { type: 'window', offset: 3.6, width: 2.0 }
+    ],
+    north: [{ type: 'door', offset: 0, width: 2.4, height: 3.0 }],
+    interiorLight: { color: 0xffe6b8, intensity: 1.8, distance: 16 }
+  });
+  const libSign = new THREE.Mesh(
+    new THREE.PlaneGeometry(6.8, 1.25),
+    new THREE.MeshStandardMaterial({ map: createSloganBannerTexture('БИБЛИОТЕКА', '#59231d', '#fff4cc') })
+  );
+  libSign.position.set(-17.3, library.roofY + 0.35, 15);
+  libSign.rotation.y = Math.PI / 2;
+  scene.add(libSign);
+  // Three parallel rows of tall wooden bookcases (2.3m aisles wide enough to weave & fight between!)
+  const bookRed = new THREE.MeshStandardMaterial({ color: 0x8f2424, roughness: 0.85 });
+  const bookBlue = new THREE.MeshStandardMaterial({ color: 0x244a7c, roughness: 0.85 });
+  for (let i = 0; i < 3; i++) {
+    const sx = -27.8 + i * 2.6;
+    addSolidBox(scene, collision, sx, library.floorY + 1.25, 16.0, 0.72, 2.5, 5.4, matWood, 'wood');
+    const spine = new THREE.Mesh(new THREE.BoxGeometry(0.76, 1.9, 4.8), i % 2 === 0 ? bookRed : bookBlue);
+    spine.position.set(sx, library.floorY + 1.35, 16.0);
+    scene.add(spine);
+  }
+  addDesk(scene, collision, -19.8, library.floorY, 11.6, 1.8, 0.85, matWood, 1);
 
   // ---- 3. ENTERABLE PALACE OF CULTURE (Classical columns, red seats, stage with curtains & piano!) ----
   const palace = buildHollowRoom(scene, collision, {
@@ -337,7 +449,10 @@ export function buildLevel7(scene, collision, particles) {
   }
   const porticoRoof = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.65, 16), matCream);
   porticoRoof.position.set(-30.0, 5.7, -38);
-  scene.add(porticoRoof);
+  const hsPalace = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), matHsEmblem);
+  hsPalace.position.set(-28.25, 7.1, -38);
+  hsPalace.rotation.y = Math.PI / 2;
+  scene.add(porticoRoof, hsPalace);
   // Interior Auditorium: rows of red seats, stage platform, crimson curtains & upright piano!
   const matRedSeat = new THREE.MeshStandardMaterial({ color: 0x991b1e, roughness: 0.8 });
   for (const sx of [-35.5, -38.5]) {
@@ -411,8 +526,93 @@ export function buildLevel7(scene, collision, particles) {
   spire.position.set(0, comm.roofY + 25.5, -62);
   const redStar = new THREE.Mesh(new THREE.OctahedronGeometry(1.45, 0), matRedGlow);
   redStar.position.set(0, comm.roofY + 31.2, -62);
-  scene.add(step1, step2, step3, spire, redStar);
+  // Prominent Hammer & Sickle Emblem on the Committee Stepped Tower facade!
+  const hsTower = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4), matHsEmblem);
+  hsTower.position.set(0, comm.roofY + 10.2, -55.9);
+  scene.add(step1, step2, step3, spire, redStar, hsTower);
   collision.addBox(0, comm.roofY + 3.2, -62, 28.4, 6.4, 18.4, 'stone');
+
+  // ---- 6. SOVIET BUILDING SITE (Bare concrete frame, upper slab reached by stairs, tower crane & enterable builders' hut!) ----
+  {
+    const bx = 50, bz = -64, bw = 14.0, bd = 11.0, slabY = 3.2;
+    // Bare concrete column frame rising 6.8m high + perimeter roof beams
+    for (const cx of [-6.4, 0, 6.4]) {
+      for (const cz of [-4.9, 4.9]) {
+        addSolidBox(scene, collision, bx + cx, 3.4, bz + cz, 0.72, 6.8, 0.72, matConc, 'stone');
+      }
+    }
+    for (const rz of [-4.9, 4.9]) {
+      const bm = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.55, 0.65), matConc);
+      bm.position.set(bx, 6.8, bz + rz);
+      scene.add(bm);
+    }
+    for (const rx of [-6.4, 6.4]) {
+      const bm = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.55, bd), matConc);
+      bm.position.set(bx + rx, 6.8, bz);
+      scene.add(bm);
+    }
+    // Concrete foundation block supporting the elevated slab (so walkers climb the stairs cleanly instead of walking underneath)
+    addSolidBox(scene, collision, bx, (slabY - 0.35) * 0.5, bz, bw - 0.4, slabY - 0.35, bd - 0.4, matConc, 'stone');
+    // Walkable elevated concrete slab (y = 3.2m!)
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.38, bd), matConc);
+    slab.position.set(bx, slabY - 0.19, bz);
+    slab.receiveShadow = true;
+    slab.castShadow = true;
+    scene.add(slab);
+    collision.addWalkable(bx, bz, bw + 0.3, bd + 0.3, slabY);
+    // Low safety guard rail along north, south & east edges of upper slab (leaving west stair landing open!)
+    addSolidBox(scene, collision, bx, slabY + 0.55, bz - bd * 0.5, bw, 1.1, 0.2, matSteel, 'solid');
+    addSolidBox(scene, collision, bx, slabY + 0.55, bz + bd * 0.5, bw, 1.1, 0.2, matSteel, 'solid');
+    addSolidBox(scene, collision, bx + bw * 0.5, slabY + 0.55, bz, 0.2, 1.1, bd, matSteel, 'solid');
+
+    // Climbable Concrete Staircase ascending from open West plaza (x = 31.5, y = 0) up to Slab (x = 43.0, y = 3.2)!
+    const stCount = 9;
+    for (let i = 0; i < stCount; i++) {
+      const sy = slabY * ((i + 1) / stCount);
+      const sx = 31.4 + i * 1.38;
+      const step = new THREE.Mesh(new THREE.BoxGeometry(1.48, sy, 3.2), matConc);
+      step.position.set(sx, sy * 0.5, bz);
+      step.receiveShadow = true;
+      scene.add(step);
+      if (sy > 0.52) {
+        collision.addBox(sx, (sy - 0.12) * 0.5, bz, 1.44, sy - 0.12, 3.1, 'stone');
+      }
+      collision.addWalkable(sx, bz, 1.7, 3.4, sy);
+    }
+    // Concrete stair side curbs guiding walkers straight up from the west foot (x=31.4) onto the slab
+    for (const side of [-1, 1]) {
+      addSolidBox(scene, collision, 37.5, 1.85, bz + side * 1.76, 11.4, 3.7, 0.24, matConc, 'stone');
+    }
+
+    // Tall Yellow-and-Red Lattice Tower Crane beside the Concrete Frame!
+    const craneMat = new THREE.MeshStandardMaterial({ color: 0xd99b24, roughness: 0.55, metalness: 0.45 });
+    const crX = 64, crZ = -66;
+    addSolidBox(scene, collision, crX, 1.2, crZ, 3.0, 2.4, 3.0, matConc, 'stone');
+    const crMast = new THREE.Mesh(new THREE.BoxGeometry(1.6, 26, 1.6), craneMat);
+    crMast.position.set(crX, 15.0, crZ);
+    const crCab = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 2.2), matRed);
+    crCab.position.set(crX - 1.2, 25.0, crZ);
+    const crJib = new THREE.Mesh(new THREE.BoxGeometry(26, 1.4, 1.4), craneMat);
+    crJib.position.set(crX - 7.5, 27.6, crZ);
+    const crCounter = new THREE.Mesh(new THREE.BoxGeometry(3.2, 1.8, 2.0), matConc);
+    crCounter.position.set(crX + 5.2, 27.4, crZ);
+    const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 14, 6), matSteel);
+    cable.position.set(crX - 14.0, 20.4, crZ);
+    const hookSlab = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.45, 2.0), matConc);
+    hookSlab.position.set(crX - 14.0, 13.4, crZ);
+    scene.add(crMast, crCab, crJib, crCounter, cable, hookSlab);
+
+    // Enterable Builders' Hut (бытовка) beside the Building Site!
+    const hut = buildHollowRoom(scene, collision, {
+      cx: 27, cz: -54, w: 8.5, d: 7.5, h: 3.4, floorY: 0.16,
+      wallMat: matWood, floorMat: matFloor, roofMat: matSteel, roofStyle: 'flat',
+      south: [{ type: 'door', offset: 0, width: 2.3, height: 2.7 }],
+      east: [{ type: 'window', offset: 0, width: 1.8 }],
+      interiorLight: { color: 0xffd288, intensity: 1.4, distance: 11 }
+    });
+    addDesk(scene, collision, 25.0, hut.floorY, -56.0, 1.8, 0.85, matWood, 1);
+    addBunk(scene, collision, 29.4, hut.floorY, -56.2, true, matSteel, 0x5c4b3c);
+  }
 
   // Lobby Red Carpet & Pillars + Reception Desk
   const carpet = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 14.5), matRed);
@@ -474,9 +674,13 @@ export function buildLevel7(scene, collision, particles) {
   const pickupDefs = [
     { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(-19, 0.9, 46),  label: 'GLASS OF HOT TEA (+35 HP)' },
     { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(21, 0.9, 46),   label: 'GARAGE HOT TEA (+35 HP)' },
+    { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(19, 0.9, 17),   label: 'METRO PAVILION TEA (+35 HP)' },
+    { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(-23, 0.9, 13),  label: 'LIBRARY HOT TEA (+35 HP)' },
+    { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(27, 0.9, -53),  label: "BUILDERS' HUT TEA (+35 HP)" },
     { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(-40, 0.9, -38), label: 'PALACE HOT TEA (+35 HP)' },
     { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(48, 0.9, -38),  label: 'FACTORY HOT TEA (+35 HP)' },
     { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(0, 0.9, -62),   label: 'COMMITTEE HOT TEA (+35 HP)' },
+    { type: 'health', variant: 'tea_glass', pos: new THREE.Vector3(-14.5, 0.72, 58), label: 'CELLAR HATCH TEA (+35 HP)', inDen: true },
     { type: 'ammo',   pos: new THREE.Vector3(21, 0.9, 34),   label: 'GARAGE AMMO BOX' },
     { type: 'ammo',   pos: new THREE.Vector3(-12, 0.9, -22), label: 'MILITIA AMMO CRATE' }
   ];
@@ -487,7 +691,7 @@ export function buildLevel7(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- 32 ENEMIES (KGB Agents, Soviet Militia, Guard Dogs & Boss Colonel Voronin!) ----
+  // ---- 36 ENEMIES (KGB Agents, Soviet Militia, Guard Dogs, Metro, Library, Building Site & Boss Colonel Voronin!) ----
   const enemySpawns = [
     // Southern Avenue & Courtyards
     { type: 'soviet_militia', pos: new THREE.Vector3(-6, 0, 58) },
@@ -498,11 +702,13 @@ export function buildLevel7(scene, collision, particles) {
     { type: 'soviet_militia', pos: new THREE.Vector3(21, 0.14, 46) },  // Garage 2
     { type: 'kgb_agent',      pos: new THREE.Vector3(21, 0.14, 34) },  // Garage 1
     { type: 'guard_dog',      pos: new THREE.Vector3(5, 0, 32) },
-    // Checkpoint & Avenue Approach
+    // Checkpoint, Metro Pavilion & District Library
     { type: 'soviet_militia', pos: new THREE.Vector3(-4, 0, 20) },
     { type: 'kgb_agent',      pos: new THREE.Vector3(3, 0, 15) },
     { type: 'guard_dog',      pos: new THREE.Vector3(-12, 0, 14) },
-    { type: 'soviet_militia', pos: new THREE.Vector3(16, 0, 12) },
+    { type: 'soviet_militia', pos: new THREE.Vector3(14, 0, 10) },
+    { type: 'kgb_agent',      pos: new THREE.Vector3(19.2, 0.18, 17.0) },  // Inside Metro Pavilion
+    { type: 'soviet_militia', pos: new THREE.Vector3(-23.8, 0.18, 15.0) }, // Inside District Library
     // Cobbled Square & Park
     { type: 'kgb_agent',      pos: new THREE.Vector3(-10, 0, -2) },
     { type: 'soviet_militia', pos: new THREE.Vector3(10, 0, -2) },
@@ -514,11 +720,13 @@ export function buildLevel7(scene, collision, particles) {
     { type: 'kgb_agent',      pos: new THREE.Vector3(-26, 0, -34) },
     { type: 'soviet_militia', pos: new THREE.Vector3(-34, 0.25, -38) }, // Inside Palace of Culture
     { type: 'kgb_agent',      pos: new THREE.Vector3(-42, 0.25, -38) }, // Inside Palace of Culture
-    // Factory Hall (East)
+    // Factory Hall & Building Site (East / North-East)
     { type: 'soviet_militia', pos: new THREE.Vector3(34, 0, -36) },
     { type: 'guard_dog',      pos: new THREE.Vector3(38, 0, -40) },
     { type: 'soviet_militia', pos: new THREE.Vector3(46, 0.16, -38) },  // Inside Factory Hall
     { type: 'kgb_agent',      pos: new THREE.Vector3(52, 0.16, -38) },  // Inside Factory Hall
+    { type: 'soviet_militia', pos: new THREE.Vector3(50.0, 3.2, -64.0) }, // On Building Site Concrete Upper Slab!
+    { type: 'kgb_agent',      pos: new THREE.Vector3(27.0, 0.16, -53.0) }, // Inside Builders' Hut!
     // Committee Building Plaza & Interior (Lobby, Archive Cage, Cell Wing)
     { type: 'soviet_militia', pos: new THREE.Vector3(-8, 0, -34) },
     { type: 'soviet_militia', pos: new THREE.Vector3(8, 0, -34) },
@@ -532,10 +740,23 @@ export function buildLevel7(scene, collision, particles) {
 
   const enterableBuildings = [
     { name: 'Food Shop', inside: new THREE.Vector3(-19, 0.16, 46), outside: new THREE.Vector3(-12, 0, 46) },
+    { name: 'Metro Pavilion', inside: new THREE.Vector3(19.2, 0.18, 17), outside: new THREE.Vector3(13, 0, 17) },
+    { name: 'District Library', inside: new THREE.Vector3(-23.8, 0.18, 15), outside: new THREE.Vector3(-15, 0, 15) },
+    { name: 'Building Site Slab', inside: new THREE.Vector3(50.0, 3.2, -64.0), outside: new THREE.Vector3(28.5, 0, -64) },
+    { name: "Builders' Hut", inside: new THREE.Vector3(27, 0.16, -53), outside: new THREE.Vector3(27, 0, -47) },
     { name: 'Palace of Culture', inside: new THREE.Vector3(-39, 0.25, -38), outside: new THREE.Vector3(-27, 0, -38) },
     { name: 'Factory Hall', inside: new THREE.Vector3(46, 0.16, -38), outside: new THREE.Vector3(36, 0, -38) },
     { name: 'Committee Building', inside: new THREE.Vector3(0, 0.25, -61), outside: new THREE.Vector3(0, 0, -50) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
+  const specialSpots = {
+    raisedHide: {
+      deckY: 3.08,
+      deckPos: new THREE.Vector3(21, 3.08, 40),
+      jumpBlocks: garageJumpCrates
+    },
+    crawlDen: cellarDen
+  };
+
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }

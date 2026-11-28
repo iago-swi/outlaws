@@ -9,6 +9,8 @@ import {
 import { createSkyDome, createWaterMesh } from '../engine/shaders.js';
 import {
   buildHollowRoom,
+  buildRaisedHide,
+  buildCrawlDen,
   addSolidBox,
   addAltar,
   addPewRow,
@@ -206,28 +208,120 @@ export function buildLevel6(scene, collision, particles) {
   buildNormanHouse(19, 16, 10, 10, 'west');
   buildNormanHouse(-19, -4, 10, 10, 'east');
 
-  // ---- 2. ENTERABLE NORMAN PARISH CHURCH (Pews, Altar & Tall Stone Bell Tower!) ----
-  const church = buildHollowRoom(scene, collision, {
-    cx: 21, cz: -12, w: 11.5, d: 16, h: 5.0, floorY: 0.2,
-    wallMat: matStone, floorMat: matStone, roofMat: matSlate, roofStyle: 'gable',
-    west: [
-      { type: 'door', offset: 0, width: 2.4, height: 3.1 },
-      { type: 'window', offset: -4.5, width: 1.5 },
-      { type: 'window', offset: 4.5, width: 1.5 }
-    ],
-    south: [{ type: 'door', offset: 0, width: 2.3, height: 3.0 }],
-    interiorLight: { color: 0xffd299, intensity: 1.7, distance: 16 }
+  // ---- 2. BOMBED-OUT NORMAN PARISH CHURCH RUIN (No roof, breached walls, jagged fragments, broken tower, fallen bell, charred beams, rubble & small fire!) ----
+  {
+    const cx = 21, cz = -12, cw = 11.5, cd = 16, fy = 0.2;
+    const matCharred = new THREE.MeshStandardMaterial({ color: 0x1a1715, roughness: 0.96 });
+    const matRubble = new THREE.MeshStandardMaterial({ color: 0x827d73, roughness: 0.96 });
+    const matBell = new THREE.MeshStandardMaterial({ color: 0x4b5c48, metalness: 0.72, roughness: 0.36 });
+
+    // Stone church floor slab (open to the pre-dawn sky — NO ROOF!)
+    const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(cw, 0.5, cd), matStone);
+    floorMesh.position.set(cx, fy - 0.25, cz);
+    floorMesh.receiveShadow = true;
+    scene.add(floorMesh);
+    collision.addWalkable(cx, cz, cw + 0.3, cd + 0.3, fy);
+
+    // Standing jagged wall fragments with wide bomb breaches (all passages >= 2.6m wide!)
+    // West wall fragments (breached in the middle)
+    addSolidBox(scene, collision, cx - cw * 0.5 + 0.25, fy + 2.3, cz - 5.6, 0.5, 4.6, 4.8, matStone, 'stone');
+    addSolidBox(scene, collision, cx - cw * 0.5 + 0.25, fy + 1.4, cz + 5.8, 0.5, 2.8, 4.4, matStone, 'stone');
+    // East wall fragments (blown-out wide shell breach!)
+    addSolidBox(scene, collision, cx + cw * 0.5 - 0.25, fy + 2.4, cz - 5.4, 0.5, 4.8, 5.2, matStone, 'stone');
+    addSolidBox(scene, collision, cx + cw * 0.5 - 0.25, fy + 1.7, cz + 5.4, 0.5, 3.4, 5.2, matStone, 'stone');
+    // South gable wall fragments flanking wide portal
+    addSolidBox(scene, collision, cx - 3.6, fy + 2.1, cz + cd * 0.5 - 0.25, 4.2, 4.2, 0.5, matStone, 'stone');
+    addSolidBox(scene, collision, cx + 3.6, fy + 1.5, cz + cd * 0.5 - 0.25, 4.2, 3.0, 0.5, matStone, 'stone');
+    // North apse wall fragments
+    addSolidBox(scene, collision, cx - 3.4, fy + 2.5, cz - cd * 0.5 + 0.25, 4.6, 5.0, 0.5, matStone, 'stone');
+    addSolidBox(scene, collision, cx + 3.4, fy + 1.9, cz - cd * 0.5 + 0.25, 4.6, 3.8, 0.5, matStone, 'stone');
+
+    // Broken-off jagged stone bell tower stub on north-east corner (no spire!)
+    addSolidBox(scene, collision, cx + 4.0, fy + 3.6, cz - 6.8, 3.2, 7.2, 3.2, matStone, 'stone');
+    const jag1 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.8, 1.2), matStone);
+    jag1.position.set(cx + 3.1, fy + 7.9, cz - 7.6);
+    const jag2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.2, 1.5), matStone);
+    jag2.position.set(cx + 4.9, fy + 7.5, cz - 6.0);
+    scene.add(jag1, jag2);
+
+    // Fallen Bronze Bell lying half-buried in rubble!
+    const bellGrp = new THREE.Group();
+    bellGrp.position.set(cx + 2.4, fy + 0.65, cz - 3.2);
+    bellGrp.rotation.set(1.15, 0.4, 0.55);
+    const bellBody = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.72, 1.35, 14), matBell);
+    const bellCrown = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), matBell);
+    bellCrown.position.y = 0.68;
+    bellGrp.add(bellBody, bellCrown);
+    scene.add(bellGrp);
+    collision.addBox(cx + 2.4, fy + 0.6, cz - 3.2, 1.4, 1.2, 1.4, 'solid');
+
+    // Stone rubble piles & tilted charred fallen roof beams
+    for (const [rx, rz, rw, rh, rd] of [
+      [cx - 3.4, cz - 2.6, 1.8, 0.85, 1.6],
+      [cx + 3.8, cz + 2.4, 1.6, 0.75, 1.8],
+      [cx - 3.8, cz + 3.8, 1.5, 0.65, 1.4]
+    ]) {
+      addSolidBox(scene, collision, rx, fy + rh * 0.5, rz, rw, rh, rd, matRubble, 'stone');
+    }
+    for (const [bx, by, bz, len, rx, rz] of [
+      [cx - 3.2, fy + 1.45, cz - 2.2, 5.2, 0.15, -0.52],
+      [cx + 3.4, fy + 1.3, cz + 2.6, 4.8, -0.2, 0.48],
+      [cx - 2.0, fy + 0.32, cz + 4.4, 3.6, 0.05, 1.45]
+    ]) {
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(0.28, len, 0.28), matCharred);
+      beam.position.set(bx, by, bz);
+      beam.rotation.set(rx, 0.2, rz);
+      scene.add(beam);
+    }
+
+    // Small flickering ruin fire amidst charred timbers (warm glow + rising smoke!)
+    const fireEmbers = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.82, 0.26, 8), new THREE.MeshBasicMaterial({ color: 0xff4c12 }));
+    fireEmbers.position.set(cx - 2.6, fy + 0.13, cz + 1.2);
+    const ruinFlame = new THREE.Mesh(new THREE.ConeGeometry(0.55, 1.35, 8), new THREE.MeshBasicMaterial({ color: 0xff9224 }));
+    ruinFlame.position.set(cx - 2.6, fy + 0.85, cz + 1.2);
+    const ruinFireLight = new THREE.PointLight(0xff7e26, 6.5, 18);
+    ruinFireLight.position.set(cx - 2.6, fy + 1.6, cz + 1.2);
+    scene.add(fireEmbers, ruinFlame, ruinFireLight);
+    animated.push((t) => {
+      ruinFlame.scale.y = 0.82 + Math.sin(t * 11.5) * 0.24;
+      ruinFireLight.intensity = 6.0 + Math.sin(t * 9.3) * 1.4;
+    });
+    particles.addMistEmitter(new THREE.Vector3(cx - 2.6, fy + 1.4, cz + 1.2), 1.4);
+
+    // Surviving stone altar & two splintered pews
+    addAltar(scene, collision, cx, fy, cz - 6.6, 2.6, 1.0, matStone, 0x8f2222);
+    addPewRow(scene, collision, cx + 3.2, fy, cz - 0.5, 2.8, matDarkWood);
+  }
+
+  // ---- 2B. ENTERABLE NORMAN FARM BARN (West of Southern Village — hay bales, stalls & farm cart!) ----
+  const farmBarn = buildHollowRoom(scene, collision, {
+    cx: -36, cz: 20, w: 11.5, d: 13.0, h: 4.8, floorY: 0.14,
+    wallMat: matStone, floorMat: matWood, roofMat: matSlate, roofStyle: 'gable',
+    east: [{ type: 'door', offset: 0, width: 3.4, height: 3.4 }],
+    south: [{ type: 'door', offset: 0, width: 2.6, height: 3.0 }],
+    west: [{ type: 'window', offset: 0, width: 1.8 }],
+    interiorLight: { color: 0xffbf72, intensity: 1.5, distance: 15 }
   });
-  const steeple = new THREE.Mesh(new THREE.BoxGeometry(3.4, 6.5, 3.4), matStone);
-  steeple.position.set(21, church.roofY + 3.4, -17.5);
-  const spire = new THREE.Mesh(new THREE.ConeGeometry(2.6, 5.5, 4), matSlate);
-  spire.rotation.y = Math.PI / 4;
-  spire.position.set(21, church.roofY + 9.2, -17.5);
-  scene.add(steeple, spire);
-  addAltar(scene, collision, 21, church.floorY, -18.2, 2.8, 1.0, matStone, 0x8f2222);
-  addPewRow(scene, collision, 23.2, church.floorY, -13.5, 3.2, matDarkWood);
-  addPewRow(scene, collision, 23.2, church.floorY, -10.5, 3.2, matDarkWood);
-  addPewRow(scene, collision, 23.2, church.floorY, -7.5, 3.2, matDarkWood);
+  const matHay = new THREE.MeshStandardMaterial({ color: 0xc9a44a, roughness: 0.95 });
+  addSolidBox(scene, collision, -39.4, farmBarn.floorY + 0.65, 16.0, 2.4, 1.3, 2.0, matHay, 'wood');
+  addSolidBox(scene, collision, -39.4, farmBarn.floorY + 0.65, 24.0, 2.4, 1.3, 2.0, matHay, 'wood');
+  addSolidBox(scene, collision, -34.2, farmBarn.floorY + 0.6, 15.2, 2.8, 1.2, 1.6, matDarkWood, 'wood');
+
+  // ---- BOMB CRATERS (Blasted earth rings with dark scorched centers!) ----
+  const matScorched = new THREE.MeshStandardMaterial({ color: 0x1e1916, roughness: 0.98 });
+  const matDirtRim = new THREE.MeshStandardMaterial({ color: 0x524536, roughness: 0.96 });
+  for (const [cx, cz, cr] of [
+    [9.5, -10.0, 2.7], [28.5, -4.0, 3.0], [-10.0, 6.0, 2.6],
+    [12.0, -34.0, 3.2], [-22.0, -32.0, 2.8], [-25.0, 28.0, 2.5]
+  ]) {
+    const pit = new THREE.Mesh(new THREE.CircleGeometry(cr * 0.78, 16), matScorched);
+    pit.rotation.x = -Math.PI / 2;
+    pit.position.set(cx, 0.05, cz);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(cr * 0.92, 0.36, 7, 16), matDirtRim);
+    rim.rotation.x = Math.PI / 2;
+    rim.position.set(cx, 0.12, cz);
+    scene.add(pit, rim);
+  }
 
   // ---- 3. ENTERABLE CONCRETE COMMAND BUNKER ON CLIFF ABOVE THE SEA ----
   const bunker = buildHollowRoom(scene, collision, {
@@ -350,13 +444,25 @@ export function buildLevel6(scene, collision, particles) {
 
   particles.initAmbient('alpine', collision.bounds);
 
+  // ---- 6.4 RAISED BOCAGE SNIPER HIDE (2 jump crates) & CROUCH-ONLY RESISTANCE DEN (1.25m door!) ----
+  const normandyHide = buildRaisedHide(scene, collision, {
+    cx: 13, cz: 37, deckY: 2.2, w: 4.2, d: 4.2, openSide: 'south',
+    wallMat: matWood, floorMat: matWood, postMat: matDarkWood, jumpMat: matWood
+  });
+  const normandyDen = buildCrawlDen(scene, collision, {
+    cx: -12, cz: 25, w: 5.2, d: 4.8, doorSide: 'east',
+    wallMat: matConc, floorMat: matStone, roofMat: matConc
+  });
+
   // ---- PICKUPS ----
   const pickupDefs = [
     { type: 'health', pos: new THREE.Vector3(-19, 0.9, 16),   label: 'RESISTANCE MEDKIT (+35 HP)' },
-    { type: 'health', pos: new THREE.Vector3(21, 0.9, -12),   label: 'CHURCH FIRST AID (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(-35, 0.9, 20),   label: 'FARM BARN BANDAGES (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(21, 0.9, -12),   label: 'CHURCH RUIN FIRST AID (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(-52, 0.9, -13),  label: 'MANOR BANDAGES (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(50, 0.9, 24),    label: 'WINDMILL RATIONS (+35 HP)' },
     { type: 'health', pos: new THREE.Vector3(0, 0.9, -43),    label: 'BUNKER MEDKIT (+35 HP)' },
+    { type: 'health', pos: new THREE.Vector3(normandyDen.insidePos.x, normandyDen.floorY + 0.55, normandyDen.insidePos.z), label: 'HIDDEN CELLAR MEDKIT (+35 HP)', inDen: true },
     { type: 'ammo',   pos: new THREE.Vector3(19, 0.9, 16),    label: 'ALLIED AMMO DROP' },
     { type: 'ammo',   pos: new THREE.Vector3(-19, 0.9, -4),   label: 'RESISTANCE AMMO CACHE' }
   ];
@@ -367,7 +473,7 @@ export function buildLevel6(scene, collision, particles) {
     pickups.push({ ...pd, mesh, collected: false });
   }
 
-  // ---- 31 ENEMIES (Riflemen, Officers, Sandbag MG Gunners, Guard Dogs, Boss Major Vogel) ----
+  // ---- 32 ENEMIES (Riflemen, Officers, Sandbag MG Gunners, Guard Dogs, Farm Barn, Church Ruin, Boss Major Vogel) ----
   const enemySpawns = [
     // Sunken lane & village south
     { type: 'german_rifleman', pos: new THREE.Vector3(-5, 0, 38) },
@@ -375,6 +481,7 @@ export function buildLevel6(scene, collision, particles) {
     { type: 'german_rifleman', pos: new THREE.Vector3(6, 0, 26) },
     { type: 'german_officer',  pos: new THREE.Vector3(-6, 0, 22) },
     { type: 'german_rifleman', pos: new THREE.Vector3(-18, 0.16, 16) }, // House 1
+    { type: 'german_rifleman', pos: new THREE.Vector3(-35, 0.14, 20) }, // Inside Farm Barn
     { type: 'german_rifleman', pos: new THREE.Vector3(18, 0.16, 16) },  // House 2
     // Windmill East Ridge
     { type: 'german_rifleman', pos: new THREE.Vector3(34, 0, 22) },
@@ -410,11 +517,13 @@ export function buildLevel6(scene, collision, particles) {
   ];
 
   const enterableBuildings = [
-    { name: 'Parish Church', inside: new THREE.Vector3(20.5, 0.2, -12), outside: new THREE.Vector3(13, 0, -12) },
+    { name: 'Bombed Parish Church Ruin', inside: new THREE.Vector3(20.5, 0.2, -12), outside: new THREE.Vector3(13, 0, -12) },
+    { name: 'Farm Barn', inside: new THREE.Vector3(-35, 0.14, 20), outside: new THREE.Vector3(-28, 0, 20) },
     { name: 'Command Bunker', inside: new THREE.Vector3(0, 0.2, -44), outside: new THREE.Vector3(0, 0, -37.5) },
     { name: 'Walled Manor', inside: new THREE.Vector3(-52, 0.18, -13), outside: new THREE.Vector3(-43, 0, -13) },
     { name: 'Norman Windmill', inside: new THREE.Vector3(50, 0.2, 24), outside: new THREE.Vector3(43, 0, 24) }
   ];
 
-  return { enemySpawns, pickups, animated, disposables, enterableBuildings };
+  const specialSpots = { raisedHide: normandyHide, crawlDen: normandyDen };
+  return { enemySpawns, pickups, animated, disposables, enterableBuildings, specialSpots };
 }

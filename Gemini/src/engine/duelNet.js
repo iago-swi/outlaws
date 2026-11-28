@@ -358,6 +358,13 @@ export class DuelConnection {
   // Messaging & Clean Teardown
   // =========================================================================
 
+  isOpen() {
+    if (!this.connected || this.closed) return false;
+    if (this.mode === 'peerjs') return !!(this.conn && this.conn.open);
+    if (this.mode === 'manual') return !!(this.dc && this.dc.readyState === 'open');
+    return false;
+  }
+
   send(msg) {
     if (!this.connected || this.closed) return false;
     try {
