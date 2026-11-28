@@ -14,7 +14,7 @@ Two browser games inspired by LucasArts’ 1997 Western *Outlaws*, built to comp
 | Gemini · Nine Horizons | [Play](https://iago-swi.github.io/outlaws/Gemini/) | [Gemini/](Gemini/) |
 | Claude · Lone Hand, Blender trial | [Play](https://iago-swi.github.io/outlaws/Claude-Blender/) | [Claude-Blender/](Claude-Blender/) |
 
-The third row is a trial, not a third game: Lone Hand 2.7.0 with the people and the houses of three chapters (Dry Gulch, Kagemori, Uri) modelled in Blender. Its README shows [before and after](Claude-Blender/comparison.jpg).
+The third row is a trial, not a third game: Lone Hand 2.7.0 with the people and the buildings of three chapters (Dry Gulch, Kagemori, Uri) made in Blender; only these three can be played in it. Its README shows [before and after](Claude-Blender/comparison.jpg).
 
 To play offline, download or clone this repository and open `index.html` in your browser. It is a landing page that links to both versions. Each version is self-contained in its own folder, with its own README.
 

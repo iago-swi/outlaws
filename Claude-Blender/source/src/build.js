@@ -64,7 +64,8 @@ export function prismGeo(w, h, d, tile = 1) {
   quad([x, 0, -z], [0, h, -z], [0, h, z], [x, 0, z]);
   P.push(-x, 0, z, x, 0, z, 0, h, z, x, 0, -z, -x, 0, -z, 0, h, -z);
   U.push(0, 0, w / tile, 0, x / tile, h / tile, 0, 0, w / tile, 0, x / tile, h / tile);
-  return rawGeo(P, U);
+  const G = rawGeo(P, U); G.userData.prim = { t: 'prism', w, h, d, tile };
+  return G;
 }
 
 /**
@@ -103,7 +104,8 @@ export function curvedRoofGeo(w, d, h, o = {}) {
       tri(a, c, e, [s0 * len, t0 * sl], [s1 * len, t1 * sl], [s1 * len, t0 * sl]);
     }
   }
-  return rawGeo(P, U);
+  const G = rawGeo(P, U); G.userData.prim = { t: 'croof', w, d, h, ridge, up, curve, tile };
+  return G;
 }
 
 /** Lumpy boulder. */
@@ -122,12 +124,35 @@ export function rockGeo(seed = 1, detail = 1) {
 
 // ---------------------------------------------------------------------------
 
+const TAKE = new Set(['wood', 'woodH', 'plaster', 'stone', 'shingle', 'kawara', 'thatch', 'flat', 'metal', 'cobble', 'window']);     // Blender trial: see Builder.capture()
+
 export class Builder {
   /** ghost: for colliders only (see blend.js): its shapes are never drawn. */
   static ghost(world) { const g = new Builder(world); g.ghost = true; return g; }
   constructor(world) { this.world = world; this.parts = new Map(); this.cur = null; this.stack = []; this.order = []; this.noTrinkets = 0; }
 
+  /**
+   * Blender trial. Between capture() and release() the shapes of standing things are set aside instead of going into the scenery:
+   * not the small things a shot breaks, not what a level made breakable itself (crates, barrels, tables), not glass, cloth, paper, rock or
+   * ground. blend.js then decides: the Blender version of a shape where there is one, the shape itself (put()) where there is not.
+   */
+  capture() { this.region = []; }
+  release() { const r = this.region || []; this.region = null; return r; }
+  takes(mat, geo) {
+    if (!TAKE.has(mat.userData.key) || (this.cur && !this.cur.wall)) return false;
+    if (geo.userData.solid) return true;
+    geo.computeBoundingSphere(); return geo.boundingSphere.radius > 0.32;
+  }
+  /** A shape straight into the scenery (what add() does when nothing is being captured). */
+  put(mat, geo, piece) {
+    let a = this.parts.get(mat);
+    if (!a) this.parts.set(mat, (a = []));
+    a.push(geo);
+    if (piece) geo.userData.piece = piece;
+    return this;
+  }
   add(mat, geo) {
+    if (this.region && this.takes(mat, geo)) { this.region.push({ mat, geo, piece: this.cur }); return this; }
     let a = this.parts.get(mat);
     if (!a) this.parts.set(mat, (a = []));
     a.push(geo);
@@ -183,6 +208,7 @@ export class Builder {
     const wall = o.solid && !this.cur && mat.userData.breakable && h >= 1.0 && Math.min(w, d) <= 0.5 && Math.max(w, d) >= 0.5 && !o.rx && !o.rz;
     if (wall) { const paper = mat.userData.breakable === 'paper'; this.piece({ hp: paper ? 25 : o.door ? 90 : clamp(Math.max(w, d) * h * 28, 110, 230), kind: paper ? 'paper' : 'wood', color: o.c ?? 0xb08a5a, x, y, z, r: Math.max(w, d) / 2, top: y + h, wall: true, door: !!o.door }); }
     const g = xf(boxGeo(w, h, d, mat.userData.tile || 1), [x, y + h / 2, z], [o.rx || 0, o.ry || 0, o.rz || 0], 1, o.c ?? 0xffffff);
+    g.userData.prim = { t: 'box', w, h, d, p: [x, y + h / 2, z], r: [o.rx || 0, o.ry || 0, o.rz || 0], tile: mat.userData.tile || 1 };
     if (o.solid) g.userData.solid = true;
     this.add(mat, g);
     if (o.solid) this.world.addBox(x, z, w, d, o.ry || 0, y, y + h);
@@ -195,6 +221,7 @@ export class Builder {
     const t = mat.userData.tile || 1, uv = g.attributes.uv;
     for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * Math.max(1, Math.round(6.28 * Math.max(rt, rb) / t)), uv.getY(i) * h / t);
     const q = xf(g, [x, y + h / 2, z], [o.rx || 0, o.ry || 0, o.rz || 0], 1, o.c ?? 0xffffff);
+    q.userData.prim = { t: 'cyl', rt, rb, h, seg: o.seg || 10, open: !!o.open, p: [x, y + h / 2, z], r: [o.rx || 0, o.ry || 0, o.rz || 0], tile: t };
     if (o.solid) q.userData.solid = true;
     this.add(mat, q);
     if (o.solid) this.world.addCyl(x, z, Math.max(rt, rb), y, y + h);
@@ -203,6 +230,7 @@ export class Builder {
   /** Any geometry. */
   geo(mat, g, p, r, s, c) {
     const q = xf(g, p, r, s, c);
+    if (q.userData.prim && !q.userData.prim.p) q.userData.prim = { ...q.userData.prim, p: p || [0, 0, 0], r: r || [0, 0, 0], s: s ?? 1 };
     if (mat.userData.rocky && !this.cur) {               // a standing stone or a small rock with nothing to bump into: it gets a collider
       q.computeBoundingBox(); const b = q.boundingBox, cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2, rad = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) / 2;
       const W = this.world;

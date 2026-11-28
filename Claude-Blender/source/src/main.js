@@ -13,7 +13,8 @@ import { makeMaterials } from './tex.js';
 import { World, Builder, Nav, merge } from './build.js';
 import { Player, Input } from './player.js';
 import { Enemy, Shots, makeHumanoid, lookFor, TYPES, dropMesh, wound, gBox, RETURNS, stride } from './actors.js';
-import { BL, loadModels, blendChapter, blendFlush } from './blend.js';
+import { BL, loadModels, blendChapter, blendFlush, sceneryFor, blendRelease } from './blend.js';
+const PLAYABLE = 3;          // Blender trial: the chapters that can be played here (Dry Gulch, Kagemori, Uri)
 import { Crowd } from './crowd.js';
 import { Arc } from './arc.js';
 import { Life } from './life.js';
@@ -127,7 +128,10 @@ class Game {
   roster() { const d = this.def; return this.duel && this.duel.active ? d.heroes.concat(VILLAINS[d.id] || []) : d.heroes; }
 
   bindUI() {
-    document.querySelectorAll('.card').forEach((c) => c.addEventListener('click', () => { this.sound.init(); this.openLevel(+c.dataset.level); }));
+    // Blender trial: only the chapters redone in Blender can be played here; the others are greyed out on the title screen
+    document.querySelectorAll('.card').forEach((c) => { if (+c.dataset.level >= PLAYABLE) { c.classList.add('off'); c.title = 'Not part of the Blender trial: play it in Lone Hand'; } });
+    document.querySelectorAll('#dlevel option').forEach((o) => { if (+o.value >= PLAYABLE) o.remove(); });
+    document.querySelectorAll('.card').forEach((c) => c.addEventListener('click', () => { if (c.classList.contains('off')) return; this.sound.init(); this.openLevel(+c.dataset.level); }));
     // hero cards: pointing at one previews that hero in the opening shot, clicking starts the chapter
     const cardOf = (e) => { const c = e.target.closest('.hero'); return c ? +c.dataset.hero : -1; };
     $('#heroes').addEventListener('mouseover', (e) => { const k = cardOf(e); if (k >= 0 && this.state === 'intro' && k !== this.heroIndex && !(this.duel && this.duel.myPick >= 0)) this.applyHero(k); });
@@ -158,7 +162,7 @@ class Game {
     for (const id of ['#pause', '#dead', '#clear', '#intro']) $(id).addEventListener('click', (e) => { const b = e.target.closest('.menubtn'); if (b && b.dataset.act && b.dataset.act !== 'sound' && b.dataset.act !== 'next') { e.stopPropagation(); b.blur(); act(b.dataset.act); } }, true);
     $('#pause').addEventListener('click', (e) => { if (e.target.closest('.soundbtn')) return; if (this.state === 'pause') { this.setState('play'); this.input.lock(); } });
     $('#dead').addEventListener('click', () => { if (this.state === 'dead' && this.player.deadT > 1) this.openLevel(this.index, true); });
-    $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.duel) { if (this.duel.link.open) this.duel.again(); else this.toTitle(); return; } if (this.index + 1 < LEVELS.length) this.openLevel(this.index + 1); else this.toTitle(); });
+    $('#clear').addEventListener('click', () => { if (this.state !== 'clear') return; if (this.duel) { if (this.duel.link.open) this.duel.again(); else this.toTitle(); return; } if (this.index + 1 < PLAYABLE) this.openLevel(this.index + 1); else this.toTitle(); });
     this.input.onLock = (locked) => {
       if (locked) { if (this.state === 'pause') this.setState('play'); }
       else if (this.state === 'play' && !this.input.free) this.setState('pause');
@@ -275,8 +279,10 @@ class Game {
     if (this.duel && this.duel.active && this.duel.cfg) { this.wits = this.duel.cfg.wits || 'medium'; this.mapSize = this.duel.cfg.size || 'medium'; }   // a game for two: the host's choice, in both browsers
     this.gfx.clearLevel(); this.shots.reset(); this.havoc.reset(); this.enemies = []; this.pickups = [];
     this.world = new World(); this.world.chapter = def.id; this.rand = rng(4242 + i * 977);
-    const B = new Builder(this.world);
+    const B = new Builder(this.world), scen = sceneryFor(def.id);
+    if (scen) B.capture();                                           // Blender trial: the shapes of what stands in the chapter are set aside ...
     const L = (this.level = def.build({ game: this, gfx: this.gfx, world: this.world, B, M: this.M, root: this.gfx.root, rand: this.rand, shared: this.gfx.shared }));
+    if (scen) blendRelease(B, B.release(), scen, def.id);             // ... and come back as their Blender versions
     if (!backdrop) this.rockColliders();
     this.sized = backdrop ? null : resize({ game: this, world: this.world, level: L, B, M: this.M, root: this.gfx.root, def, index: i }, this.mapSize);   // small, medium or large
     L.enemies = capFoes(L.enemies, this.sized && this.sized.large ? 45 : MAX_FOES);
@@ -554,8 +560,8 @@ class Game {
   }
   /** The title screen shows a different chapter on every visit. */
   randomChapter() {
-    let i = Math.floor(Math.random() * LEVELS.length);
-    if (i === this.index && this.def) i = (i + 1 + Math.floor(Math.random() * (LEVELS.length - 1))) % LEVELS.length;
+    let i = Math.floor(Math.random() * PLAYABLE);
+    if (i === this.index && this.def) i = (i + 1 + Math.floor(Math.random() * (PLAYABLE - 1))) % PLAYABLE;
     return i;
   }
 
@@ -828,7 +834,7 @@ class Game {
   say(text) { this.ui.msg.textContent = text; this.ui.msg.classList.add('on'); this.msgT = 1.6; }
 
   levelCleared() {
-    const s = this.stats, d = this.def, last = this.index + 1 >= LEVELS.length;
+    const s = this.stats, d = this.def, last = this.index + 1 >= PLAYABLE;
     this.setState('clear');
     if (document.pointerLockElement) document.exitPointerLock();
     this.sound.stopMusic(); this.sound.fanfare(d.id);
@@ -1089,7 +1095,7 @@ class Game {
 
   async start() {
     await Promise.all(['48px Rye', '48px "Pirata One"', '48px "IM Fell English"', '48px Cinzel'].map((f) => document.fonts.load(f).catch(() => {})));
-    const lv = params.has('level') ? clamp(+params.get('level') - 1, 0, LEVELS.length - 1) : params.has('title') ? clamp(+params.get('title') - 1, 0, LEVELS.length - 1) : this.randomChapter();
+    const lv = params.has('level') ? clamp(+params.get('level') - 1, 0, PLAYABLE - 1) : params.has('title') ? clamp(+params.get('title') - 1, 0, PLAYABLE - 1) : this.randomChapter();
     this.loadLevel(lv, !params.has('level')); this.cineT = 0;
     if (params.has('level')) { this.fillIntro(); this.setState('intro'); if (params.has('free')) this.begin(); }
     else this.setState('title');

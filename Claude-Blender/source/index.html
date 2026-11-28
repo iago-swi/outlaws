@@ -157,6 +157,9 @@
   .card .k { float:right; font-family:'Yu Mincho','Hiragino Mincho ProN','Noto Serif JP',serif; font-size:40px; line-height:1; color:var(--c); opacity:.9; }
   .card { border-top:3px solid var(--c); }
   .card .t { font-family:var(--font); font-size:clamp(19px,1.95vw,27px); letter-spacing:.02em; }
+  .card.off { opacity:.36; filter:grayscale(1); cursor:not-allowed; }
+  .card.off:hover { transform:none; border-color:rgba(244,234,212,.28); background:rgba(14,10,8,.5); }
+  .card.off .p::after { content:'Not in this trial'; display:block; margin-top:4px; font-style:normal; letter-spacing:.12em; text-transform:uppercase; font-size:11px; }
   .card.w { --c:#e8a84a; } .card.j { --c:#e0523c; } .card.s { --c:#e8e2d2; } .card.g { --c:#e6c05a; }
   .card.n { --c:#8fd0f0; } .card.x { --c:#d6b25a; } .card.ru { --c:#d8463a; } .card.ti { --c:#e8a030; } .card.az { --c:#3ad0c4; }
   .foot { margin-top:2.2vh; font-size:14px; letter-spacing:.2em; text-transform:uppercase; color:var(--dim); }

@@ -18,7 +18,7 @@ async function inflate(url) {
   for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i);
   const buf = await new Response(new Blob([a]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer();
   const n = new DataView(buf).getUint32(0, true), head = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, n)));
-  const T = { h: Int16Array, H: Uint16Array, I: Uint32Array, b: Int8Array, B: Uint8Array }, A = {};
+  const T = { h: Int16Array, H: Uint16Array, I: Uint32Array, b: Int8Array, B: Uint8Array, f: Float32Array }, A = {};
   let off = 4 + n;
   for (const [name, code, , count] of head.arrays) { const C = T[code], len = count * C.BYTES_PER_ELEMENT; A[name] = new C(buf.slice(off, off + len)); off += len; }
   BL.bytes += a.length;
@@ -55,7 +55,7 @@ function prepBuilding({ head, A }) {
 export async function loadModels() {
   if (!BL.on) return;
   const t0 = performance.now();
-  await Promise.all(Object.entries(FILES).map(async ([k, url]) => { const m = await inflate(url); BL.models[k] = m.head.kind === 'figure' ? prepFigure(m) : prepBuilding(m); }));
+  await Promise.all(Object.entries(FILES).map(async ([k, url]) => { const m = await inflate(url); BL.models[k] = m.head.kind === 'figure' ? prepFigure(m) : m.head.kind === 'scenery' ? m : prepBuilding(m); }));
   BL.ms = performance.now() - t0;
 }
 
@@ -116,6 +116,71 @@ export function blendHumanoid(M, S) {
   return { group, hips: B.hips, armL: B.armL, armR: B.armR, legL: B.legL, legR: B.legR, shinL: B.shinL, shinR: B.shinR, mat, scale: S.scale || 1, blend: true };
 }
 
+// ---- the rest of the scenery ----------------------------------------------------------------------------------------
+// Everything else that stands in a chapter (churches, shrines, towers, barns, fences, bridges, furniture) is built by the level's own code
+// as before; the builder sets these shapes aside (Builder.capture) and each is replaced by its Blender version (blender/refine.py:
+// planed edges, boards in relief, baked shade), found by a signature of the shape. A shape Blender has no version of goes into the scenery
+// as it is. A wall the game can break keeps its piece: the range of its Blender triangles is handed to it.
+const DUMP = params.has('dump');
+function sigOf(key, geo) {
+  geo.computeBoundingBox();
+  const b = geo.boundingBox; let h = 2166136261;
+  const mix = (v) => { h = Math.imul(h ^ (v & 0xffff), 16777619); h = Math.imul(h ^ ((v >> 16) & 0xffff), 16777619); };
+  for (const v of [b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z]) mix(Math.round(v * 100));
+  for (let i = 0; i < key.length; i++) mix(key.charCodeAt(i));
+  mix(geo.attributes.position.count);
+  return h >>> 0;
+}
+/** What is to be done with the shapes a chapter builds: 'dump' (?dump: write them down for Blender), the chapter's model, or null (leave them). */
+export function sceneryFor(id) { return DUMP ? 'dump' : (BL.live && BL.models[id + '-scenery']) || null; }
+export function blendRelease(B, list, scen, id) {
+  if (scen === 'dump') {
+    const r4 = (a) => Array.from(a, (v) => Math.round(v * 10000) / 10000);
+    BL.dump = { id, prims: list.map(({ mat, geo, piece }) => {
+      const A = geo.attributes, col = A.color.array, p = geo.userData.prim;
+      const o = { m: mat.userData.key, sig: sigOf(mat.userData.key, geo), c: r4(col.subarray(0, 3)), solid: !!geo.userData.solid, piece: !!piece };
+      { const b = geo.boundingBox; o.g = Math.round(B.world.height((b.min.x + b.max.x) / 2, (b.min.z + b.max.z) / 2) * 100) / 100; }      // the ground under it
+      if (p) o.prim = p;
+      else {
+        o.P = r4(A.position.array); if (A.uv) o.U = r4(A.uv.array); if (A.normal) o.N = r4(A.normal.array);
+        let same = true; for (let i = 3; i < col.length && same; i++) same = Math.abs(col[i] - col[i % 3]) < 1e-4;
+        if (!same) o.C = r4(col);
+      }
+      return o; }) };
+    for (const e of list) B.put(e.mat, e.geo, e.piece);
+    return;
+  }
+  const { head, A } = scen, pool = new Map(), per = head.groups.map(() => ({ prims: [], n: 0, links: [] }));
+  if (!scen.rows) { scen.rows = Array.from({ length: A.sig.length }, () => []); for (let r = 0; r < A.rp.length; r++) scen.rows[A.rp[r]].push(r); }      // a shape has a row for each material it uses
+  for (let i = 0; i < A.sig.length; i++) { const s = A.sig[i]; if (!s) continue; if (!pool.has(s)) pool.set(s, []); pool.get(s).push(i); }
+  let used = 0;
+  for (const e of list) {
+    const q = pool.get(sigOf(e.mat.userData.key, e.geo)), i = q && q.length ? q.pop() : -1;
+    if (i < 0) { B.put(e.mat, e.geo, e.piece); continue; }
+    for (const r of scen.rows[i]) { const g = per[A.pg[r]]; if (e.piece) g.links.push({ piece: e.piece, start: g.n, count: A.pc[r] }); g.prims.push(r); g.n += A.pc[r]; }
+    used++; e.geo.dispose();
+  }
+  BL.scenery = { id, taken: list.length, used };
+  per.forEach((g, gi) => {
+    if (!g.n) return;
+    const P = new Float32Array(g.n * 3), N = new Float32Array(g.n * 3), U = new Float32Array(g.n * 2), C = new Float32Array(g.n * 3);
+    let o = 0;
+    for (const i of g.prims) {
+      const ox = A.po[i * 3], oy = A.po[i * 3 + 1], oz = A.po[i * 3 + 2], q = A.pq[i], s = A.ps[i], n = A.pc[i];
+      for (let k = 0; k < n; k++, o++) {
+        const v = A.idx[s + k];
+        P[o * 3] = ox + A.pos[v * 3] * q; P[o * 3 + 1] = oy + A.pos[v * 3 + 1] * q; P[o * 3 + 2] = oz + A.pos[v * 3 + 2] * q;
+        N[o * 3] = A.nrm[v * 3] / 127; N[o * 3 + 1] = A.nrm[v * 3 + 1] / 127; N[o * 3 + 2] = A.nrm[v * 3 + 2] / 127;
+        U[o * 2] = A.uv[v * 2] / 1024; U[o * 2 + 1] = A.uv[v * 2 + 1] / 1024;
+        C[o * 3] = (A.col[v * 3] / 255) ** 2; C[o * 3 + 1] = (A.col[v * 3 + 1] / 255) ** 2; C[o * 3 + 2] = (A.col[v * 3 + 2] / 255) ** 2;
+      }
+    }
+    const name = head.groups[gi].mat;
+    if (!queue.has(name)) queue.set(name, []);
+    queue.get(name).push({ P, N, U, C, links: g.links });
+  });
+}
+
 // ---- buildings ----------------------------------------------------------------------------------------------------
 const queue = new Map();                          // material name -> lists of arrays, until blendFlush()
 /** Put the object `name` of the model file `file` at (x, y, z), turned by ry about the vertical. */
@@ -143,11 +208,13 @@ export function blendFlush(M, parent) {
     let n = 0; for (const a of list) n += a.P.length / 3;
     const P = new Float32Array(n * 3), N = new Float32Array(n * 3), U = new Float32Array(n * 2), C = new Float32Array(n * 3);
     let o = 0;
-    for (const a of list) { P.set(a.P, o * 3); N.set(a.N, o * 3); U.set(a.U, o * 2); C.set(a.C, o * 3); o += a.P.length / 3; }
+    const links = [];
+    for (const a of list) { P.set(a.P, o * 3); N.set(a.N, o * 3); U.set(a.U, o * 2); C.set(a.C, o * 3); for (const l of a.links || []) links.push({ piece: l.piece, start: o + l.start, count: l.count }); o += a.P.length / 3; }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setAttribute('color', new THREE.BufferAttribute(C, 3));
     const mat = M[name] || M.flat, m = new THREE.Mesh(g, mat);
     m.castShadow = !mat.userData.noShadow; m.receiveShadow = !mat.userData.noShadow;
+    for (const l of links) l.piece.ranges.push({ mesh: m, start: l.start, count: l.count });      // a wall that can be broken: these are its triangles
     parent.add(m); out.push(m);
   }
   queue.clear();
